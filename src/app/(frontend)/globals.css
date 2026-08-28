@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #09090b;
+}
+
+[data-theme='dark'] {
+  --background: #09090b;
+  --foreground: #fafafa;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Modern Prose / Typography for Articles */
+.prose {
+  color: #27272a;
+  max-width: 68ch;
+  font-size: 1.125rem;
+  line-height: 1.8;
+}
+
+[data-theme='dark'] .prose {
+  color: #d4d4d8;
+}
+
+.prose h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-top: 2.25em;
+  margin-bottom: 0.75em;
+  color: #09090b;
+  letter-spacing: -0.02em;
+}
+
+[data-theme='dark'] .prose h2 {
+  color: #fafafa;
+}
+
+.prose h3 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-top: 1.75em;
+  margin-bottom: 0.5em;
+  color: #18181b;
+}
+
+[data-theme='dark'] .prose h3 {
+  color: #f4f4f5;
+}
+
+.prose p {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+.prose ul, .prose ol {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  padding-left: 1.625em;
+}
+
+.prose li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: #09090b;
+}
+
+[data-theme='dark'] .prose strong {
+  color: #ffffff;
+}
+
+.prose a {
+  color: #16a34a;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.prose blockquote {
+  border-left: 4px solid #16a34a;
+  padding-left: 1rem;
+  font-style: italic;
+  color: #52525b;
+  margin: 1.5rem 0;
+}
+
+[data-theme='dark'] .prose blockquote {
+  color: #a1a1aa;
+}
+
+.prose figure {
+  margin: 2rem 0;
+}
+
+.prose img {
+  border-radius: 0.5rem;
+  width: 100%;
+  height: auto;
+}

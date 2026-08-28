@@ -1,0 +1,34 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# next.js
+.next/
+out/
+
+# payload
+payload-types.ts
+payload.db
+payload.db-journal
+*.db
+*.db-journal
+
+# production
+build/
+dist/
+
+# env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# system
+.DS_Store
+*.pem

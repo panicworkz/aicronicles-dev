@@ -1,0 +1,49 @@
+services:
+  fabelo-postgres:
+    image: postgres:16-alpine
+    container_name: fabelo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fabelo_user
+      POSTGRES_PASSWORD: fabelo_secure_db_pass_2026
+      POSTGRES_DB: fabelo_db
+    volumes:
+      - fabelo_pgdata:/var/lib/postgresql/data
+    networks:
+      - fabelo-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fabelo_user -d fabelo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  fabelo-cms:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fabelo-cms
+    restart: unless-stopped
+    depends_on:
+      fabelo-postgres:
+        condition: service_healthy
+    ports:
+      - "3001:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URI: postgres://fabelo_user:fabelo_secure_db_pass_2026@fabelo-postgres:5432/fabelo_db
+      PAYLOAD_SECRET: fabelo-secret-key-9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d
+      NEXT_PUBLIC_SITE_URL: https://fabelo.testworkz.com
+      NEXT_PUBLIC_SITE_DOMAIN: fabelo.testworkz.com
+      INDEXNOW_KEY: fabelo_indexnow_key_2026
+    volumes:
+      - fabelo_media:/app/media
+    networks:
+      - fabelo-net
+
+volumes:
+  fabelo_pgdata:
+  fabelo_media:
+
+networks:
+  fabelo-net:
+    driver: bridge
