@@ -13,8 +13,12 @@ import {
   LogOut,
   Sparkles,
   Layers,
-  ChevronRight,
+  Search,
+  Plus,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 
 export default function PanicAdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -39,34 +43,34 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
   ];
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 flex font-sans antialiased selection:bg-indigo-500 selection:text-white">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-slate-800/80 bg-[#0b0f19] flex flex-col shrink-0">
-        {/* Brand / Logo */}
-        <div className="h-16 px-6 border-b border-slate-800/80 flex items-center justify-between">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">
+      {/* Hubz Style Sidebar */}
+      <aside className="w-60 border-r border-sidebar-border bg-sidebar flex flex-col shrink-0 transition-all">
+        {/* Brand */}
+        <div className="h-14 px-4 flex items-center justify-between border-b border-sidebar-border/60">
           <Link href="/panic" className="flex items-center gap-2.5">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-sm shadow-md">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm shadow-xs">
               P
             </div>
-            <span className="font-semibold tracking-tight text-white text-base">
-              Panic<span className="text-indigo-400">CMS</span>
+            <span className="font-semibold tracking-tight text-foreground text-sm">
+              Panic CMS
             </span>
           </Link>
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-sidebar-accent text-sidebar-foreground/70">
             v1.0
           </span>
         </div>
 
         {/* Project Selector Badge */}
-        <div className="p-4 border-b border-slate-800/60 bg-slate-900/30">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Layers className="w-3.5 h-3.5 text-indigo-400" />
+        <div className="p-3 border-b border-sidebar-border/40 bg-sidebar-accent/30">
+          <div className="flex items-center gap-2 text-xs text-sidebar-foreground/70">
+            <Layers className="size-3.5 text-primary" />
             <span className="truncate font-medium">fabelo.testworkz.com</span>
           </div>
         </div>
 
-        {/* Nav Links */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        {/* Nav Items */}
+        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.exact
@@ -77,70 +81,69 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 font-semibold'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-2xs'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
+                <Icon className={`size-4 ${isActive ? 'text-primary' : 'text-sidebar-foreground/60'}`} />
                 <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* User Info & Logout */}
-        <div className="p-4 border-t border-slate-800/80 bg-[#0b0f19]">
-          <div className="flex items-center justify-between">
-            <div className="truncate">
-              <p className="text-xs font-medium text-slate-200 truncate">Fabelo Editorial</p>
-              <p className="text-[11px] text-slate-500 truncate">support@fabelo.io</p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-800/80 rounded-lg transition"
-              title="Sign Out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+        {/* Bottom User Area */}
+        <Separator className="bg-sidebar-border/60" />
+        <div className="p-3 bg-sidebar flex items-center justify-between">
+          <div className="truncate">
+            <p className="text-xs font-medium text-foreground truncate">Fabelo Editorial</p>
+            <p className="text-[11px] text-muted-foreground truncate">support@fabelo.io</p>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+            title="Sign Out"
+          >
+            <LogOut className="size-4" />
+          </Button>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar */}
-        <header className="h-16 border-b border-slate-800/80 bg-[#090d16]/80 backdrop-blur px-6 flex items-center justify-between sticky top-0 z-40">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="text-slate-500">Workspace</span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-            <span className="text-slate-200 font-medium capitalize">
-              {pathname.replace('/panic', '').replace('/', '') || 'Overview'}
-            </span>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Hubz Style Top Header */}
+        <header className="flex h-14 items-center gap-4 border-b border-border bg-background px-6 shrink-0">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search anything..."
+              className="pl-9 bg-muted/40 border-none h-8 text-xs placeholder:text-muted-foreground/60"
+            />
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              target="_blank"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition"
-            >
-              <ExternalLink className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Live Site</span>
+          <div className="flex items-center gap-2 ml-auto">
+            <Link href="/" target="_blank">
+              <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                <ExternalLink className="size-3.5 text-primary" />
+                <span>Live Site</span>
+              </Button>
             </Link>
-            <Link
-              href="/panic/posts/new"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-500 transition shadow-sm"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>New Guide</span>
+
+            <Link href="/panic/posts/new">
+              <Button size="sm" className="h-8 text-xs gap-1.5 font-medium">
+                <Plus className="size-3.5" />
+                <span>New Guide</span>
+              </Button>
             </Link>
           </div>
         </header>
 
-        {/* Main Body */}
-        <main className="flex-1 p-6 overflow-y-auto">
+        {/* Main Body Canvas */}
+        <main className="flex-1 overflow-y-auto p-6 bg-background">
           {children}
         </main>
       </div>

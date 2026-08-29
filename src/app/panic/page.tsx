@@ -12,6 +12,9 @@ import {
   Eye,
   Edit3,
 } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,22 +37,19 @@ export default async function PanicDashboardPage() {
   ];
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 tracking-tight">Overview & Content Analytics</h1>
-          <p className="text-xs text-slate-400 mt-1">Project: Fabelo Editorial Hub (fabelo.testworkz.com)</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Overview & Content Analytics</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Project: Fabelo Editorial Hub (fabelo.testworkz.com)</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/panic/posts/new"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-500 transition shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
+        <Link href="/panic/posts/new">
+          <Button size="sm" className="gap-2 text-xs font-medium">
+            <Plus className="size-4" />
             <span>Create Article</span>
-          </Link>
-        </div>
+          </Button>
+        </Link>
       </div>
 
       {/* Stats Cards */}
@@ -57,89 +57,82 @@ export default async function PanicDashboardPage() {
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div
-              key={stat.label}
-              className="rounded-xl border border-slate-800/80 bg-[#0f172a]/60 p-5 backdrop-blur shadow-sm space-y-3"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-400">{stat.label}</span>
-                <div className="p-2 rounded-lg bg-indigo-600/10 text-indigo-400">
-                  <Icon className="w-4 h-4" />
+            <Card key={stat.label}>
+              <CardContent className="p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">{stat.label}</span>
+                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                    <Icon className="size-4" />
+                  </div>
                 </div>
-              </div>
-              <div className="text-3xl font-bold text-white">{stat.value}</div>
-              <div className="text-[11px] text-slate-500 font-medium">{stat.change}</div>
-            </div>
+                <div className="text-3xl font-bold text-foreground">{stat.value}</div>
+                <div className="text-xs text-muted-foreground font-medium">{stat.change}</div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
 
-      {/* Recent Posts Table */}
-      <div className="rounded-xl border border-slate-800/80 bg-[#0f172a]/40 overflow-hidden backdrop-blur shadow-sm">
-        <div className="p-5 border-b border-slate-800/80 flex items-center justify-between">
+      {/* Recent Publications Table Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between p-5 border-b border-border/60">
           <div>
-            <h2 className="text-base font-semibold text-white">Recent Publications</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Latest articles published or edited</p>
+            <CardTitle className="text-base font-semibold">Recent Publications</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Latest articles published or edited</p>
           </div>
-          <Link
-            href="/panic/posts"
-            className="text-xs font-medium text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1"
-          >
+          <Link href="/panic/posts" className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1">
             <span>View all</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="size-3.5" />
           </Link>
-        </div>
+        </CardHeader>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#0b0f19]/80 text-slate-400 border-b border-slate-800 font-medium">
-              <tr>
-                <th className="py-3 px-4">Title & Slug</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Reading Time</th>
-                <th className="py-3 px-4">Last Modified</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              {recentPosts.map((post) => (
-                <tr key={post.id} className="hover:bg-slate-800/30 transition">
-                  <td className="py-3 px-4">
-                    <div className="font-medium text-slate-100 truncate max-w-md">{post.title}</div>
-                    <div className="text-[11px] text-slate-500 font-mono truncate max-w-md">/{post.slug}</div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 capitalize">
-                      {post.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-slate-400">{post.readingTime}</td>
-                  <td className="py-3 px-4 text-slate-400">
-                    {post.updatedAt ? new Date(post.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
-                  </td>
-                  <td className="py-3 px-4 text-right space-x-2">
-                    <Link
-                      href={`/${post.slug}`}
-                      target="_blank"
-                      className="p-1.5 inline-flex items-center text-slate-400 hover:text-white rounded hover:bg-slate-800 transition"
-                      title="View Public Page"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                    </Link>
-                    <Link
-                      href={`/panic/posts/${post.id}`}
-                      className="p-1.5 inline-flex items-center text-indigo-400 hover:text-indigo-300 rounded hover:bg-slate-800 transition"
-                      title="Edit in Visual Editor"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                    </Link>
-                  </td>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-muted/40 text-muted-foreground border-b border-border/60 font-medium">
+                <tr>
+                  <th className="py-3 px-4">Title & Slug</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Reading Time</th>
+                  <th className="py-3 px-4">Last Modified</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-border/60 text-foreground">
+                {recentPosts.map((post) => (
+                  <tr key={post.id} className="hover:bg-muted/30 transition">
+                    <td className="py-3 px-4">
+                      <div className="font-medium text-foreground truncate max-w-md">{post.title}</div>
+                      <div className="text-[11px] text-muted-foreground font-mono truncate max-w-md">/{post.slug}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Badge variant={post.status === 'published' ? 'default' : 'secondary'} className="capitalize">
+                        {post.status}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-4 text-muted-foreground">{post.readingTime}</td>
+                    <td className="py-3 px-4 text-muted-foreground">
+                      {post.updatedAt ? new Date(post.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
+                    </td>
+                    <td className="py-3 px-4 text-right space-x-1">
+                      <Link href={`/${post.slug}`} target="_blank">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="View Public Page">
+                          <Eye className="size-3.5" />
+                        </Button>
+                      </Link>
+                      <Link href={`/panic/posts/${post.id}`}>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-primary" title="Edit in Visual Editor">
+                          <Edit3 className="size-3.5" />
+                        </Button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
