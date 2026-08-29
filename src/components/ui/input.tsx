@@ -10,7 +10,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
         ref={ref}
         className={twMerge(
           clsx(
-            'flex h-9 w-full rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-1 text-sm text-white placeholder:text-neutral-500 transition-colors outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-9 w-full rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-1 text-sm text-slate-100 placeholder:text-slate-500 transition-colors outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 disabled:cursor-not-allowed disabled:opacity-50',
             className
           )
         )}

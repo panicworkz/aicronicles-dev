@@ -6,7 +6,7 @@ export const Label = React.forwardRef<HTMLLabelElement, React.LabelHTMLAttribute
   ({ className, ...props }, ref) => (
     <label
       ref={ref}
-      className={twMerge(clsx('text-xs font-semibold uppercase tracking-wider text-neutral-400 select-none', className))}
+      className={twMerge(clsx('text-xs font-medium text-slate-400 select-none', className))}
       {...props}
     />
   )
