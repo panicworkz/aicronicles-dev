@@ -1,5 +1,6 @@
 'use client';
 import { useLivePreview } from '@/hooks/useLivePreview';
+import { RichText } from '@payloadcms/richtext-lexical/react';
 import Link from 'next/link';
 
 export function LiveArticleView({ post: initialPost }: { post: any }) {
@@ -8,6 +9,8 @@ export function LiveArticleView({ post: initialPost }: { post: any }) {
   const authorName = typeof post.author === 'object' && post.author ? post.author.name : 'Fabelo Editorial';
   const tagList = Array.isArray(post.tags) ? post.tags.map((t: any) => typeof t === 'object' ? t.name : t) : [];
   const imageUrl = typeof post.featuredImage === 'object' && post.featuredImage ? post.featuredImage.url : (post.featuredImage || '/media/default.webp');
+
+  const hasLexicalContent = Boolean(post.content && post.content.root && Array.isArray(post.content.root.children) && post.content.root.children.length > 0);
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 selection:bg-amber-500 selection:text-black">
@@ -59,14 +62,17 @@ export function LiveArticleView({ post: initialPost }: { post: any }) {
         )}
 
         {/* Content Body */}
-        <div 
-          className="prose prose-invert prose-lg max-w-none font-sans leading-relaxed
+        <div className="prose prose-invert prose-lg max-w-none font-sans leading-relaxed
             prose-headings:font-serif prose-headings:text-white prose-headings:tracking-tight
             prose-a:text-amber-500 prose-a:no-underline hover:prose-a:underline
             prose-img:rounded-xl prose-img:border prose-img:border-neutral-800
-            prose-blockquote:border-l-amber-500 prose-blockquote:text-neutral-300"
-          dangerouslySetInnerHTML={{ __html: post.contentHtml || '' }}
-        />
+            prose-blockquote:border-l-amber-500 prose-blockquote:text-neutral-300">
+          {hasLexicalContent ? (
+            <RichText data={post.content} />
+          ) : (
+            <div dangerouslySetInnerHTML={{ __html: post.contentHtml || '' }} />
+          )}
+        </div>
       </main>
 
       {/* Footer */}
