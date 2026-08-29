@@ -12,10 +12,9 @@ export const Users: CollectionConfig = {
       type: 'text',
     },
     {
-      name: 'roles',
+      name: 'role',
       type: 'select',
-      hasMany: true,
-      defaultValue: ['admin'],
+      defaultValue: 'admin',
       options: [
         { label: 'Admin', value: 'admin' },
         { label: 'Editor', value: 'editor' },
