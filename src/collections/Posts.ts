@@ -6,6 +6,20 @@ export const Posts: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'status', 'publishedAt'],
+    livePreview: {
+      url: ({ data }) => {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://fabelo.testworkz.com';
+        return `${siteUrl}/${data.slug}`;
+      },
+    },
+  },
+  versions: {
+    drafts: {
+      autosave: {
+        interval: 1500, // Autosave every 1.5 seconds while typing
+      },
+    },
+    maxPerDoc: 50, // Keep 50 revisions for rollbacks
   },
   fields: [
     {
@@ -24,7 +38,7 @@ export const Posts: CollectionConfig = {
       name: 'excerpt',
       type: 'textarea',
       admin: {
-        description: 'Brief summary for search engines and social previews',
+        description: 'Brief summary for search engines, AI crawlers, and social previews',
       },
     },
     {
@@ -99,4 +113,29 @@ export const Posts: CollectionConfig = {
       ],
     },
   ],
+  hooks: {
+    afterChange: [
+      async ({ doc, operation }) => {
+        if (doc._status === 'published' || doc.status === 'published') {
+          try {
+            const domain = process.env.NEXT_PUBLIC_SITE_DOMAIN || 'fabelo.testworkz.com';
+            const key = process.env.INDEXNOW_KEY || 'fabelo_indexnow_key_2026';
+            const url = `https://${domain}/${doc.slug}`;
+            await fetch('https://api.indexnow.org/indexnow', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                host: domain,
+                key: key,
+                keyLocation: `https://${domain}/${key}.txt`,
+                urlList: [url],
+              }),
+            });
+          } catch (e) {
+            console.error('IndexNow ping error:', e);
+          }
+        }
+      },
+    ],
+  },
 };

@@ -5,6 +5,20 @@ export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: {
     useAsTitle: 'title',
+    livePreview: {
+      url: ({ data }) => {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://fabelo.testworkz.com';
+        return `${siteUrl}/${data.slug}`;
+      },
+    },
+  },
+  versions: {
+    drafts: {
+      autosave: {
+        interval: 1500,
+      },
+    },
+    maxPerDoc: 50,
   },
   fields: [
     {
