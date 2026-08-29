@@ -1,83 +1,82 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
+  ArrowLeft,
   Save,
   Eye,
-  ArrowLeft,
-  Columns,
+  ExternalLink,
+  SplitSquareVertical,
+  ImageIcon,
   Sparkles,
-  Image as ImageIcon,
-  Clock,
   Globe,
-  Tag,
-  CheckCircle2,
-  AlertCircle,
+  FileEdit,
+  Clock,
+  User,
+  Trash2,
 } from 'lucide-react';
-import { TipTapEditor } from '@/components/editor/TipTapEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import TipTapEditor from '@/components/editor/TipTapEditor';
+import { toast } from 'sonner';
 
-export default function PanicPostEditPage() {
-  const params = useParams();
+export default function PanicPostEditPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
   const router = useRouter();
-  const id = params?.id as string;
+  const postId = resolvedParams.id;
 
-  const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
-  const [showSplitPreview, setShowSplitPreview] = useState(false);
+  const [splitPreview, setSplitPreview] = useState(false);
 
-  // Form fields
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [contentHtml, setContentHtml] = useState('');
-  const [featuredImageUrl, setFeaturedImageUrl] = useState('/media/default.webp');
+  const [contentJson, setContentJson] = useState<any>(null);
+  const [featuredImageUrl, setFeaturedImageUrl] = useState('');
   const [status, setStatus] = useState('published');
   const [readingTime, setReadingTime] = useState('5 min read');
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
 
   useEffect(() => {
-    async function fetchPost() {
+    const fetchPost = async () => {
       try {
-        const res = await fetch(`/api/posts/${id}`);
+        const res = await fetch(`/api/posts/${postId}`);
         const data = await res.json();
         if (data.post) {
           const p = data.post;
-          setPost(p);
           setTitle(p.title || '');
           setSlug(p.slug || '');
           setExcerpt(p.excerpt || '');
           setContentHtml(p.contentHtml || '');
-          setFeaturedImageUrl(p.featuredImageUrl || '/media/default.webp');
-          setStatus(p.status || 'published');
+          setContentJson(p.contentJson || null);
+          setFeaturedImageUrl(p.featuredImageUrl || '');
+          setStatus(p.status || 'draft');
           setReadingTime(p.readingTime || '5 min read');
-          setMetaTitle(p.metaTitle || '');
-          setMetaDescription(p.metaDescription || '');
+          setMetaTitle(p.metaTitle || p.title || '');
+          setMetaDescription(p.metaDescription || p.excerpt || '');
+        } else {
+          toast.error('Article not found');
         }
       } catch (err) {
-        console.error('Fetch post error:', err);
+        toast.error('Failed to load post');
       } finally {
         setLoading(false);
       }
-    }
-    if (id) fetchPost();
-  }, [id]);
+    };
 
-  const handleSave = async (targetStatus?: string) => {
+    fetchPost();
+  }, [postId]);
+
+  const handleSave = async () => {
     setSaving(true);
-    setMessage('');
-
-    const newStatus = targetStatus || status;
-
     try {
-      const res = await fetch(`/api/posts/${id}`, {
+      const res = await fetch(`/api/posts/${postId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -85,286 +84,305 @@ export default function PanicPostEditPage() {
           slug,
           excerpt,
           contentHtml,
+          contentJson,
           featuredImageUrl,
-          status: newStatus,
+          status,
           readingTime,
           metaTitle,
           metaDescription,
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to update post');
       const data = await res.json();
-      setPost(data.post);
-      setStatus(newStatus);
-      setMessage('Post saved successfully!');
-      setTimeout(() => setMessage(''), 4000);
+      if (data.success) {
+        toast.success('Guide updated successfully');
+      } else {
+        toast.error(data.error || 'Failed to save changes');
+      }
     } catch (err: any) {
-      alert(err.message || 'Error saving post');
+      toast.error(err.message || 'Save error');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return <div className="p-12 text-center text-neutral-500 font-mono">Loading editor...</div>;
-  }
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this guide? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Guide deleted');
+        router.push('/panic/posts');
+      }
+    } catch (err) {
+      toast.error('Failed to delete guide');
+    }
+  };
 
-  if (!post) {
-    return <div className="p-12 text-center text-red-500 font-mono">Post not found.</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-sm text-slate-400 font-medium animate-pulse">Loading visual editor...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-20">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800/80 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
         <div className="flex items-center gap-3">
           <Link
             href="/panic/posts"
-            className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition"
-            title="Back to Posts"
+            className="p-2 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            title="Back to Articles"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono text-neutral-500">ID #{id} •</span>
-              <span
-                className={`px-2 py-0.5 rounded text-[10px] font-semibold font-mono uppercase tracking-wider ${
-                  status === 'published'
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                }`}
-              >
-                {status}
-              </span>
-            </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={`px-2 py-0.5 rounded text-[11px] font-medium capitalize ${
+                status === 'published'
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+              }`}
+            >
+              {status}
+            </span>
+            <span className="text-xs text-slate-500">ID #{postId}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {message && (
-            <span className="text-xs text-emerald-400 font-mono flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              {message}
-            </span>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setShowSplitPreview(!showSplitPreview)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
-              showSplitPreview
-                ? 'bg-neutral-800 text-amber-400 border-amber-500/50'
-                : 'border-neutral-800 text-neutral-300 hover:bg-neutral-800'
-            }`}
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSplitPreview(!splitPreview)}
+            className="gap-1.5"
           >
-            <Columns className="w-3.5 h-3.5" />
-            <span>{showSplitPreview ? 'Hide Preview' : 'Split Preview'}</span>
-          </button>
+            <SplitSquareVertical className="w-3.5 h-3.5 text-indigo-400" />
+            <span>{splitPreview ? 'Close Preview' : 'Split Preview'}</span>
+          </Button>
 
-          <Link
-            href={`/${slug}`}
-            target="_blank"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-800 text-xs font-medium text-neutral-300 hover:bg-neutral-800 hover:text-white transition"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>View Live</span>
+          <Link href={`/${slug}`} target="_blank">
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+              <span>View Live</span>
+            </Button>
           </Link>
 
           <Button
-            onClick={() => handleSave('published')}
+            size="sm"
+            onClick={handleSave}
             disabled={saving}
-            className="bg-white text-black hover:bg-neutral-200"
+            className="gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium"
           >
-            <Save className="w-4 h-4 mr-1.5" />
-            {saving ? 'Saving...' : 'Publish / Update'}
+            <Save className="w-3.5 h-3.5" />
+            <span>{saving ? 'Saving...' : 'Save Changes'}</span>
           </Button>
         </div>
       </div>
 
-      {/* Main Grid: Editor on Left, Meta on Right (or Split Preview) */}
-      <div className={`grid grid-cols-1 ${showSplitPreview ? 'lg:grid-cols-12' : 'lg:grid-cols-3'} gap-6`}>
-        {/* Editor Column */}
-        <div className={`${showSplitPreview ? 'lg:col-span-6' : 'lg:col-span-2'} space-y-6`}>
-          <div className="space-y-4 rounded-xl border border-neutral-800/80 bg-neutral-900/40 p-6 backdrop-blur shadow-sm">
-            {/* Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title">Guide Title</Label>
-              <input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter article title..."
-                className="w-full text-2xl sm:text-3xl font-black font-serif bg-transparent text-white border-b border-neutral-800 pb-2 focus:border-amber-500 focus:outline-none placeholder:text-neutral-600"
-              />
-            </div>
+      {/* Editor & Sidebar Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Main Editor Canvas */}
+        <div className={splitPreview ? 'lg:col-span-6 space-y-6' : 'lg:col-span-8 space-y-6'}>
+          {/* Frameless Large Title */}
+          <div className="space-y-3">
+            <textarea
+              rows={1}
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = `${e.target.scrollHeight}px`;
+              }}
+              placeholder="Article Title..."
+              className="w-full resize-none bg-transparent text-2xl sm:text-3xl font-bold tracking-tight text-white placeholder:text-slate-600 focus:outline-none border-0 p-0 leading-snug"
+            />
 
-            {/* Slug & Excerpt */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="slug">URL Slug</Label>
-                <Input
-                  id="slug"
+            {/* URL Slug & Reading Time Bar */}
+            <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-[#0f172a]/60 border border-slate-800 text-xs">
+              <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
+                <Globe className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="text-slate-500 truncate">fabelo.testworkz.com/</span>
+                <input
+                  type="text"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
-                  placeholder="article-url-slug"
-                  className="font-mono text-xs text-amber-500"
+                  className="bg-transparent text-indigo-400 font-mono outline-none flex-1 min-w-[120px]"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="readingTime">Reading Time</Label>
-                <Input
-                  id="readingTime"
+              <div className="flex items-center gap-1 text-slate-400 border-l border-slate-800 pl-3">
+                <Clock className="w-3.5 h-3.5 text-slate-500" />
+                <input
+                  type="text"
                   value={readingTime}
                   onChange={(e) => setReadingTime(e.target.value)}
-                  placeholder="5 min read"
-                  className="font-mono text-xs"
+                  className="bg-transparent text-slate-300 w-20 outline-none"
                 />
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="excerpt">Short Excerpt / Teaser</Label>
-              <textarea
-                id="excerpt"
-                rows={2}
-                value={excerpt}
-                onChange={(e) => setExcerpt(e.target.value)}
-                placeholder="Brief summary shown on homepage and social cards..."
-                className="w-full rounded-lg border border-neutral-800 bg-neutral-900/60 p-3 text-xs text-neutral-300 placeholder:text-neutral-500 focus:border-amber-500 focus:outline-none"
-              />
             </div>
           </div>
 
-          {/* TipTap Visual Block Editor */}
+          {/* TipTap Visual Editor */}
           <div className="space-y-2">
-            <Label>Visual Article Body (TipTap Editor)</Label>
             <TipTapEditor
               content={contentHtml}
-              onChange={(html) => setContentHtml(html)}
-              placeholder="Click here and start typing your article..."
+              onChange={(html, json) => {
+                setContentHtml(html);
+                setContentJson(json);
+              }}
             />
           </div>
         </div>
 
-        {/* Live Preview Column if Enabled */}
-        {showSplitPreview ? (
-          <div className="lg:col-span-6 border border-neutral-800 rounded-xl overflow-hidden bg-neutral-950 flex flex-col h-[850px] sticky top-20 shadow-2xl">
-            <div className="h-10 bg-neutral-900 border-b border-neutral-800 px-4 flex items-center justify-between text-xs text-neutral-400 font-mono">
-              <span className="flex items-center gap-1.5 text-amber-400">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Live Render Preview</span>
-              </span>
-              <span>fabelo.testworkz.com/{slug}</span>
+        {/* Split Preview Panel (when active) */}
+        {splitPreview && (
+          <div className="lg:col-span-6 rounded-xl border border-slate-800 bg-neutral-950 p-6 overflow-y-auto max-h-[85vh] space-y-6">
+            <div className="border-b border-slate-800 pb-4">
+              <span className="text-xs text-indigo-400 font-medium uppercase tracking-wider">Live Reader Preview</span>
+              <h1 className="text-2xl font-bold text-white mt-2 font-serif">{title}</h1>
+              <p className="text-slate-400 text-xs mt-2">{excerpt}</p>
             </div>
-            <div className="flex-1 p-6 overflow-y-auto bg-neutral-950 text-neutral-100">
-              <h1 className="text-3xl font-black font-serif text-white mb-4 leading-tight">{title}</h1>
-              <div className="flex items-center gap-3 text-xs text-neutral-400 font-mono border-y border-neutral-800 py-3 mb-6">
-                <span>Fabelo Editorial</span>
-                <span>•</span>
-                <span>{readingTime}</span>
+            <div
+              className="prose prose-invert prose-slate max-w-none text-sm leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: contentHtml }}
+            />
+          </div>
+        )}
+
+        {/* Metadata Sidebar Cards */}
+        <div className={splitPreview ? 'hidden' : 'lg:col-span-4 space-y-5'}>
+          {/* Card 1: Publishing Settings */}
+          <div className="rounded-xl border border-slate-800/80 bg-[#0f172a]/60 p-5 backdrop-blur shadow-sm space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <span>Publishing</span>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Publication Status</Label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full h-9 rounded-lg border border-slate-800 bg-slate-900/80 px-3 text-xs text-slate-200 outline-none focus:border-indigo-500"
+              >
+                <option value="published">Published (Live on web)</option>
+                <option value="draft">Draft (Private)</option>
+              </select>
+            </div>
+
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="text-red-400 hover:text-red-300 font-medium inline-flex items-center gap-1.5 transition"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Guide</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Card 2: Featured Image */}
+          <div className="rounded-xl border border-slate-800/80 bg-[#0f172a]/60 p-5 backdrop-blur shadow-sm space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white">
+              <ImageIcon className="w-4 h-4 text-indigo-400" />
+              <span>Featured Image</span>
+            </div>
+
+            {featuredImageUrl ? (
+              <div className="aspect-[16/9] w-full rounded-lg overflow-hidden border border-slate-700 bg-slate-900">
+                <img
+                  src={featuredImageUrl}
+                  alt={title}
+                  className="w-full h-full object-cover"
+                />
               </div>
-              {featuredImageUrl && (
-                <div className="mb-6 rounded-lg overflow-hidden border border-neutral-800 aspect-video bg-neutral-900">
-                  <img src={featuredImageUrl} alt={title} className="w-full h-full object-cover" />
-                </div>
-              )}
-              <div
-                className="prose prose-invert prose-lg max-w-none font-sans leading-relaxed
-                  prose-headings:font-serif prose-headings:text-white
-                  prose-a:text-amber-500 hover:prose-a:underline"
-                dangerouslySetInnerHTML={{ __html: contentHtml }}
+            ) : (
+              <div className="aspect-[16/9] w-full rounded-lg border border-dashed border-slate-700 bg-slate-900/50 flex flex-col items-center justify-center text-slate-500 text-xs gap-2">
+                <ImageIcon className="w-6 h-6" />
+                <span>No cover image selected</span>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>Image URL</Label>
+              <Input
+                type="text"
+                placeholder="/media/guide-cover.webp"
+                value={featuredImageUrl}
+                onChange={(e) => setFeaturedImageUrl(e.target.value)}
+                className="text-xs font-mono"
+              />
+              <Link
+                href="/panic/media"
+                target="_blank"
+                className="text-[11px] text-indigo-400 hover:underline inline-block mt-1"
+              >
+                Open Media Library to upload new image →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 3: Excerpt */}
+          <div className="rounded-xl border border-slate-800/80 bg-[#0f172a]/60 p-5 backdrop-blur shadow-sm space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white">
+              <FileEdit className="w-4 h-4 text-indigo-400" />
+              <span>Excerpt & Teaser</span>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Short Summary</Label>
+              <textarea
+                rows={3}
+                value={excerpt}
+                onChange={(e) => setExcerpt(e.target.value)}
+                placeholder="A concise summary of this guide for card teasers and search results..."
+                className="w-full rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-indigo-500 leading-relaxed resize-none"
               />
             </div>
           </div>
-        ) : (
-          /* Sidebar Settings Column */
-          <div className="space-y-6">
-            {/* Publishing Settings */}
-            <div className="rounded-xl border border-neutral-800/80 bg-neutral-900/40 p-5 space-y-4 backdrop-blur shadow-sm">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white font-mono flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-amber-500" />
-                <span>Publishing Status</span>
-              </h3>
 
-              <div className="space-y-3">
-                <label className="flex items-center justify-between p-3 rounded-lg border border-neutral-800 bg-neutral-950/60 cursor-pointer hover:border-neutral-700">
-                  <span className="text-xs font-medium text-neutral-200">Status</span>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className="bg-neutral-900 text-xs text-white border border-neutral-700 rounded px-2.5 py-1 focus:outline-none"
-                  >
-                    <option value="published">Published</option>
-                    <option value="draft">Draft</option>
-                  </select>
-                </label>
-              </div>
+          {/* Card 4: SEO & AEO (Search Optimization) */}
+          <div className="rounded-xl border border-slate-800/80 bg-[#0f172a]/60 p-5 backdrop-blur shadow-sm space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white">
+              <Globe className="w-4 h-4 text-indigo-400" />
+              <span>SEO & AI Search (AEO)</span>
             </div>
 
-            {/* Featured Image */}
-            <div className="rounded-xl border border-neutral-800/80 bg-neutral-900/40 p-5 space-y-4 backdrop-blur shadow-sm">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white font-mono flex items-center gap-1.5">
-                <ImageIcon className="w-3.5 h-3.5 text-amber-500" />
-                <span>Featured Image</span>
-              </h3>
-
-              <div className="space-y-3">
-                <div className="aspect-video w-full rounded-lg overflow-hidden border border-neutral-800 bg-neutral-950">
-                  <img
-                    src={featuredImageUrl || '/media/default.webp'}
-                    alt="Cover preview"
-                    className="w-full h-full object-cover"
-                  />
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <Label>Meta Title</Label>
+                  <span className="text-[10px] text-slate-500">{metaTitle.length}/60</span>
                 </div>
                 <Input
                   type="text"
-                  value={featuredImageUrl}
-                  onChange={(e) => setFeaturedImageUrl(e.target.value)}
-                  placeholder="/media/filename.webp"
-                  className="font-mono text-xs"
+                  value={metaTitle}
+                  onChange={(e) => setMetaTitle(e.target.value)}
+                  placeholder={title}
+                  className="text-xs"
                 />
-                <p className="text-[11px] text-neutral-500 font-mono">
-                  Enter media URL or pick from Media Library.
-                </p>
               </div>
-            </div>
 
-            {/* SEO & AEO Metadata */}
-            <div className="rounded-xl border border-neutral-800/80 bg-neutral-900/40 p-5 space-y-4 backdrop-blur shadow-sm">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white font-mono flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>SEO & AEO (AI Search)</span>
-              </h3>
-
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="metaTitle">Meta Title</Label>
-                  <Input
-                    id="metaTitle"
-                    value={metaTitle}
-                    onChange={(e) => setMetaTitle(e.target.value)}
-                    placeholder="Search engine title..."
-                    className="text-xs"
-                  />
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <Label>Meta Description</Label>
+                  <span className="text-[10px] text-slate-500">{metaDescription.length}/160</span>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="metaDescription">Meta Description</Label>
-                  <textarea
-                    id="metaDescription"
-                    rows={3}
-                    value={metaDescription}
-                    onChange={(e) => setMetaDescription(e.target.value)}
-                    placeholder="Search engine description snippet..."
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900/60 p-3 text-xs text-neutral-300 placeholder:text-neutral-500 focus:border-amber-500 focus:outline-none"
-                  />
-                </div>
+                <textarea
+                  rows={3}
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  placeholder="Meta description for Google & LLM citations..."
+                  className="w-full rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-indigo-500 leading-relaxed resize-none"
+                />
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
