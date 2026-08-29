@@ -1,10 +1,10 @@
 import type { CollectionConfig } from 'payload';
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'updatedAt'],
   },
   fields: [
     {
@@ -17,26 +17,26 @@ export const Pages: CollectionConfig = {
       type: 'text',
       required: true,
       unique: true,
-      index: true,
+    },
+    {
+      name: 'content',
+      type: 'richText',
+      editor: lexicalEditor({}),
     },
     {
       name: 'contentHtml',
       type: 'textarea',
       maxLength: 2000000,
+      admin: {
+        hidden: true,
+      },
     },
     {
       name: 'meta',
       type: 'group',
       fields: [
-        {
-          name: 'title',
-          type: 'text',
-        },
-        {
-          name: 'description',
-          type: 'textarea',
-          maxLength: 10000,
-        },
+        { name: 'title', type: 'text' },
+        { name: 'description', type: 'textarea' },
       ],
     },
   ],

@@ -23,26 +23,23 @@ services:
       dockerfile: Dockerfile
     container_name: fabelo-cms
     restart: unless-stopped
-    depends_on:
-      fabelo-postgres:
-        condition: service_healthy
     ports:
-      - "3001:3000"
+      - "127.0.0.1:8230:3000"
     environment:
       NODE_ENV: production
-      DATABASE_URI: postgres://fabelo_user:fabelo_secure_db_pass_2026@fabelo-postgres:5432/fabelo_db
+      DATABASE_URI: file:/app/data/payload.db
       PAYLOAD_SECRET: fabelo-secret-key-9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d
       NEXT_PUBLIC_SITE_URL: https://fabelo.testworkz.com
       NEXT_PUBLIC_SITE_DOMAIN: fabelo.testworkz.com
       INDEXNOW_KEY: fabelo_indexnow_key_2026
     volumes:
-      - fabelo_media:/app/media
+      - /opt/payload/media:/app/media
+      - /opt/payload/data:/app/data
     networks:
       - fabelo-net
 
 volumes:
   fabelo_pgdata:
-  fabelo_media:
 
 networks:
   fabelo-net:
