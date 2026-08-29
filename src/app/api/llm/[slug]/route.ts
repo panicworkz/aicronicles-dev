@@ -1,55 +1,45 @@
-import { getPayload } from '@/lib/getPayload';
+import { NextResponse } from 'next/server';
+import { db, schema } from '@/db';
+import { eq } from 'drizzle-orm';
 
-type Args = {
-  params: Promise<{
-    slug: string;
-  }>;
-};
+export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request, { params }: Args) {
+export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const payload = await getPayload();
 
-  const { docs: posts } = await payload.find({
-    collection: 'posts',
-    where: { slug: { equals: slug } },
-    depth: 1,
-    limit: 1,
+  const post = await db.query.posts.findFirst({
+    where: eq(schema.posts.slug, slug),
   });
 
-  if (posts.length === 0) {
-    return new Response('Article not found', { status: 404 });
+  if (!post) {
+    return new NextResponse('Guide not found', { status: 404 });
   }
 
-  const post = posts[0] as any;
-  const authorName = typeof post.author === 'object' && post.author ? post.author.name : 'Fabelo';
-
-  // Strip HTML tags to clean markdown text
-  const cleanContent = (post.contentHtml || '')
-    .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, '\n# $1\n')
-    .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, '\n## $1\n')
-    .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '\n### $1\n')
-    .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '\n$1\n')
-    .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n')
-    .replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, '> $1\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/\n{3,}/g, '\n\n');
+  const cleanText = (post.contentHtml || '')
+    .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
+    .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
+    .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
+    .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
+    .replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n')
+    .replace(/<[^>]+>/g, '');
 
   const markdown = `# ${post.title}
 
-- **Author**: ${authorName}
-- **Published**: ${post.publishedAt || ''}
-- **Category**: ${Array.isArray(post.tags) && post.tags[0] ? post.tags[0].name : 'Finance & AI'}
-- **Source**: https://fabelo.testworkz.com/${post.slug}/
+Published: ${(post.publishedAt || new Date()).toISOString()}
+Author: Fabelo Editorial
+Source: https://fabelo.testworkz.com/${post.slug}
 
----
+## Excerpt
+${post.excerpt}
 
-${post.excerpt ? `> **Summary**: ${post.excerpt}\n\n` : ''}${cleanContent}
+## Content
+${cleanText}
 `;
 
-  return new Response(markdown, {
+  return new NextResponse(markdown, {
     headers: {
-      'Content-Type': 'text/markdown; charset=utf-8',
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600',
     },
   });
 }

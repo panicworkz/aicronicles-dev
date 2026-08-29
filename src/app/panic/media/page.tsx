@@ -1,0 +1,134 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Upload, Copy, Check, Trash2, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+export default function PanicMediaPage() {
+  const [mediaList, setMediaList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  const fetchMedia = async () => {
+    try {
+      const res = await fetch('/api/media');
+      const data = await res.json();
+      if (data.media) {
+        setMediaList(data.media);
+      }
+    } catch (err) {
+      console.error('Fetch media error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMedia();
+  }, []);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/media', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success && data.media) {
+        setMediaList([data.media, ...mediaList]);
+      } else {
+        alert(data.error || 'Upload failed');
+      }
+    } catch (err) {
+      alert('Error uploading file');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const copyToClipboard = (url: string, id: number) => {
+    navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Media Assets & Gallery</h1>
+          <p className="text-xs text-neutral-400 font-mono mt-1">Automatic WebP optimization and instant CDN delivery</p>
+        </div>
+
+        <div>
+          <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-black text-xs font-semibold hover:bg-neutral-200 transition shadow-sm cursor-pointer">
+            <Upload className="w-4 h-4" />
+            <span>{uploading ? 'Optimizing & Uploading...' : 'Upload Image'}</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileUpload}
+              disabled={uploading}
+            />
+          </label>
+        </div>
+      </div>
+
+      {/* Media Grid */}
+      {loading ? (
+        <div className="p-12 text-center text-neutral-500 font-mono">Loading media assets...</div>
+      ) : mediaList.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-neutral-800 p-12 text-center space-y-3">
+          <ImageIcon className="w-8 h-8 text-neutral-600 mx-auto" />
+          <p className="text-sm text-neutral-400">No media uploaded yet.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {mediaList.map((m) => (
+            <div
+              key={m.id}
+              className="group rounded-xl border border-neutral-800/80 bg-neutral-900/40 overflow-hidden flex flex-col hover:border-amber-500/50 transition backdrop-blur shadow-sm"
+            >
+              <div className="aspect-video w-full bg-neutral-950 overflow-hidden relative">
+                <img
+                  src={m.url}
+                  alt={m.alt || m.filename}
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  loading="lazy"
+                />
+                <button
+                  onClick={() => copyToClipboard(m.url, m.id)}
+                  className="absolute top-2 right-2 p-1.5 rounded-md bg-neutral-900/80 text-white backdrop-blur opacity-0 group-hover:opacity-100 transition shadow"
+                  title="Copy URL"
+                >
+                  {copiedId === m.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+
+              <div className="p-2.5 space-y-1 flex-1 flex flex-col justify-between">
+                <p className="text-[11px] font-mono text-neutral-300 truncate" title={m.filename}>
+                  {m.filename}
+                </p>
+                <div className="flex items-center justify-between text-[10px] text-neutral-500 font-mono">
+                  <span>{m.width ? `${m.width}x${m.height}` : 'Image'}</span>
+                  <span>{m.filesize ? `${Math.round(m.filesize / 1024)} KB` : ''}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

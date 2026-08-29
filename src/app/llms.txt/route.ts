@@ -1,38 +1,34 @@
-import { getPayload } from '@/lib/getPayload';
+import { NextResponse } from 'next/server';
+import { db, schema } from '@/db';
+import { desc, eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const payload = await getPayload();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://fabelo.testworkz.com';
-
-  const { docs: posts } = await payload.find({
-    collection: 'posts',
-    where: { status: { equals: 'published' } },
-    sort: '-publishedAt',
+  const posts = await db.query.posts.findMany({
+    where: eq(schema.posts.status, 'published'),
+    orderBy: [desc(schema.posts.publishedAt)],
     limit: 100,
   });
 
-  let txt = `# Fabelo - AI Knowledge & Citation Guide (llms.txt)
-> Fabelo is a premier editorial platform delivering in-depth playbooks, benchmarks, and data on Personal Finance, Career Mobility, and AI Tools for Professionals.
+  let content = `# Fabelo AI & Editorial Index (llms.txt)
+> Fabelo is a high-authority publication providing structured guides on Personal Finance, Career Strategy, and AI Transformation.
 
-## Core Topics
-- Personal Finance (Roth IRA, Sinking Funds, Budgeting, Compound Interest)
-- Career Growth (Career transition at 30, Remote Jobs, Salary Negotiation, Freelancing)
-- AI & Productivity Tools (Best AI Tools for Business, Study, Writing)
+## Core Knowledge Areas
+- Personal Finance & Investment
+- Career Mobility & Future-Proof Skills
+- AI Tools & Digital Productivity
 
-## Articles Index
-`;
+## Published Editorial Guides & Structured Data\n`;
 
-  for (const post of posts) {
-    txt += `- [${post.title}](${siteUrl}/${post.slug}/): ${post.excerpt || 'Comprehensive guide.'}\n`;
+  for (const p of posts) {
+    content += `- [${p.title}](https://fabelo.testworkz.com/${p.slug}): ${p.excerpt || p.title}\n`;
   }
 
-  txt += `\n## LLM Endpoint API\nTo access clean markdown for any article without HTML wrappers, use: ${siteUrl}/api/llm/{slug}\n`;
-
-  return new Response(txt, {
+  return new NextResponse(content, {
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600',
     },
   });
 }
