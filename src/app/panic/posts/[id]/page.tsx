@@ -12,14 +12,16 @@ import {
   ImageIcon,
   Sparkles,
   Globe,
-  FileEdit,
+  FileText,
   Clock,
-  User,
   Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import TipTapEditor from '@/components/editor/TipTapEditor';
 import { toast } from 'sonner';
 
@@ -122,7 +124,7 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-sm text-slate-400 font-medium animate-pulse">Loading visual editor...</div>
+        <div className="text-sm text-muted-foreground font-medium animate-pulse">Loading visual editor...</div>
       </div>
     );
   }
@@ -130,43 +132,35 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div className="flex items-center gap-3">
-          <Link
-            href="/panic/posts"
-            className="p-2 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition"
-            title="Back to Articles"
-          >
-            <ArrowLeft className="w-4 h-4" />
+          <Link href="/panic/posts">
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" title="Back to Articles">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <span
-              className={`px-2 py-0.5 rounded text-[11px] font-medium capitalize ${
-                status === 'published'
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-              }`}
-            >
+            <Badge variant={status === 'published' ? 'default' : 'secondary'} className="capitalize">
               {status}
-            </span>
-            <span className="text-xs text-slate-500">ID #{postId}</span>
+            </Badge>
+            <span className="text-xs text-muted-foreground">ID #{postId}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setSplitPreview(!splitPreview)}
             className="gap-1.5"
           >
-            <SplitSquareVertical className="w-3.5 h-3.5 text-indigo-400" />
+            <SplitSquareVertical className="w-3.5 h-3.5" />
             <span>{splitPreview ? 'Close Preview' : 'Split Preview'}</span>
           </Button>
 
           <Link href={`/${slug}`} target="_blank">
             <Button variant="outline" size="sm" className="gap-1.5">
-              <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+              <ExternalLink className="w-3.5 h-3.5" />
               <span>View Live</span>
             </Button>
           </Link>
@@ -175,7 +169,7 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
             size="sm"
             onClick={handleSave}
             disabled={saving}
-            className="gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium"
+            className="gap-1.5 font-medium"
           >
             <Save className="w-3.5 h-3.5" />
             <span>{saving ? 'Saving...' : 'Save Changes'}</span>
@@ -184,9 +178,9 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Editor & Sidebar Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Main Editor Canvas */}
-        <div className={splitPreview ? 'lg:col-span-6 space-y-6' : 'lg:col-span-8 space-y-6'}>
+        <div className={splitPreview ? 'lg:col-span-6 space-y-4' : 'lg:col-span-8 space-y-4'}>
           {/* Frameless Large Title */}
           <div className="space-y-3">
             <textarea
@@ -198,35 +192,35 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
                 e.target.style.height = `${e.target.scrollHeight}px`;
               }}
               placeholder="Article Title..."
-              className="w-full resize-none bg-transparent text-2xl sm:text-3xl font-bold tracking-tight text-white placeholder:text-slate-600 focus:outline-none border-0 p-0 leading-snug"
+              className="w-full resize-none bg-transparent text-2xl sm:text-3xl font-bold tracking-tight text-foreground placeholder:text-muted-foreground/40 focus:outline-none border-0 p-0 leading-snug"
             />
 
             {/* URL Slug & Reading Time Bar */}
-            <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-[#0f172a]/60 border border-slate-800 text-xs">
+            <div className="flex flex-wrap items-center gap-3 p-2.5 rounded-lg border border-border bg-card text-xs">
               <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
-                <Globe className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span className="text-slate-500 truncate">fabelo.testworkz.com/</span>
+                <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <span className="text-muted-foreground truncate">fabelo.testworkz.com/</span>
                 <input
                   type="text"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
-                  className="bg-transparent text-indigo-400 font-mono outline-none flex-1 min-w-[120px]"
+                  className="bg-transparent text-primary font-mono outline-none flex-1 min-w-[120px]"
                 />
               </div>
-              <div className="flex items-center gap-1 text-slate-400 border-l border-slate-800 pl-3">
-                <Clock className="w-3.5 h-3.5 text-slate-500" />
+              <div className="flex items-center gap-1 text-muted-foreground border-l border-border pl-3">
+                <Clock className="w-3.5 h-3.5" />
                 <input
                   type="text"
                   value={readingTime}
                   onChange={(e) => setReadingTime(e.target.value)}
-                  className="bg-transparent text-slate-300 w-20 outline-none"
+                  className="bg-transparent text-foreground w-20 outline-none"
                 />
               </div>
             </div>
           </div>
 
           {/* TipTap Visual Editor */}
-          <div className="space-y-2">
+          <div>
             <TipTapEditor
               content={contentHtml}
               onChange={(html, json) => {
@@ -239,124 +233,132 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
 
         {/* Split Preview Panel (when active) */}
         {splitPreview && (
-          <div className="lg:col-span-6 rounded-xl border border-slate-800 bg-neutral-950 p-6 overflow-y-auto max-h-[85vh] space-y-6">
-            <div className="border-b border-slate-800 pb-4">
-              <span className="text-xs text-indigo-400 font-medium uppercase tracking-wider">Live Reader Preview</span>
-              <h1 className="text-2xl font-bold text-white mt-2 font-serif">{title}</h1>
-              <p className="text-slate-400 text-xs mt-2">{excerpt}</p>
+          <div className="lg:col-span-6 rounded-xl border border-border bg-card p-6 overflow-y-auto max-h-[85vh] space-y-6">
+            <div className="border-b border-border pb-4">
+              <Badge variant="outline" className="text-xs text-primary mb-2">Live Reader Preview</Badge>
+              <h1 className="text-2xl font-bold text-foreground font-serif">{title}</h1>
+              <p className="text-muted-foreground text-xs mt-2">{excerpt}</p>
             </div>
             <div
-              className="prose prose-invert prose-slate max-w-none text-sm leading-relaxed"
+              className="prose dark:prose-invert max-w-none text-sm leading-relaxed"
               dangerouslySetInnerHTML={{ __html: contentHtml }}
             />
           </div>
         )}
 
         {/* Metadata Sidebar Cards */}
-        <div className={splitPreview ? 'hidden' : 'lg:col-span-4 space-y-5'}>
+        <div className={splitPreview ? 'hidden' : 'lg:col-span-4 space-y-4'}>
           {/* Card 1: Publishing Settings */}
-          <div className="rounded-xl border border-slate-800/80 bg-[#0f172a]/60 p-5 backdrop-blur shadow-sm space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
-              <span>Publishing</span>
-            </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span>Publishing</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Publication Status</Label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="published">Published (Live on web)</option>
+                  <option value="draft">Draft (Private)</option>
+                </select>
+              </div>
 
-            <div className="space-y-2">
-              <Label>Publication Status</Label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full h-9 rounded-lg border border-slate-800 bg-slate-900/80 px-3 text-xs text-slate-200 outline-none focus:border-indigo-500"
-              >
-                <option value="published">Published (Live on web)</option>
-                <option value="draft">Draft (Private)</option>
-              </select>
-            </div>
-
-            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="text-red-400 hover:text-red-300 font-medium inline-flex items-center gap-1.5 transition"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Guide</span>
-              </button>
-            </div>
-          </div>
+              <div className="pt-2 border-t border-border flex items-center justify-between text-xs">
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="text-destructive hover:opacity-80 font-medium inline-flex items-center gap-1.5 transition"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Guide</span>
+                </button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Card 2: Featured Image */}
-          <div className="rounded-xl border border-slate-800/80 bg-[#0f172a]/60 p-5 backdrop-blur shadow-sm space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
-              <ImageIcon className="w-4 h-4 text-indigo-400" />
-              <span>Featured Image</span>
-            </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <ImageIcon className="w-4 h-4 text-primary" />
+                <span>Featured Image</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {featuredImageUrl ? (
+                <div className="aspect-[16/9] w-full rounded-lg overflow-hidden border border-border bg-muted">
+                  <img
+                    src={featuredImageUrl}
+                    alt={title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="aspect-[16/9] w-full rounded-lg border border-dashed border-border bg-muted/30 flex flex-col items-center justify-center text-muted-foreground text-xs gap-2">
+                  <ImageIcon className="w-6 h-6" />
+                  <span>No cover image selected</span>
+                </div>
+              )}
 
-            {featuredImageUrl ? (
-              <div className="aspect-[16/9] w-full rounded-lg overflow-hidden border border-slate-700 bg-slate-900">
-                <img
-                  src={featuredImageUrl}
-                  alt={title}
-                  className="w-full h-full object-cover"
+              <div className="space-y-2">
+                <Label>Image URL</Label>
+                <Input
+                  type="text"
+                  placeholder="/media/guide-cover.webp"
+                  value={featuredImageUrl}
+                  onChange={(e) => setFeaturedImageUrl(e.target.value)}
+                  className="text-xs font-mono"
                 />
+                <Link
+                  href="/panic/media"
+                  target="_blank"
+                  className="text-xs text-primary hover:underline inline-block mt-1"
+                >
+                  Open Media Library to upload new image →
+                </Link>
               </div>
-            ) : (
-              <div className="aspect-[16/9] w-full rounded-lg border border-dashed border-slate-700 bg-slate-900/50 flex flex-col items-center justify-center text-slate-500 text-xs gap-2">
-                <ImageIcon className="w-6 h-6" />
-                <span>No cover image selected</span>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>Image URL</Label>
-              <Input
-                type="text"
-                placeholder="/media/guide-cover.webp"
-                value={featuredImageUrl}
-                onChange={(e) => setFeaturedImageUrl(e.target.value)}
-                className="text-xs font-mono"
-              />
-              <Link
-                href="/panic/media"
-                target="_blank"
-                className="text-[11px] text-indigo-400 hover:underline inline-block mt-1"
-              >
-                Open Media Library to upload new image →
-              </Link>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Card 3: Excerpt */}
-          <div className="rounded-xl border border-slate-800/80 bg-[#0f172a]/60 p-5 backdrop-blur shadow-sm space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
-              <FileEdit className="w-4 h-4 text-indigo-400" />
-              <span>Excerpt & Teaser</span>
-            </div>
-
-            <div className="space-y-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <FileText className="w-4 h-4 text-primary" />
+                <span>Excerpt & Teaser</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
               <Label>Short Summary</Label>
-              <textarea
+              <Textarea
                 rows={3}
                 value={excerpt}
                 onChange={(e) => setExcerpt(e.target.value)}
                 placeholder="A concise summary of this guide for card teasers and search results..."
-                className="w-full rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-indigo-500 leading-relaxed resize-none"
+                className="text-xs leading-relaxed resize-none"
               />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          {/* Card 4: SEO & AEO (Search Optimization) */}
-          <div className="rounded-xl border border-slate-800/80 bg-[#0f172a]/60 p-5 backdrop-blur shadow-sm space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
-              <Globe className="w-4 h-4 text-indigo-400" />
-              <span>SEO & AI Search (AEO)</span>
-            </div>
-
-            <div className="space-y-3">
+          {/* Card 4: SEO & AEO */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <Globe className="w-4 h-4 text-primary" />
+                <span>SEO & AI Search (AEO)</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
               <div className="space-y-1">
                 <div className="flex justify-between text-xs">
                   <Label>Meta Title</Label>
-                  <span className="text-[10px] text-slate-500">{metaTitle.length}/60</span>
+                  <span className="text-[10px] text-muted-foreground">{metaTitle.length}/60</span>
                 </div>
                 <Input
                   type="text"
@@ -370,18 +372,18 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
               <div className="space-y-1">
                 <div className="flex justify-between text-xs">
                   <Label>Meta Description</Label>
-                  <span className="text-[10px] text-slate-500">{metaDescription.length}/160</span>
+                  <span className="text-[10px] text-muted-foreground">{metaDescription.length}/160</span>
                 </div>
-                <textarea
+                <Textarea
                   rows={3}
                   value={metaDescription}
                   onChange={(e) => setMetaDescription(e.target.value)}
                   placeholder="Meta description for Google & LLM citations..."
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-indigo-500 leading-relaxed resize-none"
+                  className="text-xs leading-relaxed resize-none"
                 />
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
