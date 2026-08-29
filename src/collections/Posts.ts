@@ -3,6 +3,12 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
+  access: {
+    read: () => true,
+    create: ({ req: { user } }) => Boolean(user),
+    update: ({ req: { user } }) => Boolean(user),
+    delete: ({ req: { user } }) => Boolean(user),
+  },
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'status', 'publishedAt'],
@@ -16,10 +22,10 @@ export const Posts: CollectionConfig = {
   versions: {
     drafts: {
       autosave: {
-        interval: 1500, // Autosave every 1.5 seconds while typing
+        interval: 1500,
       },
     },
-    maxPerDoc: 50, // Keep 50 revisions for rollbacks
+    maxPerDoc: 50,
   },
   fields: [
     {
@@ -113,29 +119,4 @@ export const Posts: CollectionConfig = {
       ],
     },
   ],
-  hooks: {
-    afterChange: [
-      async ({ doc, operation }) => {
-        if (doc._status === 'published' || doc.status === 'published') {
-          try {
-            const domain = process.env.NEXT_PUBLIC_SITE_DOMAIN || 'fabelo.testworkz.com';
-            const key = process.env.INDEXNOW_KEY || 'fabelo_indexnow_key_2026';
-            const url = `https://${domain}/${doc.slug}`;
-            await fetch('https://api.indexnow.org/indexnow', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                host: domain,
-                key: key,
-                keyLocation: `https://${domain}/${key}.txt`,
-                urlList: [url],
-              }),
-            });
-          } catch (e) {
-            console.error('IndexNow ping error:', e);
-          }
-        }
-      },
-    ],
-  },
 };
