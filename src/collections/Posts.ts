@@ -1,5 +1,4 @@
 import type { CollectionConfig } from 'payload';
-import { lexicalEditor } from '@payloadcms/richtext-lexical';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
@@ -41,6 +40,11 @@ export const Posts: CollectionConfig = {
       index: true,
     },
     {
+      name: 'content',
+      type: 'richText',
+      label: 'Article Content (Visual Editor)',
+    },
+    {
       name: 'excerpt',
       type: 'textarea',
       admin: {
@@ -51,11 +55,6 @@ export const Posts: CollectionConfig = {
       name: 'featuredImage',
       type: 'upload',
       relationTo: 'media',
-    },
-    {
-      name: 'content',
-      type: 'richText',
-      editor: lexicalEditor({}),
     },
     {
       name: 'contentHtml',
