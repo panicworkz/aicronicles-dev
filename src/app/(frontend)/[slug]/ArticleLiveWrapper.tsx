@@ -38,7 +38,6 @@ export function ArticleLiveWrapper({
 }: ArticleLiveWrapperProps) {
   const [coverUrl, setCoverUrl] = useState(initialCoverUrl);
   const [isLiveMode, setIsLiveMode] = useState(false);
-  const [formattedHtml, setFormattedHtml] = useState(initialContentHtml);
 
   // Floating selection bubble menu state
   const [bubbleMenu, setBubbleMenu] = useState<{
@@ -70,7 +69,6 @@ export function ArticleLiveWrapper({
       const imgs = doc.querySelectorAll('img');
 
       imgs.forEach((img) => {
-        // If already inside a panic image box, skip
         if (img.parentElement?.classList.contains('panic-live-image-box')) return;
 
         const src = img.getAttribute('src') || '';
@@ -129,6 +127,7 @@ export function ArticleLiveWrapper({
     }
   };
 
+  // Mount-time uncontrolled initialization so React never reconciles or wipes contentEditable DOM nodes
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
@@ -143,7 +142,13 @@ export function ArticleLiveWrapper({
       }
     }
 
-    setFormattedHtml(formatContentWithLiveImages(initialContentHtml));
+    if (titleRef.current && !titleRef.current.innerText) {
+      titleRef.current.innerText = initialTitle;
+    }
+
+    if (contentRef.current && !contentRef.current.innerHTML) {
+      contentRef.current.innerHTML = formatContentWithLiveImages(initialContentHtml);
+    }
 
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'PANIC_THEME_CHANGE') {
@@ -166,8 +171,8 @@ export function ArticleLiveWrapper({
           }
         }
 
-        if (newHtml !== undefined && !isTypingContent.current) {
-          setFormattedHtml(formatContentWithLiveImages(newHtml));
+        if (newHtml !== undefined && contentRef.current && !isTypingContent.current) {
+          contentRef.current.innerHTML = formatContentWithLiveImages(newHtml);
         }
 
         if (newCover !== undefined) {
@@ -178,9 +183,9 @@ export function ArticleLiveWrapper({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [initialContentHtml]);
+  }, [initialTitle, initialContentHtml]);
 
-  // Rock-solid selection tracking on mouseup & keyup
+  // Selection tracking on mouseup & keyup
   useEffect(() => {
     if (!isLiveMode) return;
 
@@ -555,9 +560,7 @@ export function ArticleLiveWrapper({
         className={`text-3xl sm:text-5xl font-black tracking-tight text-foreground leading-tight mb-6 font-serif ${
           isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/40 rounded-lg p-1 hover:bg-muted/30 transition cursor-text' : ''
         }`}
-      >
-        {initialTitle}
-      </h1>
+      />
 
       <div className="flex items-center space-x-4 border-y border-border py-4 mb-8 text-xs text-muted-foreground font-mono">
         <span className="text-foreground font-sans font-medium">Fabelo Editorial</span>
@@ -609,7 +612,6 @@ export function ArticleLiveWrapper({
           prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground ${
             isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/20 rounded-xl p-2 hover:bg-muted/20 transition cursor-text' : ''
           }`}
-        dangerouslySetInnerHTML={{ __html: formattedHtml || '' }}
       />
     </main>
   );
