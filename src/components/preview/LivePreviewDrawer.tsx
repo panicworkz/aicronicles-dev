@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import {
   X,
@@ -30,22 +31,24 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
   const [loading, setLoading] = useState(true);
   const [iframeKey, setIframeKey] = useState(0);
   const [mounted, setMounted] = useState(false);
-  const [animatingOut, setAnimatingOut] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (post) {
-      setMounted(true);
-      setAnimatingOut(false);
+      // Trigger smooth slide in after mount
+      const frame = requestAnimationFrame(() => {
+        setIsOpen(true);
+      });
       setLoading(true);
       document.body.style.overflow = 'hidden';
-    } else if (mounted) {
-      setAnimatingOut(true);
-      const timer = setTimeout(() => {
-        setMounted(false);
-        setAnimatingOut(false);
-        document.body.style.overflow = 'unset';
-      }, 300);
-      return () => clearTimeout(timer);
+      return () => cancelAnimationFrame(frame);
+    } else {
+      setIsOpen(false);
+      document.body.style.overflow = 'unset';
     }
   }, [post]);
 
@@ -57,13 +60,14 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  if (!post && !mounted) return null;
+  if (!mounted || (!post && !isOpen)) return null;
 
   const handleSmoothClose = () => {
-    setAnimatingOut(true);
+    setIsOpen(false);
     setTimeout(() => {
       onClose();
-    }, 280);
+      document.body.style.overflow = 'unset';
+    }, 320);
   };
 
   const handleRefresh = () => {
@@ -74,32 +78,32 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
   const getFrameWidth = () => {
     switch (deviceMode) {
       case 'mobile':
-        return 'w-[375px] h-[85vh] my-auto rounded-2xl border border-neutral-800 shadow-2xl';
+        return 'w-[375px] h-[88vh] my-auto rounded-2xl border border-neutral-800 shadow-2xl';
       case 'tablet':
-        return 'w-[768px] h-[90vh] my-auto rounded-2xl border border-neutral-800 shadow-2xl';
+        return 'w-[768px] h-[92vh] my-auto rounded-2xl border border-neutral-800 shadow-2xl';
       case 'desktop':
       default:
         return 'w-full h-full border-0';
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
-      {/* Darkened & Blurred Backdrop (arka fon çok az görünür) */}
+  return createPortal(
+    <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 z-[9999] overflow-hidden flex justify-end m-0 p-0">
+      {/* Darkened & Blurred Backdrop (Arka fon çok az görünür) */}
       <div
-        className={`fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity duration-300 ease-out cursor-pointer ${
-          animatingOut ? 'opacity-0' : 'opacity-100'
+        className={`fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300 ease-out cursor-pointer ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={handleSmoothClose}
       />
 
-      {/* Smooth Slide-over Drawer (Üstte boşluk yok, kenara tam oturan) */}
+      {/* Smooth Slide-over Drawer (Üstte kesinlikle sıfır boşluk) */}
       <aside
-        className={`relative z-50 flex h-full w-full sm:w-[85vw] lg:w-[80vw] xl:w-[75vw] max-w-[1600px] flex-col border-l border-neutral-800 bg-neutral-950 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          animatingOut ? 'translate-x-full' : 'translate-x-0'
+        className={`relative z-[10000] flex h-screen w-full sm:w-[85vw] lg:w-[82vw] xl:w-[78vw] max-w-[1600px] flex-col border-l border-neutral-800 bg-neutral-950 shadow-2xl transition-transform duration-320 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Drawer Header (Üstte tam hizada) */}
+        {/* Drawer Header (Tavana sıfır oturan) */}
         <div className="flex h-12 items-center justify-between gap-3 border-b border-neutral-800/80 bg-neutral-950 px-4 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <Badge variant={post?.status === 'published' ? 'default' : 'secondary'} className="capitalize text-xs font-normal shrink-0">
@@ -184,7 +188,7 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
           </div>
         </div>
 
-        {/* Drawer Body (Sıfır üst/yan boşluk) */}
+        {/* Drawer Body (Tam tavan ve sıfır boşluk) */}
         <div className={`relative flex-1 bg-neutral-950 overflow-hidden flex items-center justify-center ${deviceMode !== 'desktop' ? 'p-4 bg-neutral-900/30' : 'p-0'}`}>
           {loading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-950/80 backdrop-blur-xs z-10 space-y-2">
@@ -206,6 +210,7 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
           )}
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body
   );
 }
