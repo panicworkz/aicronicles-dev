@@ -85,8 +85,20 @@ export function ArticleLiveWrapper({
       }
     };
 
+    const handleScroll = () => {
+      if (currentHoverSrc.current) {
+        currentHoverSrc.current = null;
+        setHoveredImgRect(null);
+      }
+    };
+
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   // Flicker-free hover tracking: only update when entering a new image

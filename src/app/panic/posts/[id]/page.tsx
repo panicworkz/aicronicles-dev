@@ -687,7 +687,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           </div>
 
           {/* Responsive Live Frame Canvas */}
-          <div className="flex-1 p-4 overflow-y-auto flex items-center justify-center">
+          <div className="flex-1 p-4 overflow-hidden flex items-center justify-center">
             <div
               className={`h-full transition-all duration-300 rounded-xl overflow-hidden border border-border bg-background shadow-lg mx-auto ${getFrameWidth()}`}
             >
