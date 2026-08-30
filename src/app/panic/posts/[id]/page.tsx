@@ -23,7 +23,9 @@ import {
   Columns,
   Eye,
   Settings,
-  X,
+  PanelRightClose,
+  PanelRightOpen,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,8 +53,11 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
   const [autosaving, setAutosaving] = useState(false);
   const [viewMode, setViewMode] = useState<'editor' | 'live' | 'split'>('editor');
   const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [aiAeoDrawerOpen, setAiAeoDrawerOpen] = useState(false);
-  const [seoDrawerOpen, setSeoDrawerOpen] = useState(false);
+  
+  // Right Inspector Sidebar state (collapsible, alongside editor, zero overlay)
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarTab, setSidebarTab] = useState<'settings' | 'ai_aeo'>('settings');
+
   const [iframeKey, setIframeKey] = useState(0);
   const [showRevisions, setShowRevisions] = useState(false);
   const [splitPickerOpen, setSplitPickerOpen] = useState(false);
@@ -494,7 +499,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
             <Badge variant={status === 'published' ? 'default' : 'secondary'} className="capitalize text-[11px] font-normal">
               {status}
             </Badge>
-            <span className="text-xs text-muted-foreground truncate max-w-[180px] font-medium hidden sm:inline">
+            <span className="text-xs text-muted-foreground truncate max-w-[160px] font-medium hidden sm:inline">
               {title || 'Untitled'}
             </span>
           </div>
@@ -540,36 +545,18 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           </button>
         </div>
 
-        {/* Right Action Suite (Always Available) */}
+        {/* Right Actions */}
         <div className="flex items-center gap-2">
-          {/* AI & AEO Suite Toggle */}
+          {/* Collapsible Inspector Sidebar Toggle Button */}
           <Button
-            variant={aiAeoDrawerOpen ? 'default' : 'outline'}
+            variant={sidebarOpen ? 'secondary' : 'outline'}
             size="default"
-            onClick={() => {
-              setAiAeoDrawerOpen((prev) => !prev);
-              setSeoDrawerOpen(false);
-            }}
-            className="gap-1.5 text-xs text-primary font-medium"
-            title="Open AI & AEO Scoring Suite"
+            onClick={() => setSidebarOpen((prev) => !prev)}
+            className="gap-1.5 text-xs font-medium cursor-pointer"
+            title={sidebarOpen ? 'Hide Settings Sidebar' : 'Show Settings Sidebar'}
           >
-            <Sparkles className="size-3.5" />
-            <span className="hidden sm:inline">AI & AEO Suite</span>
-          </Button>
-
-          {/* SEO & Publishing Settings Toggle */}
-          <Button
-            variant={seoDrawerOpen ? 'default' : 'outline'}
-            size="default"
-            onClick={() => {
-              setSeoDrawerOpen((prev) => !prev);
-              setAiAeoDrawerOpen(false);
-            }}
-            className="gap-1.5 text-xs font-medium"
-            title="Open SEO & Publishing Settings"
-          >
-            <Settings className="size-3.5 text-muted-foreground" />
-            <span className="hidden sm:inline">SEO & Settings</span>
+            {sidebarOpen ? <PanelRightClose className="size-3.5" /> : <PanelRightOpen className="size-3.5" />}
+            <span className="hidden sm:inline">Settings</span>
           </Button>
 
           <Button
@@ -601,193 +588,209 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         </div>
       </div>
 
-      {/* Main Workspace Body */}
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Mode 1: Visual Editor (Full width centered) */}
-        {viewMode === 'editor' && (
-          <div className="w-full bg-background overflow-y-auto p-6">
-            <div className="max-w-4xl mx-auto py-4 space-y-6">
-              {renderVisualEditorContent()}
+      {/* Main Workspace: Editor/Canvas on Left + Fixed Sibling Sidebar on Right (Zero Overlay) */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Main Content / Canvas Area (Resizes automatically when sidebar is toggled) */}
+        <div className="flex-1 h-full overflow-hidden bg-background">
+          {/* Mode 1: Visual Editor */}
+          {viewMode === 'editor' && (
+            <div className="w-full h-full overflow-y-auto p-6">
+              <div className="max-w-4xl mx-auto py-4 space-y-6">
+                {renderVisualEditorContent()}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Mode 2: Live In-Context Canvas (Full width) */}
-        {viewMode === 'live' && (
-          <div className="w-full h-full">
-            {renderLiveCanvas()}
-          </div>
-        )}
-
-        {/* Mode 3: Split View (50% Editor / 50% Live Canvas) */}
-        {viewMode === 'split' && (
-          <div className="flex w-full h-full overflow-hidden">
-            <div className="w-full lg:w-1/2 border-r bg-background overflow-y-auto p-6 space-y-6">
-              {renderVisualEditorContent()}
-            </div>
-            <div className="hidden lg:flex lg:w-1/2 h-full">
+          {/* Mode 2: Live In-Context Canvas */}
+          {viewMode === 'live' && (
+            <div className="w-full h-full">
               {renderLiveCanvas()}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Slide-Over Drawer: AI & AEO Suite (Universal across all modes) */}
-        {aiAeoDrawerOpen && (
-          <div className="absolute top-0 right-0 bottom-0 w-full sm:w-[500px] bg-background/95 backdrop-blur-md border-l border-border shadow-2xl z-30 flex flex-col animate-in slide-in-from-right duration-200">
-            <div className="flex items-center justify-between p-4 border-b">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-primary" />
-                <span className="font-semibold text-sm">AI & AEO Intelligence Suite</span>
+          {/* Mode 3: Split View */}
+          {viewMode === 'split' && (
+            <div className="flex w-full h-full overflow-hidden">
+              <div className="w-full lg:w-1/2 border-r bg-background overflow-y-auto p-6 space-y-6">
+                {renderVisualEditorContent()}
               </div>
+              <div className="hidden lg:flex lg:w-1/2 h-full">
+                {renderLiveCanvas()}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Option 3: Fixed Right Inspector Sidebar (Sits as a genuine sibling in flex, NEVER overlays text) */}
+        {sidebarOpen && (
+          <aside className="w-[340px] xl:w-[380px] border-l bg-background/95 backdrop-blur-xs shrink-0 flex flex-col h-full overflow-hidden shadow-xs transition-all duration-200">
+            {/* Sidebar Sub-Header Tabs */}
+            <div className="flex h-11 items-center justify-between border-b px-3 bg-muted/20 shrink-0">
+              <div className="flex items-center rounded-lg border bg-muted/40 p-0.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setSidebarTab('settings')}
+                  className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
+                    sidebarTab === 'settings'
+                      ? 'bg-background text-foreground shadow-2xs'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Publishing & SEO
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSidebarTab('ai_aeo')}
+                  className={`px-3 py-1 rounded-md font-medium transition flex items-center gap-1 cursor-pointer ${
+                    sidebarTab === 'ai_aeo'
+                      ? 'bg-background text-primary shadow-2xs'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Sparkles className="size-3 text-primary" />
+                  <span>AI & AEO</span>
+                </button>
+              </div>
+
               <Button
                 variant="ghost"
                 size="icon-xs"
-                onClick={() => setAiAeoDrawerOpen(false)}
-                title="Close Drawer"
+                onClick={() => setSidebarOpen(false)}
+                title="Collapse Sidebar"
+                className="text-muted-foreground hover:text-foreground"
               >
-                <X className="size-4" />
+                <PanelRightClose className="size-3.5" />
               </Button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              <AeoScoreMeter
-                title={title}
-                contentHtml={contentHtml}
-                excerpt={excerpt}
-                metaTitle={metaTitle}
-                metaDescription={metaDescription}
-              />
 
-              <SerpSocialPreview
-                title={title}
-                slug={slug}
-                excerpt={excerpt}
-                featuredImageUrl={featuredImageUrl}
-                metaTitle={metaTitle}
-                metaDescription={metaDescription}
-              />
-            </div>
-          </div>
-        )}
+            {/* Sidebar Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-5">
+              {sidebarTab === 'settings' && (
+                <div className="space-y-4">
+                  {/* Publishing Status */}
+                  <Card>
+                    <CardHeader className="pb-2 pt-3 px-3">
+                      <CardTitle className="text-xs font-semibold">Publication Status</CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-3 pb-3">
+                      <select
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value)}
+                        className="w-full h-8 rounded-lg border bg-background px-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
+                      >
+                        <option value="published">Published (Live on web)</option>
+                        <option value="draft">Draft (Private)</option>
+                      </select>
+                    </CardContent>
+                  </Card>
 
-        {/* Slide-Over Drawer: SEO & Publishing Settings (Universal across all modes) */}
-        {seoDrawerOpen && (
-          <div className="absolute top-0 right-0 bottom-0 w-full sm:w-[500px] bg-background/95 backdrop-blur-md border-l border-border shadow-2xl z-30 flex flex-col animate-in slide-in-from-right duration-200">
-            <div className="flex items-center justify-between p-4 border-b">
-              <div className="flex items-center gap-2">
-                <Settings className="size-4 text-primary" />
-                <span className="font-semibold text-sm">SEO & Publishing Settings</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => setSeoDrawerOpen(false)}
-                title="Close Drawer"
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold">Publishing Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label>Publication Status</Label>
-                    <select
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value)}
-                      className="w-full h-8 rounded-lg border bg-background px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      <option value="published">Published (Live on web)</option>
-                      <option value="draft">Draft (Private)</option>
-                    </select>
-                  </div>
-                </CardContent>
-              </Card>
+                  {/* Featured Cover Image */}
+                  <Card>
+                    <CardHeader className="pb-2 pt-3 px-3">
+                      <CardTitle className="text-xs font-semibold">Featured Cover Image</CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-3 pb-3 space-y-2">
+                      <ImageUploadDropzone
+                        value={featuredImageUrl}
+                        onChange={(url) => {
+                          setFeaturedImageUrl(url);
+                          broadcastLiveSync(title, contentHtml, url);
+                        }}
+                        altValue={featuredImageAlt}
+                        onAltChange={(alt) => setFeaturedImageAlt(alt)}
+                        label=""
+                      />
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold">Featured Cover Image</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <ImageUploadDropzone
-                    value={featuredImageUrl}
-                    onChange={(url) => {
-                      setFeaturedImageUrl(url);
-                      broadcastLiveSync(title, contentHtml, url);
-                    }}
-                    altValue={featuredImageAlt}
-                    onAltChange={(alt) => setFeaturedImageAlt(alt)}
-                    label=""
+                  {/* SEO & Meta */}
+                  <Card>
+                    <CardHeader className="pb-2 pt-3 px-3 flex flex-row items-center justify-between">
+                      <CardTitle className="text-xs font-semibold">Google Search & Meta</CardTitle>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        onClick={async () => {
+                          if (!title.trim()) {
+                            toast.error('Please enter an article title first');
+                            return;
+                          }
+                          try {
+                            const res = await fetch('/api/ai/copilot', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                action: 'generateSeoMeta',
+                                title,
+                                slug,
+                                contentHtml,
+                                excerpt,
+                              }),
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                              if (data.metaTitle) setMetaTitle(data.metaTitle);
+                              if (data.metaDescription) setMetaDescription(data.metaDescription);
+                              toast.success('Dynamic AI SEO metadata generated!');
+                            }
+                          } catch (e) {
+                            toast.error('AI synthesis failed');
+                          }
+                        }}
+                        className="h-5 px-1.5 text-[10px] text-primary hover:text-primary font-medium gap-1"
+                      >
+                        <Sparkles className="size-2.5" />
+                        <span>AI Auto-Fill</span>
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="px-3 pb-3 space-y-3">
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">Meta Title</Label>
+                        <Input
+                          value={metaTitle}
+                          onChange={(e) => setMetaTitle(e.target.value)}
+                          placeholder={title}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">Meta Description</Label>
+                        <Textarea
+                          rows={3}
+                          value={metaDescription}
+                          onChange={(e) => setMetaDescription(e.target.value)}
+                          placeholder="Meta description for search engines..."
+                          className="text-xs resize-none leading-relaxed"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {sidebarTab === 'ai_aeo' && (
+                <div className="space-y-5">
+                  <AeoScoreMeter
+                    title={title}
+                    contentHtml={contentHtml}
+                    excerpt={excerpt}
+                    metaTitle={metaTitle}
+                    metaDescription={metaDescription}
                   />
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                  <CardTitle className="text-sm font-semibold">SEO & Google Search</CardTitle>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="xs"
-                    onClick={async () => {
-                      if (!title.trim()) {
-                        toast.error('Please enter an article title first');
-                        return;
-                      }
-                      try {
-                        const res = await fetch('/api/ai/copilot', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            action: 'generateSeoMeta',
-                            title,
-                            slug,
-                            contentHtml,
-                            excerpt,
-                          }),
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                          if (data.metaTitle) setMetaTitle(data.metaTitle);
-                          if (data.metaDescription) setMetaDescription(data.metaDescription);
-                          toast.success('Dynamic AI SEO metadata generated!');
-                        }
-                      } catch (e) {
-                        toast.error('AI synthesis failed');
-                      }
-                    }}
-                    className="h-6 gap-1 text-[11px] text-primary hover:text-primary font-medium"
-                  >
-                    <Sparkles className="size-3" />
-                    <span>AI Auto-Fill ✨</span>
-                  </Button>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label>Meta Title</Label>
-                    <Input
-                      value={metaTitle}
-                      onChange={(e) => setMetaTitle(e.target.value)}
-                      placeholder={title}
-                      className="text-xs"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Meta Description</Label>
-                    <Textarea
-                      rows={3}
-                      value={metaDescription}
-                      onChange={(e) => setMetaDescription(e.target.value)}
-                      placeholder="Meta description for search engines..."
-                      className="text-xs resize-none leading-relaxed"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+                  <SerpSocialPreview
+                    title={title}
+                    slug={slug}
+                    excerpt={excerpt}
+                    featuredImageUrl={featuredImageUrl}
+                    metaTitle={metaTitle}
+                    metaDescription={metaDescription}
+                  />
+                </div>
+              )}
             </div>
-          </div>
+          </aside>
         )}
       </div>
 
