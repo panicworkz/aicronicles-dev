@@ -75,8 +75,8 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
           )}
           <Button
             variant="ghost"
-            size="icon"
-            className="ml-auto size-6"
+            size="icon-sm"
+            className="ml-auto"
             onClick={() => setCollapsed(!collapsed)}
           >
             <ChevronLeft
@@ -102,7 +102,7 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                     isActive
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "text-sidebar-foreground hover:bg-sidebar-accent/50",
@@ -128,9 +128,9 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
           ) : null}
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             onClick={handleLogout}
-            className="size-7 text-muted-foreground hover:text-destructive shrink-0 mx-auto"
+            className="text-muted-foreground hover:text-destructive shrink-0 mx-auto"
             title="Logout"
           >
             <LogOut className="size-3.5" />
@@ -146,30 +146,29 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder="Search anything..."
-              className="pl-9 bg-muted/50 border-none h-9 text-sm"
+              className="pl-9 bg-muted/50 border-none h-8 text-xs"
             />
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
             <Link href="/" target="_blank">
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+              <Button variant="outline" size="default" className="gap-1.5">
                 <ExternalLink className="size-3.5 text-muted-foreground" />
                 <span>Live Site</span>
               </Button>
             </Link>
 
             <Link href="/panic/posts/new">
-              <Button size="sm" className="gap-1.5 text-xs font-medium">
+              <Button size="default" className="gap-1.5">
                 <Plus className="size-3.5" />
                 <span>New Guide</span>
               </Button>
             </Link>
 
-            {/* Hubz Sun / Moon Toggle Button */}
+            {/* Theme Toggle Button */}
             <Button
               variant="ghost"
               size="icon"
-              className="size-8"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >

@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 export default function PanicPostsListPage() {
@@ -71,7 +71,7 @@ export default function PanicPostsListPage() {
           <p className="text-xs text-muted-foreground mt-0.5">Manage publications, SEO metadata, and visual content</p>
         </div>
         <Link href="/panic/posts/new">
-          <Button size="sm" className="gap-2 text-xs font-medium">
+          <Button size="default" className="gap-2">
             <Plus className="size-4" />
             <span>New Article</span>
           </Button>
@@ -87,7 +87,7 @@ export default function PanicPostsListPage() {
             placeholder="Search by title or slug..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 text-xs"
+            className="pl-9 h-8 text-xs"
           />
         </form>
 
@@ -96,9 +96,9 @@ export default function PanicPostsListPage() {
             <Button
               key={st}
               variant={statusFilter === st ? 'default' : 'outline'}
-              size="sm"
+              size="default"
               onClick={() => setStatusFilter(st)}
-              className="capitalize text-xs h-8"
+              className="capitalize"
             >
               {st}
             </Button>
@@ -164,12 +164,12 @@ export default function PanicPostsListPage() {
                   </TableCell>
                   <TableCell className="text-right space-x-1">
                     <Link href={`/${post.slug}`} target="_blank">
-                      <Button variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-foreground" title="View Live Page">
+                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" title="View Live Page">
                         <Eye className="size-4" />
                       </Button>
                     </Link>
                     <Link href={`/panic/posts/${post.id}`}>
-                      <Button variant="ghost" size="icon" className="size-8 text-primary hover:text-primary" title="Edit in Visual Editor">
+                      <Button variant="ghost" size="icon" className="text-primary hover:text-primary" title="Edit in Visual Editor">
                         <Edit3 className="size-4" />
                       </Button>
                     </Link>
@@ -177,7 +177,7 @@ export default function PanicPostsListPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDelete(post.id)}
-                      className="size-8 text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive"
                       title="Delete Post"
                     >
                       <Trash2 className="size-4" />
