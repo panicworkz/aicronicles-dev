@@ -12,6 +12,7 @@ import {
   Ticket,
   Image as ImageIcon,
   Tags,
+  FolderTree,
   Settings,
   ExternalLink,
   LogOut,
@@ -51,13 +52,14 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
         { href: '/panic', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/panic/posts', label: 'Articles & Guides', icon: FileText },
         { href: '/panic/media', label: 'Media Library', icon: ImageIcon },
-        { href: '/panic/categories', label: 'Categories & Tags', icon: Tags },
+        { href: '/panic/categories', label: 'Editorial Taxonomies', icon: Tags },
       ],
     },
     {
       title: 'COMMERCE',
       items: [
         { href: '/panic/products', label: 'Products & Store', icon: Package },
+        { href: '/panic/product-categories', label: 'Product Categories', icon: FolderTree },
         { href: '/panic/orders', label: 'Orders & Sales', icon: ShoppingCart },
         { href: '/panic/customers', label: 'Customers', icon: Users },
         { href: '/panic/coupons', label: 'Coupons', icon: Ticket },
@@ -184,7 +186,7 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
 
           {/* Right: Grouped Badges, Quick Actions, and Profile */}
           <div className="flex items-center gap-3 ml-auto">
-            {/* GROUP 1: Live Exchange Rates (Sağa Hizalı & Gruplu Kur Bandı) */}
+            {/* GROUP 1: Live Exchange Rates */}
             <div className="hidden xl:flex items-center gap-1.5 bg-muted/30 border border-border/80 rounded-lg p-1">
               <div className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono">
                 <span className="text-muted-foreground font-medium">USD/TRY:</span>
