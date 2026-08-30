@@ -45,17 +45,17 @@ export default async function ArticleDetailPage({ params }: PageProps) {
 
   if (post) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-neutral-100 selection:bg-amber-500 selection:text-black">
+      <div className="min-h-screen bg-white text-neutral-900 selection:bg-primary selection:text-white">
         {/* Header */}
-        <header className="border-b border-neutral-800/80 bg-neutral-950/80 backdrop-blur sticky top-0 z-50">
+        <header className="border-b border-neutral-200 bg-white/90 backdrop-blur sticky top-0 z-50">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="text-xl font-bold text-white font-serif">
-              FABELO<span className="text-amber-500">.</span>
+            <Link href="/" className="text-xl font-bold text-neutral-900 font-serif tracking-tight">
+              FABELO<span className="text-primary">.</span>
             </Link>
-            <div className="flex items-center space-x-4 text-xs font-mono text-neutral-400">
-              <Link href="/llms.txt" className="text-amber-500 hover:underline">AEO / llms.txt</Link>
-              <Link href={`/api/llm/${post.slug}`} className="hover:text-white">AI Raw View</Link>
-              <Link href={`/panic/posts/${post.id}`} className="text-amber-500 hover:underline">Edit in CMS</Link>
+            <div className="flex items-center space-x-4 text-xs font-mono text-neutral-500">
+              <Link href="/llms.txt" className="text-primary hover:underline font-medium">AEO / llms.txt</Link>
+              <Link href={`/api/llm/${post.slug}`} className="hover:text-neutral-900">AI Raw View</Link>
+              <Link href={`/panic/posts/${post.id}`} className="text-primary hover:underline font-medium">Edit in CMS</Link>
             </div>
           </div>
         </header>
@@ -70,10 +70,10 @@ export default async function ArticleDetailPage({ params }: PageProps) {
         />
 
         {/* Footer */}
-        <footer className="border-t border-neutral-900 bg-neutral-950 py-12 mt-20 text-neutral-500 text-sm">
+        <footer className="border-t border-neutral-200 bg-neutral-50 py-12 mt-20 text-neutral-500 text-sm">
           <div className="max-w-4xl mx-auto px-4 flex justify-between items-center">
             <p>© {new Date().getFullYear()} Fabelo Editorial.</p>
-            <Link href="/" className="text-xs text-amber-500 hover:underline">Back to Home</Link>
+            <Link href="/" className="text-xs text-primary hover:underline font-medium">Back to Home</Link>
           </div>
         </footer>
       </div>
@@ -88,18 +88,18 @@ export default async function ArticleDetailPage({ params }: PageProps) {
   if (!page) notFound();
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100">
-      <header className="border-b border-neutral-800/80 bg-neutral-950/80 backdrop-blur sticky top-0 z-50">
+    <div className="min-h-screen bg-white text-neutral-900">
+      <header className="border-b border-neutral-200 bg-white/90 backdrop-blur sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-white font-serif">
-            FABELO<span className="text-amber-500">.</span>
+          <Link href="/" className="text-xl font-bold text-neutral-900 font-serif">
+            FABELO<span className="text-primary">.</span>
           </Link>
         </div>
       </header>
       <article className="max-w-4xl mx-auto px-4 py-16">
-        <h1 className="text-4xl font-extrabold tracking-tight text-white mb-8 font-serif">{page.title}</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight text-neutral-900 mb-8 font-serif">{page.title}</h1>
         <div
-          className="prose prose-invert prose-lg max-w-none prose-headings:font-serif prose-a:text-amber-500 hover:prose-a:underline"
+          className="prose prose-neutral prose-lg max-w-none prose-headings:font-serif prose-a:text-primary hover:prose-a:underline"
           dangerouslySetInnerHTML={{ __html: page.contentHtml || '' }}
         />
       </article>
