@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { RefreshCw, Sparkles, Image as ImageIcon } from 'lucide-react';
 
 interface ArticleLiveWrapperProps {
   initialTitle: string;
@@ -19,6 +20,7 @@ export function ArticleLiveWrapper({
 }: ArticleLiveWrapperProps) {
   const [coverUrl, setCoverUrl] = useState(initialCoverUrl);
   const [isLiveMode, setIsLiveMode] = useState(false);
+  const [hoveredImg, setHoveredImg] = useState<{ src: string; alt?: string; rect: DOMRect; isCover?: boolean } | null>(null);
 
   const titleRef = useRef<HTMLHeadingElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -79,6 +81,30 @@ export function ArticleLiveWrapper({
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
+  // Attach hover listeners to images inside contentRef when live mode is active
+  useEffect(() => {
+    if (!isLiveMode || !contentRef.current) return;
+
+    const container = contentRef.current;
+
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'IMG') {
+        const img = target as HTMLImageElement;
+        const rect = img.getBoundingClientRect();
+        setHoveredImg({
+          src: img.src,
+          alt: img.alt,
+          rect,
+          isCover: false,
+        });
+      }
+    };
+
+    container.addEventListener('mouseover', handleMouseOver);
+    return () => container.removeEventListener('mouseover', handleMouseOver);
+  }, [isLiveMode, initialContentHtml]);
+
   // Set initial content on mount
   useEffect(() => {
     if (titleRef.current && !titleRef.current.innerText) {
@@ -123,12 +149,24 @@ export function ArticleLiveWrapper({
     }, 150);
   };
 
+  const triggerReplaceImage = (src: string, alt?: string, isCover = false) => {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(
+        {
+          type: 'PANIC_REPLACE_IMAGE_REQUEST',
+          payload: { src, alt, isCover },
+        },
+        '*'
+      );
+    }
+  };
+
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 relative">
       {isLiveMode && (
         <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono">
           <span className="size-2 rounded-full bg-primary animate-ping" />
-          <span>Live In-Context Direct Editing (Click title or text below to edit directly)</span>
+          <span>Live In-Context Studio (Hover any image to replace, or click text to edit)</span>
         </div>
       )}
 
@@ -155,9 +193,22 @@ export function ArticleLiveWrapper({
         <span>{readingTime || '5 min read'}</span>
       </div>
 
+      {/* Featured Cover Image with Hover Replace in Live Canvas */}
       {coverUrl && (
-        <div className="mb-10 rounded-xl overflow-hidden border border-border aspect-video bg-muted/40 shadow-sm">
+        <div className="relative group mb-10 rounded-xl overflow-hidden border border-border aspect-video bg-muted/40 shadow-sm">
           <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
+          {isLiveMode && (
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => triggerReplaceImage(coverUrl, 'Cover', true)}
+                className="px-3.5 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold shadow-lg hover:bg-primary/90 flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <RefreshCw className="size-3.5" />
+                <span>Replace Cover Image</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -169,10 +220,17 @@ export function ArticleLiveWrapper({
         onFocus={() => { isTypingContent.current = true; }}
         onBlur={() => { isTypingContent.current = false; }}
         onInput={handleContentInput}
+        onClick={(e) => {
+          const target = e.target as HTMLElement;
+          if (isLiveMode && target.tagName === 'IMG') {
+            const img = target as HTMLImageElement;
+            triggerReplaceImage(img.src, img.alt, false);
+          }
+        }}
         className={`prose dark:prose-invert prose-neutral prose-lg max-w-none font-sans leading-relaxed
           prose-headings:font-serif prose-headings:text-foreground prose-headings:tracking-tight
           prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-          prose-img:rounded-xl prose-img:border prose-img:border-border
+          prose-img:rounded-xl prose-img:border prose-img:border-border prose-img:cursor-pointer hover:prose-img:ring-2 hover:prose-img:ring-primary/80 transition
           prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground ${
             isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/30 rounded-xl p-2 hover:bg-muted/30 transition cursor-text' : ''
           }`}

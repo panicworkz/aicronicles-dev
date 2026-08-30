@@ -32,6 +32,7 @@ import { AeoScoreMeter } from '@/components/studio/AeoScoreMeter';
 import { SerpSocialPreview } from '@/components/studio/SerpSocialPreview';
 import { BlockInsertToolbar } from '@/components/studio/BlockInsertToolbar';
 import { RevisionHistoryDrawer } from '@/components/studio/RevisionHistoryDrawer';
+import { MediaPickerModal } from '@/components/studio/MediaPickerModal';
 import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
 import { toast } from 'sonner';
 
@@ -47,6 +48,8 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
   const [activeTab, setActiveTab] = useState<'editor' | 'ai_aeo' | 'metadata'>('editor');
   const [iframeKey, setIframeKey] = useState(0);
   const [showRevisions, setShowRevisions] = useState(false);
+  const [splitPickerOpen, setSplitPickerOpen] = useState(false);
+  const [targetReplaceImg, setTargetReplaceImg] = useState<{ src: string; alt?: string; isCover?: boolean } | null>(null);
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -75,7 +78,8 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           setContentHtml(p.contentHtml || '');
           setContentJson(p.contentJson || null);
           setFeaturedImageUrl(p.featuredImageUrl || '');
-          setStatus(p.status || 'draft');
+          setFeaturedImageAlt(p.metaTitle || p.title || '');
+          setStatus(p.status || 'published');
           setReadingTime(p.readingTime || '5 min read');
           setMetaTitle(p.metaTitle || p.title || '');
           setMetaDescription(p.metaDescription || p.excerpt || '');
@@ -91,12 +95,18 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
     fetchPost();
 
-    // Listen for real-time edits made on the right-side live canvas
+    // Listen for real-time edits or image replace requests made on the right-side live canvas
     const handleLiveMessage = (event: MessageEvent) => {
       if (event.data?.type === 'PANIC_LIVE_TO_STUDIO_SYNC') {
         const { title: liveTitle, contentHtml: liveHtml } = event.data.payload || {};
         if (liveTitle !== undefined) setTitle(liveTitle);
         if (liveHtml !== undefined) setContentHtml(liveHtml);
+      }
+
+      if (event.data?.type === 'PANIC_REPLACE_IMAGE_REQUEST') {
+        const { src, alt, isCover } = event.data.payload || {};
+        setTargetReplaceImg({ src, alt, isCover });
+        setSplitPickerOpen(true);
       }
     };
 
@@ -547,6 +557,32 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         isOpen={showRevisions}
         onClose={() => setShowRevisions(false)}
         onRestore={handleRestoreRevision}
+      />
+
+      {/* Split Live Canvas & Editor Image Replace Modal */}
+      <MediaPickerModal
+        isOpen={splitPickerOpen}
+        onClose={() => {
+          setSplitPickerOpen(false);
+          setTargetReplaceImg(null);
+        }}
+        onSelect={(newUrl, newAlt) => {
+          if (targetReplaceImg?.isCover) {
+            setFeaturedImageUrl(newUrl);
+            broadcastLiveSync(title, contentHtml, newUrl);
+            toast.success('Cover image replaced live!');
+          } else if (targetReplaceImg?.src) {
+            const oldSrc = targetReplaceImg.src;
+            const updatedHtml = (contentHtml || '').replaceAll(oldSrc, newUrl);
+            setContentHtml(updatedHtml);
+            broadcastLiveSync(title, updatedHtml, featuredImageUrl);
+            toast.success('Image replaced in content!');
+          }
+          setSplitPickerOpen(false);
+          setTargetReplaceImg(null);
+        }}
+        title={targetReplaceImg?.isCover ? 'Replace Cover Image' : 'Replace Image in Content'}
+        currentUrl={targetReplaceImg?.src}
       />
     </div>
   );
