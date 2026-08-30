@@ -129,13 +129,13 @@ export function ArticleLiveWrapper({
         triggerReplaceImage(img.src, img.alt, false);
       };
 
-      // 2. Alt Button
+      // 2. Alt Button - Solid High-Contrast White Background
       const altBtn = document.createElement('button');
       altBtn.type = 'button';
-      altBtn.className = 'px-3 py-2 rounded-xl bg-background/90 text-foreground hover:bg-background text-xs font-medium shadow-xl flex items-center gap-1.5 transition cursor-pointer backdrop-blur';
+      altBtn.className = 'px-3.5 py-2 rounded-xl bg-white text-zinc-950 hover:bg-neutral-100 text-xs font-bold shadow-xl flex items-center gap-1.5 transition cursor-pointer active:scale-95 border border-white/40';
       altBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-edit-3 size-3.5 text-primary"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        <span>Alt</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-edit-3 size-3.5 text-zinc-950"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <span>Alt Metin</span>
       `;
       altBtn.onclick = (e) => {
         e.preventDefault();
@@ -325,11 +325,11 @@ export function ArticleLiveWrapper({
                     window.parent.postMessage({ type: 'PANIC_UPDATE_COVER_ALT', payload: { alt: newAlt } }, '*');
                   }
                 }}
-                className="px-3 py-2 rounded-xl bg-background/90 text-foreground hover:bg-background text-xs font-medium shadow-xl flex items-center gap-1.5 transition cursor-pointer backdrop-blur"
+                className="px-3.5 py-2 rounded-xl bg-white text-zinc-950 hover:bg-neutral-100 text-xs font-bold shadow-xl flex items-center gap-1.5 transition cursor-pointer active:scale-95 border border-white/40"
                 title="Edit Alt Text"
               >
-                <Edit3 className="size-3.5 text-primary" />
-                <span>Alt</span>
+                <Edit3 className="size-3.5 text-zinc-950" />
+                <span>Alt Metin</span>
               </button>
 
               <button

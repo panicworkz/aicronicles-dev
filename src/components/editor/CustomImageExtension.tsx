@@ -3,7 +3,7 @@
 import React from 'react';
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import Image, { type ImageOptions } from '@tiptap/extension-image';
-import { RefreshCw, Trash2, Edit3, Image as ImageIcon } from 'lucide-react';
+import { RefreshCw, Trash2, Edit3 } from 'lucide-react';
 
 interface ImageComponentProps {
   node: any;
@@ -44,12 +44,16 @@ function ImageComponent({ node, updateAttributes, deleteNode, extension }: Image
           src={src}
           alt={alt || 'Content Image'}
           title={title || ''}
-          className="w-full h-auto object-cover rounded-2xl block"
+          className="w-full h-auto object-cover rounded-2xl block min-h-[140px] bg-muted/30"
           loading="lazy"
+          onError={(e) => {
+            e.currentTarget.src = '/media/fabelo-card-25.webp';
+          }}
         />
 
         {/* Hover Action Overlay */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 backdrop-blur-2xs">
+        <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2.5 backdrop-blur-2xs">
+          {/* Button 1: Replace */}
           <button
             type="button"
             onClick={handleReplace}
@@ -60,16 +64,18 @@ function ImageComponent({ node, updateAttributes, deleteNode, extension }: Image
             <span>Replace Image</span>
           </button>
 
+          {/* Button 2: Alt Text - Solid High-Contrast White Background */}
           <button
             type="button"
             onClick={handleEditAlt}
-            className="px-3 py-2 rounded-xl bg-background/90 text-foreground hover:bg-background text-xs font-medium shadow-xl flex items-center gap-1.5 transition cursor-pointer backdrop-blur"
-            title="Edit Alt Text"
+            className="px-3.5 py-2 rounded-xl bg-white text-zinc-950 hover:bg-neutral-100 text-xs font-bold shadow-xl flex items-center gap-1.5 transition cursor-pointer active:scale-95 border border-white/40"
+            title="Edit Alt Text (SEO & Accessibility)"
           >
-            <Edit3 className="size-3.5 text-primary" />
-            <span>Alt</span>
+            <Edit3 className="size-3.5 text-zinc-950" />
+            <span>Alt Metin</span>
           </button>
 
+          {/* Button 3: Delete */}
           <button
             type="button"
             onClick={(e) => {
@@ -77,7 +83,7 @@ function ImageComponent({ node, updateAttributes, deleteNode, extension }: Image
               e.stopPropagation();
               deleteNode();
             }}
-            className="p-2 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 text-xs font-medium shadow-xl flex items-center transition cursor-pointer"
+            className="p-2 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 text-xs font-medium shadow-xl flex items-center transition cursor-pointer active:scale-95"
             title="Delete Image"
           >
             <Trash2 className="size-3.5" />
