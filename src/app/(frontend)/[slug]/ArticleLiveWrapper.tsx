@@ -81,7 +81,7 @@ export function ArticleLiveWrapper({
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Enhance all images inside contentRef in live mode with a single centered [Görseli Yönet & AI] button
+  // Enhance all images inside contentRef in live mode with a single centered [Manage Image & AI] button
   const enhanceContentImages = () => {
     if (!contentRef.current || typeof window === 'undefined') return;
 
@@ -113,7 +113,7 @@ export function ArticleLiveWrapper({
         img.src = '/media/fabelo-card-25.webp';
       };
 
-      // Clean single centered [Görseli Yönet & AI] button
+      // Clean single centered [Manage Image & AI] button
       const overlay = document.createElement('div');
       overlay.className = 'absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center backdrop-blur-2xs';
 
@@ -122,7 +122,7 @@ export function ArticleLiveWrapper({
       manageBtn.className = 'px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-2xl hover:bg-primary/90 flex items-center gap-2 transition cursor-pointer active:scale-95 border border-primary-foreground/20';
       manageBtn.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles size-3.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-        <span>Görseli Yönet & AI</span>
+        <span>Manage Image & AI</span>
       `;
       manageBtn.onclick = (e) => {
         e.preventDefault();
@@ -197,7 +197,7 @@ export function ArticleLiveWrapper({
       {isLiveMode && (
         <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono select-none">
           <span className="size-2 rounded-full bg-primary animate-ping" />
-          <span>Live In-Context Studio (Görsellerin üzerine gelip AI ile yönetebilirsiniz)</span>
+          <span>Live In-Context Studio (Hover any image to manage with AI)</span>
         </div>
       )}
 
@@ -224,7 +224,7 @@ export function ArticleLiveWrapper({
         <span>{readingTime || '5 min read'}</span>
       </div>
 
-      {/* Featured Cover Image with [Görseli Yönet & AI] Center Button */}
+      {/* Featured Cover Image with [Manage Cover & AI] Center Button */}
       {coverUrl && (
         <div className="relative group mb-10 rounded-2xl overflow-hidden border border-border/80 bg-muted/20 shadow-md max-w-4xl select-none">
           <img
@@ -241,10 +241,10 @@ export function ArticleLiveWrapper({
                 type="button"
                 onClick={() => triggerOpenImageStudio(coverUrl, 'Cover Image', 'Article Cover', true)}
                 className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-2xl hover:bg-primary/90 flex items-center gap-2 transition cursor-pointer active:scale-95 border border-primary-foreground/20"
-                title="Kapak Görselini Yönet, Değiştir ve AI ile Alt Metni Yaz"
+                title="Manage Cover Image, Replace & Generate AI Alt Text"
               >
                 <Sparkles className="size-3.5" />
-                <span>Kapak Görselini Yönet & AI</span>
+                <span>Manage Cover & AI</span>
               </button>
             </div>
           )}

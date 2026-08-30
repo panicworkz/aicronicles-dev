@@ -3,7 +3,7 @@
 import React from 'react';
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import Image, { type ImageOptions } from '@tiptap/extension-image';
-import { Sparkles, SlidersHorizontal, Image as ImageIcon } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface ImageComponentProps {
   node: any;
@@ -57,10 +57,10 @@ function ImageComponent({ node, updateAttributes, deleteNode, extension }: Image
             type="button"
             onClick={handleOpenStudio}
             className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-2xl hover:bg-primary/90 flex items-center gap-2 transition cursor-pointer active:scale-95 border border-primary-foreground/20"
-            title="Görseli Yönet, Değiştir ve AI ile Alt Metni Yaz"
+            title="Manage Image, Replace & Generate AI Alt Text"
           >
             <Sparkles className="size-3.5" />
-            <span>Görseli Yönet & AI</span>
+            <span>Manage Image & AI</span>
           </button>
         </div>
       </div>

@@ -8,11 +8,7 @@ import {
   RefreshCw,
   Trash2,
   Check,
-  Image as ImageIcon,
-  FileText,
-  HelpCircle,
   Eye,
-  Layers,
   Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -170,14 +166,14 @@ export function ImageStudioDrawer({
             </div>
             <div>
               <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
-                <span>Görsel Stüdyosu & AI</span>
+                <span>Image Studio & AI</span>
                 {target?.isCover && (
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary bg-primary/5">
-                    Kapak Görseli
+                    Cover Image
                   </Badge>
                 )}
               </h2>
-              <p className="text-xs text-muted-foreground">SEO Alt Metni, Başlık ve Görsel Yönetimi</p>
+              <p className="text-xs text-muted-foreground">SEO Alt Text, Caption & Asset Management</p>
             </div>
           </div>
 
@@ -220,7 +216,7 @@ export function ImageStudioDrawer({
                 className="gap-1.5 text-xs font-medium shrink-0 rounded-lg"
               >
                 <RefreshCw className="size-3" />
-                <span>Görseli Değiştir</span>
+                <span>Replace Image</span>
               </Button>
             </div>
           </div>
@@ -230,10 +226,10 @@ export function ImageStudioDrawer({
             <div className="space-y-0.5">
               <div className="text-xs font-semibold text-primary flex items-center gap-1.5">
                 <Wand2 className="size-3.5" />
-                <span>Yapay Zeka SEO Asistanı</span>
+                <span>AI SEO Assistant</span>
               </div>
               <p className="text-[11px] text-muted-foreground leading-snug">
-                Makale bağlamına göre Alt metni, başlığı ve AEO özetini tek tıkla otomatik yazdırın.
+                Auto-generate contextual Alt text, title, and AEO semantic summary based on article context.
               </p>
             </div>
 
@@ -245,7 +241,7 @@ export function ImageStudioDrawer({
               className="gap-1.5 shrink-0 rounded-xl text-xs font-semibold shadow-md bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Sparkles className={`size-3.5 ${generatingAi ? 'animate-spin' : ''}`} />
-              <span>{generatingAi ? 'Üretiliyor...' : 'AI ile Doldur'}</span>
+              <span>{generatingAi ? 'Generating...' : 'AI Auto-Fill'}</span>
             </Button>
           </div>
 
@@ -255,7 +251,7 @@ export function ImageStudioDrawer({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="altText" className="text-xs font-medium text-foreground">
-                  Alt Metni (Google SEO & Erişilebilirlik)
+                  Alt Text (Google SEO & Accessibility)
                 </Label>
                 <span className="text-[10px] text-muted-foreground">{alt.length} / 120</span>
               </div>
@@ -263,24 +259,24 @@ export function ImageStudioDrawer({
                 id="altText"
                 value={alt}
                 onChange={(e) => setAlt(e.target.value)}
-                placeholder="Örn: Person using laptop for AI productivity workflows"
+                placeholder="e.g. Person using laptop for AI productivity workflows"
                 className="text-xs rounded-xl"
               />
               <p className="text-[11px] text-muted-foreground">
-                Arama motorları ve ekran okuyucular için görseli tanımlayan açıklayıcı metin.
+                Descriptive text for search engines, screen readers, and image indexation.
               </p>
             </div>
 
             {/* Title / Tooltip */}
             <div className="space-y-1.5">
               <Label htmlFor="imageTitle" className="text-xs font-medium text-foreground">
-                Görsel Başlığı (Tooltip)
+                Image Title (Tooltip)
               </Label>
               <Input
                 id="imageTitle"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Örn: AI Workspace Setup"
+                placeholder="e.g. AI Workspace Setup"
                 className="text-xs rounded-xl"
               />
             </div>
@@ -288,13 +284,13 @@ export function ImageStudioDrawer({
             {/* Caption / Description */}
             <div className="space-y-1.5">
               <Label htmlFor="imageCaption" className="text-xs font-medium text-foreground">
-                Görsel Açıklaması (Caption / Altyazı)
+                Caption / Figure Description
               </Label>
               <Textarea
                 id="imageCaption"
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="Makale içinde görselin altında görünebilecek açıklama metni..."
+                placeholder="Editorial caption displayed beneath the image in article context..."
                 rows={2}
                 className="text-xs rounded-xl resize-none"
               />
@@ -305,7 +301,7 @@ export function ImageStudioDrawer({
               <div className="rounded-xl border border-border bg-muted/40 p-3 space-y-1">
                 <div className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
                   <Eye className="size-3 text-primary" />
-                  <span>AEO / Answer Engine Anlam Bağlamı:</span>
+                  <span>AEO / Answer Engine Semantic Context:</span>
                 </div>
                 <p className="text-xs text-muted-foreground italic leading-relaxed">{aeoContext}</p>
               </div>
@@ -323,7 +319,7 @@ export function ImageStudioDrawer({
             className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs gap-1.5 rounded-xl"
           >
             <Trash2 className="size-3.5" />
-            <span>Görseli Kaldır</span>
+            <span>Remove Image</span>
           </Button>
 
           <div className="flex items-center gap-2">
@@ -334,7 +330,7 @@ export function ImageStudioDrawer({
               onClick={onClose}
               className="text-xs rounded-xl"
             >
-              Vazgeç
+              Cancel
             </Button>
             <Button
               type="button"
@@ -343,7 +339,7 @@ export function ImageStudioDrawer({
               className="text-xs font-semibold gap-1.5 rounded-xl shadow-md"
             >
               <Check className="size-3.5" />
-              <span>Değişiklikleri Uygula</span>
+              <span>Apply Changes</span>
             </Button>
           </div>
         </div>
@@ -359,7 +355,7 @@ export function ImageStudioDrawer({
           setPickerOpen(false);
           toast.success('New image selected!');
         }}
-        title="Görseli Değiştir (Kütüphane, Yükle veya URL)"
+        title="Replace Image (Library, Upload, or URL)"
         currentUrl={src}
       />
     </div>,
