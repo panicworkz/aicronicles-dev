@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '@/db';
-import { desc, like, or, eq, and } from 'drizzle-orm';
+import { desc, like, or, eq, and, inArray } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +10,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search');
     const paymentStatus = searchParams.get('paymentStatus');
     const orderStatus = searchParams.get('orderStatus');
+    const typeFilter = searchParams.get('productType');
     const limit = parseInt(searchParams.get('limit') || '100', 10);
 
     const conditions: any[] = [];
@@ -40,6 +41,35 @@ export async function GET(request: Request) {
       limit,
     });
 
+    // Fetch items for all orders to attach product type summary
+    const orderIds = orderList.map((o) => o.id);
+    let itemsMap: Record<number, any[]> = {};
+    if (orderIds.length > 0) {
+      const allItems = await db.query.orderItems.findMany({
+        where: inArray(schema.orderItems.orderId, orderIds),
+      });
+      for (const it of allItems) {
+        if (!itemsMap[it.orderId]) itemsMap[it.orderId] = [];
+        itemsMap[it.orderId].push(it);
+      }
+    }
+
+    const enrichedOrders = orderList.map((o) => {
+      const items = itemsMap[o.id] || [];
+      const types = Array.from(new Set(items.map((i) => i.productType || 'physical')));
+      return {
+        ...o,
+        items,
+        productTypes: types,
+        primaryType: types[0] || 'physical',
+      };
+    });
+
+    // Filter by type if requested
+    const filteredOrders = typeFilter && typeFilter !== 'all'
+      ? enrichedOrders.filter((o) => o.productTypes.includes(typeFilter))
+      : enrichedOrders;
+
     // Calculate revenue stats
     const allOrders = await db.query.orders.findMany();
     let totalRevenue = 0;
@@ -58,7 +88,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      orders: orderList,
+      orders: filteredOrders,
       stats: {
         totalRevenue,
         totalOrders: allOrders.length,
@@ -84,6 +114,8 @@ export async function POST(request: Request) {
       currency = 'USD',
       paymentStatus = 'paid',
       orderStatus = 'processing',
+      carrier,
+      trackingNumber,
       shippingAddressJson,
       notes,
     } = body;
@@ -102,6 +134,8 @@ export async function POST(request: Request) {
         currency,
         paymentStatus,
         orderStatus,
+        carrier,
+        trackingNumber,
         shippingAddressJson,
         notes,
       } as any)
@@ -113,6 +147,8 @@ export async function POST(request: Request) {
         productId: item.productId || 1,
         variantId: item.variantId || null,
         title: item.title || item.productTitle || 'Product Item',
+        productType: item.productType || 'physical',
+        digitalAssetUrl: item.digitalAssetUrl || null,
         quantity: item.quantity || 1,
         unitPrice: String(item.unitPrice || item.price),
         totalPrice: String(item.totalPrice || (item.unitPrice || item.price) * (item.quantity || 1)),

@@ -39,13 +39,15 @@ export async function PUT(
     const orderId = parseInt(id, 10);
     const body = await request.json();
 
-    const { paymentStatus, orderStatus, shippingAddressJson, notes } = body;
+    const { paymentStatus, orderStatus, carrier, trackingNumber, shippingAddressJson, notes } = body;
 
     const [updatedOrder] = await db
       .update(schema.orders)
       .set({
         paymentStatus: paymentStatus !== undefined ? paymentStatus : undefined,
         orderStatus: orderStatus !== undefined ? orderStatus : undefined,
+        carrier: carrier !== undefined ? carrier : undefined,
+        trackingNumber: trackingNumber !== undefined ? trackingNumber : undefined,
         shippingAddressJson: shippingAddressJson !== undefined ? shippingAddressJson : undefined,
         notes: notes !== undefined ? notes : undefined,
         updatedAt: new Date(),
@@ -54,23 +56,6 @@ export async function PUT(
       .returning();
 
     return NextResponse.json({ success: true, order: updatedOrder });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
-}
-
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const orderId = parseInt(id, 10);
-
-    await db.delete(schema.orderItems).where(eq(schema.orderItems.orderId, orderId));
-    await db.delete(schema.orders).where(eq(schema.orders.id, orderId));
-
-    return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

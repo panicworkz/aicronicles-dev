@@ -1,13 +1,12 @@
 import { db, schema } from './src/db';
 
 async function seed() {
-  console.log('Seeding realistic demo orders and transactions...');
+  console.log('Seeding realistic demo orders with product types and tracking...');
 
-  // Clean existing sample orders
   await db.delete(schema.orderItems);
   await db.delete(schema.orders);
 
-  const sampleOrders = [
+  const sampleOrders: any[] = [
     {
       orderNumber: 'ORD-849201',
       customerName: 'Alexander Vance',
@@ -16,7 +15,9 @@ async function seed() {
       subtotal: '149.00',
       currency: 'USD',
       paymentStatus: 'paid',
-      orderStatus: 'delivered',
+      orderStatus: 'shipped',
+      carrier: 'DHL Express',
+      trackingNumber: 'DHL-948201948US',
       shippingAddressJson: {
         name: 'Alexander Vance',
         street: '77 Massachusetts Ave',
@@ -28,6 +29,7 @@ async function seed() {
       items: [
         {
           title: 'Full-Grain Leather Desk Pad (Large 90x45cm / Walnut Brown)',
+          productType: 'physical',
           quantity: 1,
           unitPrice: '149.00',
           totalPrice: '149.00',
@@ -43,6 +45,8 @@ async function seed() {
       currency: 'USD',
       paymentStatus: 'paid',
       orderStatus: 'processing',
+      carrier: 'Yurtiçi Kargo',
+      trackingNumber: 'YK-384920184TR',
       shippingAddressJson: {
         name: 'Zeynep Kaya',
         street: 'Büyükdere Cad. No: 199, Levent',
@@ -54,6 +58,7 @@ async function seed() {
       items: [
         {
           title: 'Minimalist Matte Ceramic Mug (Matte Obsidian Black 350ml)',
+          productType: 'physical',
           quantity: 1,
           unitPrice: '38.00',
           totalPrice: '38.00',
@@ -69,17 +74,12 @@ async function seed() {
       currency: 'USD',
       paymentStatus: 'paid',
       orderStatus: 'delivered',
-      shippingAddressJson: {
-        name: 'Marcus Lindholm',
-        street: 'Sveavägen 46',
-        city: 'Stockholm',
-        state: '',
-        postalCode: '111 34',
-        country: 'Sweden',
-      },
+      shippingAddressJson: {},
       items: [
         {
           title: 'AEO Masterclass: LLM & AI Citation Playbook (Instant PDF + Schema Builder)',
+          productType: 'digital',
+          digitalAssetUrl: 'https://assets.fabelo.com/aeo-masterclass-2026.zip',
           quantity: 1,
           unitPrice: '89.00',
           totalPrice: '89.00',
@@ -94,11 +94,12 @@ async function seed() {
       subtotal: '450.00',
       currency: 'USD',
       paymentStatus: 'paid',
-      orderStatus: 'shipped',
+      orderStatus: 'processing',
       shippingAddressJson: {},
       items: [
         {
           title: 'Executive AI Architecture Consultation (1-Hour Private Strategy Session)',
+          productType: 'service',
           quantity: 1,
           unitPrice: '450.00',
           totalPrice: '450.00',
@@ -114,17 +115,12 @@ async function seed() {
       currency: 'USD',
       paymentStatus: 'pending',
       orderStatus: 'processing',
-      shippingAddressJson: {
-        name: 'David Chen',
-        street: '10 Marina Boulevard, Tower 2',
-        city: 'Singapore',
-        state: '',
-        postalCode: '018983',
-        country: 'Singapore',
-      },
+      shippingAddressJson: {},
       items: [
         {
           title: 'Next.js 15 Enterprise Starter Kit (Developer Commercial License)',
+          productType: 'digital',
+          digitalAssetUrl: 'https://assets.fabelo.com/nextjs15-starter-source.zip',
           quantity: 1,
           unitPrice: '199.00',
           totalPrice: '199.00',
@@ -145,6 +141,8 @@ async function seed() {
         currency: o.currency,
         paymentStatus: o.paymentStatus,
         orderStatus: o.orderStatus,
+        carrier: o.carrier || null,
+        trackingNumber: o.trackingNumber || null,
         shippingAddressJson: o.shippingAddressJson,
       } as any)
       .returning();
@@ -154,6 +152,8 @@ async function seed() {
         orderId: insertedOrder.id,
         productId: 1,
         title: item.title,
+        productType: item.productType,
+        digitalAssetUrl: item.digitalAssetUrl || null,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         totalPrice: item.totalPrice,
@@ -162,7 +162,7 @@ async function seed() {
     console.log(`Created order ${o.orderNumber}`);
   }
 
-  console.log('Orders seeding complete!');
+  console.log('Orders with product types seeding complete!');
   process.exit(0);
 }
 

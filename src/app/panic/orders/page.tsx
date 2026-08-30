@@ -13,6 +13,8 @@ import {
   TrendingUp,
   Truck,
   RotateCcw,
+  FileDown,
+  Briefcase,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +35,7 @@ export default function PanicOrdersPage() {
   const [search, setSearch] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
 
   const fetchOrders = async () => {
     try {
@@ -41,6 +44,7 @@ export default function PanicOrdersPage() {
       if (search) url.searchParams.set('search', search);
       if (paymentFilter !== 'all') url.searchParams.set('paymentStatus', paymentFilter);
       if (statusFilter !== 'all') url.searchParams.set('orderStatus', statusFilter);
+      if (typeFilter !== 'all') url.searchParams.set('productType', typeFilter);
 
       const res = await fetch(url.toString());
       const data = await res.json();
@@ -60,7 +64,7 @@ export default function PanicOrdersPage() {
       fetchOrders();
     }, 200);
     return () => clearTimeout(timer);
-  }, [search, paymentFilter, statusFilter]);
+  }, [search, paymentFilter, statusFilter, typeFilter]);
 
   const getPaymentBadge = (status: string) => {
     switch (status) {
@@ -87,13 +91,25 @@ export default function PanicOrdersPage() {
     }
   };
 
+  const getProductTypeBadge = (type: string) => {
+    switch (type) {
+      case 'digital':
+        return <Badge variant="secondary" className="text-[10px] gap-1"><FileDown className="size-3 text-primary" /> Digital</Badge>;
+      case 'service':
+        return <Badge variant="secondary" className="text-[10px] gap-1"><Briefcase className="size-3 text-emerald-500" /> Service</Badge>;
+      case 'physical':
+      default:
+        return <Badge variant="secondary" className="text-[10px] gap-1"><Package className="size-3 text-amber-500" /> Physical</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Orders & Transactions</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Track customer purchases, fulfillment, shipping addresses and transaction receipts</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Track physical shipments, digital downloads, consulting bookings, and invoices</p>
         </div>
       </div>
 
@@ -163,8 +179,19 @@ export default function PanicOrdersPage() {
               />
             </div>
 
-            {/* Quick Status Filters */}
+            {/* Quick Status and Type Filters */}
             <div className="flex items-center gap-2 w-full md:w-auto">
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="h-8.5 rounded-md border bg-background px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary w-full md:w-36"
+              >
+                <option value="all">Type: All</option>
+                <option value="physical">📦 Physical</option>
+                <option value="digital">⚡ Digital</option>
+                <option value="service">💼 Service</option>
+              </select>
+
               <select
                 value={paymentFilter}
                 onChange={(e) => setPaymentFilter(e.target.value)}
@@ -212,6 +239,7 @@ export default function PanicOrdersPage() {
                 <tr className="border-b bg-muted/30 text-muted-foreground font-semibold uppercase tracking-wider text-[10px]">
                   <th className="py-3 px-4">Order #</th>
                   <th className="py-3 px-4">Customer</th>
+                  <th className="py-3 px-4">Type</th>
                   <th className="py-3 px-4">Payment</th>
                   <th className="py-3 px-4">Fulfillment</th>
                   <th className="py-3 px-4">Total Amount</th>
@@ -239,6 +267,10 @@ export default function PanicOrdersPage() {
                           {order.customerEmail}
                         </span>
                       </div>
+                    </td>
+
+                    <td className="py-3 px-4">
+                      {getProductTypeBadge(order.primaryType || 'physical')}
                     </td>
 
                     <td className="py-3 px-4">

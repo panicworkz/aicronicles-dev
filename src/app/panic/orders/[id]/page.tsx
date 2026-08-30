@@ -14,9 +14,15 @@ import {
   Mail,
   MapPin,
   User,
+  FileDown,
+  Briefcase,
+  ExternalLink,
+  Save,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { formatPrice } from '@/lib/currency';
 import { toast } from 'sonner';
@@ -31,6 +37,9 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
   const [order, setOrder] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
 
+  const [carrier, setCarrier] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
+
   const fetchOrder = async () => {
     try {
       setLoading(true);
@@ -38,6 +47,8 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
       const data = await res.json();
       if (data.order) {
         setOrder(data.order);
+        setCarrier(data.order.carrier || '');
+        setTrackingNumber(data.order.trackingNumber || '');
         setItems(data.items || []);
       } else {
         toast.error('Order not found');
@@ -75,6 +86,29 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
     }
   };
 
+  const handleSaveTracking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUpdating(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ carrier, trackingNumber, orderStatus: 'shipped' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setOrder(data.order);
+        toast.success('Tracking information saved and marked as Shipped!');
+      } else {
+        toast.error('Failed to save tracking');
+      }
+    } catch (err) {
+      toast.error('Tracking save error');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -99,6 +133,22 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
   }
 
   const shipping = order.shippingAddressJson || {};
+
+  const hasPhysical = items.some((i) => i.productType === 'physical');
+  const hasDigital = items.some((i) => i.productType === 'digital');
+  const hasService = items.some((i) => i.productType === 'service');
+
+  const getItemTypeBadge = (type: string) => {
+    switch (type) {
+      case 'digital':
+        return <Badge variant="secondary" className="text-[10px] gap-1"><FileDown className="size-3 text-primary" /> Digital Download</Badge>;
+      case 'service':
+        return <Badge variant="secondary" className="text-[10px] gap-1"><Briefcase className="size-3 text-emerald-500" /> Consulting / Service</Badge>;
+      case 'physical':
+      default:
+        return <Badge variant="secondary" className="text-[10px] gap-1"><Package className="size-3 text-amber-500" /> Physical Good</Badge>;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -135,7 +185,7 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (8 cols): Order Line Items */}
+        {/* Left Column (8 cols): Order Line Items & Fulfillment Specifics */}
         <div className="lg:col-span-8 space-y-6">
           <Card>
             <CardHeader className="pb-3">
@@ -149,6 +199,7 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
                 <thead>
                   <tr className="border-b bg-muted/30 text-muted-foreground font-semibold uppercase tracking-wider text-[10px]">
                     <th className="py-2.5 px-4">Item & Description</th>
+                    <th className="py-2.5 px-4">Type</th>
                     <th className="py-2.5 px-4">Price</th>
                     <th className="py-2.5 px-4 text-center">Qty</th>
                     <th className="py-2.5 px-4 text-right">Total</th>
@@ -159,6 +210,9 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
                     <tr key={item.id}>
                       <td className="py-3 px-4">
                         <div className="font-semibold text-foreground text-xs">{item.title}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        {getItemTypeBadge(item.productType)}
                       </td>
                       <td className="py-3 px-4 font-mono">{formatPrice(item.unitPrice, order.currency)}</td>
                       <td className="py-3 px-4 text-center font-mono font-semibold">{item.quantity}</td>
@@ -177,7 +231,7 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
                   <span className="font-mono">{formatPrice(order.total, order.currency)}</span>
                 </div>
                 <div className="flex items-center justify-between text-muted-foreground">
-                  <span>Shipping & Taxes</span>
+                  <span>Shipping & Handling</span>
                   <span className="font-mono">$0.00</span>
                 </div>
                 <div className="flex items-center justify-between font-bold text-foreground text-sm pt-2 border-t border-border">
@@ -188,12 +242,110 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
             </CardContent>
           </Card>
 
+          {/* Type-Specific Fulfillment Panels */}
+          {hasDigital && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-primary flex items-center gap-2">
+                  <FileDown className="size-4" />
+                  <span>Digital Asset Delivery & Token Access</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-xs">
+                <p className="text-muted-foreground">
+                  Digital download link is automatically delivered to customer email (<span className="font-mono text-foreground">{order.customerEmail}</span>).
+                </p>
+                {items.filter((i) => i.productType === 'digital').map((item) => (
+                  <div key={item.id} className="p-3 rounded-md bg-background border border-border flex items-center justify-between gap-3">
+                    <div className="truncate">
+                      <span className="font-semibold text-foreground block">{item.title}</span>
+                      <span className="text-[11px] text-muted-foreground font-mono truncate block">
+                        {item.digitalAssetUrl || 'https://assets.fabelo.com/bundle-2026.zip'}
+                      </span>
+                    </div>
+                    <a
+                      href={item.digitalAssetUrl || '#'}
+                      target="_blank"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline shrink-0"
+                    >
+                      <ExternalLink className="size-3.5" />
+                      <span>Test Download</span>
+                    </a>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {hasService && (
+            <Card className="border-emerald-500/30 bg-emerald-500/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                  <Briefcase className="size-4" />
+                  <span>Consulting & Advisory Session Onboarding</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-xs">
+                <p className="text-muted-foreground">
+                  1-on-1 strategy deep dive booked by <span className="font-semibold text-foreground">{order.customerName}</span>. Calendar invitation and tech intake questionnaire sent.
+                </p>
+                <div className="p-3 rounded-md bg-background border border-border space-y-1">
+                  <span className="text-[11px] text-muted-foreground uppercase font-semibold">Video Conference Link</span>
+                  <div className="font-mono text-primary text-xs">https://meet.google.com/fab-exec-session</div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {hasPhysical && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Truck className="size-4 text-primary" />
+                  <span>Physical Shipping & Courier Tracking</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSaveTracking} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Courier / Carrier</Label>
+                      <Input
+                        value={carrier}
+                        onChange={(e) => setCarrier(e.target.value)}
+                        placeholder="e.g. DHL Express, FedEx, Yurtiçi Kargo"
+                        className="text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Tracking Number / Waybill</Label>
+                      <Input
+                        value={trackingNumber}
+                        onChange={(e) => setTrackingNumber(e.target.value)}
+                        placeholder="e.g. TRK-984028194"
+                        className="text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-[11px] text-muted-foreground">Saving will notify customer and update order status to Shipped.</span>
+                    <Button type="submit" size="sm" disabled={updating} className="gap-1.5">
+                      <Save className="size-3.5" />
+                      <span>{updating ? 'Saving...' : 'Save Tracking Info'}</span>
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Quick Fulfillment Management */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Truck className="size-4 text-primary" />
-                <span>Fulfillment & Dispatch Controls</span>
+                <CheckCircle2 className="size-4 text-primary" />
+                <span>Quick Status Overrides</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
