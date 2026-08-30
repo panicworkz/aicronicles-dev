@@ -132,7 +132,7 @@ export function MediaDetailDrawer({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex justify-end transition-all duration-300 ease-in-out ${
+      className={`fixed inset-0 top-0 left-0 right-0 bottom-0 z-[100] flex justify-end overflow-hidden transition-all duration-300 ease-in-out ${
         isOpen
           ? 'opacity-100 pointer-events-auto visible'
           : 'opacity-0 pointer-events-none invisible'
@@ -140,20 +140,20 @@ export function MediaDetailDrawer({
     >
       {/* Backdrop with smooth blur & fade */}
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-300 ease-in-out cursor-pointer ${
+        className={`fixed inset-0 top-0 left-0 right-0 bottom-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out cursor-pointer ${
           isOpen ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={onClose}
       />
 
-      {/* Slide-over Drawer with smooth slide-in and slide-out */}
+      {/* Slide-over Drawer - Completely Flush to the Top (0px Gap, Full 100vh) */}
       <aside
-        className={`relative z-50 flex h-full w-full sm:w-[520px] flex-col border-l bg-background shadow-2xl transition-transform duration-300 ease-in-out will-change-transform ${
+        className={`relative z-[101] flex h-screen max-h-screen w-full sm:w-[520px] flex-col border-l border-border bg-background shadow-2xl transition-transform duration-300 ease-in-out will-change-transform top-0 right-0 m-0 p-0 rounded-none ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Header */}
-        <div className="flex h-14 items-center justify-between gap-3 border-b px-5 shrink-0">
+        {/* Header - Flush with top edge */}
+        <div className="flex h-14 items-center justify-between gap-3 border-b px-5 shrink-0 bg-background">
           <div className="flex items-center gap-2">
             <ImageIcon className="size-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Media Asset SEO & AEO Settings</h2>

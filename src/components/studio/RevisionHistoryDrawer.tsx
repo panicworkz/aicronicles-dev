@@ -55,7 +55,7 @@ export function RevisionHistoryDrawer({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex justify-end transition-all duration-300 ease-in-out ${
+      className={`fixed inset-0 top-0 left-0 right-0 bottom-0 z-[100] flex justify-end overflow-hidden transition-all duration-300 ease-in-out ${
         isOpen
           ? 'opacity-100 pointer-events-auto visible'
           : 'opacity-0 pointer-events-none invisible'
@@ -63,19 +63,19 @@ export function RevisionHistoryDrawer({
     >
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-300 ease-in-out cursor-pointer ${
+        className={`fixed inset-0 top-0 left-0 right-0 bottom-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out cursor-pointer ${
           isOpen ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={onClose}
       />
 
-      {/* Slide-over Panel from Right */}
+      {/* Slide-over Panel from Right (100% Flush Top-0) */}
       <aside
-        className={`relative z-50 flex h-full w-full sm:w-[450px] flex-col border-l bg-background shadow-2xl transition-transform duration-300 ease-in-out ${
+        className={`relative z-[101] flex h-screen max-h-screen w-full sm:w-[450px] flex-col border-l border-border bg-background shadow-2xl transition-transform duration-300 ease-in-out will-change-transform top-0 right-0 m-0 p-0 rounded-none ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex h-14 items-center justify-between gap-3 border-b px-4 shrink-0">
+        <div className="flex h-14 items-center justify-between gap-3 border-b px-4 shrink-0 bg-background">
           <div className="flex items-center gap-2">
             <History className="size-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Revision History & Snapshots</h2>
