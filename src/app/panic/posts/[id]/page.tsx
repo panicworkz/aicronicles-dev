@@ -67,6 +67,12 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
   const [metaDescription, setMetaDescription] = useState('');
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const contentHtmlRef = useRef(contentHtml);
+  contentHtmlRef.current = contentHtml;
+  const titleRef = useRef(title);
+  titleRef.current = title;
+  const featuredImageUrlRef = useRef(featuredImageUrl);
+  featuredImageUrlRef.current = featuredImageUrl;
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -107,40 +113,65 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
       }
 
       if (event.data?.type === 'PANIC_OPEN_IMAGE_STUDIO') {
-        const { src, alt, title: imgTitle, isCover } = event.data.payload || {};
+        const { src, alt, title: imgTitle, caption: imgCaption, isCover } = event.data.payload || {};
         setStudioTarget({
           src,
           alt,
           title: imgTitle,
+          caption: imgCaption,
           isCover,
           onSave: (newData) => {
             if (isCover) {
               setFeaturedImageUrl(newData.src);
               if (newData.alt) setFeaturedImageAlt(newData.alt);
-              broadcastLiveSync(title, contentHtml, newData.src);
+              broadcastLiveSync(titleRef.current, contentHtmlRef.current, newData.src);
             } else {
-              let updatedHtml = contentHtml || '';
-              if (src !== newData.src) {
-                updatedHtml = updatedHtml.replaceAll(src, newData.src);
+              const currentHtml = contentHtmlRef.current || '';
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(currentHtml, 'text/html');
+              const imgs = doc.querySelectorAll('img');
+              let matched = false;
+
+              imgs.forEach((im) => {
+                const imSrc = im.getAttribute('src') || '';
+                if (imSrc === src || src.endsWith(imSrc) || imSrc.endsWith(src) || im.src === src) {
+                  matched = true;
+                  im.setAttribute('src', newData.src);
+                  im.setAttribute('alt', newData.alt || '');
+                  if (newData.title) im.setAttribute('title', newData.title);
+                  else im.removeAttribute('title');
+                }
+              });
+
+              let updatedHtml = doc.body.innerHTML;
+              if (!matched && src !== newData.src) {
+                updatedHtml = currentHtml.replaceAll(src, newData.src);
               }
-              if (newData.alt && alt && alt !== newData.alt) {
-                updatedHtml = updatedHtml.replaceAll(`alt="${alt}"`, `alt="${newData.alt}"`);
-              }
+
               setContentHtml(updatedHtml);
-              broadcastLiveSync(title, updatedHtml, featuredImageUrl);
+              broadcastLiveSync(titleRef.current, updatedHtml, featuredImageUrlRef.current);
             }
           },
           onDelete: () => {
             if (isCover) {
               setFeaturedImageUrl('');
-              broadcastLiveSync(title, contentHtml, '');
+              broadcastLiveSync(titleRef.current, contentHtmlRef.current, '');
             } else {
-              let updatedHtml = contentHtml || '';
-              // Remove image by replacing occurrences
-              const regex = new RegExp(`<img[^>]*src=["']${src}["'][^>]*>`, 'gi');
-              updatedHtml = updatedHtml.replace(regex, '');
+              const currentHtml = contentHtmlRef.current || '';
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(currentHtml, 'text/html');
+              const imgs = doc.querySelectorAll('img');
+              imgs.forEach((im) => {
+                const imSrc = im.getAttribute('src') || '';
+                if (imSrc === src || src.endsWith(imSrc) || imSrc.endsWith(src) || im.src === src) {
+                  const parent = im.parentElement;
+                  if (parent && parent.tagName === 'FIGURE') parent.remove();
+                  else im.remove();
+                }
+              });
+              const updatedHtml = doc.body.innerHTML;
               setContentHtml(updatedHtml);
-              broadcastLiveSync(title, updatedHtml, featuredImageUrl);
+              broadcastLiveSync(titleRef.current, updatedHtml, featuredImageUrlRef.current);
             }
           },
         });

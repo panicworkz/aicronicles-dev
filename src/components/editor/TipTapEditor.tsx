@@ -121,8 +121,8 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
   });
 
   useEffect(() => {
-    if (editor && content && editor.getHTML() !== content && !editor.isFocused) {
-      editor.commands.setContent(content);
+    if (editor && content !== undefined && editor.getHTML() !== content) {
+      editor.commands.setContent(content, false);
     }
   }, [content, editor]);
 

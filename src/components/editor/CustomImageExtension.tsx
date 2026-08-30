@@ -13,7 +13,7 @@ interface ImageComponentProps {
 }
 
 function ImageComponent({ node, updateAttributes, deleteNode, extension }: ImageComponentProps) {
-  const { src, alt, title } = node.attrs;
+  const { src, alt, title, caption } = node.attrs;
 
   const handleOpenStudio = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -23,11 +23,13 @@ function ImageComponent({ node, updateAttributes, deleteNode, extension }: Image
         src,
         alt,
         title,
-        onSave: (newData: { src: string; alt: string; title: string }) => {
+        caption,
+        onSave: (newData: { src: string; alt: string; title: string; caption?: string }) => {
           updateAttributes({
             src: newData.src,
             alt: newData.alt,
             title: newData.title,
+            caption: newData.caption || '',
           });
         },
         onDelete: () => {
@@ -51,6 +53,12 @@ function ImageComponent({ node, updateAttributes, deleteNode, extension }: Image
           }}
         />
 
+        {caption && (
+          <div className="p-2.5 px-4 bg-muted/50 border-t border-border/60 text-xs text-muted-foreground text-center italic">
+            {caption}
+          </div>
+        )}
+
         {/* Clean Center Hover Button */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center backdrop-blur-2xs">
           <button
@@ -73,13 +81,24 @@ export interface CustomImageOptions extends ImageOptions {
     src: string;
     alt?: string;
     title?: string;
-    onSave: (newData: { src: string; alt: string; title: string }) => void;
+    caption?: string;
+    onSave: (newData: { src: string; alt: string; title: string; caption?: string }) => void;
     onDelete: () => void;
   }) => void) | null;
 }
 
 export const CustomImageExtension = Image.extend<CustomImageOptions>({
   name: 'image',
+
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      src: { default: null },
+      alt: { default: null },
+      title: { default: null },
+      caption: { default: null },
+    };
+  },
 
   addOptions() {
     return {

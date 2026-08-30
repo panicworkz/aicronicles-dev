@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sparkles } from 'lucide-react';
 
 interface ArticleLiveWrapperProps {
@@ -27,66 +27,12 @@ export function ArticleLiveWrapper({
   const isTypingContent = useRef(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    // Check URL parameters for live mode and theme
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('live') === '1') {
-        setIsLiveMode(true);
-      }
-      const themeParam = urlParams.get('theme');
-      if (themeParam === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else if (themeParam === 'light') {
-        document.documentElement.classList.remove('dark');
-      }
-    }
-
-    const handleMessage = (event: MessageEvent) => {
-      // Live Theme Synchronization
-      if (event.data?.type === 'PANIC_THEME_CHANGE') {
-        const theme = event.data.theme;
-        if (theme === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else if (theme === 'light') {
-          document.documentElement.classList.remove('dark');
-        }
-      }
-
-      if (event.data?.type === 'PANIC_STUDIO_LIVE_UPDATE') {
-        if (event.data?.source === 'live_iframe') return;
-
-        const { title: newTitle, contentHtml: newHtml, featuredImageUrl: newCover } = event.data.payload || {};
-
-        if (newTitle !== undefined && titleRef.current && !isTypingTitle.current) {
-          if (titleRef.current.innerText !== newTitle) {
-            titleRef.current.innerText = newTitle;
-          }
-        }
-
-        if (newHtml !== undefined && contentRef.current && !isTypingContent.current) {
-          if (contentRef.current.innerHTML !== newHtml) {
-            contentRef.current.innerHTML = newHtml;
-            enhanceContentImages();
-          }
-        }
-
-        if (newCover !== undefined) {
-          setCoverUrl(newCover);
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
   // Enhance all images inside contentRef in live mode with a single centered [Manage Image & AI] button
-  const enhanceContentImages = () => {
+  const enhanceContentImages = useCallback(() => {
     if (!contentRef.current || typeof window === 'undefined') return;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const inLive = urlParams.get('live') === '1';
+    const inLive = urlParams.get('live') === '1' || window !== window.parent;
     if (!inLive) return;
 
     const imgs = contentRef.current.querySelectorAll('img');
@@ -133,9 +79,61 @@ export function ArticleLiveWrapper({
       overlay.appendChild(manageBtn);
       innerBox.appendChild(overlay);
     });
-  };
+  }, []);
 
-  // Enhance images on initial load
+  useEffect(() => {
+    // Check URL parameters for live mode and theme
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('live') === '1' || window !== window.parent) {
+        setIsLiveMode(true);
+      }
+      const themeParam = urlParams.get('theme');
+      if (themeParam === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else if (themeParam === 'light') {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+
+    const handleMessage = (event: MessageEvent) => {
+      // Live Theme Synchronization
+      if (event.data?.type === 'PANIC_THEME_CHANGE') {
+        const theme = event.data.theme;
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else if (theme === 'light') {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+
+      if (event.data?.type === 'PANIC_STUDIO_LIVE_UPDATE') {
+        if (event.data?.source === 'live_iframe') return;
+
+        const { title: newTitle, contentHtml: newHtml, featuredImageUrl: newCover } = event.data.payload || {};
+
+        if (newTitle !== undefined && titleRef.current && !isTypingTitle.current) {
+          if (titleRef.current.innerText !== newTitle) {
+            titleRef.current.innerText = newTitle;
+          }
+        }
+
+        if (newHtml !== undefined && contentRef.current && !isTypingContent.current) {
+          contentRef.current.innerHTML = newHtml;
+          setTimeout(() => enhanceContentImages(), 20);
+        }
+
+        if (newCover !== undefined) {
+          setCoverUrl(newCover);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [enhanceContentImages]);
+
+  // Set initial content and enhance on mount
   useEffect(() => {
     if (titleRef.current && !titleRef.current.innerText) {
       titleRef.current.innerText = initialTitle;
@@ -143,8 +141,8 @@ export function ArticleLiveWrapper({
     if (contentRef.current && !contentRef.current.innerHTML) {
       contentRef.current.innerHTML = initialContentHtml;
     }
-    enhanceContentImages();
-  }, [initialTitle, initialContentHtml, isLiveMode]);
+    setTimeout(() => enhanceContentImages(), 20);
+  }, [initialTitle, initialContentHtml, enhanceContentImages]);
 
   const handleTitleInput = (e: React.FormEvent<HTMLHeadingElement>) => {
     const newText = e.currentTarget.innerText;
