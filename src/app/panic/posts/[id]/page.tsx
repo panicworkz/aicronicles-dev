@@ -71,6 +71,8 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
   contentHtmlRef.current = contentHtml;
   const titleRef = useRef(title);
   titleRef.current = title;
+  const slugRef = useRef(slug);
+  slugRef.current = slug;
   const featuredImageUrlRef = useRef(featuredImageUrl);
   featuredImageUrlRef.current = featuredImageUrl;
 
@@ -81,8 +83,10 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         const data = await res.json();
         if (data.post) {
           const p = data.post;
+          const initialSlug = p.slug || p.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `article-${p.id}`;
           setTitle(p.title || '');
-          setSlug(p.slug || '');
+          setSlug(initialSlug);
+          slugRef.current = initialSlug;
           setExcerpt(p.excerpt || '');
           setContentHtml(p.contentHtml || '');
           setContentJson(p.contentJson || null);
@@ -131,7 +135,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     title: titleRef.current,
-                    slug,
+                    slug: slugRef.current,
                     excerpt,
                     contentHtml: contentHtmlRef.current,
                     contentJson,
@@ -190,7 +194,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     title: titleRef.current,
-                    slug,
+                    slug: slugRef.current,
                     excerpt,
                     contentHtml: updatedHtml,
                     contentJson,
