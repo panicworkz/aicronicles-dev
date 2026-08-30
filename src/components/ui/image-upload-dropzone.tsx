@@ -1,7 +1,16 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { UploadCloud, Image as ImageIcon, X, Loader2, FolderOpen, Link2 } from 'lucide-react';
+import {
+  UploadCloud,
+  Image as ImageIcon,
+  X,
+  Loader2,
+  FolderOpen,
+  Trash2,
+  RefreshCw,
+  Link2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MediaPickerModal } from '@/components/studio/MediaPickerModal';
@@ -25,6 +34,8 @@ export function ImageUploadDropzone({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showManualUrl, setShowManualUrl] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const hasImage = Boolean(value && value.trim() && value !== '/media/default.webp');
 
   const handleUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -58,7 +69,10 @@ export function ImageUploadDropzone({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) handleUpload(file);
+    if (file) {
+      handleUpload(file);
+      e.target.value = '';
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -68,11 +82,18 @@ export function ImageUploadDropzone({
     if (file) handleUpload(file);
   };
 
+  const handleClearImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange('');
+    toast.info('Cover image removed');
+  };
+
   return (
-    <div className={`space-y-2.5 ${className}`}>
+    <div className={`space-y-3 ${className}`}>
+      {/* Top Header Label & URL toggle */}
       <div className="flex items-center justify-between">
         {label && <label className="text-xs font-semibold text-foreground">{label}</label>}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 ml-auto">
           <Button
             type="button"
             variant="ghost"
@@ -81,7 +102,7 @@ export function ImageUploadDropzone({
             className="h-6 gap-1 text-[11px] text-primary hover:text-primary font-medium px-2"
           >
             <FolderOpen className="size-3" />
-            <span>Browse Library</span>
+            <span>Library ({hasImage ? 'Change' : 'Browse'})</span>
           </Button>
           <Button
             type="button"
@@ -96,39 +117,61 @@ export function ImageUploadDropzone({
         </div>
       </div>
 
-      {value && value !== '/media/default.webp' ? (
-        <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border bg-muted/30 group">
-          <img src={value} alt="Cover preview" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+      {/* Main Image Box */}
+      {hasImage ? (
+        <div className="space-y-2">
+          <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border bg-muted/40 group shadow-xs">
+            <img
+              src={value}
+              alt="Cover preview"
+              className="w-full h-full object-cover"
+            />
+
+            {/* Top-Right Instant Remove Button */}
+            <button
+              type="button"
+              onClick={handleClearImage}
+              className="absolute top-2 right-2 p-1.5 rounded-md bg-background/90 text-destructive hover:bg-destructive hover:text-white backdrop-blur shadow-sm transition cursor-pointer"
+              title="Remove Cover Image"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          </div>
+
+          {/* Always-visible Action Controls under the image */}
+          <div className="grid grid-cols-3 gap-1.5">
             <Button
               type="button"
-              variant="secondary"
+              variant="outline"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
-              className="gap-1.5 text-xs font-medium h-8"
+              disabled={uploading}
+              className="h-8 gap-1 text-[11px] font-medium"
             >
-              <UploadCloud className="size-3.5" />
-              <span>Upload New</span>
+              <UploadCloud className="size-3.5 text-muted-foreground" />
+              <span>{uploading ? 'Uploading...' : 'Replace'}</span>
             </Button>
+
             <Button
               type="button"
-              variant="secondary"
+              variant="outline"
               size="sm"
               onClick={() => setPickerOpen(true)}
-              className="gap-1.5 text-xs font-medium h-8"
+              className="h-8 gap-1 text-[11px] font-medium"
             >
-              <FolderOpen className="size-3.5" />
-              <span>Pick Library</span>
+              <FolderOpen className="size-3.5 text-primary" />
+              <span>Library</span>
             </Button>
+
             <Button
               type="button"
-              variant="destructive"
-              size="icon-sm"
-              onClick={() => onChange('/media/default.webp')}
-              title="Reset image"
-              className="size-8"
+              variant="outline"
+              size="sm"
+              onClick={handleClearImage}
+              className="h-8 gap-1 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
             >
-              <X className="size-3.5" />
+              <Trash2 className="size-3.5" />
+              <span>Remove</span>
             </Button>
           </div>
         </div>
@@ -150,7 +193,7 @@ export function ImageUploadDropzone({
           {uploading ? (
             <div className="flex flex-col items-center space-y-2">
               <Loader2 className="size-7 text-primary animate-spin" />
-              <p className="text-xs text-muted-foreground font-medium">Uploading and optimizing WebP...</p>
+              <p className="text-xs text-muted-foreground font-medium">Uploading & optimizing WebP...</p>
             </div>
           ) : (
             <div className="flex flex-col items-center space-y-2">
@@ -159,18 +202,33 @@ export function ImageUploadDropzone({
               </div>
               <div className="space-y-0.5">
                 <p className="text-xs font-semibold text-foreground">Click to upload cover or drag & drop</p>
-                <p className="text-[10px] text-muted-foreground">Auto-compressed to WebP for Google CWV</p>
+                <p className="text-[10px] text-muted-foreground">Auto-converted to high-speed WebP</p>
+              </div>
+              <div className="pt-1">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPickerOpen(true);
+                  }}
+                  className="h-6 gap-1 text-[10px] font-medium"
+                >
+                  <FolderOpen className="size-3" />
+                  <span>Choose from 509 Media</span>
+                </Button>
               </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Optional Manual URL Input */}
+      {/* Manual URL Input Bar */}
       {showManualUrl && (
         <div className="space-y-1 pt-1 animate-in fade-in duration-200">
           <Input
-            value={value}
+            value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder="/media/cover-name.webp or https://..."
             className="text-xs font-mono h-8"
@@ -190,7 +248,10 @@ export function ImageUploadDropzone({
       <MediaPickerModal
         isOpen={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSelect={(url) => onChange(url)}
+        onSelect={(url) => {
+          onChange(url);
+          toast.success('Cover image updated from library');
+        }}
         currentUrl={value}
       />
     </div>
