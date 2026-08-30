@@ -14,6 +14,16 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const authors = pgTable('authors', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  role: text('role').default('Editorial Staff'),
+  bio: text('bio'),
+  avatarUrl: text('avatar_url'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 export const categories = pgTable('categories', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
@@ -30,6 +40,8 @@ export const tags = pgTable('tags', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
+  description: text('description'),
+  color: text('color').default('#2563eb'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -40,15 +52,14 @@ export const posts = pgTable('posts', {
   excerpt: text('excerpt'),
   contentHtml: text('content_html'),
   contentJson: jsonb('content_json'),
+  featuredImageId: integer('featured_image_id'),
   featuredImageUrl: text('featured_image_url'),
-  featuredImageAlt: text('featured_image_alt'),
-  authorId: integer('author_id').references(() => users.id),
-  status: text('status').notNull().default('draft'),
+  status: text('status').notNull().default('published'),
+  authorId: integer('author_id'),
+  tagsJson: jsonb('tags_json').default([]),
   readingTime: text('reading_time').default('5 min read'),
-  categoryId: integer('category_id').references(() => categories.id),
   metaTitle: text('meta_title'),
   metaDescription: text('meta_description'),
-  canonicalUrl: text('canonical_url'),
   publishedAt: timestamp('published_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -60,8 +71,8 @@ export const postRevisions = pgTable('post_revisions', {
   title: text('title').notNull(),
   contentHtml: text('content_html'),
   contentJson: jsonb('content_json'),
-  summary: text('summary'),
-  authorId: integer('author_id'),
+  excerpt: text('excerpt'),
+  authorName: text('author_name').default('Admin'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -70,8 +81,7 @@ export const media = pgTable('media', {
   filename: text('filename').notNull(),
   url: text('url').notNull(),
   alt: text('alt'),
-  caption: text('caption'),
-  mimeType: text('mime_type'),
+  mimeType: text('mime_type').default('image/jpeg'),
   filesize: integer('filesize'),
   width: integer('width'),
   height: integer('height'),
@@ -82,9 +92,18 @@ export const pages = pgTable('pages', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
   slug: text('slug').notNull().unique(),
+  contentJson: jsonb('content_json'),
   contentHtml: text('content_html'),
   status: text('status').notNull().default('published'),
+  metaTitle: text('meta_title'),
+  metaDescription: text('meta_description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const siteSettings = pgTable('site_settings', {
+  key: text('key').primaryKey(),
+  value: jsonb('value').notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
