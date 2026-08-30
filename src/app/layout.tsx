@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { ThemeProvider } from '@/providers/theme-provider';
 import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
-  title: 'Fabelo - Intelligence for Career, Finance & AI',
-  description: 'Research-backed editorial guides and analysis on Personal Finance, Career Mobility, and Workplace AI Transformation.',
+  title: 'Panic CMS',
+  description: 'High-Performance Publishing & Commerce Engine',
 };
 
 export default function RootLayout({
@@ -13,10 +14,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-neutral-950 text-neutral-100 font-sans antialiased">
-        {children}
-        <Toaster position="top-right" richColors theme="dark" />
+    <html lang="en" suppressHydrationWarning>
+      <body className="font-sans antialiased min-h-screen bg-background text-foreground transition-colors duration-200">
+        <ThemeProvider defaultTheme="light">
+          {children}
+          <Toaster position="top-right" richColors />
+        </ThemeProvider>
       </body>
     </html>
   );
