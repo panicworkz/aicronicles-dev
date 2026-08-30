@@ -171,8 +171,9 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
 
       {/* Main Column */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Hubz Header with Live Currency Ticker */}
-        <header className="flex h-14 items-center gap-4 border-b bg-background px-6 shrink-0">
+        {/* Hubz Header with Grouped Actions & Right-Aligned Currencies */}
+        <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-6 shrink-0">
+          {/* Left: Global Search Input */}
           <div className="relative flex-1 max-w-xs xl:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
@@ -181,58 +182,85 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
             />
           </div>
 
-          {/* Live Currency Ticker (Hubz.panic.pw Style) */}
-          <div className="hidden lg:flex items-center gap-2">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border/70 bg-muted/30 text-[11px] font-mono">
-              <span className="text-muted-foreground font-medium">USD/TRY:</span>
-              <span className="font-bold text-foreground">₺38.50</span>
-              <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-0.5"><TrendingUp className="size-2.5" />+0.15%</span>
+          {/* Right: Grouped Badges, Quick Actions, and Profile */}
+          <div className="flex items-center gap-3 ml-auto">
+            {/* GROUP 1: Live Exchange Rates (Sağa Hizalı & Gruplu Kur Bandı) */}
+            <div className="hidden xl:flex items-center gap-1.5 bg-muted/30 border border-border/80 rounded-lg p-1">
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono">
+                <span className="text-muted-foreground font-medium">USD/TRY:</span>
+                <span className="font-bold text-foreground">₺38.50</span>
+                <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-0.5">
+                  <TrendingUp className="size-2.5" />0.15%
+                </span>
+              </div>
+
+              <div className="h-3 w-px bg-border/80 shrink-0" />
+
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono">
+                <span className="text-muted-foreground font-medium">EUR/TRY:</span>
+                <span className="font-bold text-foreground">₺41.85</span>
+                <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-0.5">
+                  <TrendingUp className="size-2.5" />0.08%
+                </span>
+              </div>
+
+              <div className="h-3 w-px bg-border/80 shrink-0" />
+
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono">
+                <span className="text-muted-foreground font-medium">EUR/USD:</span>
+                <span className="font-bold text-foreground">$1.09</span>
+              </div>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border/70 bg-muted/30 text-[11px] font-mono">
-              <span className="text-muted-foreground font-medium">EUR/TRY:</span>
-              <span className="font-bold text-foreground">₺41.85</span>
-              <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-0.5"><TrendingUp className="size-2.5" />+0.08%</span>
+            {/* DIVIDER 1 */}
+            <div className="hidden xl:block h-4 w-px bg-border shrink-0" />
+
+            {/* GROUP 2: Navigation & Quick Creation Buttons */}
+            <div className="flex items-center gap-1.5">
+              <Link href="/" target="_blank">
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-medium">
+                  <ExternalLink className="size-3.5 text-muted-foreground" />
+                  <span>Live Site</span>
+                </Button>
+              </Link>
+
+              <Link href="/store" target="_blank">
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-medium">
+                  <Package className="size-3.5 text-muted-foreground" />
+                  <span>Store</span>
+                </Button>
+              </Link>
+
+              <Link href="/panic/posts/new">
+                <Button size="sm" className="h-8 gap-1.5 text-xs font-medium">
+                  <Plus className="size-3.5" />
+                  <span>New Guide</span>
+                </Button>
+              </Link>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border/70 bg-muted/30 text-[11px] font-mono">
-              <span className="text-muted-foreground font-medium">EUR/USD:</span>
-              <span className="font-bold text-foreground">$1.09</span>
-            </div>
-          </div>
+            {/* DIVIDER 2 */}
+            <div className="h-4 w-px bg-border shrink-0" />
 
-          <div className="flex items-center gap-2 ml-auto">
-            <Link href="/store" target="_blank">
-              <Button variant="outline" size="default" className="gap-1.5">
-                <ExternalLink className="size-3.5 text-muted-foreground" />
-                <span>Store</span>
+            {/* GROUP 3: Theme Toggle & User Profile */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                className="size-8"
+              >
+                {theme === "dark" ? (
+                  <Sun className="size-4" />
+                ) : (
+                  <Moon className="size-4" />
+                )}
               </Button>
-            </Link>
 
-            <Link href="/panic/posts/new">
-              <Button size="default" className="gap-1.5">
-                <Plus className="size-3.5" />
-                <span>New Guide</span>
-              </Button>
-            </Link>
-
-            {/* Theme Toggle Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              {theme === "dark" ? (
-                <Sun className="size-4" />
-              ) : (
-                <Moon className="size-4" />
-              )}
-            </Button>
-
-            {/* User Avatar */}
-            <div className="size-8 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
-              UY
+              <div className="size-8 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center border border-primary/20">
+                UY
+              </div>
             </div>
           </div>
         </header>
