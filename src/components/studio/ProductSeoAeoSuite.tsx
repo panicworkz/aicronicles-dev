@@ -20,16 +20,6 @@ interface ProductSeoAeoSuiteProps {
   onMetaDescriptionChange: (v: string) => void;
 }
 
-function truncateAtWordBoundary(text: string, maxLen: number): string {
-  if (text.length <= maxLen) return text;
-  const truncated = text.substring(0, maxLen);
-  const lastSpace = truncated.lastIndexOf(' ');
-  if (lastSpace > maxLen * 0.7) {
-    return truncated.substring(0, lastSpace);
-  }
-  return truncated;
-}
-
 export function ProductSeoAeoSuite({
   title,
   slug,
@@ -54,33 +44,24 @@ export function ProductSeoAeoSuite({
 
     setGenerating(true);
     try {
-      // 1. SMART META TITLE (Strictly <= 60 characters)
-      let generatedTitle = '';
-      const brandSuffix = ' | Fabelo';
-      const cleanTitle = title.trim();
+      const res = await fetch('/api/ai/copilot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generateProductSeo',
+          title,
+          description,
+        }),
+      });
 
-      if (cleanTitle.length + brandSuffix.length <= 60) {
-        generatedTitle = `${cleanTitle}${brandSuffix}`;
-      } else if (cleanTitle.length <= 60) {
-        generatedTitle = cleanTitle;
+      const data = await res.json();
+      if (data.success && data.metaTitle && data.metaDescription) {
+        onMetaTitleChange(data.metaTitle);
+        onMetaDescriptionChange(data.metaDescription);
+        toast.success(`Generated complete, grammatical SEO copy (${data.metaTitle.length} & ${data.metaDescription.length} chars)`);
       } else {
-        generatedTitle = truncateAtWordBoundary(cleanTitle, 57);
+        toast.error('Failed to generate SEO copy');
       }
-
-      // 2. SMART META DESCRIPTION (Strictly <= 155 characters)
-      let rawDesc = (description || '').trim();
-      let generatedDesc = '';
-
-      if (rawDesc && rawDesc.length >= 50) {
-        generatedDesc = truncateAtWordBoundary(rawDesc, 150);
-      } else {
-        const fallback = `Buy official ${cleanTitle}. High quality, verified instant fulfillment, and secure multi-currency checkout.`;
-        generatedDesc = truncateAtWordBoundary(fallback, 150);
-      }
-
-      onMetaTitleChange(generatedTitle);
-      onMetaDescriptionChange(generatedDesc);
-      toast.success(`Generated optimized SEO tags (${generatedTitle.length} / 60 & ${generatedDesc.length} / 155 chars)`);
     } catch (err) {
       toast.error('AI generation failed');
     } finally {
@@ -106,8 +87,8 @@ export function ProductSeoAeoSuite({
   const titleLength = (metaTitle || '').length;
   const descLength = (metaDescription || '').length;
 
-  const isTitleOptimal = titleLength > 0 && titleLength <= 60;
-  const isDescOptimal = descLength > 0 && descLength <= 155;
+  const isTitleOptimal = titleLength >= 30 && titleLength <= 60;
+  const isDescOptimal = descLength >= 100 && descLength <= 155;
 
   return (
     <Card className="border-border">
@@ -129,7 +110,7 @@ export function ProductSeoAeoSuite({
           className="gap-1.5 text-xs text-primary font-medium"
         >
           <Sparkles className="size-3.5" />
-          <span>{generating ? 'Optimizing...' : 'AI Auto-Fill SEO'}</span>
+          <span>{generating ? 'Crafting copy...' : 'AI Auto-Fill SEO'}</span>
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -151,7 +132,7 @@ export function ProductSeoAeoSuite({
           <Input
             value={metaTitle}
             onChange={(e) => onMetaTitleChange(e.target.value)}
-            placeholder={title ? `${title} | Fabelo` : 'Meta Title (max 60 chars)...'}
+            placeholder={title ? `${title} | Official Fabelo` : 'Meta Title (max 60 chars)...'}
             className="text-xs"
           />
         </div>
@@ -175,7 +156,7 @@ export function ProductSeoAeoSuite({
             rows={2}
             value={metaDescription}
             onChange={(e) => onMetaDescriptionChange(e.target.value)}
-            placeholder="Compelling 140-155 character summary for Google & AI search engine snippets..."
+            placeholder="Compelling 130-155 character complete sentence for Google & AI search engine snippets..."
             className="text-xs resize-none leading-relaxed"
           />
         </div>

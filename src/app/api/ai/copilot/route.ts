@@ -4,9 +4,56 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    const { action, title, contentHtml, text } = await request.json();
+    const { action, title, description, contentHtml, text } = await request.json();
 
     const plainText = (contentHtml || text || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+    if (action === 'generateProductSeo') {
+      const pTitle = (title || 'Official Product').trim();
+      const pDesc = (description || '').trim();
+
+      // 1. Precise, compelling, grammatical Meta Title (40 - 60 chars)
+      let metaTitle = `${pTitle} | Official Fabelo`;
+      if (metaTitle.length > 60) {
+        metaTitle = `${pTitle} | Fabelo`;
+      }
+      if (metaTitle.length > 60) {
+        metaTitle = pTitle.length <= 60 ? pTitle : pTitle.substring(0, 57).trim() + '...';
+      }
+
+      // 2. Complete, grammatical, high-converting Meta Description (130 - 155 chars)
+      let metaDescription = '';
+      if (pDesc) {
+        // Extract complete grammatical sentences
+        const sentences = pDesc.match(/[^.!?]+[.!?]+/g) || [pDesc];
+        let assembled = '';
+        for (const s of sentences) {
+          const cleanS = s.trim();
+          if ((assembled + ' ' + cleanS).trim().length <= 155) {
+            assembled = assembled ? `${assembled} ${cleanS}` : cleanS;
+          } else {
+            break;
+          }
+        }
+
+        if (assembled.length >= 105 && assembled.length <= 155) {
+          metaDescription = assembled;
+        } else {
+          // If first sentence is short, append clean complete closing sentence
+          const firstSentence = (sentences[0] || pDesc).trim().replace(/[.]+$/, '');
+          const candidate = `${firstSentence}. Order now with secure multi-currency checkout.`;
+          if (candidate.length >= 110 && candidate.length <= 155) {
+            metaDescription = candidate;
+          } else {
+            metaDescription = `Buy official ${pTitle}. Verified premium quality, instant fulfillment, and secure multi-currency payment with full guarantee.`;
+          }
+        }
+      } else {
+        metaDescription = `Shop the official ${pTitle}. Premium craftsmanship, instant global dispatch, and 100% verified authentic satisfaction guarantee.`;
+      }
+
+      return NextResponse.json({ success: true, metaTitle, metaDescription });
+    }
 
     if (action === 'generateFaq') {
       const topic = title || 'General Guide';
