@@ -6,7 +6,6 @@ import Link from 'next/link';
 import {
   ArrowLeft,
   Save,
-  Eye,
   ExternalLink,
   SplitSquareVertical,
   ImageIcon,
@@ -130,17 +129,17 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       {/* Top Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b">
         <div className="flex items-center gap-3">
           <Link href="/panic/posts">
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0" title="Back to Articles">
-              <ArrowLeft className="w-4 h-4" />
+            <Button variant="outline" size="icon" className="size-8" title="Back to Articles">
+              <ArrowLeft className="size-4" />
             </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <Badge variant={status === 'published' ? 'default' : 'secondary'} className="capitalize">
+            <Badge variant={status === 'published' ? 'default' : 'secondary'} className="capitalize text-xs font-normal">
               {status}
             </Badge>
             <span className="text-xs text-muted-foreground">ID #{postId}</span>
@@ -152,15 +151,15 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
             variant="outline"
             size="sm"
             onClick={() => setSplitPreview(!splitPreview)}
-            className="gap-1.5"
+            className="gap-1.5 text-xs"
           >
-            <SplitSquareVertical className="w-3.5 h-3.5" />
+            <SplitSquareVertical className="size-3.5" />
             <span>{splitPreview ? 'Close Preview' : 'Split Preview'}</span>
           </Button>
 
           <Link href={`/${slug}`} target="_blank">
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <ExternalLink className="w-3.5 h-3.5" />
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+              <ExternalLink className="size-3.5 text-muted-foreground" />
               <span>View Live</span>
             </Button>
           </Link>
@@ -169,9 +168,9 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
             size="sm"
             onClick={handleSave}
             disabled={saving}
-            className="gap-1.5 font-medium"
+            className="gap-1.5 text-xs font-medium"
           >
-            <Save className="w-3.5 h-3.5" />
+            <Save className="size-3.5" />
             <span>{saving ? 'Saving...' : 'Save Changes'}</span>
           </Button>
         </div>
@@ -196,9 +195,9 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
             />
 
             {/* URL Slug & Reading Time Bar */}
-            <div className="flex flex-wrap items-center gap-3 p-2.5 rounded-lg border border-border bg-card text-xs">
+            <div className="flex flex-wrap items-center gap-3 p-2.5 rounded-lg border bg-card text-xs">
               <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
-                <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <Globe className="size-3.5 text-muted-foreground shrink-0" />
                 <span className="text-muted-foreground truncate">fabelo.testworkz.com/</span>
                 <input
                   type="text"
@@ -207,8 +206,8 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
                   className="bg-transparent text-primary font-mono outline-none flex-1 min-w-[120px]"
                 />
               </div>
-              <div className="flex items-center gap-1 text-muted-foreground border-l border-border pl-3">
-                <Clock className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-1 text-muted-foreground border-l pl-3">
+                <Clock className="size-3.5" />
                 <input
                   type="text"
                   value={readingTime}
@@ -233,8 +232,8 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
 
         {/* Split Preview Panel (when active) */}
         {splitPreview && (
-          <div className="lg:col-span-6 rounded-xl border border-border bg-card p-6 overflow-y-auto max-h-[85vh] space-y-6">
-            <div className="border-b border-border pb-4">
+          <div className="lg:col-span-6 rounded-xl border bg-card p-6 overflow-y-auto max-h-[85vh] space-y-6">
+            <div className="border-b pb-4">
               <Badge variant="outline" className="text-xs text-primary mb-2">Live Reader Preview</Badge>
               <h1 className="text-2xl font-bold text-foreground font-serif">{title}</h1>
               <p className="text-muted-foreground text-xs mt-2">{excerpt}</p>
@@ -250,9 +249,9 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
         <div className={splitPreview ? 'hidden' : 'lg:col-span-4 space-y-4'}>
           {/* Card 1: Publishing Settings */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                <Sparkles className="w-4 h-4 text-primary" />
+                <Sparkles className="size-4 text-primary" />
                 <span>Publishing</span>
               </CardTitle>
             </CardHeader>
@@ -262,20 +261,20 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full h-9 rounded-lg border bg-background px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
                 >
                   <option value="published">Published (Live on web)</option>
                   <option value="draft">Draft (Private)</option>
                 </select>
               </div>
 
-              <div className="pt-2 border-t border-border flex items-center justify-between text-xs">
+              <div className="pt-2 border-t flex items-center justify-between text-xs">
                 <button
                   type="button"
                   onClick={handleDelete}
                   className="text-destructive hover:opacity-80 font-medium inline-flex items-center gap-1.5 transition"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="size-3.5" />
                   <span>Delete Guide</span>
                 </button>
               </div>
@@ -284,15 +283,15 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
 
           {/* Card 2: Featured Image */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                <ImageIcon className="w-4 h-4 text-primary" />
+                <ImageIcon className="size-4 text-primary" />
                 <span>Featured Image</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {featuredImageUrl ? (
-                <div className="aspect-[16/9] w-full rounded-lg overflow-hidden border border-border bg-muted">
+                <div className="aspect-[16/9] w-full rounded-lg overflow-hidden border bg-muted">
                   <img
                     src={featuredImageUrl}
                     alt={title}
@@ -300,8 +299,8 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
                   />
                 </div>
               ) : (
-                <div className="aspect-[16/9] w-full rounded-lg border border-dashed border-border bg-muted/30 flex flex-col items-center justify-center text-muted-foreground text-xs gap-2">
-                  <ImageIcon className="w-6 h-6" />
+                <div className="aspect-[16/9] w-full rounded-lg border border-dashed bg-muted/30 flex flex-col items-center justify-center text-muted-foreground text-xs gap-2">
+                  <ImageIcon className="size-6" />
                   <span>No cover image selected</span>
                 </div>
               )}
@@ -328,9 +327,9 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
 
           {/* Card 3: Excerpt */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                <FileText className="w-4 h-4 text-primary" />
+                <FileText className="size-4 text-primary" />
                 <span>Excerpt & Teaser</span>
               </CardTitle>
             </CardHeader>
@@ -348,9 +347,9 @@ export default function PanicPostEditPage({ params }: { params: Promise<{ id: st
 
           {/* Card 4: SEO & AEO */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                <Globe className="w-4 h-4 text-primary" />
+                <Globe className="size-4 text-primary" />
                 <span>SEO & AI Search (AEO)</span>
               </CardTitle>
             </CardHeader>

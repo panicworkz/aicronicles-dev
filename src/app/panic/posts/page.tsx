@@ -12,7 +12,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 export default function PanicPostsListPage() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -62,11 +63,11 @@ export default function PanicPostsListPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Articles & Guides</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Articles & Guides</h1>
           <p className="text-xs text-muted-foreground mt-0.5">Manage publications, SEO metadata, and visual content</p>
         </div>
         <Link href="/panic/posts/new">
@@ -105,92 +106,88 @@ export default function PanicPostsListPage() {
         </div>
       </div>
 
-      {/* Posts Table Card */}
+      {/* Full-width Posts Table Card */}
       <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-muted/40 text-muted-foreground border-b border-border font-medium">
-                <tr>
-                  <th className="py-3 px-4">Cover</th>
-                  <th className="py-3 px-4">Title & Slug</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Reading Time</th>
-                  <th className="py-3 px-4">Published</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border text-foreground">
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-12 text-muted-foreground">
-                      Loading publications...
-                    </td>
-                  </tr>
-                ) : posts.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-12 text-muted-foreground">
-                      No articles found matching criteria.
-                    </td>
-                  </tr>
-                ) : (
-                  posts.map((post) => (
-                    <tr key={post.id} className="hover:bg-muted/30 transition">
-                      <td className="py-3 px-4 w-16">
-                        <div className="w-12 h-8 rounded-md bg-muted overflow-hidden border border-border">
-                          <img
-                            src={post.featuredImageUrl || '/media/default.webp'}
-                            alt={post.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Link
-                          href={`/panic/posts/${post.id}`}
-                          className="font-medium text-foreground hover:text-primary transition line-clamp-1 max-w-md"
-                        >
-                          {post.title}
-                        </Link>
-                        <div className="text-[11px] text-muted-foreground font-mono truncate max-w-md">/{post.slug}</div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge variant={post.status === 'published' ? 'default' : 'secondary'} className="capitalize">
-                          {post.status}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground">{post.readingTime}</td>
-                      <td className="py-3 px-4 text-muted-foreground">
-                        {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Draft'}
-                      </td>
-                      <td className="py-3 px-4 text-right space-x-1">
-                        <Link href={`/${post.slug}`} target="_blank">
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="View Public Page">
-                            <Eye className="size-3.5" />
-                          </Button>
-                        </Link>
-                        <Link href={`/panic/posts/${post.id}`}>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-primary" title="Edit in Visual Editor">
-                            <Edit3 className="size-3.5" />
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(post.id)}
-                          className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                          title="Delete Post"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-16">Cover</TableHead>
+              <TableHead>Title & Slug</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Reading Time</TableHead>
+              <TableHead>Published</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
+                  Loading publications...
+                </TableCell>
+              </TableRow>
+            ) : posts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
+                  No articles found matching criteria.
+                </TableCell>
+              </TableRow>
+            ) : (
+              posts.map((post) => (
+                <TableRow key={post.id}>
+                  <TableCell>
+                    <div className="w-12 h-8 rounded-md bg-muted overflow-hidden border border-border">
+                      <img
+                        src={post.featuredImageUrl || '/media/default.webp'}
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      href={`/panic/posts/${post.id}`}
+                      className="font-medium text-foreground hover:text-primary transition line-clamp-1"
+                    >
+                      {post.title}
+                    </Link>
+                    <div className="text-xs text-muted-foreground font-mono">/{post.slug}</div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={post.status === 'published' ? 'default' : 'secondary'} className="capitalize text-xs font-normal">
+                      {post.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{post.readingTime}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Draft'}
+                  </TableCell>
+                  <TableCell className="text-right space-x-1">
+                    <Link href={`/${post.slug}`} target="_blank">
+                      <Button variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-foreground" title="View Live Page">
+                        <Eye className="size-4" />
+                      </Button>
+                    </Link>
+                    <Link href={`/panic/posts/${post.id}`}>
+                      <Button variant="ghost" size="icon" className="size-8 text-primary hover:text-primary" title="Edit in Visual Editor">
+                        <Edit3 className="size-4" />
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(post.id)}
+                      className="size-8 text-destructive hover:text-destructive"
+                      title="Delete Post"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </Card>
     </div>
   );
