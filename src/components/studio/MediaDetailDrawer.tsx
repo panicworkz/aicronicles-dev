@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Save,
@@ -35,6 +36,7 @@ export function MediaDetailDrawer({
   onUpdate,
   onDelete,
 }: MediaDetailDrawerProps) {
+  const [mounted, setMounted] = useState(false);
   const [activeMedia, setActiveMedia] = useState<any | null>(null);
   const [title, setTitle] = useState('');
   const [alt, setAlt] = useState('');
@@ -43,6 +45,10 @@ export function MediaDetailDrawer({
   const [saving, setSaving] = useState(false);
   const [generatingAi, setGeneratingAi] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (media) {
@@ -66,7 +72,7 @@ export function MediaDetailDrawer({
   }, [isOpen, onClose]);
 
   const displayMedia = media || activeMedia;
-  if (!displayMedia) return null;
+  if (!mounted || !displayMedia) return null;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,29 +136,32 @@ export function MediaDetailDrawer({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
+  return createPortal(
     <div
-      className={`fixed inset-0 top-0 left-0 right-0 bottom-0 z-[100] flex justify-end overflow-hidden transition-all duration-300 ease-in-out ${
+      className={`fixed inset-0 top-0 left-0 right-0 bottom-0 z-[99999] flex justify-end overflow-hidden transition-all duration-300 ease-in-out ${
         isOpen
           ? 'opacity-100 pointer-events-auto visible'
           : 'opacity-0 pointer-events-none invisible'
       }`}
+      style={{ top: 0, left: 0, right: 0, bottom: 0, margin: 0, padding: 0 }}
     >
-      {/* Backdrop with smooth blur & fade */}
+      {/* Backdrop */}
       <div
         className={`fixed inset-0 top-0 left-0 right-0 bottom-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out cursor-pointer ${
           isOpen ? 'opacity-100' : 'opacity-0'
         }`}
+        style={{ top: 0, left: 0, right: 0, bottom: 0, margin: 0, padding: 0 }}
         onClick={onClose}
       />
 
-      {/* Slide-over Drawer - Completely Flush to the Top (0px Gap, Full 100vh) */}
+      {/* Slide-over Drawer - Strictly Flush to top-0 of document.body */}
       <aside
-        className={`relative z-[101] flex h-screen max-h-screen w-full sm:w-[520px] flex-col border-l border-border bg-background shadow-2xl transition-transform duration-300 ease-in-out will-change-transform top-0 right-0 m-0 p-0 rounded-none ${
+        className={`relative z-[100000] flex h-screen max-h-screen w-full sm:w-[520px] flex-col border-l border-border bg-background shadow-2xl transition-transform duration-300 ease-in-out will-change-transform top-0 right-0 m-0 p-0 rounded-none ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
+        style={{ height: '100vh', maxHeight: '100vh', top: 0, bottom: 0, right: 0 }}
       >
-        {/* Header - Flush with top edge */}
+        {/* Header - Fixed Height & Flush */}
         <div className="flex h-14 items-center justify-between gap-3 border-b px-5 shrink-0 bg-background">
           <div className="flex items-center gap-2">
             <ImageIcon className="size-4 text-primary" />
@@ -320,6 +329,7 @@ export function MediaDetailDrawer({
           </div>
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body
   );
 }

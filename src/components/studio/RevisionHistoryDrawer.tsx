@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { History, RotateCcw, Clock, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,8 +20,13 @@ export function RevisionHistoryDrawer({
   onClose,
   onRestore,
 }: RevisionHistoryDrawerProps) {
+  const [mounted, setMounted] = useState(false);
   const [revisions, setRevisions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -53,27 +59,32 @@ export function RevisionHistoryDrawer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
-      className={`fixed inset-0 top-0 left-0 right-0 bottom-0 z-[100] flex justify-end overflow-hidden transition-all duration-300 ease-in-out ${
+      className={`fixed inset-0 top-0 left-0 right-0 bottom-0 z-[99999] flex justify-end overflow-hidden transition-all duration-300 ease-in-out ${
         isOpen
           ? 'opacity-100 pointer-events-auto visible'
           : 'opacity-0 pointer-events-none invisible'
       }`}
+      style={{ top: 0, left: 0, right: 0, bottom: 0, margin: 0, padding: 0 }}
     >
       {/* Backdrop */}
       <div
         className={`fixed inset-0 top-0 left-0 right-0 bottom-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out cursor-pointer ${
           isOpen ? 'opacity-100' : 'opacity-0'
         }`}
+        style={{ top: 0, left: 0, right: 0, bottom: 0, margin: 0, padding: 0 }}
         onClick={onClose}
       />
 
-      {/* Slide-over Panel from Right (100% Flush Top-0) */}
+      {/* Slide-over Panel from Right */}
       <aside
-        className={`relative z-[101] flex h-screen max-h-screen w-full sm:w-[450px] flex-col border-l border-border bg-background shadow-2xl transition-transform duration-300 ease-in-out will-change-transform top-0 right-0 m-0 p-0 rounded-none ${
+        className={`relative z-[100000] flex h-screen max-h-screen w-full sm:w-[450px] flex-col border-l border-border bg-background shadow-2xl transition-transform duration-300 ease-in-out will-change-transform top-0 right-0 m-0 p-0 rounded-none ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
+        style={{ height: '100vh', maxHeight: '100vh', top: 0, bottom: 0, right: 0 }}
       >
         <div className="flex h-14 items-center justify-between gap-3 border-b px-4 shrink-0 bg-background">
           <div className="flex items-center gap-2">
@@ -141,6 +152,7 @@ export function RevisionHistoryDrawer({
           )}
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body
   );
 }
