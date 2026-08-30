@@ -8,8 +8,6 @@ import {
   Save,
   Plus,
   Trash2,
-  Package,
-  Sparkles,
   Layers,
   Coins,
   FileDown,
@@ -20,9 +18,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
+import { ProductGalleryUploader } from '@/components/ui/product-gallery-uploader';
 import { ProductSeoAeoSuite } from '@/components/studio/ProductSeoAeoSuite';
-import { DEFAULT_RATES, formatPrice } from '@/lib/currency';
+import { formatPrice } from '@/lib/currency';
 import { toast } from 'sonner';
 
 export default function PanicNewProductPage() {
@@ -41,6 +39,7 @@ export default function PanicNewProductPage() {
   const [digitalAssetUrl, setDigitalAssetUrl] = useState('');
   const [status, setStatus] = useState('published');
   const [featuredImageUrl, setFeaturedImageUrl] = useState('');
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
 
@@ -102,6 +101,7 @@ export default function PanicNewProductPage() {
           digitalAssetUrl,
           status,
           featuredImageUrl,
+          galleryUrls,
           metaTitle,
           metaDescription,
           variants,
@@ -136,7 +136,7 @@ export default function PanicNewProductPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Create New Product</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Physical goods, digital assets, services & multi-currency pricing</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Physical goods, digital assets, services & multi-photo gallery</p>
           </div>
         </div>
 
@@ -343,16 +343,17 @@ export default function PanicNewProductPage() {
 
         {/* Right Column (4 cols) */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Direct 1-Click Image Upload Dropzone */}
+          {/* Multi-Photo Gallery & Cover Uploader */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Featured Product Image</CardTitle>
+              <CardTitle className="text-sm font-semibold">Product Images & Gallery</CardTitle>
             </CardHeader>
             <CardContent>
-              <ImageUploadDropzone
-                value={featuredImageUrl}
-                onChange={(url) => setFeaturedImageUrl(url)}
-                label=""
+              <ProductGalleryUploader
+                featuredImage={featuredImageUrl}
+                galleryImages={galleryUrls}
+                onFeaturedImageChange={(url) => setFeaturedImageUrl(url)}
+                onGalleryImagesChange={(urls) => setGalleryUrls(urls)}
               />
             </CardContent>
           </Card>

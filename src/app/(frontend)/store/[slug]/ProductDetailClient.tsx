@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Package, FileDown, Briefcase, ShoppingCart, Check, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
+import { Package, FileDown, Briefcase, ShoppingCart, Check, ShieldCheck, Truck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCurrency } from '@/providers/currency-provider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,15 @@ export function ProductDetailClient({ product, variants = [] }: { product: any; 
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
+  // Combine featured cover image + all gallery images
+  const allImages: string[] = [
+    product.featuredImageUrl,
+    ...(Array.isArray(product.galleryUrls) ? product.galleryUrls : []),
+  ].filter(Boolean);
+
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const currentImage = allImages[activeImageIndex] || product.featuredImageUrl;
+
   const activePrice = selectedVariant?.price ? selectedVariant.price : product.price;
 
   const handleAddToCart = () => {
@@ -21,19 +30,74 @@ export function ProductDetailClient({ product, variants = [] }: { product: any; 
     setTimeout(() => setAdded(false), 2000);
   };
 
+  const handlePrevImage = () => {
+    setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
+  };
+
+  const handleNextImage = () => {
+    setActiveImageIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-      {/* Left 6 cols: Gallery Image */}
+      {/* Left 6 cols: Interactive Gallery with Thumbnails */}
       <div className="lg:col-span-6 space-y-4">
-        <div className="aspect-square rounded-2xl overflow-hidden border border-border bg-muted/20 shadow-md">
-          {product.featuredImageUrl ? (
-            <img src={product.featuredImageUrl} alt={product.title} className="w-full h-full object-cover" />
+        {/* Main Photo View */}
+        <div className="relative aspect-square rounded-2xl overflow-hidden border border-border bg-muted/20 shadow-md group">
+          {currentImage ? (
+            <img
+              key={currentImage}
+              src={currentImage}
+              alt={product.title}
+              className="w-full h-full object-cover transition-all duration-300 animate-in fade-in"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
               No image available
             </div>
           )}
+
+          {allImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrevImage}
+                className="absolute left-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-background/80 backdrop-blur border border-border text-foreground flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+                title="Previous photo"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNextImage}
+                className="absolute right-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-background/80 backdrop-blur border border-border text-foreground flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+                title="Next photo"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            </>
+          )}
         </div>
+
+        {/* Thumbnail Navigation Strip */}
+        {allImages.length > 1 && (
+          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-thin">
+            {allImages.map((img, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setActiveImageIndex(idx)}
+                className={`relative aspect-square w-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                  activeImageIndex === idx
+                    ? 'border-primary ring-2 ring-primary/30 scale-105 shadow-sm'
+                    : 'border-border opacity-70 hover:opacity-100'
+                }`}
+              >
+                <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Right 6 cols: Product Options & Purchase */}

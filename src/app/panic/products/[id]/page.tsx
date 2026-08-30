@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
+import { ProductGalleryUploader } from '@/components/ui/product-gallery-uploader';
 import { ProductSeoAeoSuite } from '@/components/studio/ProductSeoAeoSuite';
 import { formatPrice } from '@/lib/currency';
 import { toast } from 'sonner';
@@ -44,6 +44,7 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
   const [digitalAssetUrl, setDigitalAssetUrl] = useState('');
   const [status, setStatus] = useState('published');
   const [featuredImageUrl, setFeaturedImageUrl] = useState('');
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [variants, setVariants] = useState<any[]>([]);
@@ -67,6 +68,7 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
           setDigitalAssetUrl(p.digitalAssetUrl || '');
           setStatus(p.status || 'published');
           setFeaturedImageUrl(p.featuredImageUrl || '');
+          setGalleryUrls(Array.isArray(p.galleryUrls) ? p.galleryUrls : []);
           setMetaTitle(p.metaTitle || '');
           setMetaDescription(p.metaDescription || '');
           setVariants(data.variants || []);
@@ -126,6 +128,7 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
           digitalAssetUrl,
           status,
           featuredImageUrl,
+          galleryUrls,
           metaTitle,
           metaDescription,
           variants,
@@ -392,16 +395,17 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
 
         {/* Right Column (4 cols) */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Direct 1-Click Image Upload Dropzone */}
+          {/* Multi-Photo Gallery & Cover Uploader */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Featured Product Image</CardTitle>
+              <CardTitle className="text-sm font-semibold">Product Images & Gallery</CardTitle>
             </CardHeader>
             <CardContent>
-              <ImageUploadDropzone
-                value={featuredImageUrl}
-                onChange={(url) => setFeaturedImageUrl(url)}
-                label=""
+              <ProductGalleryUploader
+                featuredImage={featuredImageUrl}
+                galleryImages={galleryUrls}
+                onFeaturedImageChange={(url) => setFeaturedImageUrl(url)}
+                onGalleryImagesChange={(urls) => setGalleryUrls(urls)}
               />
             </CardContent>
           </Card>
