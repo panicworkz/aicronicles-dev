@@ -39,7 +39,6 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
 
   useEffect(() => {
     if (post) {
-      // Trigger smooth slide in after mount
       const frame = requestAnimationFrame(() => {
         setIsOpen(true);
       });
@@ -124,7 +123,7 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
                 size="icon-xs"
                 onClick={() => setDeviceMode('desktop')}
                 title="Desktop (100%)"
-                className={deviceMode === 'desktop' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}
+                className={deviceMode === 'desktop' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:text-white'}
               >
                 <Monitor className="size-3.5" />
               </Button>
@@ -133,7 +132,7 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
                 size="icon-xs"
                 onClick={() => setDeviceMode('tablet')}
                 title="Tablet (768px)"
-                className={deviceMode === 'tablet' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}
+                className={deviceMode === 'tablet' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:text-white'}
               >
                 <Tablet className="size-3.5" />
               </Button>
@@ -142,7 +141,7 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
                 size="icon-xs"
                 onClick={() => setDeviceMode('mobile')}
                 title="Mobile (375px)"
-                className={deviceMode === 'mobile' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}
+                className={deviceMode === 'mobile' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:text-white'}
               >
                 <Smartphone className="size-3.5" />
               </Button>
@@ -169,10 +168,13 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
 
             {post && (
               <Link href={`/${post.slug}`} target="_blank">
-                <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs text-neutral-300 border-neutral-800 hover:bg-neutral-900">
-                  <ExternalLink className="size-3.5" />
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-neutral-700 bg-neutral-900 text-white hover:bg-neutral-800 hover:border-neutral-600 transition shadow-xs cursor-pointer"
+                >
+                  <ExternalLink className="size-3.5 text-neutral-300" />
                   <span className="hidden sm:inline">Open New Tab</span>
-                </Button>
+                </button>
               </Link>
             )}
 
