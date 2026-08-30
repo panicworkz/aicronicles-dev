@@ -11,8 +11,6 @@ import {
   Settings,
   ExternalLink,
   LogOut,
-  Sparkles,
-  Layers,
   Search,
   Plus,
   Sun,
@@ -23,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/providers/theme-provider';
+import { cn } from '@/lib/utils';
 
 export default function PanicAdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -41,154 +40,158 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
   };
 
   const navItems = [
-    { label: 'Dashboard', href: '/panic', icon: LayoutDashboard, exact: true },
-    { label: 'Articles & Posts', href: '/panic/posts', icon: FileText, exact: false },
-    { label: 'Media Library', href: '/panic/media', icon: ImageIcon, exact: false },
-    { label: 'Categories & Tags', href: '/panic/categories', icon: Tags, exact: false },
-    { label: 'Project Settings', href: '/panic/settings', icon: Settings, exact: false },
+    { href: '/panic', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/panic/posts', label: 'Articles & Posts', icon: FileText },
+    { href: '/panic/media', label: 'Media Library', icon: ImageIcon },
+    { href: '/panic/categories', label: 'Categories & Tags', icon: Tags },
+    { href: '/panic/settings', label: 'Settings', icon: Settings },
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">
+    <div className="flex h-screen overflow-hidden">
       {/* Hubz Sidebar */}
       <aside
-        className={`flex flex-col border-r border-border bg-sidebar transition-all duration-300 shrink-0 ${
-          collapsed ? 'w-16' : 'w-60'
-        }`}
+        className={cn(
+          "flex flex-col border-r bg-sidebar transition-all duration-300 shrink-0",
+          collapsed ? "w-16" : "w-60",
+        )}
       >
-        {/* Brand Header with Collapse Toggle */}
-        <div className="flex h-14 items-center gap-2 px-4 border-b border-border">
-          {!collapsed ? (
-            <Link href="/panic" className="flex items-center gap-2 font-semibold text-base tracking-tight">
+        <div className="flex h-14 items-center gap-2 px-4 border-b">
+          {!collapsed && (
+            <Link
+              href="/panic"
+              className="flex items-center gap-2 font-semibold text-lg"
+            >
               <div className="size-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-xs">
                 P
               </div>
               <span>Panic CMS</span>
             </Link>
-          ) : (
+          )}
+          {collapsed && (
             <div className="size-7 mx-auto rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-xs">
               P
             </div>
           )}
           <Button
             variant="ghost"
-            size="sm"
-            className="ml-auto size-7 p-0 text-muted-foreground hover:text-foreground"
+            size="icon"
+            className="ml-auto size-6"
             onClick={() => setCollapsed(!collapsed)}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <ChevronLeft className={`size-4 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`} />
+            <ChevronLeft
+              className={cn(
+                "size-4 transition-transform",
+                collapsed && "rotate-180",
+              )}
+            />
           </Button>
         </div>
 
-        {/* Project Selector Badge */}
-        {!collapsed && (
-          <div className="p-3 border-b border-border/50 bg-muted/20">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Layers className="size-3.5 text-primary" />
-              <span className="truncate font-medium">fabelo.testworkz.com</span>
-            </div>
-          </div>
-        )}
+        <div className="flex-1 py-2 overflow-y-auto">
+          <nav className="flex flex-col gap-1 px-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive =
+                item.href === '/panic'
+                  ? pathname === '/panic'
+                  : pathname.startsWith(item.href);
 
-        {/* Nav Links */}
-        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = item.exact
-              ? pathname === item.href
-              : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                  )}
+                  title={collapsed ? item.label : undefined}
+                >
+                  <span className="relative shrink-0">
+                    <Icon className="size-4" />
+                  </span>
+                  {!collapsed && <span className="truncate">{item.label}</span>}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-2xs'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
-                }`}
-                title={collapsed ? item.label : undefined}
-              >
-                <Icon className={`size-4 shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-                {!collapsed && <span className="truncate">{item.label}</span>}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* User Info & Logout */}
-        <Separator className="bg-border/60" />
-        <div className="p-3 bg-sidebar flex items-center justify-between">
+        <Separator />
+        <div className="p-2 flex items-center justify-between">
           {!collapsed ? (
-            <div className="truncate">
-              <p className="text-xs font-medium text-foreground truncate">Fabelo Editorial</p>
-              <p className="text-[11px] text-muted-foreground truncate">support@fabelo.io</p>
+            <div className="px-3 py-2 text-xs text-muted-foreground">
+              Panic CMS v1.0
             </div>
           ) : null}
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={handleLogout}
-            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive shrink-0 mx-auto"
-            title="Sign Out"
+            className="size-7 text-muted-foreground hover:text-destructive shrink-0 mx-auto"
+            title="Logout"
           >
-            <LogOut className="size-4" />
+            <LogOut className="size-3.5" />
           </Button>
         </div>
       </aside>
 
       {/* Main Column */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden">
         {/* Hubz Header */}
-        <header className="flex h-14 items-center gap-4 border-b border-border bg-background px-6 shrink-0">
+        <header className="flex h-14 items-center gap-4 border-b bg-background px-6 shrink-0">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder="Search anything..."
-              className="pl-9 bg-muted/50 border-none h-8 text-xs placeholder:text-muted-foreground"
+              className="pl-9 bg-muted/50 border-none h-9 text-sm"
             />
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
             <Link href="/" target="_blank">
-              <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
-                <ExternalLink className="size-3.5 text-primary" />
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                <ExternalLink className="size-3.5 text-muted-foreground" />
                 <span>Live Site</span>
               </Button>
             </Link>
 
             <Link href="/panic/posts/new">
-              <Button size="sm" className="h-8 text-xs gap-1.5 font-medium">
+              <Button size="sm" className="gap-1.5 text-xs font-medium">
                 <Plus className="size-3.5" />
                 <span>New Guide</span>
               </Button>
             </Link>
 
-            {/* Hubz Light / Dark Theme Switcher */}
+            {/* Hubz Sun / Moon Toggle Button */}
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              size="icon"
+              className="size-8"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
-              {theme === 'dark' ? (
-                <Sun className="size-4 text-amber-400" />
+              {theme === "dark" ? (
+                <Sun className="size-4" />
               ) : (
-                <Moon className="size-4 text-slate-700" />
+                <Moon className="size-4" />
               )}
             </Button>
 
             {/* User Avatar */}
-            <div className="size-8 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center border border-primary/20">
-              FE
+            <div className="size-8 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
+              UY
             </div>
           </div>
         </header>
 
-        {/* Scrollable Main Canvas */}
-        <main className="flex-1 overflow-y-auto p-6 bg-background scroll-smooth">
+        {/* Scrollable Main Area */}
+        <main
+          data-hubz-scroll-main
+          className="flex-1 overflow-y-auto scroll-smooth p-6 bg-background"
+        >
           {children}
         </main>
       </div>
