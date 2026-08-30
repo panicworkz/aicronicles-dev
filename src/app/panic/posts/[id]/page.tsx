@@ -32,6 +32,7 @@ import { AeoScoreMeter } from '@/components/studio/AeoScoreMeter';
 import { SerpSocialPreview } from '@/components/studio/SerpSocialPreview';
 import { BlockInsertToolbar } from '@/components/studio/BlockInsertToolbar';
 import { RevisionHistoryDrawer } from '@/components/studio/RevisionHistoryDrawer';
+import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
 import { toast } from 'sonner';
 
 export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{ id: string }> }) {
@@ -392,31 +393,17 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
               </Card>
 
               <Card>
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold">Featured Cover Image</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {featuredImageUrl ? (
-                    <div className="aspect-video w-full rounded-lg overflow-hidden border bg-muted">
-                      <img
-                        src={featuredImageUrl}
-                        alt={title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="aspect-video w-full rounded-lg border border-dashed bg-muted/30 flex items-center justify-center text-xs text-muted-foreground">
-                      No image selected
-                    </div>
-                  )}
-                  <Input
+                  <ImageUploadDropzone
                     value={featuredImageUrl}
-                    onChange={(e) => {
-                      setFeaturedImageUrl(e.target.value);
-                      broadcastLiveSync(title, contentHtml, e.target.value);
+                    onChange={(url) => {
+                      setFeaturedImageUrl(url);
+                      broadcastLiveSync(title, contentHtml, url);
                     }}
-                    placeholder="/media/cover.webp"
-                    className="text-xs font-mono"
+                    label=""
                   />
                 </CardContent>
               </Card>

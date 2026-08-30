@@ -26,6 +26,7 @@ import TipTapEditor from '@/components/editor/TipTapEditor';
 import { BlockInsertToolbar } from '@/components/studio/BlockInsertToolbar';
 import { AeoScoreMeter } from '@/components/studio/AeoScoreMeter';
 import { SerpSocialPreview } from '@/components/studio/SerpSocialPreview';
+import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
 import { toast } from 'sonner';
 
 export default function PanicNewPostPage() {
@@ -387,40 +388,18 @@ export default function PanicNewPostPage() {
 
           {/* Card 2: Featured Cover Image */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                 <ImageIcon className="w-4 h-4 text-primary" />
-                <span>Featured Image</span>
+                <span>Featured Cover Image</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {featuredImageUrl ? (
-                <div className="aspect-video w-full rounded-lg overflow-hidden border bg-muted">
-                  <img
-                    src={featuredImageUrl}
-                    alt={title || 'Cover'}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : null}
-              <div className="space-y-1.5">
-                <Label className="text-xs">Image URL</Label>
-                <Input
-                  type="text"
-                  placeholder="/media/default.webp"
-                  value={featuredImageUrl}
-                  onChange={(e) => setFeaturedImageUrl(e.target.value)}
-                  className="text-xs font-mono"
-                />
-                <Link
-                  href="/panic/media"
-                  target="_blank"
-                  className="text-[11px] text-primary hover:underline flex items-center gap-1 mt-1"
-                >
-                  <ExternalLink className="size-3" />
-                  <span>Open Media Library to select or upload image →</span>
-                </Link>
-              </div>
+              <ImageUploadDropzone
+                value={featuredImageUrl}
+                onChange={(url) => setFeaturedImageUrl(url)}
+                label=""
+              />
             </CardContent>
           </Card>
 
