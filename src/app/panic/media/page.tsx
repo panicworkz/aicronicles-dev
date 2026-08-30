@@ -75,9 +75,9 @@ export default function PanicMediaPage() {
         </div>
 
         <div>
-          <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 transition shadow-sm cursor-pointer">
-            <Upload className="size-4" />
-            <span>{uploading ? 'Optimizing & Uploading...' : 'Upload Image'}</span>
+          <label className="inline-flex h-8 gap-1.5 px-3 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition shadow-2xs cursor-pointer select-none">
+            <Upload className="size-3.5" />
+            <span>{uploading ? 'Optimizing...' : 'Upload Image'}</span>
             <input
               type="file"
               accept="image/*"

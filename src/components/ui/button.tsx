@@ -3,32 +3,37 @@ import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
-  size?: "default" | "sm" | "lg" | "icon";
+  size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-sm" | "icon-xs" | "icon-lg";
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "default", ...props }, ref) => {
     const variants = {
-      default: "bg-primary text-primary-foreground hover:opacity-90 shadow-sm",
-      destructive: "bg-destructive text-destructive-foreground hover:opacity-90 shadow-sm",
-      outline: "border border-border bg-background hover:bg-muted text-foreground",
-      secondary: "bg-secondary text-secondary-foreground hover:opacity-80",
-      ghost: "hover:bg-muted text-muted-foreground hover:text-foreground",
+      default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs",
+      outline: "border border-border bg-background hover:bg-muted hover:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+      secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+      ghost: "hover:bg-muted hover:text-foreground dark:hover:bg-muted/50",
+      destructive: "bg-destructive/10 text-destructive hover:bg-destructive/20",
       link: "text-primary underline-offset-4 hover:underline",
     };
 
     const sizes = {
-      default: "h-9 px-4 py-2 text-sm",
-      sm: "h-8 px-3 text-xs",
-      lg: "h-10 px-6 text-sm",
-      icon: "h-8 w-8 p-0",
+      default: "h-8 gap-1.5 px-3 text-xs font-medium [&_svg:not([class*='size-'])]:size-3.5",
+      xs: "h-6 gap-1 rounded-md px-2 text-[11px] [&_svg:not([class*='size-'])]:size-3",
+      sm: "h-7 gap-1 rounded-md px-2.5 text-xs [&_svg:not([class*='size-'])]:size-3.5",
+      lg: "h-9 gap-1.5 px-4 text-sm [&_svg:not([class*='size-'])]:size-4",
+      icon: "size-8 [&_svg:not([class*='size-'])]:size-4",
+      "icon-sm": "size-7 rounded-md [&_svg:not([class*='size-'])]:size-3.5",
+      "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
+      "icon-lg": "size-9 [&_svg:not([class*='size-'])]:size-4",
     };
 
     return (
       <button
         ref={ref}
+        data-slot="button"
         className={cn(
-          "inline-flex items-center justify-center rounded-lg font-medium transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] cursor-pointer",
+          "inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent whitespace-nowrap transition-all outline-none select-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 cursor-pointer",
           variants[variant],
           sizes[size],
           className
