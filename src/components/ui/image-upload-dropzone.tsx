@@ -10,6 +10,7 @@ import {
   Trash2,
   RefreshCw,
   Link2,
+  Upload,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -90,29 +91,44 @@ export function ImageUploadDropzone({
 
   return (
     <div className={`space-y-3 ${className}`}>
-      {/* Top Header Label & URL toggle */}
+      {/* Top Header with 3 Quick Source Triggers */}
       <div className="flex items-center justify-between">
         {label && <label className="text-xs font-semibold text-foreground">{label}</label>}
-        <div className="flex items-center gap-1.5 ml-auto">
+        <div className="flex items-center gap-1 ml-auto">
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={() => fileInputRef.current?.click()}
+            className="h-6 gap-1 text-[11px] text-muted-foreground hover:text-foreground px-1.5"
+            title="Upload from Computer"
+          >
+            <Upload className="size-3" />
+            <span className="hidden sm:inline">Upload</span>
+          </Button>
+
           <Button
             type="button"
             variant="ghost"
             size="xs"
             onClick={() => setPickerOpen(true)}
-            className="h-6 gap-1 text-[11px] text-primary hover:text-primary font-medium px-2"
+            className="h-6 gap-1 text-[11px] text-primary hover:text-primary font-medium px-1.5"
+            title="Browse Media Library"
           >
             <FolderOpen className="size-3" />
-            <span>Library ({hasImage ? 'Change' : 'Browse'})</span>
+            <span>Library</span>
           </Button>
+
           <Button
             type="button"
             variant="ghost"
             size="xs"
             onClick={() => setShowManualUrl(!showManualUrl)}
-            className="h-6 gap-1 text-[11px] text-muted-foreground hover:text-foreground font-normal px-1.5"
+            className="h-6 gap-1 text-[11px] text-muted-foreground hover:text-foreground px-1.5"
             title="Toggle URL Input"
           >
             <Link2 className="size-3" />
+            <span className="hidden sm:inline">URL</span>
           </Button>
         </div>
       </div>
@@ -138,7 +154,7 @@ export function ImageUploadDropzone({
             </button>
           </div>
 
-          {/* Always-visible Action Controls under the image */}
+          {/* 3 Replacement Action Buttons + Remove */}
           <div className="grid grid-cols-3 gap-1.5">
             <Button
               type="button"
@@ -147,9 +163,10 @@ export function ImageUploadDropzone({
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               className="h-8 gap-1 text-[11px] font-medium"
+              title="Upload new file from computer"
             >
               <UploadCloud className="size-3.5 text-muted-foreground" />
-              <span>{uploading ? 'Uploading...' : 'Replace'}</span>
+              <span>{uploading ? 'Uploading...' : 'Upload PC'}</span>
             </Button>
 
             <Button
@@ -158,9 +175,10 @@ export function ImageUploadDropzone({
               size="sm"
               onClick={() => setPickerOpen(true)}
               className="h-8 gap-1 text-[11px] font-medium"
+              title="Pick from 509 library images or paste link"
             >
               <FolderOpen className="size-3.5 text-primary" />
-              <span>Library</span>
+              <span>Library/URL</span>
             </Button>
 
             <Button
@@ -169,6 +187,7 @@ export function ImageUploadDropzone({
               size="sm"
               onClick={handleClearImage}
               className="h-8 gap-1 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+              title="Clear cover image"
             >
               <Trash2 className="size-3.5" />
               <span>Remove</span>
@@ -201,10 +220,10 @@ export function ImageUploadDropzone({
                 <UploadCloud className="size-4.5" />
               </div>
               <div className="space-y-0.5">
-                <p className="text-xs font-semibold text-foreground">Click to upload cover or drag & drop</p>
+                <p className="text-xs font-semibold text-foreground">Click to upload or drag & drop</p>
                 <p className="text-[10px] text-muted-foreground">Auto-converted to high-speed WebP</p>
               </div>
-              <div className="pt-1">
+              <div className="flex items-center gap-1.5 pt-1">
                 <Button
                   type="button"
                   variant="secondary"
@@ -216,7 +235,7 @@ export function ImageUploadDropzone({
                   className="h-6 gap-1 text-[10px] font-medium"
                 >
                   <FolderOpen className="size-3" />
-                  <span>Choose from 509 Media</span>
+                  <span>Choose from Library / URL</span>
                 </Button>
               </div>
             </div>
@@ -230,7 +249,7 @@ export function ImageUploadDropzone({
           <Input
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="/media/cover-name.webp or https://..."
+            placeholder="Paste image link: https://... or /media/..."
             className="text-xs font-mono h-8"
           />
         </div>
@@ -244,15 +263,16 @@ export function ImageUploadDropzone({
         className="hidden"
       />
 
-      {/* Media Picker Modal */}
+      {/* 3-in-1 Media Picker Modal */}
       <MediaPickerModal
         isOpen={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={(url) => {
           onChange(url);
-          toast.success('Cover image updated from library');
+          toast.success('Cover image set successfully');
         }}
         currentUrl={value}
+        title="Set Featured Cover Image"
       />
     </div>
   );
