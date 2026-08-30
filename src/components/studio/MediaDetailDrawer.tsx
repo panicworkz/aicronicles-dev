@@ -35,6 +35,7 @@ export function MediaDetailDrawer({
   onUpdate,
   onDelete,
 }: MediaDetailDrawerProps) {
+  const [activeMedia, setActiveMedia] = useState<any | null>(null);
   const [title, setTitle] = useState('');
   const [alt, setAlt] = useState('');
   const [caption, setCaption] = useState('');
@@ -45,6 +46,7 @@ export function MediaDetailDrawer({
 
   useEffect(() => {
     if (media) {
+      setActiveMedia(media);
       setTitle(media.title || media.filename || '');
       setAlt(media.alt || media.filename || '');
       setCaption(media.caption || '');
@@ -63,7 +65,8 @@ export function MediaDetailDrawer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!media) return null;
+  const displayMedia = media || activeMedia;
+  if (!displayMedia) return null;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +76,7 @@ export function MediaDetailDrawer({
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: media.id,
+          id: displayMedia.id,
           title,
           alt,
           caption,
@@ -99,7 +102,7 @@ export function MediaDetailDrawer({
   const handleAiAutoDescribe = () => {
     setGeneratingAi(true);
     setTimeout(() => {
-      const cleanName = (media.filename || '')
+      const cleanName = (displayMedia.filename || '')
         .replace(/\.[^/.]+$/, '')
         .replace(/[-_0-9]+/g, ' ')
         .trim();
@@ -108,7 +111,7 @@ export function MediaDetailDrawer({
         .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
 
-      const autoAlt = `${formattedTitle} - High resolution editorial illustration`;
+      const autoAlt = `${formattedTitle} - High resolution visual asset`;
       const autoCaption = `Official visual asset showcasing ${cleanName}.`;
       const autoAeo = `Visual representation of ${cleanName}. High-contrast, web-optimized asset illustrating core concepts and system design for AI Answer Engines and multi-modal search models.`;
 
@@ -121,7 +124,7 @@ export function MediaDetailDrawer({
   };
 
   const copyUrl = () => {
-    navigator.clipboard.writeText(media.url);
+    navigator.clipboard.writeText(displayMedia.url);
     setCopied(true);
     toast.success('URL copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
@@ -137,7 +140,7 @@ export function MediaDetailDrawer({
     >
       {/* Backdrop with smooth blur & fade */}
       <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-300 ease-in-out cursor-pointer ${
+        className={`fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-300 ease-in-out cursor-pointer ${
           isOpen ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={onClose}
@@ -145,7 +148,7 @@ export function MediaDetailDrawer({
 
       {/* Slide-over Drawer with smooth slide-in and slide-out */}
       <aside
-        className={`relative z-50 flex h-full w-full sm:w-[500px] flex-col border-l bg-background shadow-2xl transition-transform duration-300 ease-in-out ${
+        className={`relative z-50 flex h-full w-full sm:w-[520px] flex-col border-l bg-background shadow-2xl transition-transform duration-300 ease-in-out will-change-transform ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -166,24 +169,24 @@ export function MediaDetailDrawer({
           <div className="rounded-md border bg-muted/20 overflow-hidden space-y-3 p-3">
             <div className="aspect-video w-full rounded-md overflow-hidden bg-black/50 border border-border relative">
               <img
-                src={media.url}
-                alt={alt || media.filename}
+                src={displayMedia.url}
+                alt={alt || displayMedia.filename}
                 className="w-full h-full object-contain"
               />
             </div>
 
             <div className="flex items-center justify-between text-xs font-mono text-muted-foreground pt-1">
-              <span>{media.width ? `${media.width} x ${media.height} px` : 'WebP Image'}</span>
-              <span>{media.filesize ? `${Math.round(media.filesize / 1024)} KB` : ''}</span>
+              <span>{displayMedia.width ? `${displayMedia.width} x ${displayMedia.height} px` : 'WebP Image'}</span>
+              <span>{displayMedia.filesize ? `${Math.round(displayMedia.filesize / 1024)} KB` : ''}</span>
               <Badge variant="outline" className="text-[10px] uppercase font-mono">
-                {media.mimeType ? media.mimeType.split('/')[1] : 'webp'}
+                {displayMedia.mimeType ? displayMedia.mimeType.split('/')[1] : 'webp'}
               </Badge>
             </div>
 
             {/* URL Copy Bar */}
             <div className="flex items-center gap-2 pt-1">
               <Input
-                value={media.url}
+                value={displayMedia.url}
                 readOnly
                 className="h-8 text-xs font-mono bg-background truncate select-all"
               />
@@ -289,8 +292,8 @@ export function MediaDetailDrawer({
             variant="destructive"
             size="sm"
             onClick={() => {
-              if (confirm(`Are you sure you want to permanently delete "${media.filename}"?`)) {
-                onDelete(media.id);
+              if (confirm(`Are you sure you want to permanently delete "${displayMedia.filename}"?`)) {
+                onDelete(displayMedia.id);
                 onClose();
               }
             }}
