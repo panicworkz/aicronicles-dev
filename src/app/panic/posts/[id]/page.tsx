@@ -687,13 +687,19 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
             <div
               className={`h-full transition-all duration-300 rounded-xl overflow-hidden border border-border bg-background shadow-lg mx-auto ${getFrameWidth()}`}
             >
-              <iframe
-                ref={iframeRef}
-                key={iframeKey}
-                src={`/${slug}?live=1`}
-                className="w-full h-full border-0 bg-background"
-                title="Live Web Preview"
-              />
+              {slug ? (
+                <iframe
+                  ref={iframeRef}
+                  key={`${slug}-${iframeKey}`}
+                  src={`/${slug}?live=1`}
+                  className="w-full h-full border-0 bg-background"
+                  title="Live Web Preview"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground font-mono">
+                  Loading live canvas preview...
+                </div>
+              )}
             </div>
           </div>
         </div>
