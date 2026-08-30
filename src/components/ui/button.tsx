@@ -18,14 +18,14 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const sizes = {
-      default: "h-8 gap-2 px-3.5 text-xs font-medium rounded-lg [&_svg:not([class*='size-'])]:size-3.5",
-      xs: "h-6 gap-1 rounded-md px-2 text-[11px] font-medium [&_svg:not([class*='size-'])]:size-3",
-      sm: "h-7 gap-1.5 rounded-lg px-3 text-xs font-medium [&_svg:not([class*='size-'])]:size-3.5",
-      lg: "h-9 gap-2.5 rounded-lg px-4 text-sm font-medium [&_svg:not([class*='size-'])]:size-4",
-      icon: "size-8 rounded-lg [&_svg:not([class*='size-'])]:size-4",
-      "icon-sm": "size-7 rounded-lg [&_svg:not([class*='size-'])]:size-3.5",
-      "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-      "icon-lg": "size-9 rounded-lg [&_svg:not([class*='size-'])]:size-4",
+      default: "h-8 gap-2 px-3 text-xs font-medium rounded-md [&_svg:not([class*='size-'])]:size-3.5",
+      xs: "h-6 gap-1 rounded-[5px] px-2 text-[11px] font-medium [&_svg:not([class*='size-'])]:size-3",
+      sm: "h-7 gap-1.5 rounded-md px-2.5 text-xs font-medium [&_svg:not([class*='size-'])]:size-3.5",
+      lg: "h-9 gap-2.5 rounded-md px-4 text-sm font-medium [&_svg:not([class*='size-'])]:size-4",
+      icon: "size-8 rounded-md [&_svg:not([class*='size-'])]:size-4",
+      "icon-sm": "size-7 rounded-md [&_svg:not([class*='size-'])]:size-3.5",
+      "icon-xs": "size-6 rounded-[5px] [&_svg:not([class*='size-'])]:size-3",
+      "icon-lg": "size-9 rounded-md [&_svg:not([class*='size-'])]:size-4",
     };
 
     return (
