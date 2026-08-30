@@ -24,6 +24,9 @@ export function ArticleLiveWrapper({
 
   const titleRef = useRef<HTMLHeadingElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const isTypingTitle = useRef(false);
+  const isTypingContent = useRef(false);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Helper to format raw HTML with GPU-accelerated CSS hover overlays for all images
   const formatContentWithLiveImages = (rawHtml: string) => {
@@ -44,6 +47,7 @@ export function ArticleLiveWrapper({
 
         const figure = doc.createElement('figure');
         figure.className = 'panic-live-image-wrapper relative my-6 block group select-none max-w-3xl';
+        figure.setAttribute('contenteditable', 'false');
 
         const box = doc.createElement('div');
         box.className = 'panic-live-image-box relative rounded-2xl overflow-hidden border border-border/80 bg-muted/20 shadow-md transition-all duration-200 inline-block w-full';
@@ -123,13 +127,13 @@ export function ArticleLiveWrapper({
 
         const { title: newTitle, contentHtml: newHtml, featuredImageUrl: newCover } = event.data.payload || {};
 
-        if (newTitle !== undefined && titleRef.current) {
+        if (newTitle !== undefined && titleRef.current && !isTypingTitle.current) {
           if (titleRef.current.innerText !== newTitle) {
             titleRef.current.innerText = newTitle;
           }
         }
 
-        if (newHtml !== undefined) {
+        if (newHtml !== undefined && !isTypingContent.current) {
           setFormattedHtml(formatContentWithLiveImages(newHtml));
         }
 
@@ -142,6 +146,58 @@ export function ArticleLiveWrapper({
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [initialContentHtml]);
+
+  const handleTitleInput = (e: React.FormEvent<HTMLHeadingElement>) => {
+    const newText = e.currentTarget.innerText;
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    syncTimeoutRef.current = setTimeout(() => {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          {
+            type: 'PANIC_LIVE_TO_STUDIO_SYNC',
+            source: 'live_iframe',
+            payload: { title: newText },
+          },
+          '*'
+        );
+      }
+    }, 150);
+  };
+
+  const handleContentInput = (e: React.FormEvent<HTMLDivElement>) => {
+    const rawHtml = e.currentTarget.innerHTML;
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    syncTimeoutRef.current = setTimeout(() => {
+      if (window.parent && window.parent !== window) {
+        // Strip live wrapper elements before sending back to studio
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(rawHtml, 'text/html');
+        const liveFigures = doc.querySelectorAll('.panic-live-image-wrapper');
+        liveFigures.forEach((fig) => {
+          const img = fig.querySelector('img');
+          if (img) {
+            const cleanImg = doc.createElement('img');
+            cleanImg.src = img.getAttribute('src') || img.src;
+            if (img.alt) cleanImg.alt = img.alt;
+            if (img.title) cleanImg.title = img.title;
+            const btn = fig.querySelector('button[data-panic-manage="true"]');
+            const cap = btn?.getAttribute('data-caption');
+            if (cap) cleanImg.setAttribute('data-caption', cap);
+            fig.parentNode?.replaceChild(cleanImg, fig);
+          }
+        });
+        const cleanHtml = doc.body.innerHTML;
+        window.parent.postMessage(
+          {
+            type: 'PANIC_LIVE_TO_STUDIO_SYNC',
+            source: 'live_iframe',
+            payload: { contentHtml: cleanHtml },
+          },
+          '*'
+        );
+      }
+    }, 200);
+  };
 
   const triggerOpenImageStudio = (src: string, alt = '', title = '', caption = '', isCover = false) => {
     if (window.parent && window.parent !== window) {
@@ -175,14 +231,21 @@ export function ArticleLiveWrapper({
       {isLiveMode && (
         <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono select-none">
           <span className="size-2 rounded-full bg-primary animate-ping" />
-          <span>Live In-Context Studio (Hover any image to manage with AI)</span>
+          <span>Live In-Context Studio (Click to edit text, hover images to manage)</span>
         </div>
       )}
 
-      {/* Direct In-Context Title */}
+      {/* Direct In-Context Editable Title */}
       <h1
         ref={titleRef}
-        className="text-3xl sm:text-5xl font-black tracking-tight text-foreground leading-tight mb-6 font-serif select-none"
+        contentEditable={isLiveMode}
+        suppressContentEditableWarning
+        onFocus={() => { isTypingTitle.current = true; }}
+        onBlur={() => { isTypingTitle.current = false; }}
+        onInput={handleTitleInput}
+        className={`text-3xl sm:text-5xl font-black tracking-tight text-foreground leading-tight mb-6 font-serif ${
+          isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/40 rounded-lg p-1 hover:bg-muted/30 transition cursor-text' : ''
+        }`}
       >
         {initialTitle}
       </h1>
@@ -222,14 +285,21 @@ export function ArticleLiveWrapper({
         </div>
       )}
 
-      {/* Direct Content Body with Pure CSS Group-Hover Actions */}
+      {/* Direct In-Context Editable Content Body */}
       <div
         ref={contentRef}
+        contentEditable={isLiveMode}
+        suppressContentEditableWarning
+        onFocus={() => { isTypingContent.current = true; }}
+        onBlur={() => { isTypingContent.current = false; }}
+        onInput={handleContentInput}
         onClick={handleContentClick}
-        className="prose dark:prose-invert prose-neutral prose-lg max-w-none font-sans leading-relaxed
+        className={`prose dark:prose-invert prose-neutral prose-lg max-w-none font-sans leading-relaxed
           prose-headings:font-serif prose-headings:text-foreground prose-headings:tracking-tight
           prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-          prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground"
+          prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground ${
+            isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/20 rounded-xl p-2 hover:bg-muted/20 transition cursor-text' : ''
+          }`}
         dangerouslySetInnerHTML={{ __html: formattedHtml || '' }}
       />
     </main>

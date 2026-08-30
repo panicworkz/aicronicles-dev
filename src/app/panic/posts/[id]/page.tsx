@@ -23,6 +23,7 @@ import {
   Columns,
   Eye,
   Layout,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -112,12 +113,18 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
     fetchPost();
 
-    // Listen for real-time edits or image manage requests made on the right-side live canvas
+    // Listen for real-time edits or image manage requests made on the live canvas
     const handleLiveMessage = (event: MessageEvent) => {
       if (event.data?.type === 'PANIC_LIVE_TO_STUDIO_SYNC') {
         const { title: liveTitle, contentHtml: liveHtml } = event.data.payload || {};
-        if (liveTitle !== undefined) setTitle(liveTitle);
-        if (liveHtml !== undefined) setContentHtml(liveHtml);
+        if (liveTitle !== undefined) {
+          setTitle(liveTitle);
+          titleRef.current = liveTitle;
+        }
+        if (liveHtml !== undefined) {
+          setContentHtml(liveHtml);
+          contentHtmlRef.current = liveHtml;
+        }
       }
 
       if (event.data?.type === 'PANIC_OPEN_IMAGE_STUDIO') {
@@ -220,48 +227,8 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
               }
             }
           },
-          onDelete: async () => {
-            if (isCover) {
-              setFeaturedImageUrl('');
-              broadcastLiveSync(titleRef.current, contentHtmlRef.current, '');
-            } else {
-              const currentHtml = contentHtmlRef.current || '';
-              const parser = new DOMParser();
-              const doc = parser.parseFromString(currentHtml, 'text/html');
-              const imgs = doc.querySelectorAll('img');
-              imgs.forEach((im) => {
-                const imSrc = im.getAttribute('src') || '';
-                if (imSrc === src || src.endsWith(imSrc) || imSrc.endsWith(src) || im.src === src) {
-                  const parent = im.parentElement;
-                  if (parent && parent.tagName === 'FIGURE') parent.remove();
-                  else im.remove();
-                }
-              });
-              const updatedHtml = doc.body.innerHTML;
-              setContentHtml(updatedHtml);
-              broadcastLiveSync(titleRef.current, updatedHtml, featuredImageUrlRef.current);
-            }
-          },
         });
         setStudioOpen(true);
-      }
-
-      if (event.data?.type === 'PANIC_REPLACE_IMAGE_REQUEST') {
-        const { src, alt, isCover } = event.data.payload || {};
-        setTargetReplaceImg({ src, alt, isCover });
-        setSplitPickerOpen(true);
-      }
-
-      if (event.data?.type === 'PANIC_UPDATE_COVER_ALT') {
-        const { alt } = event.data.payload || {};
-        if (alt) setFeaturedImageAlt(alt);
-        toast.success('Cover alt text updated');
-      }
-
-      if (event.data?.type === 'PANIC_DELETE_COVER_REQUEST') {
-        setFeaturedImageUrl('');
-        broadcastLiveSync(title, contentHtml, '');
-        toast.info('Cover image removed');
       }
     };
 
@@ -269,12 +236,12 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
     return () => window.removeEventListener('message', handleLiveMessage);
   }, [postId]);
 
-  // Live Sync from left editor to right iframe via postMessage
   const broadcastLiveSync = (newTitle: string, newHtml: string, newCover: string) => {
-    if (iframeRef.current?.contentWindow) {
+    if (iframeRef.current && iframeRef.current.contentWindow) {
       iframeRef.current.contentWindow.postMessage(
         {
           type: 'PANIC_STUDIO_LIVE_UPDATE',
+          source: 'studio_parent',
           payload: {
             title: newTitle,
             contentHtml: newHtml,
@@ -286,25 +253,35 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
     }
   };
 
-  const handleTitleChange = (val: string) => {
-    setTitle(val);
-    broadcastLiveSync(val, contentHtml, featuredImageUrl);
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+    titleRef.current = newTitle;
+    broadcastLiveSync(newTitle, contentHtml, featuredImageUrl);
   };
 
-  const handleContentChange = (html: string, json: any) => {
-    setContentHtml(html);
-    setContentJson(json);
-    broadcastLiveSync(title, html, featuredImageUrl);
+  const handleContentChange = (newHtml: string, newJson: any) => {
+    setContentHtml(newHtml);
+    contentHtmlRef.current = newHtml;
+    setContentJson(newJson);
+    broadcastLiveSync(title, newHtml, featuredImageUrl);
   };
 
-  const handleInsertHtml = (htmlToAppend: string) => {
-    const updated = (contentHtml || '') + htmlToAppend;
-    handleContentChange(updated, null);
+  const handleInsertHtml = (snippetHtml: string) => {
+    const combined = `${contentHtml}\n${snippetHtml}`;
+    setContentHtml(combined);
+    contentHtmlRef.current = combined;
+    broadcastLiveSync(title, combined, featuredImageUrl);
+    toast.success('Block added to article');
   };
 
-  const handleSave = async (isSilent = false) => {
-    if (!isSilent) setSaving(true);
-    else setAutosaving(true);
+  const handleSave = async (isAuto = false) => {
+    if (!title.trim()) {
+      if (!isAuto) toast.error('Please enter an article title');
+      return;
+    }
+
+    if (isAuto) setAutosaving(true);
+    else setSaving(true);
 
     try {
       const res = await fetch(`/api/posts/${postId}`, {
@@ -312,7 +289,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
-          slug,
+          slug: slugRef.current || slug,
           excerpt,
           contentHtml,
           contentJson,
@@ -326,40 +303,34 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
       const data = await res.json();
       if (data.success) {
-        if (!isSilent) {
-          toast.success('Guide updated successfully');
-          // Create revision log
-          fetch(`/api/posts/${postId}/revisions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, contentHtml, contentJson, excerpt }),
-          });
+        if (!isAuto) {
+          toast.success('Article saved successfully!');
         }
       } else {
-        if (!isSilent) toast.error(data.error || 'Failed to save changes');
+        if (!isAuto) toast.error(data.error || 'Failed to save');
       }
-    } catch (err: any) {
-      if (!isSilent) toast.error(err.message || 'Save error');
+    } catch (err) {
+      if (!isAuto) toast.error('An error occurred while saving');
     } finally {
-      setSaving(false);
-      setAutosaving(false);
+      if (isAuto) setAutosaving(false);
+      else setSaving(false);
     }
   };
 
-  // Restore revision snapshot
   const handleRestoreRevision = (rev: any) => {
     if (rev.title) setTitle(rev.title);
     if (rev.contentHtml) setContentHtml(rev.contentHtml);
     if (rev.contentJson) setContentJson(rev.contentJson);
-    if (rev.excerpt) setExcerpt(rev.excerpt);
     broadcastLiveSync(rev.title || title, rev.contentHtml || contentHtml, featuredImageUrl);
+    toast.success('Revision restored to editor');
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <div className="text-xs text-muted-foreground font-medium animate-pulse">
-          Initializing Next-Gen Split Live Studio...
+      <div className="flex h-[80vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          <RefreshCw className="size-6 animate-spin text-primary" />
+          <p className="text-xs font-mono">Loading Studio...</p>
         </div>
       </div>
     );
@@ -377,6 +348,133 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
     }
   };
 
+  // Render the AI & AEO Suite Content
+  const renderAiAeoSuite = () => (
+    <div className="space-y-6">
+      <AeoScoreMeter
+        title={title}
+        contentHtml={contentHtml}
+        excerpt={excerpt}
+        metaTitle={metaTitle}
+        metaDescription={metaDescription}
+      />
+
+      <SerpSocialPreview
+        title={title}
+        slug={slug}
+        excerpt={excerpt}
+        featuredImageUrl={featuredImageUrl}
+        metaTitle={metaTitle}
+        metaDescription={metaDescription}
+      />
+    </div>
+  );
+
+  // Render the SEO & Metadata Content
+  const renderMetadataSuite = () => (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold">Publishing Details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Publication Status</Label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full h-8 rounded-lg border bg-background px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="published">Published (Live on web)</option>
+              <option value="draft">Draft (Private)</option>
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">Featured Cover Image</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <ImageUploadDropzone
+            value={featuredImageUrl}
+            onChange={(url) => {
+              setFeaturedImageUrl(url);
+              broadcastLiveSync(title, contentHtml, url);
+            }}
+            altValue={featuredImageAlt}
+            onAltChange={(alt) => setFeaturedImageAlt(alt)}
+            label=""
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-semibold">SEO & Google Search</CardTitle>
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={async () => {
+              if (!title.trim()) {
+                toast.error('Please enter an article title first');
+                return;
+              }
+              try {
+                const res = await fetch('/api/ai/copilot', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    action: 'generateSeoMeta',
+                    title,
+                    slug,
+                    contentHtml,
+                    excerpt,
+                  }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                  if (data.metaTitle) setMetaTitle(data.metaTitle);
+                  if (data.metaDescription) setMetaDescription(data.metaDescription);
+                  toast.success('Dynamic AI SEO metadata generated!');
+                }
+              } catch (e) {
+                toast.error('AI synthesis failed');
+              }
+            }}
+            className="h-6 gap-1 text-[11px] text-primary hover:text-primary font-medium"
+          >
+            <Sparkles className="size-3" />
+            <span>AI Auto-Fill ✨</span>
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Meta Title</Label>
+            <Input
+              value={metaTitle}
+              onChange={(e) => setMetaTitle(e.target.value)}
+              placeholder={title}
+              className="text-xs"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Meta Description</Label>
+            <Textarea
+              rows={3}
+              value={metaDescription}
+              onChange={(e) => setMetaDescription(e.target.value)}
+              placeholder="Meta description for search engines..."
+              className="text-xs resize-none leading-relaxed"
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)] -m-6 overflow-hidden">
       {/* Studio Header Toolbar */}
@@ -391,14 +489,14 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
             <Badge variant={status === 'published' ? 'default' : 'secondary'} className="capitalize text-[11px] font-normal">
               {status}
             </Badge>
-            <span className="text-xs text-muted-foreground truncate max-w-[200px] font-medium hidden sm:inline">
+            <span className="text-xs text-muted-foreground truncate max-w-[180px] font-medium hidden sm:inline">
               {title || 'Untitled'}
             </span>
           </div>
         </div>
 
         {/* Mode Switcher & Tab Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Main 3-Way Mode Switcher */}
           <div className="flex items-center rounded-xl border border-border/80 bg-muted/30 p-0.5 text-xs shadow-2xs">
             <button
@@ -439,34 +537,32 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
             </button>
           </div>
 
-          {/* Subtabs for Visual Editor (shown when in editor or split mode) */}
-          {viewMode !== 'live' && (
-            <div className="hidden sm:flex items-center rounded-lg border bg-muted/40 p-0.5 text-xs">
-              <Button
-                variant={activeTab === 'editor' ? 'secondary' : 'ghost'}
-                size="xs"
-                onClick={() => setActiveTab('editor')}
-              >
-                Editor
-              </Button>
-              <Button
-                variant={activeTab === 'ai_aeo' ? 'secondary' : 'ghost'}
-                size="xs"
-                onClick={() => setActiveTab('ai_aeo')}
-                className="gap-1 text-primary"
-              >
-                <Sparkles className="size-3" />
-                <span>AI & AEO</span>
-              </Button>
-              <Button
-                variant={activeTab === 'metadata' ? 'secondary' : 'ghost'}
-                size="xs"
-                onClick={() => setActiveTab('metadata')}
-              >
-                SEO Meta
-              </Button>
-            </div>
-          )}
+          {/* Subtabs (Always visible across all modes!) */}
+          <div className="flex items-center rounded-lg border bg-muted/40 p-0.5 text-xs">
+            <Button
+              variant={activeTab === 'editor' ? 'secondary' : 'ghost'}
+              size="xs"
+              onClick={() => setActiveTab('editor')}
+            >
+              Editor
+            </Button>
+            <Button
+              variant={activeTab === 'ai_aeo' ? 'secondary' : 'ghost'}
+              size="xs"
+              onClick={() => setActiveTab('ai_aeo')}
+              className="gap-1 text-primary"
+            >
+              <Sparkles className="size-3" />
+              <span>AI & AEO</span>
+            </Button>
+            <Button
+              variant={activeTab === 'metadata' ? 'secondary' : 'ghost'}
+              size="xs"
+              onClick={() => setActiveTab('metadata')}
+            >
+              SEO Meta
+            </Button>
+          </div>
         </div>
 
         {/* Right Actions */}
@@ -501,7 +597,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
       </div>
 
       {/* Main Mode Body */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* 1. VISUAL EDITOR PANEL (Full width in 'editor' mode, 50% in 'split' mode, hidden in 'live' mode) */}
         {viewMode !== 'live' && (
           <div
@@ -574,130 +670,8 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                 </div>
               )}
 
-              {activeTab === 'ai_aeo' && (
-                <div className="space-y-6">
-                  <AeoScoreMeter
-                    title={title}
-                    contentHtml={contentHtml}
-                    excerpt={excerpt}
-                    metaTitle={metaTitle}
-                    metaDescription={metaDescription}
-                  />
-
-                  <SerpSocialPreview
-                    title={title}
-                    slug={slug}
-                    excerpt={excerpt}
-                    featuredImageUrl={featuredImageUrl}
-                    metaTitle={metaTitle}
-                    metaDescription={metaDescription}
-                  />
-                </div>
-              )}
-
-              {activeTab === 'metadata' && (
-                <div className="space-y-4">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-semibold">Publishing Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-1.5">
-                        <Label>Publication Status</Label>
-                        <select
-                          value={status}
-                          onChange={(e) => setStatus(e.target.value)}
-                          className="w-full h-8 rounded-lg border bg-background px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
-                        >
-                          <option value="published">Published (Live on web)</option>
-                          <option value="draft">Draft (Private)</option>
-                        </select>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-semibold">Featured Cover Image</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <ImageUploadDropzone
-                        value={featuredImageUrl}
-                        onChange={(url) => {
-                          setFeaturedImageUrl(url);
-                          broadcastLiveSync(title, contentHtml, url);
-                        }}
-                        altValue={featuredImageAlt}
-                        onAltChange={(alt) => setFeaturedImageAlt(alt)}
-                        label=""
-                      />
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                      <CardTitle className="text-sm font-semibold">SEO & Google Search</CardTitle>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="xs"
-                        onClick={async () => {
-                          if (!title.trim()) {
-                            toast.error('Please enter an article title first');
-                            return;
-                          }
-                          try {
-                            const res = await fetch('/api/ai/copilot', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                action: 'generateSeoMeta',
-                                title,
-                                slug,
-                                contentHtml,
-                                excerpt,
-                              }),
-                            });
-                            const data = await res.json();
-                            if (data.success) {
-                              if (data.metaTitle) setMetaTitle(data.metaTitle);
-                              if (data.metaDescription) setMetaDescription(data.metaDescription);
-                              toast.success('Dynamic AI SEO metadata generated!');
-                            }
-                          } catch (e) {
-                            toast.error('AI synthesis failed');
-                          }
-                        }}
-                        className="h-6 gap-1 text-[11px] text-primary hover:text-primary font-medium"
-                      >
-                        <Sparkles className="size-3" />
-                        <span>AI Auto-Fill ✨</span>
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="space-y-1.5">
-                        <Label>Meta Title</Label>
-                        <Input
-                          value={metaTitle}
-                          onChange={(e) => setMetaTitle(e.target.value)}
-                          placeholder={title}
-                          className="text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Meta Description</Label>
-                        <Textarea
-                          rows={3}
-                          value={metaDescription}
-                          onChange={(e) => setMetaDescription(e.target.value)}
-                          placeholder="Meta description for search engines..."
-                          className="text-xs resize-none leading-relaxed"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
+              {activeTab === 'ai_aeo' && renderAiAeoSuite()}
+              {activeTab === 'metadata' && renderMetadataSuite()}
             </div>
           </div>
         )}
@@ -705,7 +679,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         {/* 2. LIVE IN-CONTEXT CANVAS (Full width in 'live' mode, 50% in 'split' mode, hidden in 'editor' mode) */}
         {viewMode !== 'editor' && (
           <div
-            className={`flex flex-col bg-muted/30 overflow-hidden ${
+            className={`flex flex-col bg-muted/30 overflow-hidden relative ${
               viewMode === 'live'
                 ? 'w-full h-full'
                 : 'hidden lg:flex lg:w-1/2'
@@ -776,6 +750,39 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                 )}
               </div>
             </div>
+
+            {/* Slide-Over Side Drawer for Live Mode when AI & AEO or SEO Meta tab is clicked */}
+            {viewMode === 'live' && activeTab !== 'editor' && (
+              <div className="absolute top-10 right-0 bottom-0 w-full sm:w-[480px] bg-background/95 backdrop-blur-md border-l border-border shadow-2xl z-30 flex flex-col animate-in slide-in-from-right duration-200">
+                <div className="flex items-center justify-between p-4 border-b">
+                  <div className="flex items-center gap-2">
+                    {activeTab === 'ai_aeo' ? (
+                      <>
+                        <Sparkles className="size-4 text-primary" />
+                        <span className="font-semibold text-sm">AI & AEO Intelligence Suite</span>
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="size-4 text-primary" />
+                        <span className="font-semibold text-sm">SEO & Publishing Settings</span>
+                      </>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => setActiveTab('editor')}
+                    title="Close Panel"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  {activeTab === 'ai_aeo' && renderAiAeoSuite()}
+                  {activeTab === 'metadata' && renderMetadataSuite()}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
