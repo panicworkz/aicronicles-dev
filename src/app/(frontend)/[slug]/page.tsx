@@ -25,12 +25,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
-    title: `${post.metaTitle || post.title} - Fabelo`,
+    title: `${post.metaTitle || post.title}`,
     description: post.metaDescription || post.excerpt,
     openGraph: {
       title: post.title,
-      description: post.excerpt || undefined,
+      description: post.metaDescription || post.excerpt || undefined,
       images: post.featuredImageUrl ? [{ url: post.featuredImageUrl }] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.metaDescription || post.excerpt || undefined,
+      images: post.featuredImageUrl ? [post.featuredImageUrl] : [],
     },
   };
 }
@@ -44,6 +50,20 @@ export default async function ArticleDetailPage({ params }: PageProps) {
   });
 
   if (post) {
+    let author = null;
+    if (post.authorId) {
+      author = await db.query.authors.findFirst({
+        where: eq(schema.authors.id, post.authorId),
+      });
+    }
+
+    let category = null;
+    if (post.categoryId) {
+      category = await db.query.categories.findFirst({
+        where: eq(schema.categories.id, post.categoryId),
+      });
+    }
+
     return (
       <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-white transition-colors duration-200">
         {/* Header */}
@@ -65,8 +85,11 @@ export default async function ArticleDetailPage({ params }: PageProps) {
           initialTitle={post.title}
           initialContentHtml={post.contentHtml || ''}
           initialCoverUrl={post.featuredImageUrl}
+          excerpt={post.excerpt}
           readingTime={post.readingTime}
           publishedAt={post.publishedAt ? post.publishedAt.toISOString() : null}
+          author={author}
+          category={category}
         />
 
         {/* Footer */}
@@ -99,7 +122,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
       <article className="max-w-4xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-extrabold tracking-tight text-foreground mb-8 font-serif">{page.title}</h1>
         <div
-          className="prose dark:prose-invert prose-neutral prose-lg max-w-none prose-headings:font-serif prose-a:text-primary hover:prose-a:underline"
+          className="prose dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{ __html: page.contentHtml || '' }}
         />
       </article>

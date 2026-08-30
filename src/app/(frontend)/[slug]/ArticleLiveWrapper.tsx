@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import Link from 'next/link';
 import {
   Sparkles,
   Bold,
@@ -26,16 +27,30 @@ interface ArticleLiveWrapperProps {
   initialTitle: string;
   initialContentHtml: string;
   initialCoverUrl?: string | null;
+  excerpt?: string | null;
   readingTime?: string | null;
   publishedAt?: string | null;
+  author?: {
+    name: string;
+    slug: string;
+    avatarUrl?: string | null;
+    role?: string | null;
+  } | null;
+  category?: {
+    name: string;
+    slug: string;
+  } | null;
 }
 
 export function ArticleLiveWrapper({
   initialTitle,
   initialContentHtml,
   initialCoverUrl,
+  excerpt,
   readingTime,
   publishedAt,
+  author,
+  category,
 }: ArticleLiveWrapperProps) {
   const [coverUrl, setCoverUrl] = useState(initialCoverUrl);
   const [isLiveMode, setIsLiveMode] = useState(false);
@@ -573,8 +588,17 @@ export function ArticleLiveWrapper({
         </div>
       )}
 
-      {/* Floating Selection Bubble Formatting Toolbar (Portalled outside to never re-render article content) */}
+      {/* Floating Selection Bubble Formatting Toolbar */}
       {renderBubblePortal()}
+
+      {/* Category Badge */}
+      {category && (
+        <div className="mb-3">
+          <span className="inline-block px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider font-mono">
+            {category.name}
+          </span>
+        </div>
+      )}
 
       {/* Direct In-Context Editable Title */}
       <h1
@@ -584,19 +608,37 @@ export function ArticleLiveWrapper({
         onFocus={() => { isTypingTitle.current = true; }}
         onBlur={() => { isTypingTitle.current = false; }}
         onInput={handleTitleInput}
-        className={`text-3xl sm:text-5xl font-black tracking-tight text-foreground leading-tight mb-6 font-serif ${
+        className={`text-3xl sm:text-5xl font-black tracking-tight text-foreground leading-tight mb-4 font-serif ${
           isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/40 rounded-lg p-1 hover:bg-muted/30 transition cursor-text' : ''
         }`}
-      >
-        {initialTitle}
-      </h1>
+        dangerouslySetInnerHTML={{ __html: initialTitle }}
+      />
 
+      {/* Article Excerpt / Lead */}
+      {excerpt && (
+        <p className="text-lg text-muted-foreground leading-relaxed mb-6 font-serif">
+          {excerpt}
+        </p>
+      )}
+
+      {/* Author & Meta Row */}
       <div className="flex items-center space-x-4 border-y border-border py-4 mb-8 text-xs text-muted-foreground font-mono">
-        <span className="text-foreground font-sans font-medium">Fabelo Editorial</span>
+        <div className="flex items-center gap-2">
+          {author?.avatarUrl ? (
+            <img src={author.avatarUrl} alt={author.name} className="size-6 rounded-full object-cover border" />
+          ) : (
+            <div className="size-6 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px]">
+              {(author?.name || 'U')[0]}
+            </div>
+          )}
+          <span className="text-foreground font-sans font-semibold">
+            {author?.name || 'Ufuk Yorulmaz'}
+          </span>
+        </div>
         <span>•</span>
         <span>{publishedAt ? new Date(publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Editorial'}</span>
         <span>•</span>
-        <span>{readingTime || '5 min read'}</span>
+        <span className="font-semibold text-primary">{readingTime || '5 min read'}</span>
       </div>
 
       {/* Featured Cover Image with [Manage Cover & AI] Center Button */}
