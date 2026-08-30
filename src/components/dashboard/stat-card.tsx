@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { TrendingDown, TrendingUp } from "lucide-react";
