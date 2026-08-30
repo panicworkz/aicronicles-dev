@@ -42,19 +42,45 @@ export function RevisionHistoryDrawer({
     fetchRevisions();
   }, [isOpen, postId]);
 
-  if (!isOpen) return null;
+  // Handle ESC key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end animate-in fade-in duration-200">
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-xs cursor-pointer" onClick={onClose} />
+    <div
+      className={`fixed inset-0 z-50 flex justify-end transition-all duration-300 ease-in-out ${
+        isOpen
+          ? 'opacity-100 pointer-events-auto visible'
+          : 'opacity-0 pointer-events-none invisible'
+      }`}
+    >
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-300 ease-in-out cursor-pointer ${
+          isOpen ? 'opacity-100' : 'opacity-0'
+        }`}
+        onClick={onClose}
+      />
 
-      <aside className="relative z-50 flex h-full w-full sm:w-[450px] flex-col border-l bg-background shadow-2xl animate-in slide-in-from-right duration-300">
+      {/* Slide-over Panel from Right */}
+      <aside
+        className={`relative z-50 flex h-full w-full sm:w-[450px] flex-col border-l bg-background shadow-2xl transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
         <div className="flex h-14 items-center justify-between gap-3 border-b px-4 shrink-0">
           <div className="flex items-center gap-2">
             <History className="size-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Revision History & Snapshots</h2>
           </div>
-          <Button variant="ghost" size="icon-sm" onClick={onClose}>
+          <Button variant="ghost" size="icon-sm" onClick={onClose} title="Close (ESC)">
             <X className="size-4" />
           </Button>
         </div>
