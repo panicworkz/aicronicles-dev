@@ -621,9 +621,15 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           )}
         </div>
 
-        {/* Option 3: Fixed Right Inspector Sidebar (Sits as a genuine sibling in flex, NEVER overlays text) */}
-        {sidebarOpen && (
-          <aside className="w-[340px] xl:w-[380px] border-l bg-background/95 backdrop-blur-xs shrink-0 flex flex-col h-full overflow-hidden shadow-xs transition-all duration-200">
+        {/* Option 3: Fixed Right Inspector Sidebar (Smooth animated slide & width transition) */}
+        <aside
+          className={`border-l bg-background/95 backdrop-blur-xs shrink-0 flex flex-col h-full overflow-hidden shadow-xs transition-all duration-300 ease-in-out ${
+            sidebarOpen
+              ? 'w-[340px] xl:w-[380px] opacity-100'
+              : 'w-0 opacity-0 border-l-0 pointer-events-none'
+          }`}
+        >
+          <div className="w-[340px] xl:w-[380px] flex flex-col h-full overflow-hidden">
             {/* Sidebar Sub-Header Tabs */}
             <div className="flex h-11 items-center justify-between border-b px-3 bg-muted/20 shrink-0">
               <div className="flex items-center rounded-lg border bg-muted/40 p-0.5 text-xs">
@@ -657,7 +663,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                 size="icon-xs"
                 onClick={() => setSidebarOpen(false)}
                 title="Collapse Sidebar"
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <PanelRightClose className="size-3.5" />
               </Button>
@@ -790,8 +796,8 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                 </div>
               )}
             </div>
-          </aside>
-        )}
+          </div>
+        </aside>
       </div>
 
       {/* Revision History Drawer */}
