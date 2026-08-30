@@ -33,6 +33,7 @@ import { SerpSocialPreview } from '@/components/studio/SerpSocialPreview';
 import { BlockInsertToolbar } from '@/components/studio/BlockInsertToolbar';
 import { RevisionHistoryDrawer } from '@/components/studio/RevisionHistoryDrawer';
 import { MediaPickerModal } from '@/components/studio/MediaPickerModal';
+import { ImageStudioDrawer, type ImageStudioTarget } from '@/components/studio/ImageStudioDrawer';
 import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
 import { toast } from 'sonner';
 
@@ -50,6 +51,8 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
   const [showRevisions, setShowRevisions] = useState(false);
   const [splitPickerOpen, setSplitPickerOpen] = useState(false);
   const [targetReplaceImg, setTargetReplaceImg] = useState<{ src: string; alt?: string; isCover?: boolean } | null>(null);
+  const [studioOpen, setStudioOpen] = useState(false);
+  const [studioTarget, setStudioTarget] = useState<ImageStudioTarget | null>(null);
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -95,12 +98,53 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
     fetchPost();
 
-    // Listen for real-time edits or image replace requests made on the right-side live canvas
+    // Listen for real-time edits or image manage requests made on the right-side live canvas
     const handleLiveMessage = (event: MessageEvent) => {
       if (event.data?.type === 'PANIC_LIVE_TO_STUDIO_SYNC') {
         const { title: liveTitle, contentHtml: liveHtml } = event.data.payload || {};
         if (liveTitle !== undefined) setTitle(liveTitle);
         if (liveHtml !== undefined) setContentHtml(liveHtml);
+      }
+
+      if (event.data?.type === 'PANIC_OPEN_IMAGE_STUDIO') {
+        const { src, alt, title: imgTitle, isCover } = event.data.payload || {};
+        setStudioTarget({
+          src,
+          alt,
+          title: imgTitle,
+          isCover,
+          onSave: (newData) => {
+            if (isCover) {
+              setFeaturedImageUrl(newData.src);
+              if (newData.alt) setFeaturedImageAlt(newData.alt);
+              broadcastLiveSync(title, contentHtml, newData.src);
+            } else {
+              let updatedHtml = contentHtml || '';
+              if (src !== newData.src) {
+                updatedHtml = updatedHtml.replaceAll(src, newData.src);
+              }
+              if (newData.alt && alt && alt !== newData.alt) {
+                updatedHtml = updatedHtml.replaceAll(`alt="${alt}"`, `alt="${newData.alt}"`);
+              }
+              setContentHtml(updatedHtml);
+              broadcastLiveSync(title, updatedHtml, featuredImageUrl);
+            }
+          },
+          onDelete: () => {
+            if (isCover) {
+              setFeaturedImageUrl('');
+              broadcastLiveSync(title, contentHtml, '');
+            } else {
+              let updatedHtml = contentHtml || '';
+              // Remove image by replacing occurrences
+              const regex = new RegExp(`<img[^>]*src=["']${src}["'][^>]*>`, 'gi');
+              updatedHtml = updatedHtml.replace(regex, '');
+              setContentHtml(updatedHtml);
+              broadcastLiveSync(title, updatedHtml, featuredImageUrl);
+            }
+          },
+        });
+        setStudioOpen(true);
       }
 
       if (event.data?.type === 'PANIC_REPLACE_IMAGE_REQUEST') {
@@ -368,6 +412,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                 <TipTapEditor
                   content={contentHtml}
                   onChange={handleContentChange}
+                  articleTitle={title}
                 />
               </div>
             </div>
@@ -569,6 +614,18 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         isOpen={showRevisions}
         onClose={() => setShowRevisions(false)}
         onRestore={handleRestoreRevision}
+      />
+
+      {/* Slide-Over Image Studio & AI Optimizer Drawer for Live Canvas */}
+      <ImageStudioDrawer
+        isOpen={studioOpen}
+        onClose={() => {
+          setStudioOpen(false);
+          setStudioTarget(null);
+        }}
+        target={studioTarget}
+        articleTitle={title}
+        articleContent={contentHtml}
       />
 
       {/* Split Live Canvas & Editor Image Replace Modal */}

@@ -184,6 +184,8 @@ Return JSON ONLY: {"metaTitle": "...", "metaDescription": "..."}`;
     // 2. MEDIA ASSET SEO & AEO SYNTHESIZER
     // =========================================================================
     if (action === 'generateMediaSeo') {
+      const { articleTitle, articleContent, currentAlt, currentTitle } = await request.json().catch(() => ({}));
+      
       const cleanFileName = (filename || cleanTitle || 'image')
         .replace(/\.[^/.]+$/, '')
         .replace(/[-_0-9]+/g, ' ')
@@ -195,12 +197,55 @@ Return JSON ONLY: {"metaTitle": "...", "metaDescription": "..."}`;
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
 
-      const autoTitle = words || 'Visual Asset';
-      const autoAlt = words || 'Editorial image';
-      const autoCaption = isTurkish ? `${words} görseli.` : `${words} visual reference.`;
+      // If Gemini is available, generate context-aware Alt & SEO Caption
+      if (process.env.GEMINI_API_KEY) {
+        const geminiPrompt = `You are an SEO & Image Accessibility specialist. Generate descriptive Alt text (max 100 chars, highly specific, no "image of"), image title, caption, and AEO context for this image.
+Article Title: "${articleTitle || cleanTitle || ''}"
+Image Filename / Subject: "${words || currentAlt || cleanFileName}"
+Context: "${cleanText(articleContent || rawText).substring(0, 400)}"
+
+Return JSON ONLY:
+{
+  "alt": "Descriptive, keyword-rich Alt text",
+  "title": "Clean concise image title",
+  "caption": "Helpful editorial caption explaining the image in context",
+  "aeoContext": "1-sentence AI answer engine semantic explanation"
+}`;
+
+        const llmResult = await callGeminiIfAvailable(geminiPrompt);
+        if (llmResult) {
+          try {
+            const parsed = JSON.parse(llmResult.replace(/```json/g, '').replace(/```/g, '').trim());
+            if (parsed.alt) {
+              return NextResponse.json({
+                success: true,
+                title: parsed.title || words || 'Visual Illustration',
+                alt: parsed.alt,
+                caption: parsed.caption || '',
+                aeoContext: parsed.aeoContext || '',
+              });
+            }
+          } catch (e) {
+            // fallback to smart NLP
+          }
+        }
+      }
+
+      // Smart Contextual NLP Fallback
+      let autoAlt = currentAlt || words || 'Editorial Illustration';
+      if (articleTitle && !autoAlt.toLowerCase().includes(articleTitle.toLowerCase().substring(0, 15))) {
+        autoAlt = isTurkish
+          ? `${words || 'Görsel'} - ${articleTitle}`
+          : `${words || 'Illustration'} for ${articleTitle}`;
+      }
+
+      const autoTitle = words || cleanTitle || 'Visual Asset';
+      const autoCaption = isTurkish
+        ? `${words || cleanTitle} görsel açıklaması ve detaylı görünüm.`
+        : `${words || cleanTitle} visual overview and editorial context.`;
       const autoAeo = isTurkish
-        ? `${words} konusunu açıklayan görsel materyal.`
-        : `Visual asset demonstrating ${words}.`;
+        ? `${articleTitle || cleanTitle} rehberindeki görsel içeriği temsil eder.`
+        : `Illustrates key concepts discussed in ${articleTitle || cleanTitle}.`;
 
       return NextResponse.json({
         success: true,

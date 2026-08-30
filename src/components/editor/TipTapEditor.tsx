@@ -29,18 +29,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { MediaPickerModal } from '@/components/studio/MediaPickerModal';
+import { ImageStudioDrawer, type ImageStudioTarget } from '@/components/studio/ImageStudioDrawer';
 import { toast } from 'sonner';
 
 interface TipTapEditorProps {
   content: string;
   onChange: (html: string, json: any) => void;
+  articleTitle?: string;
 }
 
-export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
+export default function TipTapEditor({ content, onChange, articleTitle }: TipTapEditorProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerMode, setPickerMode] = useState<'insert' | 'replace'>('insert');
-  const [selectedImgSrc, setSelectedImgSrc] = useState<string | undefined>(undefined);
-  const [replaceCallback, setReplaceCallback] = useState<((url: string, alt?: string) => void) | null>(null);
+  const [studioOpen, setStudioOpen] = useState(false);
+  const [studioTarget, setStudioTarget] = useState<ImageStudioTarget | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
@@ -53,11 +54,9 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
       CustomImageExtension.configure({
         inline: false,
         allowBase64: true,
-        onReplaceImage: (src: string, alt: string, callback: (newSrc: string, newAlt?: string) => void) => {
-          setSelectedImgSrc(src);
-          setReplaceCallback(() => callback);
-          setPickerMode('replace');
-          setPickerOpen(true);
+        onManageImage: (data) => {
+          setStudioTarget(data);
+          setStudioOpen(true);
         },
       }),
       LinkExtension.configure({
@@ -149,17 +148,11 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
           .replace(/[-_0-9]+/g, ' ')
           .trim();
         
-        if (pickerMode === 'replace' && replaceCallback) {
-          replaceCallback(data.media.url, data.media.alt || defaultAlt);
-          setReplaceCallback(null);
-          toast.success('Image replaced successfully!');
-        } else {
-          editor.chain().focus().setImage({
-            src: data.media.url,
-            alt: data.media.alt || defaultAlt,
-          }).run();
-          toast.success('Image inserted with auto-generated Alt text');
-        }
+        editor.chain().focus().setImage({
+          src: data.media.url,
+          alt: data.media.alt || defaultAlt,
+        }).run();
+        toast.success('Image inserted with auto-generated Alt text');
       } else {
         toast.error(data.error || 'Upload failed');
       }
@@ -172,17 +165,11 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
   const handlePickerSelect = (url: string, alt?: string) => {
     if (!editor) return;
 
-    if (pickerMode === 'replace' && replaceCallback) {
-      replaceCallback(url, alt);
-      setReplaceCallback(null);
-      toast.success('Image replaced successfully!');
-    } else {
-      editor.chain().focus().setImage({
-        src: url,
-        alt: alt || 'Article illustration',
-      }).run();
-      toast.success('Image inserted into content');
-    }
+    editor.chain().focus().setImage({
+      src: url,
+      alt: alt || 'Article illustration',
+    }).run();
+    toast.success('Image inserted into content');
     setPickerOpen(false);
   };
 
@@ -224,16 +211,24 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
         onChange={handleDirectFileInput}
       />
 
-      {/* 3-in-1 Media Modal */}
+      {/* 3-in-1 Media Modal for Insert */}
       <MediaPickerModal
         isOpen={pickerOpen}
-        onClose={() => {
-          setPickerOpen(false);
-          setReplaceCallback(null);
-        }}
+        onClose={() => setPickerOpen(false)}
         onSelect={handlePickerSelect}
-        title={pickerMode === 'replace' ? 'Replace Image (Library, Upload, or URL)' : 'Insert Image (Library, Upload, or URL)'}
-        currentUrl={selectedImgSrc}
+        title="Insert Image (Library, Upload, or URL)"
+      />
+
+      {/* Slide-Over Image Studio & AI Optimizer Drawer */}
+      <ImageStudioDrawer
+        isOpen={studioOpen}
+        onClose={() => {
+          setStudioOpen(false);
+          setStudioTarget(null);
+        }}
+        target={studioTarget}
+        articleTitle={articleTitle}
+        articleContent={content}
       />
 
       {/* Editor Main Toolbar */}
@@ -357,11 +352,7 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
           type="button"
           variant="secondary"
           size="xs"
-          onClick={() => {
-            setPickerMode('insert');
-            setSelectedImgSrc(undefined);
-            setPickerOpen(true);
-          }}
+          onClick={() => setPickerOpen(true)}
           className="gap-1 text-xs font-semibold text-primary h-7 px-2"
           title="Insert Image (Upload PC, Media Library, or Link URL)"
         >

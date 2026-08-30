@@ -3,7 +3,7 @@
 import React from 'react';
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import Image, { type ImageOptions } from '@tiptap/extension-image';
-import { RefreshCw, Trash2, Edit3 } from 'lucide-react';
+import { Sparkles, SlidersHorizontal, Image as ImageIcon } from 'lucide-react';
 
 interface ImageComponentProps {
   node: any;
@@ -15,25 +15,25 @@ interface ImageComponentProps {
 function ImageComponent({ node, updateAttributes, deleteNode, extension }: ImageComponentProps) {
   const { src, alt, title } = node.attrs;
 
-  const handleReplace = (e: React.MouseEvent) => {
+  const handleOpenStudio = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (extension.options.onReplaceImage) {
-      extension.options.onReplaceImage(src, alt, (newSrc: string, newAlt?: string) => {
-        updateAttributes({
-          src: newSrc,
-          alt: newAlt || alt,
-        });
+    if (extension.options.onManageImage) {
+      extension.options.onManageImage({
+        src,
+        alt,
+        title,
+        onSave: (newData: { src: string; alt: string; title: string }) => {
+          updateAttributes({
+            src: newData.src,
+            alt: newData.alt,
+            title: newData.title,
+          });
+        },
+        onDelete: () => {
+          deleteNode();
+        },
       });
-    }
-  };
-
-  const handleEditAlt = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const newAlt = window.prompt('Edit Image Alt Text (SEO & Accessibility):', alt || '');
-    if (newAlt !== null) {
-      updateAttributes({ alt: newAlt });
     }
   };
 
@@ -51,42 +51,16 @@ function ImageComponent({ node, updateAttributes, deleteNode, extension }: Image
           }}
         />
 
-        {/* Hover Action Overlay */}
-        <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2.5 backdrop-blur-2xs">
-          {/* Button 1: Replace */}
+        {/* Clean Center Hover Button */}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center backdrop-blur-2xs">
           <button
             type="button"
-            onClick={handleReplace}
-            className="px-3.5 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-xl hover:bg-primary/90 flex items-center gap-1.5 transition cursor-pointer active:scale-95"
-            title="Replace Image (Library, Upload, or URL)"
+            onClick={handleOpenStudio}
+            className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-2xl hover:bg-primary/90 flex items-center gap-2 transition cursor-pointer active:scale-95 border border-primary-foreground/20"
+            title="Görseli Yönet, Değiştir ve AI ile Alt Metni Yaz"
           >
-            <RefreshCw className="size-3.5" />
-            <span>Replace Image</span>
-          </button>
-
-          {/* Button 2: Alt Text - Solid High-Contrast White Background */}
-          <button
-            type="button"
-            onClick={handleEditAlt}
-            className="px-3.5 py-2 rounded-xl bg-white text-zinc-950 hover:bg-neutral-100 text-xs font-bold shadow-xl flex items-center gap-1.5 transition cursor-pointer active:scale-95 border border-white/40"
-            title="Edit Alt Text (SEO & Accessibility)"
-          >
-            <Edit3 className="size-3.5 text-zinc-950" />
-            <span>Alt Metin</span>
-          </button>
-
-          {/* Button 3: Delete */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              deleteNode();
-            }}
-            className="p-2 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 text-xs font-medium shadow-xl flex items-center transition cursor-pointer active:scale-95"
-            title="Delete Image"
-          >
-            <Trash2 className="size-3.5" />
+            <Sparkles className="size-3.5" />
+            <span>Görseli Yönet & AI</span>
           </button>
         </div>
       </div>
@@ -95,7 +69,13 @@ function ImageComponent({ node, updateAttributes, deleteNode, extension }: Image
 }
 
 export interface CustomImageOptions extends ImageOptions {
-  onReplaceImage?: ((src: string, alt: string, callback: (newSrc: string, newAlt?: string) => void) => void) | null;
+  onManageImage?: ((data: {
+    src: string;
+    alt?: string;
+    title?: string;
+    onSave: (newData: { src: string; alt: string; title: string }) => void;
+    onDelete: () => void;
+  }) => void) | null;
 }
 
 export const CustomImageExtension = Image.extend<CustomImageOptions>({
@@ -104,7 +84,7 @@ export const CustomImageExtension = Image.extend<CustomImageOptions>({
   addOptions() {
     return {
       ...this.parent?.(),
-      onReplaceImage: null,
+      onManageImage: null,
     };
   },
 
