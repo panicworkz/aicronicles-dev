@@ -190,18 +190,31 @@ export function ImageUploadDropzone({
       {/* Main Image Box */}
       {hasImage ? (
         <div className="space-y-2.5">
-          <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border bg-muted/40 group shadow-xs">
+          <div
+            onClick={() => setPickerOpen(true)}
+            className="relative aspect-video w-full rounded-lg overflow-hidden border border-border bg-muted/40 group shadow-xs cursor-pointer"
+            title="Click to replace this cover image"
+          >
             <img
               src={value}
               alt={altValue || 'Cover preview'}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
             />
 
+            {/* Hover Replace Overlay Hint */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2 text-white text-xs font-semibold backdrop-blur-2xs">
+              <RefreshCw className="size-4 animate-spin-once" />
+              <span>Click to Replace Image</span>
+            </div>
+
             {/* Top-Right Instant Actions */}
-            <div className="absolute top-2 right-2 flex items-center gap-1">
+            <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
               <button
                 type="button"
-                onClick={openSeoDrawer}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openSeoDrawer();
+                }}
                 className="p-1.5 rounded-md bg-background/90 text-primary hover:bg-background backdrop-blur shadow-sm transition cursor-pointer"
                 title="Advanced SEO & AEO Settings"
               >

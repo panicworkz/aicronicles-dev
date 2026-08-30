@@ -25,7 +25,11 @@ import {
   Undo,
   Redo,
   Upload,
-  Tag,
+  RefreshCw,
+  Edit2,
+  Trash2,
+  X,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -39,6 +43,8 @@ interface TipTapEditorProps {
 
 export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerMode, setPickerMode] = useState<'insert' | 'replace'>('insert');
+  const [selectedImage, setSelectedImage] = useState<{ src: string; alt?: string; pos: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
@@ -49,10 +55,10 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
         },
       }),
       ImageExtension.configure({
-        inline: true,
+        inline: false,
         allowBase64: true,
         HTMLAttributes: {
-          class: 'rounded-xl max-w-full my-6 border border-border/80 shadow-sm mx-auto object-cover',
+          class: 'rounded-xl max-w-full my-6 border border-border/80 shadow-md mx-auto object-cover cursor-pointer hover:ring-2 hover:ring-primary/80 transition duration-200',
         },
       }),
       LinkExtension.configure({
@@ -84,6 +90,32 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
     editorProps: {
       attributes: {
         class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[500px] p-6 text-foreground text-sm sm:text-base leading-relaxed',
+      },
+      handleClickOn: (view, pos, node, nodePos, event, direct) => {
+        if (node.type.name === 'image') {
+          setSelectedImage({
+            src: node.attrs.src,
+            alt: node.attrs.alt,
+            pos: nodePos,
+          });
+          return true;
+        } else {
+          setSelectedImage(null);
+        }
+        return false;
+      },
+      handleDoubleClickOn: (view, pos, node, nodePos, event, direct) => {
+        if (node.type.name === 'image') {
+          setSelectedImage({
+            src: node.attrs.src,
+            alt: node.attrs.alt,
+            pos: nodePos,
+          });
+          setPickerMode('replace');
+          setPickerOpen(true);
+          return true;
+        }
+        return false;
       },
       handleDrop: (view, event, slice, moved) => {
         if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
@@ -143,11 +175,21 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
           .replace(/\.[^/.]+$/, '')
           .replace(/[-_0-9]+/g, ' ')
           .trim();
-        editor.chain().focus().setImage({
-          src: data.media.url,
-          alt: data.media.alt || defaultAlt,
-        }).run();
-        toast.success('Image inserted with auto-generated Alt text');
+        
+        if (pickerMode === 'replace' && selectedImage) {
+          editor.chain().focus().setNodeSelection(selectedImage.pos).setImage({
+            src: data.media.url,
+            alt: data.media.alt || defaultAlt,
+          }).run();
+          setSelectedImage(null);
+          toast.success('Image replaced successfully!');
+        } else {
+          editor.chain().focus().setImage({
+            src: data.media.url,
+            alt: data.media.alt || defaultAlt,
+          }).run();
+          toast.success('Image inserted with auto-generated Alt text');
+        }
       } else {
         toast.error(data.error || 'Upload failed');
       }
@@ -155,6 +197,26 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
       toast.dismiss();
       toast.error('Image upload failed');
     }
+  };
+
+  const handlePickerSelect = (url: string, alt?: string) => {
+    if (!editor) return;
+
+    if (pickerMode === 'replace' && selectedImage) {
+      editor.chain().focus().setNodeSelection(selectedImage.pos).setImage({
+        src: url,
+        alt: alt || selectedImage.alt || '',
+      }).run();
+      setSelectedImage(null);
+      toast.success('Image replaced successfully!');
+    } else {
+      editor.chain().focus().setImage({
+        src: url,
+        alt: alt || 'Article illustration',
+      }).run();
+      toast.success('Image inserted into content');
+    }
+    setPickerOpen(false);
   };
 
   const handleDirectFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,18 +227,22 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
     }
   };
 
-  const editImageAlt = () => {
-    if (!editor) return;
-    if (!editor.isActive('image')) {
-      toast.info('Click on an image inside the text editor first to edit its SEO / Alt text');
-      return;
-    }
-    const currentAlt = editor.getAttributes('image').alt || '';
+  const editSelectedImageAlt = () => {
+    if (!editor || !selectedImage) return;
+    const currentAlt = selectedImage.alt || '';
     const newAlt = window.prompt('Edit Image Alt Text (for Google SEO & Accessibility):', currentAlt);
     if (newAlt !== null) {
-      editor.chain().focus().updateAttributes('image', { alt: newAlt }).run();
+      editor.chain().focus().setNodeSelection(selectedImage.pos).updateAttributes('image', { alt: newAlt }).run();
+      setSelectedImage((prev) => prev ? { ...prev, alt: newAlt } : null);
       toast.success('Image Alt text updated');
     }
+  };
+
+  const deleteSelectedImage = () => {
+    if (!editor || !selectedImage) return;
+    editor.chain().focus().setNodeSelection(selectedImage.pos).deleteSelection().run();
+    setSelectedImage(null);
+    toast.info('Image removed from content');
   };
 
   if (!editor) {
@@ -199,220 +265,268 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
-      {/* Clean Solid Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 p-2 border-b border-border bg-muted/40 shrink-0">
-        <Button
-          type="button"
-          variant={editor.isActive('heading', { level: 1 }) ? 'secondary' : 'ghost'}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          title="Heading 1"
-        >
-          <Heading1 className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive('heading', { level: 2 }) ? 'secondary' : 'ghost'}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          title="Heading 2"
-        >
-          <Heading2 className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive('heading', { level: 3 }) ? 'secondary' : 'ghost'}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          title="Heading 3"
-        >
-          <Heading3 className="w-4 h-4" />
-        </Button>
-
-        <Separator orientation="vertical" className="h-5 mx-1" />
-
-        <Button
-          type="button"
-          variant={editor.isActive('bold') ? 'secondary' : 'ghost'}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          title="Bold"
-        >
-          <Bold className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive('italic') ? 'secondary' : 'ghost'}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          title="Italic"
-        >
-          <Italic className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive('code') ? 'secondary' : 'ghost'}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          title="Inline Code"
-        >
-          <Code className="w-4 h-4" />
-        </Button>
-
-        <Separator orientation="vertical" className="h-5 mx-1" />
-
-        <Button
-          type="button"
-          variant={editor.isActive('bulletList') ? 'secondary' : 'ghost'}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          title="Bullet List"
-        >
-          <List className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive('orderedList') ? 'secondary' : 'ghost'}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          title="Numbered List"
-        >
-          <ListOrdered className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive('blockquote') ? 'secondary' : 'ghost'}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          title="Quote"
-        >
-          <Quote className="w-4 h-4" />
-        </Button>
-
-        <Separator orientation="vertical" className="h-5 mx-1" />
-
-        <Button
-          type="button"
-          variant={editor.isActive('link') ? 'secondary' : 'ghost'}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={setLink}
-          title="Link"
-        >
-          <LinkIcon className="w-4 h-4" />
-        </Button>
-
-        {/* Rich Image Insertion with Modal Picker + Direct Upload */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 gap-1.5 px-2 text-xs font-medium text-primary hover:bg-primary/10 hover:text-primary"
-          onClick={() => setPickerOpen(true)}
-          title="Insert Image (Upload, Pick Library, or Link)"
-        >
-          <ImageIcon className="w-4 h-4" />
-          <span className="hidden sm:inline">Image</span>
-        </Button>
-
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => fileInputRef.current?.click()}
-          title="Quick Upload Image from Computer"
-        >
-          <Upload className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
-        </Button>
-
-        {/* Edit Selected Image Alt / SEO */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 gap-1 px-1.5 text-xs text-muted-foreground hover:text-foreground"
-          onClick={editImageAlt}
-          title="Edit Clicked Image Alt Text / SEO"
-        >
-          <Tag className="w-3.5 h-3.5 text-primary" />
-          <span className="text-[11px] hidden md:inline">Alt/SEO</span>
-        </Button>
-
-        <Button
-          type="button"
-          variant={editor.isActive('table') ? 'secondary' : 'ghost'}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={insertTable}
-          title="Table"
-        >
-          <TableIcon className="w-4 h-4" />
-        </Button>
-
-        <div className="ml-auto flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => editor.chain().focus().undo().run()}
-            disabled={!editor.can().undo()}
-            title="Undo"
-          >
-            <Undo className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => editor.chain().focus().redo().run()}
-            disabled={!editor.can().redo()}
-            title="Redo"
-          >
-            <Redo className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Editor Content Area */}
-      <div className="flex-1 bg-card">
-        <EditorContent editor={editor} />
-      </div>
-
-      {/* Hidden File Input for Quick Direct Upload */}
+    <div className="relative rounded-xl border bg-card shadow-xs overflow-hidden">
+      {/* Hidden File Input for direct PC image picking */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        onChange={handleDirectFileInput}
         className="hidden"
+        onChange={handleDirectFileInput}
       />
 
-      {/* Media Picker Modal */}
+      {/* 3-in-1 Media Modal */}
       <MediaPickerModal
         isOpen={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSelect={(url, alt) => {
-          if (editor) {
-            editor.chain().focus().setImage({
-              src: url,
-              alt: alt || '',
-            }).run();
-          }
-        }}
+        onSelect={handlePickerSelect}
+        title={pickerMode === 'replace' ? 'Replace Image (Library, Upload, or URL)' : 'Insert Image (Library, Upload, or URL)'}
+        currentUrl={selectedImage?.src}
       />
+
+      {/* FLOATING ACTION TOOLBAR WHEN AN IMAGE IS CLICKED / SELECTED */}
+      {selectedImage && (
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 p-1.5 rounded-xl bg-background/95 border border-primary/40 shadow-xl backdrop-blur-md animate-in fade-in zoom-in-95 duration-150">
+          <div className="flex items-center gap-1.5 px-2 text-xs font-semibold text-primary border-r border-border pr-2.5">
+            <ImageIcon className="size-3.5" />
+            <span className="truncate max-w-[120px]">{selectedImage.alt || 'Selected Image'}</span>
+          </div>
+
+          <Button
+            type="button"
+            variant="secondary"
+            size="xs"
+            onClick={() => {
+              setPickerMode('replace');
+              setPickerOpen(true);
+            }}
+            className="h-7 gap-1 text-xs font-semibold text-primary hover:bg-primary/10"
+            title="Replace this image with another file from library or computer"
+          >
+            <RefreshCw className="size-3" />
+            <span>Replace Image</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={editSelectedImageAlt}
+            className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
+            title="Edit Alt & SEO metadata"
+          >
+            <Edit2 className="size-3" />
+            <span>Edit Alt</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={deleteSelectedImage}
+            className="h-7 gap-1 text-xs text-destructive hover:bg-destructive/10"
+            title="Delete this image"
+          >
+            <Trash2 className="size-3" />
+            <span>Delete</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => setSelectedImage(null)}
+            className="size-6 text-muted-foreground ml-1"
+            title="Close toolbar"
+          >
+            <X className="size-3" />
+          </Button>
+        </div>
+      )}
+
+      {/* Editor Main Toolbar */}
+      <div className="flex flex-wrap items-center gap-1 border-b bg-muted/30 p-2">
+        {/* Formatting */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={editor.isActive('bold') ? 'bg-muted text-primary' : ''}
+          title="Bold"
+        >
+          <Bold className="w-3.5 h-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={editor.isActive('italic') ? 'bg-muted text-primary' : ''}
+          title="Italic"
+        >
+          <Italic className="w-3.5 h-3.5" />
+        </Button>
+
+        <Separator orientation="vertical" className="mx-1 h-4" />
+
+        {/* Headings */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          className={editor.isActive('heading', { level: 1 }) ? 'bg-muted text-primary' : ''}
+          title="Heading 1"
+        >
+          <Heading1 className="w-3.5 h-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          className={editor.isActive('heading', { level: 2 }) ? 'bg-muted text-primary' : ''}
+          title="Heading 2"
+        >
+          <Heading2 className="w-3.5 h-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          className={editor.isActive('heading', { level: 3 }) ? 'bg-muted text-primary' : ''}
+          title="Heading 3"
+        >
+          <Heading3 className="w-3.5 h-3.5" />
+        </Button>
+
+        <Separator orientation="vertical" className="mx-1 h-4" />
+
+        {/* Lists & Blockquote */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={editor.isActive('bulletList') ? 'bg-muted text-primary' : ''}
+          title="Bullet List"
+        >
+          <List className="w-3.5 h-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={editor.isActive('orderedList') ? 'bg-muted text-primary' : ''}
+          title="Numbered List"
+        >
+          <ListOrdered className="w-3.5 h-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          className={editor.isActive('blockquote') ? 'bg-muted text-primary' : ''}
+          title="Quote"
+        >
+          <Quote className="w-3.5 h-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          className={editor.isActive('codeBlock') ? 'bg-muted text-primary' : ''}
+          title="Code Block"
+        >
+          <Code className="w-3.5 h-3.5" />
+        </Button>
+
+        <Separator orientation="vertical" className="mx-1 h-4" />
+
+        {/* Links, Media & Tables */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={setLink}
+          className={editor.isActive('link') ? 'bg-muted text-primary' : ''}
+          title="Insert Link"
+        >
+          <LinkIcon className="w-3.5 h-3.5" />
+        </Button>
+
+        {/* 3-in-1 Image Picker Button */}
+        <Button
+          type="button"
+          variant="secondary"
+          size="xs"
+          onClick={() => {
+            setPickerMode('insert');
+            setPickerOpen(true);
+          }}
+          className="gap-1 text-xs font-semibold text-primary h-7 px-2"
+          title="Insert Image (Upload PC, Media Library, or Link URL)"
+        >
+          <ImageIcon className="size-3.5" />
+          <span>Image</span>
+        </Button>
+
+        {/* Direct PC Upload Quick Trigger */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          onClick={() => fileInputRef.current?.click()}
+          className="gap-1 text-xs text-muted-foreground hover:text-foreground h-7 px-1.5"
+          title="Upload directly from Computer"
+        >
+          <Upload className="size-3" />
+          <span className="hidden sm:inline">Upload PC</span>
+        </Button>
+
+        {/* Table Button */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={insertTable}
+          title="Insert Table"
+        >
+          <TableIcon className="w-3.5 h-3.5" />
+        </Button>
+
+        <div className="flex-1" />
+
+        {/* History Controls */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={!editor.can().undo()}
+          title="Undo (Ctrl+Z)"
+        >
+          <Undo className="w-3.5 h-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={!editor.can().redo()}
+          title="Redo (Ctrl+Y)"
+        >
+          <Redo className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+
+      {/* Editor Content Area */}
+      <EditorContent editor={editor} />
     </div>
   );
 }
