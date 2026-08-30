@@ -43,6 +43,7 @@ export default function PanicNewPostPage() {
   const [contentHtml, setContentHtml] = useState('');
   const [contentJson, setContentJson] = useState<any>(null);
   const [featuredImageUrl, setFeaturedImageUrl] = useState('/media/default.webp');
+  const [featuredImageAlt, setFeaturedImageAlt] = useState('');
   const [status, setStatus] = useState('draft');
   const [readingTime, setReadingTime] = useState('5 min read');
   const [metaTitle, setMetaTitle] = useState('');
@@ -398,6 +399,8 @@ export default function PanicNewPostPage() {
               <ImageUploadDropzone
                 value={featuredImageUrl}
                 onChange={(url) => setFeaturedImageUrl(url)}
+                altValue={featuredImageAlt}
+                onAltChange={(alt) => setFeaturedImageAlt(alt)}
                 label=""
               />
             </CardContent>

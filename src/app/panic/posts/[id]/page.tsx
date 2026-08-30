@@ -54,6 +54,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
   const [contentHtml, setContentHtml] = useState('');
   const [contentJson, setContentJson] = useState<any>(null);
   const [featuredImageUrl, setFeaturedImageUrl] = useState('');
+  const [featuredImageAlt, setFeaturedImageAlt] = useState('');
   const [status, setStatus] = useState('published');
   const [readingTime, setReadingTime] = useState('5 min read');
   const [metaTitle, setMetaTitle] = useState('');
@@ -403,6 +404,8 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                       setFeaturedImageUrl(url);
                       broadcastLiveSync(title, contentHtml, url);
                     }}
+                    altValue={featuredImageAlt}
+                    onAltChange={(alt) => setFeaturedImageAlt(alt)}
                     label=""
                   />
                 </CardContent>

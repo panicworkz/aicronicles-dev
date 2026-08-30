@@ -11,15 +11,22 @@ import {
   RefreshCw,
   Link2,
   Upload,
+  Bot,
+  Sparkles,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { MediaPickerModal } from '@/components/studio/MediaPickerModal';
+import { MediaDetailDrawer } from '@/components/studio/MediaDetailDrawer';
 import { toast } from 'sonner';
 
 interface ImageUploadDropzoneProps {
   value?: string;
   onChange: (url: string) => void;
+  altValue?: string;
+  onAltChange?: (alt: string) => void;
   label?: string;
   className?: string;
 }
@@ -27,6 +34,8 @@ interface ImageUploadDropzoneProps {
 export function ImageUploadDropzone({
   value,
   onChange,
+  altValue,
+  onAltChange,
   label = 'Featured Cover Image',
   className = '',
 }: ImageUploadDropzoneProps) {
@@ -34,6 +43,8 @@ export function ImageUploadDropzone({
   const [dragOver, setDragOver] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showManualUrl, setShowManualUrl] = useState(false);
+  const [seoDrawerOpen, setSeoDrawerOpen] = useState(false);
+  const [currentMediaObj, setCurrentMediaObj] = useState<any | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasImage = Boolean(value && value.trim() && value !== '/media/default.webp');
@@ -57,7 +68,11 @@ export function ImageUploadDropzone({
       const data = await res.json();
       if (data.success && data.media?.url) {
         onChange(data.media.url);
-        toast.success('Cover image uploaded and converted to WebP');
+        if (onAltChange && data.media.alt) {
+          onAltChange(data.media.alt);
+        }
+        setCurrentMediaObj(data.media);
+        toast.success('Cover image uploaded! You can edit its SEO/Alt text below.');
       } else {
         toast.error(data.error || 'Upload failed');
       }
@@ -66,6 +81,44 @@ export function ImageUploadDropzone({
     } finally {
       setUploading(false);
     }
+  };
+
+  const openSeoDrawer = async () => {
+    if (!value) return;
+    try {
+      const filename = value.split('/').pop()?.split('?')[0];
+      const res = await fetch(`/api/media?search=${encodeURIComponent(filename || '')}`);
+      const data = await res.json();
+      if (data.media && data.media.length > 0) {
+        setCurrentMediaObj(data.media[0]);
+      } else {
+        setCurrentMediaObj({
+          id: 0,
+          url: value,
+          filename: filename || 'cover.webp',
+          title: 'Cover Image',
+          alt: altValue || 'Article Cover Image',
+        });
+      }
+      setSeoDrawerOpen(true);
+    } catch (err) {
+      setSeoDrawerOpen(true);
+    }
+  };
+
+  const handleAutoAlt = () => {
+    if (!value) return;
+    const cleanName = (value.split('/').pop() || '')
+      .replace(/\.[^/.]+$/, '')
+      .replace(/[-_0-9]+/g, ' ')
+      .trim();
+    const formatted = cleanName
+      .split(' ')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+    const autoText = `${formatted} - High quality visual guide`;
+    if (onAltChange) onAltChange(autoText);
+    toast.success('Alt text generated!');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,6 +139,7 @@ export function ImageUploadDropzone({
   const handleClearImage = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange('');
+    if (onAltChange) onAltChange('');
     toast.info('Cover image removed');
   };
 
@@ -135,26 +189,36 @@ export function ImageUploadDropzone({
 
       {/* Main Image Box */}
       {hasImage ? (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border bg-muted/40 group shadow-xs">
             <img
               src={value}
-              alt="Cover preview"
+              alt={altValue || 'Cover preview'}
               className="w-full h-full object-cover"
             />
 
-            {/* Top-Right Instant Remove Button */}
-            <button
-              type="button"
-              onClick={handleClearImage}
-              className="absolute top-2 right-2 p-1.5 rounded-md bg-background/90 text-destructive hover:bg-destructive hover:text-white backdrop-blur shadow-sm transition cursor-pointer"
-              title="Remove Cover Image"
-            >
-              <Trash2 className="size-3.5" />
-            </button>
+            {/* Top-Right Instant Actions */}
+            <div className="absolute top-2 right-2 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={openSeoDrawer}
+                className="p-1.5 rounded-md bg-background/90 text-primary hover:bg-background backdrop-blur shadow-sm transition cursor-pointer"
+                title="Advanced SEO & AEO Settings"
+              >
+                <Bot className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleClearImage}
+                className="p-1.5 rounded-md bg-background/90 text-destructive hover:bg-destructive hover:text-white backdrop-blur shadow-sm transition cursor-pointer"
+                title="Remove Cover Image"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </div>
           </div>
 
-          {/* 3 Replacement Action Buttons + Remove */}
+          {/* Action Buttons */}
           <div className="grid grid-cols-3 gap-1.5">
             <Button
               type="button"
@@ -166,7 +230,7 @@ export function ImageUploadDropzone({
               title="Upload new file from computer"
             >
               <UploadCloud className="size-3.5 text-muted-foreground" />
-              <span>{uploading ? 'Uploading...' : 'Upload PC'}</span>
+              <span>{uploading ? 'Uploading...' : 'Replace'}</span>
             </Button>
 
             <Button
@@ -175,24 +239,51 @@ export function ImageUploadDropzone({
               size="sm"
               onClick={() => setPickerOpen(true)}
               className="h-8 gap-1 text-[11px] font-medium"
-              title="Pick from 509 library images or paste link"
+              title="Pick from 509 library images"
             >
               <FolderOpen className="size-3.5 text-primary" />
-              <span>Library/URL</span>
+              <span>Library</span>
             </Button>
 
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={handleClearImage}
-              className="h-8 gap-1 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
-              title="Clear cover image"
+              onClick={openSeoDrawer}
+              className="h-8 gap-1 text-[11px] font-medium text-primary border-primary/30 hover:bg-primary/5"
+              title="Configure SEO Alt Text & AEO LLM Vision"
             >
-              <Trash2 className="size-3.5" />
-              <span>Remove</span>
+              <SlidersHorizontal className="size-3.5" />
+              <span>SEO/AEO</span>
             </Button>
           </div>
+
+          {/* Direct Alt Text Input for Cover (Always Available) */}
+          {onAltChange && (
+            <div className="space-y-1 pt-1">
+              <div className="flex items-center justify-between">
+                <Label className="text-[11px] font-medium text-muted-foreground">
+                  Cover Alt Text (Google SEO)
+                </Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={handleAutoAlt}
+                  className="h-5 gap-1 text-[10px] text-primary hover:text-primary px-1 font-medium"
+                >
+                  <Sparkles className="size-2.5" />
+                  <span>AI Alt</span>
+                </Button>
+              </div>
+              <Input
+                value={altValue || ''}
+                onChange={(e) => onAltChange(e.target.value)}
+                placeholder="Descriptive text for Google Image search..."
+                className="text-xs h-7.5"
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div
@@ -267,12 +358,34 @@ export function ImageUploadDropzone({
       <MediaPickerModal
         isOpen={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSelect={(url) => {
+        onSelect={(url, alt) => {
           onChange(url);
+          if (onAltChange && alt) {
+            onAltChange(alt);
+          }
           toast.success('Cover image set successfully');
         }}
         currentUrl={value}
         title="Set Featured Cover Image"
+      />
+
+      {/* Instant SEO & AEO Settings Drawer for Cover */}
+      <MediaDetailDrawer
+        media={currentMediaObj}
+        isOpen={seoDrawerOpen}
+        onClose={() => setSeoDrawerOpen(false)}
+        onUpdate={(updated) => {
+          onChange(updated.url);
+          if (onAltChange && updated.alt) {
+            onAltChange(updated.alt);
+          }
+          toast.success('Cover SEO & AEO settings saved');
+        }}
+        onDelete={() => {
+          onChange('');
+          if (onAltChange) onAltChange('');
+          setSeoDrawerOpen(false);
+        }}
       />
     </div>
   );

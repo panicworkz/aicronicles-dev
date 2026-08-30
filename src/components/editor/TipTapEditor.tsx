@@ -25,6 +25,7 @@ import {
   Undo,
   Redo,
   Upload,
+  Tag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -138,8 +139,15 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
       toast.dismiss();
 
       if (data.success && data.media?.url) {
-        editor.chain().focus().setImage({ src: data.media.url, alt: data.media.alt || file.name }).run();
-        toast.success('Image inserted into publication');
+        const defaultAlt = (file.name || '')
+          .replace(/\.[^/.]+$/, '')
+          .replace(/[-_0-9]+/g, ' ')
+          .trim();
+        editor.chain().focus().setImage({
+          src: data.media.url,
+          alt: data.media.alt || defaultAlt,
+        }).run();
+        toast.success('Image inserted with auto-generated Alt text');
       } else {
         toast.error(data.error || 'Upload failed');
       }
@@ -154,6 +162,20 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
     if (file) {
       uploadAndInsertImage(file);
       e.target.value = '';
+    }
+  };
+
+  const editImageAlt = () => {
+    if (!editor) return;
+    if (!editor.isActive('image')) {
+      toast.info('Click on an image inside the text editor first to edit its SEO / Alt text');
+      return;
+    }
+    const currentAlt = editor.getAttributes('image').alt || '';
+    const newAlt = window.prompt('Edit Image Alt Text (for Google SEO & Accessibility):', currentAlt);
+    if (newAlt !== null) {
+      editor.chain().focus().updateAttributes('image', { alt: newAlt }).run();
+      toast.success('Image Alt text updated');
     }
   };
 
@@ -297,7 +319,7 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
           size="sm"
           className="h-8 gap-1.5 px-2 text-xs font-medium text-primary hover:bg-primary/10 hover:text-primary"
           onClick={() => setPickerOpen(true)}
-          title="Insert Image (Upload or Pick from Library)"
+          title="Insert Image (Upload, Pick Library, or Link)"
         >
           <ImageIcon className="w-4 h-4" />
           <span className="hidden sm:inline">Image</span>
@@ -312,6 +334,19 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
           title="Quick Upload Image from Computer"
         >
           <Upload className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+        </Button>
+
+        {/* Edit Selected Image Alt / SEO */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-8 gap-1 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+          onClick={editImageAlt}
+          title="Edit Clicked Image Alt Text / SEO"
+        >
+          <Tag className="w-3.5 h-3.5 text-primary" />
+          <span className="text-[11px] hidden md:inline">Alt/SEO</span>
         </Button>
 
         <Button
@@ -365,13 +400,16 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
         className="hidden"
       />
 
-      {/* Media Picker Modal (Upload New or Pick from 509 Media Assets) */}
+      {/* Media Picker Modal */}
       <MediaPickerModal
         isOpen={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSelect={(url) => {
+        onSelect={(url, alt) => {
           if (editor) {
-            editor.chain().focus().setImage({ src: url }).run();
+            editor.chain().focus().setImage({
+              src: url,
+              alt: alt || '',
+            }).run();
           }
         }}
       />
