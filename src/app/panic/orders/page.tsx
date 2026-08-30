@@ -78,29 +78,80 @@ export default function PanicOrdersPage() {
     }
   };
 
-  const getOrderStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-      case 'delivered':
-        return <Badge variant="outline" className="text-[10px] text-emerald-600 dark:text-emerald-400 border-emerald-500/30">✓ Delivered</Badge>;
-      case 'shipped':
-        return <Badge variant="outline" className="text-[10px] text-blue-600 dark:text-blue-400 border-blue-500/30"><Truck className="size-3 mr-1" /> Shipped</Badge>;
-      case 'processing':
-      default:
-        return <Badge variant="outline" className="text-[10px] text-amber-500 border-amber-500/30">Processing</Badge>;
-    }
-  };
-
   const getProductTypeBadge = (type: string) => {
     switch (type) {
       case 'digital':
-        return <Badge variant="secondary" className="text-[10px] gap-1"><FileDown className="size-3 text-primary" /> Digital</Badge>;
+        return <Badge variant="secondary" className="text-[10px] gap-1 font-medium"><FileDown className="size-3 text-primary" /> Digital</Badge>;
       case 'service':
-        return <Badge variant="secondary" className="text-[10px] gap-1"><Briefcase className="size-3 text-emerald-500" /> Service</Badge>;
+        return <Badge variant="secondary" className="text-[10px] gap-1 font-medium"><Briefcase className="size-3 text-emerald-500" /> Service</Badge>;
       case 'physical':
       default:
-        return <Badge variant="secondary" className="text-[10px] gap-1"><Package className="size-3 text-amber-500" /> Physical</Badge>;
+        return <Badge variant="secondary" className="text-[10px] gap-1 font-medium"><Package className="size-3 text-amber-500" /> Physical</Badge>;
     }
+  };
+
+  const getDeliveryAccessBadge = (order: any) => {
+    const type = order.primaryType || 'physical';
+    const payment = order.paymentStatus;
+    const status = order.orderStatus;
+
+    if (type === 'digital') {
+      if (payment === 'paid') {
+        return (
+          <Badge variant="outline" className="text-[10px] text-primary border-primary/30 gap-1 font-mono">
+            <FileDown className="size-3" />
+            <span>⚡ Instant Access (File Ready)</span>
+          </Badge>
+        );
+      }
+      return (
+        <Badge variant="outline" className="text-[10px] text-muted-foreground border-border gap-1 font-mono">
+          <span>🔒 Awaiting Payment (Locked)</span>
+        </Badge>
+      );
+    }
+
+    if (type === 'service') {
+      if (status === 'completed' || status === 'delivered') {
+        return (
+          <Badge variant="outline" className="text-[10px] text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 font-mono">
+            <span>✓ Session Completed</span>
+          </Badge>
+        );
+      }
+      return (
+        <Badge variant="outline" className="text-[10px] text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 font-mono">
+          <Briefcase className="size-3" />
+          <span>📅 Session Booked (Meet Ready)</span>
+        </Badge>
+      );
+    }
+
+    // Physical good
+    if (status === 'delivered' || status === 'completed') {
+      return (
+        <Badge variant="outline" className="text-[10px] text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 font-mono">
+          <CheckCircle2 className="size-3" />
+          <span>✓ Delivered</span>
+        </Badge>
+      );
+    }
+
+    if (status === 'shipped') {
+      return (
+        <Badge variant="outline" className="text-[10px] text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1 font-mono">
+          <Truck className="size-3" />
+          <span>🚚 Shipped {order.carrier ? `(${order.carrier})` : ''}</span>
+        </Badge>
+      );
+    }
+
+    return (
+      <Badge variant="outline" className="text-[10px] text-amber-500 border-amber-500/30 gap-1 font-mono">
+        <Package className="size-3" />
+        <span>⏳ Needs Shipping</span>
+      </Badge>
+    );
   };
 
   return (
@@ -241,7 +292,7 @@ export default function PanicOrdersPage() {
                   <th className="py-3 px-4">Customer</th>
                   <th className="py-3 px-4">Type</th>
                   <th className="py-3 px-4">Payment</th>
-                  <th className="py-3 px-4">Fulfillment</th>
+                  <th className="py-3 px-4">Delivery & Access Status</th>
                   <th className="py-3 px-4">Total Amount</th>
                   <th className="py-3 px-4">Date</th>
                   <th className="py-3 px-4 text-right">Details</th>
@@ -278,7 +329,7 @@ export default function PanicOrdersPage() {
                     </td>
 
                     <td className="py-3 px-4">
-                      {getOrderStatusBadge(order.orderStatus)}
+                      {getDeliveryAccessBadge(order)}
                     </td>
 
                     <td className="py-3 px-4 font-mono font-bold text-foreground">
