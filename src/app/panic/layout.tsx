@@ -27,6 +27,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { LiveRatesTicker } from '@/components/studio/LiveRatesTicker';
 import { useTheme } from '@/providers/theme-provider';
 import { cn } from '@/lib/utils';
 
@@ -188,33 +189,8 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
 
           {/* Right: Grouped Badges, Quick Actions, and Profile */}
           <div className="flex items-center gap-3 ml-auto">
-            {/* GROUP 1: Live Exchange Rates */}
-            <div className="hidden xl:flex items-center gap-1.5 bg-muted/30 border border-border/80 rounded-lg p-1">
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono">
-                <span className="text-muted-foreground font-medium">USD/TRY:</span>
-                <span className="font-bold text-foreground">₺38.50</span>
-                <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-0.5">
-                  <TrendingUp className="size-2.5" />0.15%
-                </span>
-              </div>
-
-              <div className="h-3 w-px bg-border/80 shrink-0" />
-
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono">
-                <span className="text-muted-foreground font-medium">EUR/TRY:</span>
-                <span className="font-bold text-foreground">₺41.85</span>
-                <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-0.5">
-                  <TrendingUp className="size-2.5" />0.08%
-                </span>
-              </div>
-
-              <div className="h-3 w-px bg-border/80 shrink-0" />
-
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono">
-                <span className="text-muted-foreground font-medium">EUR/USD:</span>
-                <span className="font-bold text-foreground">$1.09</span>
-              </div>
-            </div>
+            {/* GROUP 1: Live TCMB Exchange Rates */}
+            <LiveRatesTicker />
 
             {/* DIVIDER 1 */}
             <div className="hidden xl:block h-4 w-px bg-border shrink-0" />
