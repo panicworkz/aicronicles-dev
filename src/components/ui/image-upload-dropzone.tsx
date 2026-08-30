@@ -11,12 +11,10 @@ import {
   RefreshCw,
   Link2,
   Upload,
-  Bot,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MediaPickerModal } from '@/components/studio/MediaPickerModal';
-import { MediaDetailDrawer } from '@/components/studio/MediaDetailDrawer';
 import { toast } from 'sonner';
 
 interface ImageUploadDropzoneProps {
@@ -36,8 +34,6 @@ export function ImageUploadDropzone({
   const [dragOver, setDragOver] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showManualUrl, setShowManualUrl] = useState(false);
-  const [seoDrawerOpen, setSeoDrawerOpen] = useState(false);
-  const [currentMediaObj, setCurrentMediaObj] = useState<any | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasImage = Boolean(value && value.trim() && value !== '/media/default.webp');
@@ -61,9 +57,7 @@ export function ImageUploadDropzone({
       const data = await res.json();
       if (data.success && data.media?.url) {
         onChange(data.media.url);
-        setCurrentMediaObj(data.media);
-        setSeoDrawerOpen(true);
-        toast.success('Cover image uploaded! Configure SEO & AEO settings below:');
+        toast.success('Cover image uploaded and converted to WebP');
       } else {
         toast.error(data.error || 'Upload failed');
       }
@@ -71,29 +65,6 @@ export function ImageUploadDropzone({
       toast.error(err.message || 'Image upload failed');
     } finally {
       setUploading(false);
-    }
-  };
-
-  const openSeoDrawer = async () => {
-    if (!value) return;
-    try {
-      const filename = value.split('/').pop()?.split('?')[0];
-      const res = await fetch(`/api/media?search=${encodeURIComponent(filename || '')}`);
-      const data = await res.json();
-      if (data.media && data.media.length > 0) {
-        setCurrentMediaObj(data.media[0]);
-      } else {
-        setCurrentMediaObj({
-          id: 0,
-          url: value,
-          filename: filename || 'cover.webp',
-          title: 'Cover Image',
-          alt: 'Article Cover Image',
-        });
-      }
-      setSeoDrawerOpen(true);
-    } catch (err) {
-      setSeoDrawerOpen(true);
     }
   };
 
@@ -172,40 +143,30 @@ export function ImageUploadDropzone({
               className="w-full h-full object-cover"
             />
 
-            {/* Top-Right Instant Actions */}
-            <div className="absolute top-2 right-2 flex items-center gap-1">
-              <button
-                type="button"
-                onClick={openSeoDrawer}
-                className="p-1.5 rounded-md bg-background/90 text-primary hover:bg-background backdrop-blur shadow-sm transition cursor-pointer"
-                title="Edit SEO & AEO Settings"
-              >
-                <Bot className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleClearImage}
-                className="p-1.5 rounded-md bg-background/90 text-destructive hover:bg-destructive hover:text-white backdrop-blur shadow-sm transition cursor-pointer"
-                title="Remove Cover Image"
-              >
-                <Trash2 className="size-3.5" />
-              </button>
-            </div>
+            {/* Top-Right Instant Remove Button */}
+            <button
+              type="button"
+              onClick={handleClearImage}
+              className="absolute top-2 right-2 p-1.5 rounded-md bg-background/90 text-destructive hover:bg-destructive hover:text-white backdrop-blur shadow-sm transition cursor-pointer"
+              title="Remove Cover Image"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
           </div>
 
-          {/* 4 Action Buttons: Replace, Library, SEO & AEO, Remove */}
-          <div className="grid grid-cols-4 gap-1.5">
+          {/* 3 Replacement Action Buttons + Remove */}
+          <div className="grid grid-cols-3 gap-1.5">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="h-8 gap-1 text-[11px] font-medium px-1"
+              className="h-8 gap-1 text-[11px] font-medium"
               title="Upload new file from computer"
             >
               <UploadCloud className="size-3.5 text-muted-foreground" />
-              <span className="truncate">Upload</span>
+              <span>{uploading ? 'Uploading...' : 'Upload PC'}</span>
             </Button>
 
             <Button
@@ -213,23 +174,11 @@ export function ImageUploadDropzone({
               variant="outline"
               size="sm"
               onClick={() => setPickerOpen(true)}
-              className="h-8 gap-1 text-[11px] font-medium px-1"
-              title="Pick from 509 library images"
+              className="h-8 gap-1 text-[11px] font-medium"
+              title="Pick from 509 library images or paste link"
             >
               <FolderOpen className="size-3.5 text-primary" />
-              <span className="truncate">Library</span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={openSeoDrawer}
-              className="h-8 gap-1 text-[11px] font-medium text-primary border-primary/30 hover:bg-primary/5 px-1"
-              title="Configure SEO Alt Text & AEO LLM Vision"
-            >
-              <Bot className="size-3.5" />
-              <span className="truncate">SEO/AEO</span>
+              <span>Library/URL</span>
             </Button>
 
             <Button
@@ -237,11 +186,11 @@ export function ImageUploadDropzone({
               variant="outline"
               size="sm"
               onClick={handleClearImage}
-              className="h-8 gap-1 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 px-1"
+              className="h-8 gap-1 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
               title="Clear cover image"
             >
               <Trash2 className="size-3.5" />
-              <span className="truncate">Remove</span>
+              <span>Remove</span>
             </Button>
           </div>
         </div>
@@ -271,7 +220,7 @@ export function ImageUploadDropzone({
                 <UploadCloud className="size-4.5" />
               </div>
               <div className="space-y-0.5">
-                <p className="text-xs font-semibold text-foreground">Click to upload cover or drag & drop</p>
+                <p className="text-xs font-semibold text-foreground">Click to upload or drag & drop</p>
                 <p className="text-[10px] text-muted-foreground">Auto-converted to high-speed WebP</p>
               </div>
               <div className="flex items-center gap-1.5 pt-1">
@@ -324,21 +273,6 @@ export function ImageUploadDropzone({
         }}
         currentUrl={value}
         title="Set Featured Cover Image"
-      />
-
-      {/* Instant SEO & AEO Settings Drawer for Cover */}
-      <MediaDetailDrawer
-        media={currentMediaObj}
-        isOpen={seoDrawerOpen}
-        onClose={() => setSeoDrawerOpen(false)}
-        onUpdate={(updated) => {
-          onChange(updated.url);
-          toast.success('Cover SEO & AEO settings saved');
-        }}
-        onDelete={() => {
-          onChange('');
-          setSeoDrawerOpen(false);
-        }}
       />
     </div>
   );
