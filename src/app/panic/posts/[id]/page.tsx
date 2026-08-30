@@ -120,11 +120,32 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           title: imgTitle,
           caption: imgCaption,
           isCover,
-          onSave: (newData) => {
+          onSave: async (newData) => {
             if (isCover) {
               setFeaturedImageUrl(newData.src);
               if (newData.alt) setFeaturedImageAlt(newData.alt);
               broadcastLiveSync(titleRef.current, contentHtmlRef.current, newData.src);
+              try {
+                await fetch(`/api/posts/${postId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    title: titleRef.current,
+                    slug,
+                    excerpt,
+                    contentHtml: contentHtmlRef.current,
+                    contentJson,
+                    featuredImageUrl: newData.src,
+                    status,
+                    readingTime,
+                    metaTitle,
+                    metaDescription,
+                  }),
+                });
+                toast.success('Cover image updated and saved!');
+              } catch (e) {
+                // silent
+              }
             } else {
               const currentHtml = contentHtmlRef.current || '';
               const parser = new DOMParser();
@@ -140,6 +161,8 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                   im.setAttribute('alt', newData.alt || '');
                   if (newData.title) im.setAttribute('title', newData.title);
                   else im.removeAttribute('title');
+                  if (newData.caption) im.setAttribute('data-caption', newData.caption);
+                  else im.removeAttribute('data-caption');
                 }
               });
 
@@ -150,9 +173,31 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
               setContentHtml(updatedHtml);
               broadcastLiveSync(titleRef.current, updatedHtml, featuredImageUrlRef.current);
+
+              try {
+                await fetch(`/api/posts/${postId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    title: titleRef.current,
+                    slug,
+                    excerpt,
+                    contentHtml: updatedHtml,
+                    contentJson,
+                    featuredImageUrl: featuredImageUrlRef.current,
+                    status,
+                    readingTime,
+                    metaTitle,
+                    metaDescription,
+                  }),
+                });
+                toast.success('Image settings applied and saved!');
+              } catch (e) {
+                // silent
+              }
             }
           },
-          onDelete: () => {
+          onDelete: async () => {
             if (isCover) {
               setFeaturedImageUrl('');
               broadcastLiveSync(titleRef.current, contentHtmlRef.current, '');

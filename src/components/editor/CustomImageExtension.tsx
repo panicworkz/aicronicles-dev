@@ -21,9 +21,9 @@ function ImageComponent({ node, updateAttributes, deleteNode, extension }: Image
     if (extension.options.onManageImage) {
       extension.options.onManageImage({
         src,
-        alt,
-        title,
-        caption,
+        alt: alt || '',
+        title: title || '',
+        caption: caption || '',
         onSave: (newData: { src: string; alt: string; title: string; caption?: string }) => {
           updateAttributes({
             src: newData.src,
@@ -44,7 +44,7 @@ function ImageComponent({ node, updateAttributes, deleteNode, extension }: Image
       <div className="relative rounded-2xl overflow-hidden border border-border/80 bg-muted/20 shadow-md transition-all duration-200 inline-block w-full max-w-3xl">
         <img
           src={src}
-          alt={alt || 'Content Image'}
+          alt={alt || ''}
           title={title || ''}
           className="w-full h-auto object-cover rounded-2xl block min-h-[140px] bg-muted/30"
           loading="lazy"
@@ -92,11 +92,34 @@ export const CustomImageExtension = Image.extend<CustomImageOptions>({
 
   addAttributes() {
     return {
-      ...this.parent?.(),
-      src: { default: null },
-      alt: { default: null },
-      title: { default: null },
-      caption: { default: null },
+      src: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('src'),
+        renderHTML: (attributes) => ({
+          src: attributes.src,
+        }),
+      },
+      alt: {
+        default: '',
+        parseHTML: (element) => element.getAttribute('alt') || '',
+        renderHTML: (attributes) => ({
+          alt: attributes.alt,
+        }),
+      },
+      title: {
+        default: '',
+        parseHTML: (element) => element.getAttribute('title') || '',
+        renderHTML: (attributes) => ({
+          title: attributes.title,
+        }),
+      },
+      caption: {
+        default: '',
+        parseHTML: (element) => element.getAttribute('data-caption') || '',
+        renderHTML: (attributes) => ({
+          'data-caption': attributes.caption,
+        }),
+      },
     };
   },
 
