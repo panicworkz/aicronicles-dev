@@ -88,9 +88,21 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
     };
 
     fetchPost();
+
+    // Listen for real-time edits made on the right-side live canvas
+    const handleLiveMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'PANIC_LIVE_TO_STUDIO_SYNC') {
+        const { title: liveTitle, contentHtml: liveHtml } = event.data.payload || {};
+        if (liveTitle !== undefined) setTitle(liveTitle);
+        if (liveHtml !== undefined) setContentHtml(liveHtml);
+      }
+    };
+
+    window.addEventListener('message', handleLiveMessage);
+    return () => window.removeEventListener('message', handleLiveMessage);
   }, [postId]);
 
-  // Live Sync to iframe via postMessage
+  // Live Sync from left editor to right iframe via postMessage
   const broadcastLiveSync = (newTitle: string, newHtml: string, newCover: string) => {
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage(
@@ -445,7 +457,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           <div className="flex h-10 items-center justify-between gap-2 border-b bg-background/80 backdrop-blur-xs px-4 shrink-0">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
               <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Live Interactive Canvas</span>
+              <span>Live In-Context Canvas</span>
             </div>
 
             {/* Device Switcher */}
