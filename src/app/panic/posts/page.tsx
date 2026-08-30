@@ -14,12 +14,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { LivePreviewDrawer } from '@/components/preview/LivePreviewDrawer';
 
 export default function PanicPostsListPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [previewPost, setPreviewPost] = useState<any | null>(null);
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -147,11 +149,11 @@ export default function PanicPostsListPage() {
                   <TableCell>
                     <Link
                       href={`/panic/posts/${post.id}`}
-                      className="font-medium text-foreground hover:text-primary transition line-clamp-1"
+                      className="font-medium text-foreground hover:text-primary transition line-clamp-1 text-xs"
                     >
                       {post.title}
                     </Link>
-                    <div className="text-xs text-muted-foreground font-mono">/{post.slug}</div>
+                    <div className="text-[11px] text-muted-foreground font-mono">/{post.slug}</div>
                   </TableCell>
                   <TableCell>
                     <Badge variant={post.status === 'published' ? 'default' : 'secondary'} className="capitalize text-xs font-normal">
@@ -163,11 +165,15 @@ export default function PanicPostsListPage() {
                     {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Draft'}
                   </TableCell>
                   <TableCell className="text-right space-x-1">
-                    <Link href={`/${post.slug}`} target="_blank">
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" title="View Live Page">
-                        <Eye className="size-4" />
-                      </Button>
-                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setPreviewPost(post)}
+                      className="text-muted-foreground hover:text-foreground"
+                      title="Live Slide-over Preview"
+                    >
+                      <Eye className="size-4" />
+                    </Button>
                     <Link href={`/panic/posts/${post.id}`}>
                       <Button variant="ghost" size="icon" className="text-primary hover:text-primary" title="Edit in Visual Editor">
                         <Edit3 className="size-4" />
@@ -189,6 +195,12 @@ export default function PanicPostsListPage() {
           </TableBody>
         </Table>
       </Card>
+
+      {/* Live Preview Slide-Over Drawer */}
+      <LivePreviewDrawer
+        post={previewPost}
+        onClose={() => setPreviewPost(null)}
+      />
     </div>
   );
 }
