@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { RefreshCw, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 interface ArticleLiveWrapperProps {
   initialTitle: string;
@@ -20,10 +20,11 @@ export function ArticleLiveWrapper({
 }: ArticleLiveWrapperProps) {
   const [coverUrl, setCoverUrl] = useState(initialCoverUrl);
   const [isLiveMode, setIsLiveMode] = useState(false);
-  const [hoveredImg, setHoveredImg] = useState<{ src: string; alt?: string; rect: DOMRect; isCover?: boolean } | null>(null);
+  const [activeImageTarget, setActiveImageTarget] = useState<{ src: string; alt?: string; rect: { top: number; left: number; width: number; height: number }; isCover?: boolean } | null>(null);
 
   const titleRef = useRef<HTMLHeadingElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLElement>(null);
   const isTypingTitle = useRef(false);
   const isTypingContent = useRef(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -81,29 +82,36 @@ export function ArticleLiveWrapper({
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Attach hover listeners to images inside contentRef when live mode is active
+  // Track hover over images with zero layout jitter
   useEffect(() => {
-    if (!isLiveMode || !contentRef.current) return;
+    if (!isLiveMode) return;
 
-    const container = contentRef.current;
-
-    const handleMouseOver = (e: MouseEvent) => {
+    const handleMouseMove = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target.tagName === 'IMG') {
+      if (target && target.tagName === 'IMG') {
         const img = target as HTMLImageElement;
-        const rect = img.getBoundingClientRect();
-        setHoveredImg({
-          src: img.src,
-          alt: img.alt,
-          rect,
-          isCover: false,
-        });
+        const mainRect = containerRef.current?.getBoundingClientRect();
+        const imgRect = img.getBoundingClientRect();
+
+        if (mainRect) {
+          setActiveImageTarget({
+            src: img.src,
+            alt: img.alt,
+            rect: {
+              top: imgRect.top - mainRect.top + window.scrollY,
+              left: imgRect.left - mainRect.left + window.scrollX,
+              width: imgRect.width,
+              height: imgRect.height,
+            },
+            isCover: img.getAttribute('data-cover') === 'true',
+          });
+        }
       }
     };
 
-    container.addEventListener('mouseover', handleMouseOver);
-    return () => container.removeEventListener('mouseover', handleMouseOver);
-  }, [isLiveMode, initialContentHtml]);
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [isLiveMode]);
 
   // Set initial content on mount
   useEffect(() => {
@@ -162,11 +170,33 @@ export function ArticleLiveWrapper({
   };
 
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 relative">
+    <main ref={containerRef} className="max-w-4xl mx-auto px-4 sm:px-6 py-12 relative">
       {isLiveMode && (
-        <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono">
+        <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono select-none">
           <span className="size-2 rounded-full bg-primary animate-ping" />
-          <span>Live In-Context Studio (Hover any image to replace, or click text to edit)</span>
+          <span>Live In-Context Studio (Hover & click any image to replace)</span>
+        </div>
+      )}
+
+      {/* Floating Replace Button positioned over the active hovered image */}
+      {isLiveMode && activeImageTarget && (
+        <div
+          style={{
+            position: 'absolute',
+            top: `${activeImageTarget.rect.top + 16}px`,
+            left: `${activeImageTarget.rect.left + activeImageTarget.rect.width - 150}px`,
+            zIndex: 50,
+          }}
+          className="animate-in fade-in duration-150"
+        >
+          <button
+            type="button"
+            onClick={() => triggerReplaceImage(activeImageTarget.src, activeImageTarget.alt, activeImageTarget.isCover)}
+            className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-2xl hover:bg-primary/90 flex items-center gap-1.5 transition cursor-pointer active:scale-95 border border-primary-foreground/20 backdrop-blur"
+          >
+            <RefreshCw className="size-3.5" />
+            <span>Replace Image</span>
+          </button>
         </div>
       )}
 
@@ -193,22 +223,18 @@ export function ArticleLiveWrapper({
         <span>{readingTime || '5 min read'}</span>
       </div>
 
-      {/* Featured Cover Image with Hover Replace in Live Canvas */}
+      {/* Featured Cover Image */}
       {coverUrl && (
         <div className="relative group mb-10 rounded-xl overflow-hidden border border-border aspect-video bg-muted/40 shadow-sm">
-          <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
-          {isLiveMode && (
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => triggerReplaceImage(coverUrl, 'Cover', true)}
-                className="px-3.5 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold shadow-lg hover:bg-primary/90 flex items-center gap-1.5 transition cursor-pointer"
-              >
-                <RefreshCw className="size-3.5" />
-                <span>Replace Cover Image</span>
-              </button>
-            </div>
-          )}
+          <img
+            src={coverUrl}
+            alt="Cover"
+            data-cover="true"
+            className="w-full h-full object-cover cursor-pointer"
+            onClick={() => {
+              if (isLiveMode) triggerReplaceImage(coverUrl, 'Cover', true);
+            }}
+          />
         </div>
       )}
 
@@ -230,7 +256,7 @@ export function ArticleLiveWrapper({
         className={`prose dark:prose-invert prose-neutral prose-lg max-w-none font-sans leading-relaxed
           prose-headings:font-serif prose-headings:text-foreground prose-headings:tracking-tight
           prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-          prose-img:rounded-xl prose-img:border prose-img:border-border prose-img:cursor-pointer hover:prose-img:ring-2 hover:prose-img:ring-primary/80 transition
+          prose-img:rounded-xl prose-img:border prose-img:border-border prose-img:cursor-pointer
           prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground ${
             isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/30 rounded-xl p-2 hover:bg-muted/30 transition cursor-text' : ''
           }`}

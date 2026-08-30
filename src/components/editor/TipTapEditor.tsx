@@ -3,12 +3,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import ImageExtension from '@tiptap/extension-image';
 import LinkExtension from '@tiptap/extension-link';
 import TableExtension from '@tiptap/extension-table';
 import TableRowExtension from '@tiptap/extension-table-row';
 import TableCellExtension from '@tiptap/extension-table-cell';
 import TableHeaderExtension from '@tiptap/extension-table-header';
+import { CustomImageExtension } from './CustomImageExtension';
 import {
   Bold,
   Italic,
@@ -25,11 +25,6 @@ import {
   Undo,
   Redo,
   Upload,
-  RefreshCw,
-  Edit2,
-  Trash2,
-  X,
-  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -44,7 +39,8 @@ interface TipTapEditorProps {
 export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerMode, setPickerMode] = useState<'insert' | 'replace'>('insert');
-  const [selectedImage, setSelectedImage] = useState<{ src: string; alt?: string; pos: number } | null>(null);
+  const [selectedImgSrc, setSelectedImgSrc] = useState<string | undefined>(undefined);
+  const [replaceCallback, setReplaceCallback] = useState<((url: string, alt?: string) => void) | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
@@ -54,11 +50,14 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
           levels: [1, 2, 3],
         },
       }),
-      ImageExtension.configure({
+      CustomImageExtension.configure({
         inline: false,
         allowBase64: true,
-        HTMLAttributes: {
-          class: 'rounded-xl max-w-full my-6 border border-border/80 shadow-md mx-auto object-cover cursor-pointer hover:ring-2 hover:ring-primary/80 transition duration-200',
+        onReplaceImage: (src: string, alt: string, callback: (newSrc: string, newAlt?: string) => void) => {
+          setSelectedImgSrc(src);
+          setReplaceCallback(() => callback);
+          setPickerMode('replace');
+          setPickerOpen(true);
         },
       }),
       LinkExtension.configure({
@@ -90,32 +89,6 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
     editorProps: {
       attributes: {
         class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[500px] p-6 text-foreground text-sm sm:text-base leading-relaxed',
-      },
-      handleClickOn: (view, pos, node, nodePos, event, direct) => {
-        if (node.type.name === 'image') {
-          setSelectedImage({
-            src: node.attrs.src,
-            alt: node.attrs.alt,
-            pos: nodePos,
-          });
-          return true;
-        } else {
-          setSelectedImage(null);
-        }
-        return false;
-      },
-      handleDoubleClickOn: (view, pos, node, nodePos, event, direct) => {
-        if (node.type.name === 'image') {
-          setSelectedImage({
-            src: node.attrs.src,
-            alt: node.attrs.alt,
-            pos: nodePos,
-          });
-          setPickerMode('replace');
-          setPickerOpen(true);
-          return true;
-        }
-        return false;
       },
       handleDrop: (view, event, slice, moved) => {
         if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
@@ -176,12 +149,9 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
           .replace(/[-_0-9]+/g, ' ')
           .trim();
         
-        if (pickerMode === 'replace' && selectedImage) {
-          editor.chain().focus().setNodeSelection(selectedImage.pos).setImage({
-            src: data.media.url,
-            alt: data.media.alt || defaultAlt,
-          }).run();
-          setSelectedImage(null);
+        if (pickerMode === 'replace' && replaceCallback) {
+          replaceCallback(data.media.url, data.media.alt || defaultAlt);
+          setReplaceCallback(null);
           toast.success('Image replaced successfully!');
         } else {
           editor.chain().focus().setImage({
@@ -202,12 +172,9 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
   const handlePickerSelect = (url: string, alt?: string) => {
     if (!editor) return;
 
-    if (pickerMode === 'replace' && selectedImage) {
-      editor.chain().focus().setNodeSelection(selectedImage.pos).setImage({
-        src: url,
-        alt: alt || selectedImage.alt || '',
-      }).run();
-      setSelectedImage(null);
+    if (pickerMode === 'replace' && replaceCallback) {
+      replaceCallback(url, alt);
+      setReplaceCallback(null);
       toast.success('Image replaced successfully!');
     } else {
       editor.chain().focus().setImage({
@@ -225,24 +192,6 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
       uploadAndInsertImage(file);
       e.target.value = '';
     }
-  };
-
-  const editSelectedImageAlt = () => {
-    if (!editor || !selectedImage) return;
-    const currentAlt = selectedImage.alt || '';
-    const newAlt = window.prompt('Edit Image Alt Text (for Google SEO & Accessibility):', currentAlt);
-    if (newAlt !== null) {
-      editor.chain().focus().setNodeSelection(selectedImage.pos).updateAttributes('image', { alt: newAlt }).run();
-      setSelectedImage((prev) => prev ? { ...prev, alt: newAlt } : null);
-      toast.success('Image Alt text updated');
-    }
-  };
-
-  const deleteSelectedImage = () => {
-    if (!editor || !selectedImage) return;
-    editor.chain().focus().setNodeSelection(selectedImage.pos).deleteSelection().run();
-    setSelectedImage(null);
-    toast.info('Image removed from content');
   };
 
   if (!editor) {
@@ -278,71 +227,14 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
       {/* 3-in-1 Media Modal */}
       <MediaPickerModal
         isOpen={pickerOpen}
-        onClose={() => setPickerOpen(false)}
+        onClose={() => {
+          setPickerOpen(false);
+          setReplaceCallback(null);
+        }}
         onSelect={handlePickerSelect}
         title={pickerMode === 'replace' ? 'Replace Image (Library, Upload, or URL)' : 'Insert Image (Library, Upload, or URL)'}
-        currentUrl={selectedImage?.src}
+        currentUrl={selectedImgSrc}
       />
-
-      {/* FLOATING ACTION TOOLBAR WHEN AN IMAGE IS CLICKED / SELECTED */}
-      {selectedImage && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 p-1.5 rounded-xl bg-background/95 border border-primary/40 shadow-xl backdrop-blur-md animate-in fade-in zoom-in-95 duration-150">
-          <div className="flex items-center gap-1.5 px-2 text-xs font-semibold text-primary border-r border-border pr-2.5">
-            <ImageIcon className="size-3.5" />
-            <span className="truncate max-w-[120px]">{selectedImage.alt || 'Selected Image'}</span>
-          </div>
-
-          <Button
-            type="button"
-            variant="secondary"
-            size="xs"
-            onClick={() => {
-              setPickerMode('replace');
-              setPickerOpen(true);
-            }}
-            className="h-7 gap-1 text-xs font-semibold text-primary hover:bg-primary/10"
-            title="Replace this image with another file from library or computer"
-          >
-            <RefreshCw className="size-3" />
-            <span>Replace Image</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="xs"
-            onClick={editSelectedImageAlt}
-            className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
-            title="Edit Alt & SEO metadata"
-          >
-            <Edit2 className="size-3" />
-            <span>Edit Alt</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="xs"
-            onClick={deleteSelectedImage}
-            className="h-7 gap-1 text-xs text-destructive hover:bg-destructive/10"
-            title="Delete this image"
-          >
-            <Trash2 className="size-3" />
-            <span>Delete</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => setSelectedImage(null)}
-            className="size-6 text-muted-foreground ml-1"
-            title="Close toolbar"
-          >
-            <X className="size-3" />
-          </Button>
-        </div>
-      )}
 
       {/* Editor Main Toolbar */}
       <div className="flex flex-wrap items-center gap-1 border-b bg-muted/30 p-2">
@@ -467,6 +359,7 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
           size="xs"
           onClick={() => {
             setPickerMode('insert');
+            setSelectedImgSrc(undefined);
             setPickerOpen(true);
           }}
           className="gap-1 text-xs font-semibold text-primary h-7 px-2"
