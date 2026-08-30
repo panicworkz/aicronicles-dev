@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sparkles, Globe, ShieldCheck, Code, CheckCircle } from 'lucide-react';
+import { Sparkles, Globe, CheckCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,16 @@ interface ProductSeoAeoSuiteProps {
   onMetaDescriptionChange: (v: string) => void;
 }
 
+function truncateAtWordBoundary(text: string, maxLen: number): string {
+  if (text.length <= maxLen) return text;
+  const truncated = text.substring(0, maxLen);
+  const lastSpace = truncated.lastIndexOf(' ');
+  if (lastSpace > maxLen * 0.7) {
+    return truncated.substring(0, lastSpace);
+  }
+  return truncated;
+}
+
 export function ProductSeoAeoSuite({
   title,
   slug,
@@ -33,7 +43,7 @@ export function ProductSeoAeoSuite({
   const [generating, setGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<'serp' | 'aeo_schema'>('serp');
 
-  const displayTitle = metaTitle || title ? `${metaTitle || title} | Official Store` : 'Product Title | Official Store';
+  const displayTitle = metaTitle || title || 'Product Title | Official Store';
   const displayDesc = metaDescription || description || 'Buy official products, instant digital downloads, and consulting services with secure checkout.';
 
   const handleGenerateAiMeta = async () => {
@@ -44,12 +54,33 @@ export function ProductSeoAeoSuite({
 
     setGenerating(true);
     try {
-      const generatedTitle = `${title} | Official Store & Best Price 2026`;
-      const generatedDesc = `Get ${title}. High performance, verified quality, instant fulfillment with global currency support. ${description?.slice(0, 80) || ''}...`;
+      // 1. SMART META TITLE (Strictly <= 60 characters)
+      let generatedTitle = '';
+      const brandSuffix = ' | Fabelo';
+      const cleanTitle = title.trim();
+
+      if (cleanTitle.length + brandSuffix.length <= 60) {
+        generatedTitle = `${cleanTitle}${brandSuffix}`;
+      } else if (cleanTitle.length <= 60) {
+        generatedTitle = cleanTitle;
+      } else {
+        generatedTitle = truncateAtWordBoundary(cleanTitle, 57);
+      }
+
+      // 2. SMART META DESCRIPTION (Strictly <= 155 characters)
+      let rawDesc = (description || '').trim();
+      let generatedDesc = '';
+
+      if (rawDesc && rawDesc.length >= 50) {
+        generatedDesc = truncateAtWordBoundary(rawDesc, 150);
+      } else {
+        const fallback = `Buy official ${cleanTitle}. High quality, verified instant fulfillment, and secure multi-currency checkout.`;
+        generatedDesc = truncateAtWordBoundary(fallback, 150);
+      }
 
       onMetaTitleChange(generatedTitle);
       onMetaDescriptionChange(generatedDesc);
-      toast.success('AI SEO & AEO Meta generated');
+      toast.success(`Generated optimized SEO tags (${generatedTitle.length} / 60 & ${generatedDesc.length} / 155 chars)`);
     } catch (err) {
       toast.error('AI generation failed');
     } finally {
@@ -72,6 +103,12 @@ export function ProductSeoAeoSuite({
     },
   };
 
+  const titleLength = (metaTitle || '').length;
+  const descLength = (metaDescription || '').length;
+
+  const isTitleOptimal = titleLength > 0 && titleLength <= 60;
+  const isDescOptimal = descLength > 0 && descLength <= 155;
+
   return (
     <Card className="border-border">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -92,21 +129,29 @@ export function ProductSeoAeoSuite({
           className="gap-1.5 text-xs text-primary font-medium"
         >
           <Sparkles className="size-3.5" />
-          <span>{generating ? 'Generating...' : 'AI Auto-Fill SEO'}</span>
+          <span>{generating ? 'Optimizing...' : 'AI Auto-Fill SEO'}</span>
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label>Meta Title (Search Heading)</Label>
-            <span className={`text-[11px] font-mono ${(metaTitle || '').length > 65 ? 'text-amber-500' : 'text-muted-foreground'}`}>
-              {(metaTitle || '').length}/65 chars
+            <span
+              className={`text-[11px] font-mono font-medium ${
+                titleLength === 0
+                  ? 'text-muted-foreground'
+                  : isTitleOptimal
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-amber-500'
+              }`}
+            >
+              {titleLength}/60 chars {isTitleOptimal ? '✓ Optimal' : titleLength > 60 ? '⚠️ Too long' : ''}
             </span>
           </div>
           <Input
             value={metaTitle}
             onChange={(e) => onMetaTitleChange(e.target.value)}
-            placeholder={title ? `${title} | Official Store` : 'Meta Title...'}
+            placeholder={title ? `${title} | Fabelo` : 'Meta Title (max 60 chars)...'}
             className="text-xs"
           />
         </div>
@@ -114,15 +159,23 @@ export function ProductSeoAeoSuite({
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label>Meta Description (Snippet & LLM Summary)</Label>
-            <span className={`text-[11px] font-mono ${(metaDescription || '').length > 160 ? 'text-amber-500' : 'text-muted-foreground'}`}>
-              {(metaDescription || '').length}/160 chars
+            <span
+              className={`text-[11px] font-mono font-medium ${
+                descLength === 0
+                  ? 'text-muted-foreground'
+                  : isDescOptimal
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-amber-500'
+              }`}
+            >
+              {descLength}/155 chars {isDescOptimal ? '✓ Optimal' : descLength > 155 ? '⚠️ Too long' : ''}
             </span>
           </div>
           <Textarea
             rows={2}
             value={metaDescription}
             onChange={(e) => onMetaDescriptionChange(e.target.value)}
-            placeholder="Compelling 150-character summary for Google & AI search engine snippets..."
+            placeholder="Compelling 140-155 character summary for Google & AI search engine snippets..."
             className="text-xs resize-none leading-relaxed"
           />
         </div>
