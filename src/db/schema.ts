@@ -56,6 +56,7 @@ export const posts = pgTable('posts', {
   featuredImageUrl: text('featured_image_url'),
   status: text('status').notNull().default('published'),
   authorId: integer('author_id'),
+  categoryId: integer('category_id'),
   tagsJson: jsonb('tags_json').default([]),
   readingTime: text('reading_time').default('5 min read'),
   metaTitle: text('meta_title'),

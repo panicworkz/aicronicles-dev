@@ -12,10 +12,13 @@ import {
   Save,
   X,
   FileText,
-  ShoppingBag,
+  BookOpen,
+  ExternalLink,
+  Loader2,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,6 +44,11 @@ export default function PanicCategoriesPage() {
   const [tagSlug, setTagSlug] = useState('');
   const [savingTag, setSavingTag] = useState(false);
 
+  // Article List Slide-Over Drawer
+  const [selectedTaxonomy, setSelectedTaxonomy] = useState<{ type: 'category' | 'tag'; item: any } | null>(null);
+  const [drawerPosts, setDrawerPosts] = useState<any[]>([]);
+  const [drawerLoading, setDrawerLoading] = useState(false);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -63,6 +71,34 @@ export default function PanicCategoriesPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const openCategoryPosts = async (cat: any) => {
+    setSelectedTaxonomy({ type: 'category', item: cat });
+    setDrawerLoading(true);
+    try {
+      const res = await fetch(`/api/posts?categoryId=${cat.id}`);
+      const data = await res.json();
+      setDrawerPosts(data.posts || []);
+    } catch (e) {
+      toast.error('Failed to load articles');
+    } finally {
+      setDrawerLoading(false);
+    }
+  };
+
+  const openTagPosts = async (t: any) => {
+    setSelectedTaxonomy({ type: 'tag', item: t });
+    setDrawerLoading(true);
+    try {
+      const res = await fetch(`/api/posts?tag=${encodeURIComponent(t.name)}`);
+      const data = await res.json();
+      setDrawerPosts(data.posts || []);
+    } catch (e) {
+      toast.error('Failed to load articles');
+    } finally {
+      setDrawerLoading(false);
+    }
+  };
 
   const openCreateCat = () => {
     setEditingCat(null);
@@ -178,204 +214,311 @@ export default function PanicCategoriesPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header with Switcher Notice */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Top Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-primary uppercase tracking-wider font-mono">Content / Taxonomies</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">Editorial Categories & Article Topics</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Organize knowledge base articles, SEO guides, and technical publications
+          <h1 className="text-2xl font-bold tracking-tight font-serif">Editorial Taxonomies</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+            Manage editorial categories and topics. Click any card to inspect and manage its assigned articles.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href="/panic/product-categories">
-            <Button variant="outline" size="sm" className="h-8.5 gap-1.5 text-xs font-medium border-primary/30 text-primary hover:bg-primary/10">
-              <ShoppingBag className="size-3.5" />
-              <span>Go to Product Categories</span>
-              <ArrowRight className="size-3" />
-            </Button>
-          </Link>
-          <Button onClick={openCreateCat} size="sm" className="h-8.5 gap-1.5 text-xs font-medium">
-            <Plus className="size-3.5" />
+          <Button onClick={openCreateCat} size="sm" className="gap-1.5 font-medium shadow-xs">
+            <Plus className="size-4" />
             <span>New Category</span>
           </Button>
-        </div>
-      </div>
-
-      {/* Info Callout Banner */}
-      <div className="p-3.5 rounded-md border border-border bg-muted/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <FileText className="size-4 text-primary shrink-0" />
-          <span>
-            These taxonomies are strictly for <strong>Editorial Articles & Guides</strong>. Store and E-Commerce collections are managed independently under Commerce.
-          </span>
-        </div>
-        <Link href="/panic/product-categories" className="text-primary font-semibold hover:underline shrink-0 flex items-center gap-1">
-          <span>Manage Store Products</span>
-          <ArrowRight className="size-3" />
-        </Link>
-      </div>
-
-      {/* 1. Categories Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">Publication Categories</h2>
-            <p className="text-[11px] text-muted-foreground">Top-level vertical groupings for SEO architecture</p>
-          </div>
-          <span className="text-xs text-muted-foreground font-mono">{categories.length} categories</span>
-        </div>
-
-        {loading ? (
-          <div className="p-8 text-center text-xs text-muted-foreground animate-pulse">Loading categories...</div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {categories.map((cat) => (
-              <Card key={cat.id} className="group hover:border-primary/60 transition shadow-xs flex flex-col justify-between">
-                <CardContent className="p-5 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-                      <FolderTree className="size-3.5" />
-                      <span>{cat.name}</span>
-                    </span>
-                    <Badge variant="secondary" className="text-[10px] font-mono shrink-0">
-                      {cat.postCount || 0} Guides
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                    {cat.description || 'Editorial knowledge category.'}
-                  </p>
-                  <div className="text-[11px] text-muted-foreground font-mono pt-1">/{cat.slug}</div>
-                </CardContent>
-
-                <div className="p-2.5 bg-muted/20 border-t flex items-center justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => openEditCat(cat)}
-                    className="text-muted-foreground hover:text-foreground"
-                    title="Edit Category"
-                  >
-                    <Edit3 className="size-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => handleDeleteCat(cat.id, cat.name)}
-                    className="text-destructive hover:text-destructive"
-                    title="Delete Category"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* 2. Tags Section */}
-      <div className="space-y-4 pt-6 border-t border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">Editorial Tags & Topics</h2>
-            <p className="text-[11px] text-muted-foreground">Granular topic tags for search indexing and cross-linking</p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setTagModalOpen(true)}
-            className="h-8 gap-1.5 text-xs font-medium"
-          >
-            <Plus className="size-3.5" />
+          <Button onClick={() => setTagModalOpen(true)} variant="outline" size="sm" className="gap-1.5 font-medium shadow-xs">
+            <Plus className="size-4" />
             <span>New Tag</span>
           </Button>
         </div>
+      </div>
 
-        {loading ? (
-          <div className="p-8 text-center text-xs text-muted-foreground animate-pulse">Loading tags...</div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {tags.map((tag) => (
-              <Card key={tag.id} className="p-3 flex items-center justify-between hover:border-primary/50 transition shadow-xs group">
-                <div className="space-y-0.5 truncate">
-                  <div className="text-xs font-medium text-foreground truncate">{tag.name}</div>
-                  <div className="text-[10px] text-muted-foreground font-mono truncate">#{tag.slug}</div>
+      {/* 1. EDITORIAL CATEGORIES SECTION */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FolderTree className="size-4 text-primary" />
+            <h2 className="text-base font-bold font-serif">Editorial Categories</h2>
+            <Badge variant="outline" className="font-mono text-[11px]">{categories.length}</Badge>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {categories.map((cat) => (
+            <Card
+              key={cat.id}
+              onClick={() => openCategoryPosts(cat)}
+              className="relative overflow-hidden border border-border bg-card/60 hover:border-primary/50 hover:shadow-md transition duration-200 cursor-pointer group flex flex-col justify-between"
+            >
+              <CardHeader className="p-4 pb-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-1">
+                    <CardTitle className="text-sm font-bold font-serif group-hover:text-primary transition">
+                      {cat.name}
+                    </CardTitle>
+                    <span className="text-[10px] font-mono text-muted-foreground">/{cat.slug}</span>
+                  </div>
+
+                  <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={() => openEditCat(cat)}
+                      className="size-6 text-muted-foreground hover:text-foreground"
+                      title="Edit Category"
+                    >
+                      <Edit3 className="size-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={() => handleDeleteCat(cat.id, cat.name)}
+                      className="size-6 text-destructive hover:bg-destructive/10"
+                      title="Delete Category"
+                    >
+                      <Trash2 className="size-3" />
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
+              </CardHeader>
+
+              <CardContent className="p-4 pt-0 space-y-3">
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                  {cat.description || 'No description provided.'}
+                </p>
+
+                <div className="flex items-center justify-between pt-2 border-t border-border/60 text-xs">
+                  <span className="inline-flex items-center gap-1 font-mono text-[11px] text-primary font-semibold">
+                    <BookOpen className="size-3" />
+                    {cat.postCount || 0} Articles
+                  </span>
+                  <span className="text-[11px] text-muted-foreground group-hover:text-foreground flex items-center gap-0.5">
+                    View list <ChevronRight className="size-3 group-hover:translate-x-0.5 transition" />
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* 2. TOPIC TAGS SECTION */}
+      <div className="space-y-4 pt-4 border-t border-border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Tag className="size-4 text-primary" />
+            <h2 className="text-base font-bold font-serif">Editorial Topic Tags</h2>
+            <Badge variant="outline" className="font-mono text-[11px]">{tags.length}</Badge>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {tags.map((tag) => (
+            <div
+              key={tag.id}
+              onClick={() => openTagPosts(tag)}
+              className="p-3.5 rounded-xl border border-border bg-card/60 hover:border-primary/50 hover:shadow-sm transition cursor-pointer flex items-center justify-between gap-2 group"
+            >
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-xs text-foreground group-hover:text-primary transition">
+                    #{tag.name}
+                  </span>
+                  <Badge variant="secondary" className="font-mono text-[10px] h-4 px-1.5">
+                    {tag.postCount || 0}
+                  </Badge>
+                </div>
+                <span className="text-[10px] font-mono text-muted-foreground">/tag/{tag.slug}</span>
+              </div>
+
+              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                <Link
+                  href={`/tag/${tag.slug}`}
+                  target="_blank"
+                  className="p-1 text-muted-foreground hover:text-foreground rounded"
+                  title="View Public Tag Page"
+                >
+                  <ExternalLink className="size-3" />
+                </Link>
+                <button
+                  type="button"
                   onClick={() => handleDeleteTag(tag.id, tag.name)}
-                  className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive shrink-0 transition"
+                  className="p-1 text-destructive hover:bg-destructive/10 rounded"
                   title="Delete Tag"
                 >
                   <Trash2 className="size-3" />
-                </Button>
-              </Card>
-            ))}
-          </div>
-        )}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Create / Edit Category Modal */}
-      {catModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
-          <Card className="w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200">
-            <CardHeader className="flex flex-row items-center justify-between border-b py-4">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <FolderTree className="size-4 text-primary" />
-                <span>{editingCat ? 'Edit Editorial Category' : 'Create Editorial Category'}</span>
-              </CardTitle>
-              <Button variant="ghost" size="icon-sm" onClick={() => setCatModalOpen(false)}>
+      {/* SLIDE-OVER DRAWER: LIST OF POSTS IN SELECTED CATEGORY / TAG */}
+      {selectedTaxonomy && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-2xs animate-in fade-in duration-200">
+          <div className="relative w-full max-w-xl h-full bg-card border-l border-border shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200">
+            {/* Drawer Header */}
+            <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  {selectedTaxonomy.type === 'category' ? (
+                    <FolderTree className="size-4 text-primary" />
+                  ) : (
+                    <Tag className="size-4 text-primary" />
+                  )}
+                  <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+                    {selectedTaxonomy.type === 'category' ? 'Category Articles' : 'Tag Articles'}
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold font-serif text-foreground">
+                  {selectedTaxonomy.item.name}
+                </h3>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => setSelectedTaxonomy(null)}
+                className="size-8"
+              >
                 <X className="size-4" />
               </Button>
-            </CardHeader>
+            </div>
 
-            <form onSubmit={handleSaveCat}>
-              <CardContent className="p-5 space-y-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Category Name</Label>
-                  <Input
-                    value={catName}
-                    onChange={(e) => {
-                      setCatName(e.target.value);
-                      if (!editingCat) {
-                        setCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
-                      }
-                    }}
-                    placeholder="e.g. AI Strategy & LLM Architectures"
-                    className="text-xs"
-                    required
-                  />
+            {/* Drawer Content */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-3">
+              {drawerLoading ? (
+                <div className="flex items-center justify-center py-16 text-muted-foreground gap-2 text-xs">
+                  <Loader2 className="size-4 animate-spin text-primary" />
+                  <span>Loading articles...</span>
                 </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">URL Slug</Label>
-                  <Input
-                    value={catSlug}
-                    onChange={(e) => setCatSlug(e.target.value)}
-                    placeholder="e.g. ai-strategy"
-                    className="text-xs font-mono"
-                    required
-                  />
+              ) : drawerPosts.length === 0 ? (
+                <div className="text-center py-16 space-y-3">
+                  <BookOpen className="size-10 text-muted-foreground mx-auto opacity-40" />
+                  <p className="text-xs text-muted-foreground">
+                    No articles currently assigned to this {selectedTaxonomy.type}.
+                  </p>
+                  <Link href="/panic/posts/new">
+                    <Button size="xs" variant="outline" className="gap-1 mt-2">
+                      <Plus className="size-3" />
+                      <span>Write First Article</span>
+                    </Button>
+                  </Link>
                 </div>
+              ) : (
+                <div className="space-y-2.5">
+                  <div className="text-xs font-mono text-muted-foreground pb-1">
+                    Showing {drawerPosts.length} assigned articles:
+                  </div>
+                  {drawerPosts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="p-3.5 rounded-xl border border-border bg-muted/20 hover:border-primary/40 hover:bg-muted/40 transition flex items-center justify-between gap-3"
+                    >
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={post.status === 'published' ? 'default' : 'secondary'}
+                            className="capitalize text-[10px] h-4 px-1.5"
+                          >
+                            {post.status}
+                          </Badge>
+                          <span className="text-xs font-semibold text-foreground truncate block font-serif">
+                            {post.title}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground truncate font-mono">
+                          /{post.slug}
+                        </p>
+                      </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Description</Label>
-                  <Textarea
-                    rows={3}
-                    value={catDesc}
-                    onChange={(e) => setCatDesc(e.target.value)}
-                    placeholder="Brief description for SEO taxonomy pages..."
-                    className="text-xs resize-none"
-                  />
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Link href={`/panic/posts/${post.id}`}>
+                          <Button variant="outline" size="xs" className="h-7 text-xs gap-1">
+                            <Edit3 className="size-3" />
+                            <span>Edit</span>
+                          </Button>
+                        </Link>
+                        <Link href={`/${post.slug}`} target="_blank">
+                          <Button variant="ghost" size="icon-xs" className="size-7" title="View Live Article">
+                            <ExternalLink className="size-3" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </CardContent>
+              )}
+            </div>
 
-              <div className="p-4 border-t bg-muted/10 flex items-center justify-end gap-2">
+            {/* Drawer Footer */}
+            <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between">
+              <span className="text-xs font-mono text-muted-foreground">
+                Total: <b>{drawerPosts.length}</b> articles
+              </span>
+              <Button size="sm" variant="outline" onClick={() => setSelectedTaxonomy(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE / EDIT CATEGORY MODAL */}
+      {catModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-base font-bold font-serif">
+                {editingCat ? 'Edit Category' : 'Create New Category'}
+              </h3>
+              <Button variant="ghost" size="icon-xs" onClick={() => setCatModalOpen(false)}>
+                <X className="size-4" />
+              </Button>
+            </div>
+
+            <form onSubmit={handleSaveCat} className="space-y-3.5">
+              <div className="space-y-1">
+                <Label className="text-xs">Category Name *</Label>
+                <Input
+                  value={catName}
+                  onChange={(e) => {
+                    setCatName(e.target.value);
+                    if (!editingCat) {
+                      setCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
+                    }
+                  }}
+                  placeholder="e.g. AI & Machine Learning"
+                  className="text-xs"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs">URL Slug</Label>
+                <Input
+                  value={catSlug}
+                  onChange={(e) => setCatSlug(e.target.value)}
+                  placeholder="ai-machine-learning"
+                  className="text-xs font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs">Description</Label>
+                <Textarea
+                  value={catDesc}
+                  onChange={(e) => setCatDesc(e.target.value)}
+                  placeholder="Short description for editorial topic..."
+                  rows={3}
+                  className="text-xs resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t">
                 <Button type="button" variant="outline" size="sm" onClick={() => setCatModalOpen(false)}>
                   Cancel
                 </Button>
@@ -385,63 +528,57 @@ export default function PanicCategoriesPage() {
                 </Button>
               </div>
             </form>
-          </Card>
+          </div>
         </div>
       )}
 
-      {/* Create Tag Modal */}
+      {/* CREATE TAG MODAL */}
       {tagModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
-          <Card className="w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
-            <CardHeader className="flex flex-row items-center justify-between border-b py-4">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Tag className="size-4 text-primary" />
-                <span>Create New Tag</span>
-              </CardTitle>
-              <Button variant="ghost" size="icon-sm" onClick={() => setTagModalOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-base font-bold font-serif">Create New Tag</h3>
+              <Button variant="ghost" size="icon-xs" onClick={() => setTagModalOpen(false)}>
                 <X className="size-4" />
               </Button>
-            </CardHeader>
+            </div>
 
-            <form onSubmit={handleSaveTag}>
-              <CardContent className="p-5 space-y-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Tag Name</Label>
-                  <Input
-                    value={tagName}
-                    onChange={(e) => {
-                      setTagName(e.target.value);
-                      setTagSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
-                    }}
-                    placeholder="e.g. Perplexity AI"
-                    className="text-xs"
-                    required
-                  />
-                </div>
+            <form onSubmit={handleSaveTag} className="space-y-3.5">
+              <div className="space-y-1">
+                <Label className="text-xs">Tag Name *</Label>
+                <Input
+                  value={tagName}
+                  onChange={(e) => {
+                    setTagName(e.target.value);
+                    setTagSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
+                  }}
+                  placeholder="e.g. React 19"
+                  className="text-xs"
+                  required
+                />
+              </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Tag Slug</Label>
-                  <Input
-                    value={tagSlug}
-                    onChange={(e) => setTagSlug(e.target.value)}
-                    placeholder="e.g. perplexity-ai"
-                    className="text-xs font-mono"
-                    required
-                  />
-                </div>
-              </CardContent>
+              <div className="space-y-1">
+                <Label className="text-xs">URL Slug</Label>
+                <Input
+                  value={tagSlug}
+                  onChange={(e) => setTagSlug(e.target.value)}
+                  placeholder="react-19"
+                  className="text-xs font-mono"
+                />
+              </div>
 
-              <div className="p-4 border-t bg-muted/10 flex items-center justify-end gap-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t">
                 <Button type="button" variant="outline" size="sm" onClick={() => setTagModalOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit" size="sm" disabled={savingTag} className="gap-1.5">
                   <Save className="size-3.5" />
-                  <span>{savingTag ? 'Saving...' : 'Create Tag'}</span>
+                  <span>{savingTag ? 'Saving...' : 'Save Tag'}</span>
                 </Button>
               </div>
             </form>
-          </Card>
+          </div>
         </div>
       )}
     </div>

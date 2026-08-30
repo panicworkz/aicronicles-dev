@@ -1,31 +1,56 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
-import { desc, eq, ilike, or } from 'drizzle-orm';
+import { desc, eq, ilike, or, and, sql } from 'drizzle-orm';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search');
     const status = searchParams.get('status');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const categoryId = searchParams.get('categoryId');
+    const authorId = searchParams.get('authorId');
+    const tag = searchParams.get('tag');
+    const limit = parseInt(searchParams.get('limit') || '100');
 
     const conditions = [];
+
     if (status && (status === 'published' || status === 'draft')) {
       conditions.push(eq(schema.posts.status, status));
     }
+    if (categoryId) {
+      conditions.push(eq(schema.posts.categoryId, parseInt(categoryId, 10)));
+    }
+    if (authorId) {
+      conditions.push(eq(schema.posts.authorId, parseInt(authorId, 10)));
+    }
     if (search) {
-      conditions.push(or(
-        ilike(schema.posts.title, `%${search}%`),
-        ilike(schema.posts.slug, `%${search}%`)
-      ));
+      conditions.push(
+        or(
+          ilike(schema.posts.title, `%${search}%`),
+          ilike(schema.posts.slug, `%${search}%`)
+        )
+      );
     }
 
-    const postsList = await db.query.posts.findMany({
-      where: conditions.length > 0 ? (conditions.length === 1 ? conditions[0] : or(...conditions)) : undefined,
+    let postsList = await db.query.posts.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
       orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.createdAt)],
       limit,
     });
+
+    if (tag) {
+      const cleanTag = tag.toLowerCase().trim();
+      postsList = postsList.filter((p: any) => {
+        const tags = Array.isArray(p.tagsJson) ? p.tagsJson : [];
+        return tags.some((t: any) => {
+          const str = typeof t === 'string' ? t : t?.name || '';
+          return str.toLowerCase().includes(cleanTag);
+        });
+      });
+    }
 
     return NextResponse.json({ posts: postsList });
   } catch (error: any) {
@@ -51,6 +76,7 @@ export async function POST(req: Request) {
       featuredImageId: data.featuredImageId || null,
       status: data.status || 'draft',
       authorId: data.authorId || session.userId,
+      categoryId: data.categoryId ? parseInt(String(data.categoryId), 10) : null,
       tagsJson: data.tagsJson || [],
       readingTime: data.readingTime || '5 min read',
       metaTitle: data.metaTitle || data.title,

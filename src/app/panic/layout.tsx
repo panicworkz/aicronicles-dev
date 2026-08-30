@@ -54,8 +54,9 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
         { href: '/panic', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/panic/posts', label: 'Articles & Guides', icon: FileText },
         { href: '/panic/pages', label: 'Static Pages', icon: Globe },
+        { href: '/panic/authors', label: 'Authors & Staff', icon: Users },
         { href: '/panic/media', label: 'Media Library', icon: ImageIcon },
-        { href: '/panic/categories', label: 'Editorial Taxonomies', icon: Tags },
+        { href: '/panic/categories', label: 'Taxonomies', icon: Tags },
       ],
     },
     {

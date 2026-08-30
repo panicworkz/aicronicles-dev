@@ -9,7 +9,26 @@ export async function GET() {
     const tagList = await db.query.tags.findMany({
       orderBy: [desc(schema.tags.createdAt)],
     });
-    return NextResponse.json({ success: true, tags: tagList });
+
+    const postsList = await db.query.posts.findMany();
+
+    const tagsWithCounts = tagList.map((tag) => {
+      const tagNameLower = tag.name.toLowerCase();
+      const count = postsList.filter((p: any) => {
+        const tags = Array.isArray(p.tagsJson) ? p.tagsJson : [];
+        return tags.some((t: any) => {
+          const str = typeof t === 'string' ? t : t?.name || '';
+          return str.toLowerCase() === tagNameLower || str.toLowerCase().includes(tag.slug);
+        });
+      }).length;
+
+      return {
+        ...tag,
+        postCount: count,
+      };
+    });
+
+    return NextResponse.json({ success: true, tags: tagsWithCounts });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -23,7 +42,9 @@ export async function POST(req: Request) {
     const [newTag] = await db.insert(schema.tags).values({
       name: data.name,
       slug,
-    }).returning();
+      description: data.description || '',
+      color: data.color || '#2563eb',
+    } as any).returning();
 
     return NextResponse.json({ success: true, tag: newTag });
   } catch (err: any) {
