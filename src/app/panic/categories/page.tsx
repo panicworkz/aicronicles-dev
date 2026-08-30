@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { TaxonomyArticleDrawer } from '@/components/studio/TaxonomyArticleDrawer';
 import { toast } from 'sonner';
 
 export default function PanicCategoriesPage() {
@@ -44,10 +45,8 @@ export default function PanicCategoriesPage() {
   const [tagSlug, setTagSlug] = useState('');
   const [savingTag, setSavingTag] = useState(false);
 
-  // Article List Slide-Over Drawer
+  // Slide-Over Taxonomy Drawer State
   const [selectedTaxonomy, setSelectedTaxonomy] = useState<{ type: 'category' | 'tag'; item: any } | null>(null);
-  const [drawerPosts, setDrawerPosts] = useState<any[]>([]);
-  const [drawerLoading, setDrawerLoading] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -71,34 +70,6 @@ export default function PanicCategoriesPage() {
   useEffect(() => {
     fetchData();
   }, []);
-
-  const openCategoryPosts = async (cat: any) => {
-    setSelectedTaxonomy({ type: 'category', item: cat });
-    setDrawerLoading(true);
-    try {
-      const res = await fetch(`/api/posts?categoryId=${cat.id}`);
-      const data = await res.json();
-      setDrawerPosts(data.posts || []);
-    } catch (e) {
-      toast.error('Failed to load articles');
-    } finally {
-      setDrawerLoading(false);
-    }
-  };
-
-  const openTagPosts = async (t: any) => {
-    setSelectedTaxonomy({ type: 'tag', item: t });
-    setDrawerLoading(true);
-    try {
-      const res = await fetch(`/api/posts?tag=${encodeURIComponent(t.name)}`);
-      const data = await res.json();
-      setDrawerPosts(data.posts || []);
-    } catch (e) {
-      toast.error('Failed to load articles');
-    } finally {
-      setDrawerLoading(false);
-    }
-  };
 
   const openCreateCat = () => {
     setEditingCat(null);
@@ -219,7 +190,7 @@ export default function PanicCategoriesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight font-serif">Editorial Taxonomies</h1>
           <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-            Manage editorial categories and topics. Click any card to inspect and manage its assigned articles.
+            Manage editorial categories and topics. Click any card to inspect its assigned articles in smooth slide-over.
           </p>
         </div>
 
@@ -249,7 +220,7 @@ export default function PanicCategoriesPage() {
           {categories.map((cat) => (
             <Card
               key={cat.id}
-              onClick={() => openCategoryPosts(cat)}
+              onClick={() => setSelectedTaxonomy({ type: 'category', item: cat })}
               className="relative overflow-hidden border border-border bg-card/60 hover:border-primary/50 hover:shadow-md transition duration-200 cursor-pointer group flex flex-col justify-between"
             >
               <CardHeader className="p-4 pb-2">
@@ -318,7 +289,7 @@ export default function PanicCategoriesPage() {
           {tags.map((tag) => (
             <div
               key={tag.id}
-              onClick={() => openTagPosts(tag)}
+              onClick={() => setSelectedTaxonomy({ type: 'tag', item: tag })}
               className="p-3.5 rounded-xl border border-border bg-card/60 hover:border-primary/50 hover:shadow-sm transition cursor-pointer flex items-center justify-between gap-2 group"
             >
               <div className="space-y-0.5">
@@ -356,116 +327,12 @@ export default function PanicCategoriesPage() {
         </div>
       </div>
 
-      {/* SLIDE-OVER DRAWER: LIST OF POSTS IN SELECTED CATEGORY / TAG */}
-      {selectedTaxonomy && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-2xs animate-in fade-in duration-200">
-          <div className="relative w-full max-w-xl h-full bg-card border-l border-border shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200">
-            {/* Drawer Header */}
-            <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  {selectedTaxonomy.type === 'category' ? (
-                    <FolderTree className="size-4 text-primary" />
-                  ) : (
-                    <Tag className="size-4 text-primary" />
-                  )}
-                  <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                    {selectedTaxonomy.type === 'category' ? 'Category Articles' : 'Tag Articles'}
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold font-serif text-foreground">
-                  {selectedTaxonomy.item.name}
-                </h3>
-              </div>
-
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => setSelectedTaxonomy(null)}
-                className="size-8"
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-
-            {/* Drawer Content */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-3">
-              {drawerLoading ? (
-                <div className="flex items-center justify-center py-16 text-muted-foreground gap-2 text-xs">
-                  <Loader2 className="size-4 animate-spin text-primary" />
-                  <span>Loading articles...</span>
-                </div>
-              ) : drawerPosts.length === 0 ? (
-                <div className="text-center py-16 space-y-3">
-                  <BookOpen className="size-10 text-muted-foreground mx-auto opacity-40" />
-                  <p className="text-xs text-muted-foreground">
-                    No articles currently assigned to this {selectedTaxonomy.type}.
-                  </p>
-                  <Link href="/panic/posts/new">
-                    <Button size="xs" variant="outline" className="gap-1 mt-2">
-                      <Plus className="size-3" />
-                      <span>Write First Article</span>
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  <div className="text-xs font-mono text-muted-foreground pb-1">
-                    Showing {drawerPosts.length} assigned articles:
-                  </div>
-                  {drawerPosts.map((post) => (
-                    <div
-                      key={post.id}
-                      className="p-3.5 rounded-xl border border-border bg-muted/20 hover:border-primary/40 hover:bg-muted/40 transition flex items-center justify-between gap-3"
-                    >
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant={post.status === 'published' ? 'default' : 'secondary'}
-                            className="capitalize text-[10px] h-4 px-1.5"
-                          >
-                            {post.status}
-                          </Badge>
-                          <span className="text-xs font-semibold text-foreground truncate block font-serif">
-                            {post.title}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground truncate font-mono">
-                          /{post.slug}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Link href={`/panic/posts/${post.id}`}>
-                          <Button variant="outline" size="xs" className="h-7 text-xs gap-1">
-                            <Edit3 className="size-3" />
-                            <span>Edit</span>
-                          </Button>
-                        </Link>
-                        <Link href={`/${post.slug}`} target="_blank">
-                          <Button variant="ghost" size="icon-xs" className="size-7" title="View Live Article">
-                            <ExternalLink className="size-3" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Drawer Footer */}
-            <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between">
-              <span className="text-xs font-mono text-muted-foreground">
-                Total: <b>{drawerPosts.length}</b> articles
-              </span>
-              <Button size="sm" variant="outline" onClick={() => setSelectedTaxonomy(null)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* BUTTERY-SMOOTH PORTAL SLIDE-OVER DRAWER (ZERO TOP GAP, 100% FLUSH, SMOOTH SLIDE) */}
+      <TaxonomyArticleDrawer
+        taxonomy={selectedTaxonomy}
+        isOpen={Boolean(selectedTaxonomy)}
+        onClose={() => setSelectedTaxonomy(null)}
+      />
 
       {/* CREATE / EDIT CATEGORY MODAL */}
       {catModalOpen && (
