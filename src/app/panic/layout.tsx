@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   FileText,
+  Globe,
   Package,
   ShoppingCart,
   Users,
@@ -51,6 +52,7 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
       items: [
         { href: '/panic', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/panic/posts', label: 'Articles & Guides', icon: FileText },
+        { href: '/panic/pages', label: 'Static Pages', icon: Globe },
         { href: '/panic/media', label: 'Media Library', icon: ImageIcon },
         { href: '/panic/categories', label: 'Editorial Taxonomies', icon: Tags },
       ],
