@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles } from 'lucide-react';
 
 interface ArticleLiveWrapperProps {
@@ -38,6 +38,7 @@ export function ArticleLiveWrapper({
   const isTypingContent = useRef(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const currentHoverSrc = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -88,7 +89,7 @@ export function ArticleLiveWrapper({
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Event Delegation: Clean hover tracking over any <img> inside contentRef without mutating DOM
+  // Flicker-free hover tracking: only update when entering a new image
   const handleContentMouseOver = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isLiveMode) return;
     const target = e.target as HTMLElement;
@@ -96,6 +97,10 @@ export function ArticleLiveWrapper({
       const img = target as HTMLImageElement;
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
 
+      const targetSrc = img.getAttribute('src') || img.src;
+      if (currentHoverSrc.current === targetSrc) return;
+
+      currentHoverSrc.current = targetSrc;
       const imgRect = img.getBoundingClientRect();
       const contRect = containerRef.current?.getBoundingClientRect() || { top: 0, left: 0 };
 
@@ -104,7 +109,7 @@ export function ArticleLiveWrapper({
         left: imgRect.left - contRect.left,
         width: imgRect.width,
         height: imgRect.height,
-        src: img.getAttribute('src') || img.src,
+        src: targetSrc,
         alt: img.getAttribute('alt') || '',
         title: img.getAttribute('title') || '',
         caption: img.getAttribute('data-caption') || '',
@@ -115,8 +120,9 @@ export function ArticleLiveWrapper({
   const handleContentMouseLeave = () => {
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     hoverTimeoutRef.current = setTimeout(() => {
+      currentHoverSrc.current = null;
       setHoveredImgRect(null);
-    }, 300);
+    }, 150);
   };
 
   const handleTitleInput = (e: React.FormEvent<HTMLHeadingElement>) => {
@@ -209,7 +215,7 @@ export function ArticleLiveWrapper({
             }}
           />
           {isLiveMode && (
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center backdrop-blur-2xs">
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center backdrop-blur-2xs">
               <button
                 type="button"
                 onClick={() => triggerOpenImageStudio(coverUrl, 'Cover Image', 'Article Cover', '', true)}
@@ -244,7 +250,7 @@ export function ArticleLiveWrapper({
         dangerouslySetInnerHTML={{ __html: initialContentHtml || '' }}
       />
 
-      {/* Clean Floating React Hover Overlay for Inline Images */}
+      {/* Solid Flicker-Free Floating React Hover Overlay for Inline Images */}
       {isLiveMode && hoveredImgRect && (
         <div
           style={{
@@ -253,17 +259,22 @@ export function ArticleLiveWrapper({
             left: hoveredImgRect.left,
             width: hoveredImgRect.width,
             height: hoveredImgRect.height,
-            pointerEvents: 'none',
+            pointerEvents: 'auto',
           }}
-          className="rounded-2xl flex items-center justify-center bg-black/40 backdrop-blur-2xs transition-all duration-150 z-20"
+          className="rounded-2xl flex items-center justify-center bg-black/40 backdrop-blur-2xs transition-opacity duration-150 z-20"
           onMouseEnter={() => {
             if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
           }}
-          onMouseLeave={handleContentMouseLeave}
+          onMouseLeave={() => {
+            if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+            hoverTimeoutRef.current = setTimeout(() => {
+              currentHoverSrc.current = null;
+              setHoveredImgRect(null);
+            }, 100);
+          }}
         >
           <button
             type="button"
-            style={{ pointerEvents: 'auto' }}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
