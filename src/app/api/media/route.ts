@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
-    const limit = parseInt(searchParams.get('limit') || '100', 10);
+    const limit = parseInt(searchParams.get('limit') || '1000', 10);
 
     const condition = search
       ? or(
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       limit,
     });
 
-    return NextResponse.json({ success: true, media: mediaList });
+    return NextResponse.json({ success: true, media: mediaList, total: mediaList.length });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -33,7 +33,7 @@ export default function PanicMediaPage() {
   const fetchMedia = async () => {
     try {
       setLoading(true);
-      let url = '/api/media?limit=100';
+      let url = '/api/media?limit=1000';
       if (search) url += `&search=${encodeURIComponent(search)}`;
 
       const res = await fetch(url);
@@ -73,7 +73,6 @@ export default function PanicMediaPage() {
       if (data.success && data.media) {
         setMediaList([data.media, ...mediaList]);
         toast.success('Image optimized & uploaded as WebP');
-        // Open drawer for the newly uploaded media to set SEO/AEO
         setSelectedMedia(data.media);
         setDrawerOpen(true);
       } else {
@@ -124,7 +123,7 @@ export default function PanicMediaPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Media Assets & SEO / AEO Studio</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Manage gallery files, automatic WebP compression, Alt Text and AI Vision Context</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Manage all article graphics, infographics, gallery files and AI Vision context</p>
         </div>
 
         <div>
@@ -149,7 +148,7 @@ export default function PanicMediaPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search media by filename, alt text, or title..."
+            placeholder="Search all 509 media assets by filename, alt text, or title..."
             className="pl-9 h-8.5 text-xs"
           />
         </div>
