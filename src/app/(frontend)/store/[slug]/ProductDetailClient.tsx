@@ -1,10 +1,26 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Package, FileDown, Briefcase, ShoppingCart, Check, ShieldCheck, Truck, ChevronLeft, ChevronRight, ExternalLink, Sliders } from 'lucide-react';
+import {
+  Package,
+  FileDown,
+  Briefcase,
+  ShoppingCart,
+  Check,
+  ShieldCheck,
+  Truck,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Sliders,
+  Tag,
+  Ticket,
+  X,
+} from 'lucide-react';
 import { useCurrency } from '@/providers/currency-provider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 export function ProductDetailClient({ product, variants = [] }: { product: any; variants: any[] }) {
@@ -12,6 +28,11 @@ export function ProductDetailClient({ product, variants = [] }: { product: any; 
   const [selectedVariant, setSelectedVariant] = useState<any>(variants[0] || null);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+
+  // Promo Code State
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   // Combine featured cover image + all gallery images
   const allImages: string[] = [
@@ -22,7 +43,54 @@ export function ProductDetailClient({ product, variants = [] }: { product: any; 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const currentImage = allImages[activeImageIndex] || product.featuredImageUrl;
 
-  const activePrice = selectedVariant?.price ? selectedVariant.price : product.price;
+  const basePrice = parseFloat(selectedVariant?.price ? selectedVariant.price : product.price);
+  const subtotal = basePrice * quantity;
+  
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === 'percentage') {
+      discountAmount = (subtotal * appliedCoupon.value) / 100;
+    } else {
+      discountAmount = appliedCoupon.value;
+    }
+    if (discountAmount > subtotal) discountAmount = subtotal;
+  }
+  const finalPrice = Math.max(0, subtotal - discountAmount);
+
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!couponCode.trim()) return;
+
+    setValidatingCoupon(true);
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: couponCode.trim().toUpperCase(),
+          cartTotal: subtotal,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.valid) {
+        setAppliedCoupon(data.coupon);
+        toast.success(data.message || `Promo code ${data.coupon.code} applied!`);
+      } else {
+        toast.error(data.error || 'Invalid promo code');
+      }
+    } catch (err) {
+      toast.error('Error validating coupon');
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    toast.info('Promo code removed');
+  };
 
   const handleAddToCart = () => {
     if (product.checkoutUrl) {
@@ -30,7 +98,7 @@ export function ProductDetailClient({ product, variants = [] }: { product: any; 
       return;
     }
     setAdded(true);
-    toast.success(`Added ${product.title} (${selectedVariant?.title || 'Standard'}) to cart!`);
+    toast.success(`Added ${quantity}x ${product.title} (${selectedVariant?.title || 'Standard'}) to cart!`);
     setTimeout(() => setAdded(false), 2000);
   };
 
@@ -141,12 +209,17 @@ export function ProductDetailClient({ product, variants = [] }: { product: any; 
           {/* Dynamic Multi-Currency Price */}
           <div className="flex items-baseline gap-3 pt-2">
             <span className="text-2xl sm:text-3xl font-extrabold text-foreground font-mono">
-              {format(activePrice)}
+              {format(appliedCoupon ? finalPrice : basePrice)}
             </span>
-            {product.compareAtPrice && (
+            {(appliedCoupon || product.compareAtPrice) && (
               <span className="text-sm text-muted-foreground line-through font-mono">
-                {format(product.compareAtPrice)}
+                {format(appliedCoupon ? subtotal : product.compareAtPrice)}
               </span>
+            )}
+            {appliedCoupon && (
+              <Badge variant="default" className="bg-emerald-600 dark:bg-emerald-500 text-[11px] font-semibold">
+                {appliedCoupon.code}: {appliedCoupon.type === 'percentage' ? `${appliedCoupon.value}% OFF` : `$${appliedCoupon.value} OFF`}
+              </Badge>
             )}
           </div>
         </div>
@@ -181,8 +254,50 @@ export function ProductDetailClient({ product, variants = [] }: { product: any; 
           </div>
         )}
 
+        {/* Promo Code Box */}
+        <div className="p-3.5 rounded-lg border border-border bg-muted/20 space-y-2.5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-semibold text-foreground flex items-center gap-1.5">
+              <Ticket className="size-3.5 text-primary" />
+              <span>Have a Discount Promo Code?</span>
+            </span>
+            <span className="text-[11px] text-muted-foreground font-mono">Try: FABELO20</span>
+          </div>
+
+          {appliedCoupon ? (
+            <div className="flex items-center justify-between p-2 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-xs">
+              <div className="flex items-center gap-2">
+                <Check className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="font-semibold text-emerald-700 dark:text-emerald-300 font-mono">
+                  {appliedCoupon.code} applied ({appliedCoupon.type === 'percentage' ? `${appliedCoupon.value}%` : `$${appliedCoupon.value}`} savings)
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={removeCoupon}
+                className="text-muted-foreground hover:text-destructive p-1"
+                title="Remove promo code"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleApplyCoupon} className="flex items-center gap-2">
+              <Input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                placeholder="Enter promo code (e.g. FABELO20)"
+                className="h-8 text-xs font-mono uppercase font-bold"
+              />
+              <Button type="submit" size="sm" disabled={validatingCoupon} className="h-8 text-xs shrink-0">
+                {validatingCoupon ? 'Validating...' : 'Apply'}
+              </Button>
+            </form>
+          )}
+        </div>
+
         {/* Quantity & Action Buttons */}
-        <div className="flex items-center gap-3 pt-3">
+        <div className="flex items-center gap-3 pt-1">
           <div className="flex items-center rounded-md border border-border bg-card h-8.5 px-2 text-xs font-mono">
             <button
               type="button"

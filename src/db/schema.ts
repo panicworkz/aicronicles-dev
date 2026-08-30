@@ -193,12 +193,12 @@ export const orderItems = pgTable('order_items', {
 export const coupons = pgTable('coupons', {
   id: serial('id').primaryKey(),
   code: text('code').notNull().unique(),
-  discountType: text('discount_type').notNull().default('percentage'),
-  discountValue: numeric('discount_value', { precision: 10, scale: 2 }).notNull(),
-  minOrderAmount: numeric('min_order_amount', { precision: 10, scale: 2 }),
+  type: text('type').notNull().default('percentage'),
+  value: numeric('value', { precision: 10, scale: 2 }).notNull(),
+  minOrderAmount: numeric('min_order_amount', { precision: 10, scale: 2 }).default('0.00'),
   usageLimit: integer('usage_limit'),
-  usedCount: integer('used_count').default(0),
-  isActive: boolean('is_active').default(true),
+  timesUsed: integer('times_used').default(0),
+  active: boolean('active').notNull().default(true),
   expiresAt: timestamp('expires_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
