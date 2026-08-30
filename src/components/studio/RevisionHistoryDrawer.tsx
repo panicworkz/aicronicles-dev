@@ -66,13 +66,13 @@ export function RevisionHistoryDrawer({
             </div>
           ) : revisions.length === 0 ? (
             <div className="text-center py-12 text-xs text-muted-foreground">
-              No previous revisions recorded. Snapshots are created upon saving.
+              No previous revisions recorded. Snapshots are created automatically upon saving.
             </div>
           ) : (
             revisions.map((rev) => (
               <div
                 key={rev.id}
-                className="p-3.5 rounded-xl border bg-card hover:border-primary/50 transition space-y-2"
+                className="p-3.5 rounded-md border bg-card hover:border-primary/50 transition space-y-2"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-foreground truncate max-w-[200px]">
@@ -104,7 +104,7 @@ export function RevisionHistoryDrawer({
                       toast.success(`Restored snapshot from ${new Date(rev.createdAt).toLocaleTimeString()}`);
                       onClose();
                     }}
-                    className="gap-1.5 text-xs text-primary font-medium"
+                    className="gap-1.5 text-xs text-primary font-medium rounded-md"
                   >
                     <RotateCcw className="size-3" />
                     <span>Restore Version</span>
