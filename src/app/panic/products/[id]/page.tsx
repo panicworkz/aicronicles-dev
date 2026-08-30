@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
+import { ProductSeoAeoSuite } from '@/components/studio/ProductSeoAeoSuite';
 import { formatPrice } from '@/lib/currency';
 import { toast } from 'sonner';
 
@@ -43,6 +44,8 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
   const [digitalAssetUrl, setDigitalAssetUrl] = useState('');
   const [status, setStatus] = useState('published');
   const [featuredImageUrl, setFeaturedImageUrl] = useState('');
+  const [metaTitle, setMetaTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
   const [variants, setVariants] = useState<any[]>([]);
 
   useEffect(() => {
@@ -64,6 +67,8 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
           setDigitalAssetUrl(p.digitalAssetUrl || '');
           setStatus(p.status || 'published');
           setFeaturedImageUrl(p.featuredImageUrl || '');
+          setMetaTitle(p.metaTitle || '');
+          setMetaDescription(p.metaDescription || '');
           setVariants(data.variants || []);
         } else {
           toast.error('Product not found');
@@ -121,6 +126,8 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
           digitalAssetUrl,
           status,
           featuredImageUrl,
+          metaTitle,
+          metaDescription,
           variants,
         }),
       });
@@ -295,6 +302,18 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
               </div>
             </CardContent>
           </Card>
+
+          {/* Product SEO, AEO & SERP Simulator */}
+          <ProductSeoAeoSuite
+            title={title}
+            slug={slug}
+            price={price}
+            description={description}
+            metaTitle={metaTitle}
+            metaDescription={metaDescription}
+            onMetaTitleChange={(v) => setMetaTitle(v)}
+            onMetaDescriptionChange={(v) => setMetaDescription(v)}
+          />
 
           {/* Dynamic Variants Builder */}
           <Card>

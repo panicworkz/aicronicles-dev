@@ -20,6 +20,7 @@ import {
   Sun,
   Moon,
   ChevronLeft,
+  TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -170,9 +171,9 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
 
       {/* Main Column */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Hubz Header */}
+        {/* Hubz Header with Live Currency Ticker */}
         <header className="flex h-14 items-center gap-4 border-b bg-background px-6 shrink-0">
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 max-w-xs xl:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder="Search guides, products, orders..."
@@ -180,11 +181,31 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
             />
           </div>
 
+          {/* Live Currency Ticker (Hubz.panic.pw Style) */}
+          <div className="hidden lg:flex items-center gap-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border/70 bg-muted/30 text-[11px] font-mono">
+              <span className="text-muted-foreground font-medium">USD/TRY:</span>
+              <span className="font-bold text-foreground">₺38.50</span>
+              <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-0.5"><TrendingUp className="size-2.5" />+0.15%</span>
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border/70 bg-muted/30 text-[11px] font-mono">
+              <span className="text-muted-foreground font-medium">EUR/TRY:</span>
+              <span className="font-bold text-foreground">₺41.85</span>
+              <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-0.5"><TrendingUp className="size-2.5" />+0.08%</span>
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border/70 bg-muted/30 text-[11px] font-mono">
+              <span className="text-muted-foreground font-medium">EUR/USD:</span>
+              <span className="font-bold text-foreground">$1.09</span>
+            </div>
+          </div>
+
           <div className="flex items-center gap-2 ml-auto">
-            <Link href="/" target="_blank">
+            <Link href="/store" target="_blank">
               <Button variant="outline" size="default" className="gap-1.5">
                 <ExternalLink className="size-3.5 text-muted-foreground" />
-                <span>Live Site</span>
+                <span>Store</span>
               </Button>
             </Link>
 

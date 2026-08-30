@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
+import { ProductSeoAeoSuite } from '@/components/studio/ProductSeoAeoSuite';
 import { DEFAULT_RATES, formatPrice } from '@/lib/currency';
 import { toast } from 'sonner';
 
@@ -40,6 +41,8 @@ export default function PanicNewProductPage() {
   const [digitalAssetUrl, setDigitalAssetUrl] = useState('');
   const [status, setStatus] = useState('published');
   const [featuredImageUrl, setFeaturedImageUrl] = useState('');
+  const [metaTitle, setMetaTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
 
   // Variants list
   const [variants, setVariants] = useState<any[]>([]);
@@ -99,6 +102,8 @@ export default function PanicNewProductPage() {
           digitalAssetUrl,
           status,
           featuredImageUrl,
+          metaTitle,
+          metaDescription,
           variants,
         }),
       });
@@ -245,6 +250,18 @@ export default function PanicNewProductPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Product SEO, AEO & SERP Simulator */}
+          <ProductSeoAeoSuite
+            title={title}
+            slug={slug}
+            price={price}
+            description={description}
+            metaTitle={metaTitle}
+            metaDescription={metaDescription}
+            onMetaTitleChange={(v) => setMetaTitle(v)}
+            onMetaDescriptionChange={(v) => setMetaDescription(v)}
+          />
 
           {/* Dynamic Variants Builder */}
           <Card>
