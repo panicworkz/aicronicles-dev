@@ -17,8 +17,9 @@ import {
   Clock,
   Trash2,
   RefreshCw,
-  Sliders,
-  CheckCircle2,
+  History,
+  Check,
+  Share2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import TipTapEditor from '@/components/editor/TipTapEditor';
+import { AeoScoreMeter } from '@/components/studio/AeoScoreMeter';
+import { SerpSocialPreview } from '@/components/studio/SerpSocialPreview';
+import { BlockInsertToolbar } from '@/components/studio/BlockInsertToolbar';
+import { RevisionHistoryDrawer } from '@/components/studio/RevisionHistoryDrawer';
 import { toast } from 'sonner';
 
 export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{ id: string }> }) {
@@ -36,9 +41,11 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [autosaving, setAutosaving] = useState(false);
   const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [activeTab, setActiveTab] = useState<'editor' | 'metadata' | 'ai'>('editor');
+  const [activeTab, setActiveTab] = useState<'editor' | 'ai_aeo' | 'metadata'>('editor');
   const [iframeKey, setIframeKey] = useState(0);
+  const [showRevisions, setShowRevisions] = useState(false);
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -111,8 +118,15 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
     broadcastLiveSync(title, html, featuredImageUrl);
   };
 
-  const handleSave = async () => {
-    setSaving(true);
+  const handleInsertHtml = (htmlToAppend: string) => {
+    const updated = (contentHtml || '') + htmlToAppend;
+    handleContentChange(updated, null);
+  };
+
+  const handleSave = async (isSilent = false) => {
+    if (!isSilent) setSaving(true);
+    else setAutosaving(true);
+
     try {
       const res = await fetch(`/api/posts/${postId}`, {
         method: 'PUT',
@@ -133,35 +147,40 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
       const data = await res.json();
       if (data.success) {
-        toast.success('Guide updated successfully');
+        if (!isSilent) {
+          toast.success('Guide updated successfully');
+          // Create revision log
+          fetch(`/api/posts/${postId}/revisions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, contentHtml, contentJson, excerpt }),
+          });
+        }
       } else {
-        toast.error(data.error || 'Failed to save changes');
+        if (!isSilent) toast.error(data.error || 'Failed to save changes');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Save error');
+      if (!isSilent) toast.error(err.message || 'Save error');
     } finally {
       setSaving(false);
+      setAutosaving(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this guide? This cannot be undone.')) return;
-    try {
-      const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
-      if (res.ok) {
-        toast.success('Guide deleted');
-        router.push('/panic/posts');
-      }
-    } catch (err) {
-      toast.error('Failed to delete guide');
-    }
+  // Restore revision snapshot
+  const handleRestoreRevision = (rev: any) => {
+    if (rev.title) setTitle(rev.title);
+    if (rev.contentHtml) setContentHtml(rev.contentHtml);
+    if (rev.contentJson) setContentJson(rev.contentJson);
+    if (rev.excerpt) setExcerpt(rev.excerpt);
+    broadcastLiveSync(rev.title || title, rev.contentHtml || contentHtml, featuredImageUrl);
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[70vh]">
         <div className="text-xs text-muted-foreground font-medium animate-pulse">
-          Initializing Split Live Studio...
+          Initializing Next-Gen Split Live Studio...
         </div>
       </div>
     );
@@ -209,6 +228,15 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
             Visual Editor
           </Button>
           <Button
+            variant={activeTab === 'ai_aeo' ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('ai_aeo')}
+            className="gap-1 text-primary"
+          >
+            <Sparkles className="size-3" />
+            <span>AI & AEO Suite</span>
+          </Button>
+          <Button
             variant={activeTab === 'metadata' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setActiveTab('metadata')}
@@ -219,6 +247,16 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="default"
+            onClick={() => setShowRevisions(true)}
+            className="gap-1.5 text-xs"
+          >
+            <History className="size-3.5" />
+            <span className="hidden sm:inline">Revisions</span>
+          </Button>
+
           <Link href={`/${slug}`} target="_blank">
             <Button variant="outline" size="default" className="gap-1.5 hidden md:inline-flex">
               <ExternalLink className="size-3.5" />
@@ -228,21 +266,21 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
           <Button
             size="default"
-            onClick={handleSave}
+            onClick={() => handleSave(false)}
             disabled={saving}
             className="gap-1.5 font-medium"
           >
             <Save className="size-3.5" />
-            <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+            <span>{saving ? 'Saving...' : autosaving ? 'Autosaving...' : 'Save Changes'}</span>
           </Button>
         </div>
       </div>
 
       {/* Main Split Body: Left 50% Editor / Right 50% Live Web Canvas */}
       <div className="flex flex-1 overflow-hidden">
-        {/* LEFT PANEL: Visual Editor & Metadata (50%) */}
+        {/* LEFT PANEL (50%) */}
         <div className="w-full lg:w-1/2 border-r bg-background overflow-y-auto p-6 space-y-6">
-          {activeTab === 'editor' ? (
+          {activeTab === 'editor' && (
             <div className="space-y-4">
               {/* Frameless Large Title */}
               <div className="space-y-3">
@@ -282,6 +320,13 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                 </div>
               </div>
 
+              {/* Rich Block Quick Insert Toolbar */}
+              <BlockInsertToolbar
+                title={title}
+                contentHtml={contentHtml}
+                onInsertHtml={handleInsertHtml}
+              />
+
               {/* TipTap Rich Editor */}
               <div>
                 <TipTapEditor
@@ -290,8 +335,30 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                 />
               </div>
             </div>
-          ) : (
-            /* METADATA & SEO TAB */
+          )}
+
+          {activeTab === 'ai_aeo' && (
+            <div className="space-y-6">
+              <AeoScoreMeter
+                title={title}
+                contentHtml={contentHtml}
+                excerpt={excerpt}
+                metaTitle={metaTitle}
+                metaDescription={metaDescription}
+              />
+
+              <SerpSocialPreview
+                title={title}
+                slug={slug}
+                excerpt={excerpt}
+                featuredImageUrl={featuredImageUrl}
+                metaTitle={metaTitle}
+                metaDescription={metaDescription}
+              />
+            </div>
+          )}
+
+          {activeTab === 'metadata' && (
             <div className="space-y-4">
               <Card>
                 <CardHeader className="pb-3">
@@ -314,7 +381,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold">Featured Image</CardTitle>
+                  <CardTitle className="text-sm font-semibold">Featured Cover Image</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {featuredImageUrl ? (
@@ -344,7 +411,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold">SEO & Google Search Preview</CardTitle>
+                  <CardTitle className="text-sm font-semibold">SEO & Google Search</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="space-y-1.5">
@@ -435,6 +502,14 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           </div>
         </div>
       </div>
+
+      {/* Revision History Drawer */}
+      <RevisionHistoryDrawer
+        postId={postId}
+        isOpen={showRevisions}
+        onClose={() => setShowRevisions(false)}
+        onRestore={handleRestoreRevision}
+      />
     </div>
   );
 }
