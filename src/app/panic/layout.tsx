@@ -6,6 +6,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   FileText,
+  Package,
+  ShoppingCart,
+  Users,
+  Ticket,
   Image as ImageIcon,
   Tags,
   Settings,
@@ -39,12 +43,31 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
     router.refresh();
   };
 
-  const navItems = [
-    { href: '/panic', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/panic/posts', label: 'Articles & Posts', icon: FileText },
-    { href: '/panic/media', label: 'Media Library', icon: ImageIcon },
-    { href: '/panic/categories', label: 'Categories & Tags', icon: Tags },
-    { href: '/panic/settings', label: 'Settings', icon: Settings },
+  const navSections = [
+    {
+      title: 'CONTENT',
+      items: [
+        { href: '/panic', label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/panic/posts', label: 'Articles & Guides', icon: FileText },
+        { href: '/panic/media', label: 'Media Library', icon: ImageIcon },
+        { href: '/panic/categories', label: 'Categories & Tags', icon: Tags },
+      ],
+    },
+    {
+      title: 'COMMERCE',
+      items: [
+        { href: '/panic/products', label: 'Products & Store', icon: Package },
+        { href: '/panic/orders', label: 'Orders & Sales', icon: ShoppingCart },
+        { href: '/panic/customers', label: 'Customers', icon: Users },
+        { href: '/panic/coupons', label: 'Coupons', icon: Ticket },
+      ],
+    },
+    {
+      title: 'SYSTEM',
+      items: [
+        { href: '/panic/settings', label: 'Settings', icon: Settings },
+      ],
+    },
   ];
 
   return (
@@ -88,42 +111,49 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
           </Button>
         </div>
 
-        <div className="flex-1 py-2 overflow-y-auto">
-          <nav className="flex flex-col gap-1 px-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive =
-                item.href === '/panic'
-                  ? pathname === '/panic'
-                  : pathname.startsWith(item.href);
+        <div className="flex-1 py-3 overflow-y-auto space-y-4">
+          {navSections.map((section, idx) => (
+            <div key={idx} className="px-2 space-y-1">
+              {!collapsed && (
+                <div className="px-3 py-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                  {section.title}
+                </div>
+              )}
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const isActive =
+                  item.href === '/panic'
+                    ? pathname === '/panic'
+                    : pathname.startsWith(item.href);
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50",
-                  )}
-                  title={collapsed ? item.label : undefined}
-                >
-                  <span className="relative shrink-0">
-                    <Icon className="size-4" />
-                  </span>
-                  {!collapsed && <span className="truncate">{item.label}</span>}
-                </Link>
-              );
-            })}
-          </nav>
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                    )}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    <span className="relative shrink-0">
+                      <Icon className="size-4" />
+                    </span>
+                    {!collapsed && <span className="truncate">{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </div>
 
         <Separator />
         <div className="p-2 flex items-center justify-between">
           {!collapsed ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">
-              Panic CMS v1.0
+              Panic CMS v2.0
             </div>
           ) : null}
           <Button
@@ -145,7 +175,7 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search anything..."
+              placeholder="Search guides, products, orders..."
               className="pl-9 bg-muted/50 border-none h-8 text-xs"
             />
           </div>
