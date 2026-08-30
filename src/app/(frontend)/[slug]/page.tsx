@@ -45,22 +45,22 @@ export default async function ArticleDetailPage({ params }: PageProps) {
 
   if (post) {
     return (
-      <div className="min-h-screen bg-white text-neutral-900 selection:bg-primary selection:text-white">
+      <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-white transition-colors duration-200">
         {/* Header */}
-        <header className="border-b border-neutral-200 bg-white/90 backdrop-blur sticky top-0 z-50">
+        <header className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-50">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="text-xl font-bold text-neutral-900 font-serif tracking-tight">
+            <Link href="/" className="text-xl font-bold text-foreground font-serif tracking-tight">
               FABELO<span className="text-primary">.</span>
             </Link>
-            <div className="flex items-center space-x-4 text-xs font-mono text-neutral-500">
+            <div className="flex items-center space-x-4 text-xs font-mono text-muted-foreground">
               <Link href="/llms.txt" className="text-primary hover:underline font-medium">AEO / llms.txt</Link>
-              <Link href={`/api/llm/${post.slug}`} className="hover:text-neutral-900">AI Raw View</Link>
+              <Link href={`/api/llm/${post.slug}`} className="hover:text-foreground">AI Raw View</Link>
               <Link href={`/panic/posts/${post.id}`} className="text-primary hover:underline font-medium">Edit in CMS</Link>
             </div>
           </div>
         </header>
 
-        {/* Article with Live Sync */}
+        {/* Article with Live Sync & Dynamic Theme Adaptation */}
         <ArticleLiveWrapper
           initialTitle={post.title}
           initialContentHtml={post.contentHtml || ''}
@@ -70,7 +70,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
         />
 
         {/* Footer */}
-        <footer className="border-t border-neutral-200 bg-neutral-50 py-12 mt-20 text-neutral-500 text-sm">
+        <footer className="border-t border-border bg-muted/30 py-12 mt-20 text-muted-foreground text-sm">
           <div className="max-w-4xl mx-auto px-4 flex justify-between items-center">
             <p>© {new Date().getFullYear()} Fabelo Editorial.</p>
             <Link href="/" className="text-xs text-primary hover:underline font-medium">Back to Home</Link>
@@ -88,18 +88,18 @@ export default async function ArticleDetailPage({ params }: PageProps) {
   if (!page) notFound();
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900">
-      <header className="border-b border-neutral-200 bg-white/90 backdrop-blur sticky top-0 z-50">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-neutral-900 font-serif">
+          <Link href="/" className="text-xl font-bold text-foreground font-serif">
             FABELO<span className="text-primary">.</span>
           </Link>
         </div>
       </header>
       <article className="max-w-4xl mx-auto px-4 py-16">
-        <h1 className="text-4xl font-extrabold tracking-tight text-neutral-900 mb-8 font-serif">{page.title}</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight text-foreground mb-8 font-serif">{page.title}</h1>
         <div
-          className="prose prose-neutral prose-lg max-w-none prose-headings:font-serif prose-a:text-primary hover:prose-a:underline"
+          className="prose dark:prose-invert prose-neutral prose-lg max-w-none prose-headings:font-serif prose-a:text-primary hover:prose-a:underline"
           dangerouslySetInnerHTML={{ __html: page.contentHtml || '' }}
         />
       </article>

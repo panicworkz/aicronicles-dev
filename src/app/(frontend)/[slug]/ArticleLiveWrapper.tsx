@@ -27,15 +27,31 @@ export function ArticleLiveWrapper({
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Check if inside studio iframe
+    // Check URL parameters for live mode and theme
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('live') === '1') {
         setIsLiveMode(true);
       }
+      const themeParam = urlParams.get('theme');
+      if (themeParam === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else if (themeParam === 'light') {
+        document.documentElement.classList.remove('dark');
+      }
     }
 
     const handleMessage = (event: MessageEvent) => {
+      // Live Theme Synchronization
+      if (event.data?.type === 'PANIC_THEME_CHANGE') {
+        const theme = event.data.theme;
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else if (theme === 'light') {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+
       if (event.data?.type === 'PANIC_STUDIO_LIVE_UPDATE') {
         if (event.data?.source === 'live_iframe') return;
 
@@ -124,15 +140,15 @@ export function ArticleLiveWrapper({
         onFocus={() => { isTypingTitle.current = true; }}
         onBlur={() => { isTypingTitle.current = false; }}
         onInput={handleTitleInput}
-        className={`text-3xl sm:text-5xl font-black tracking-tight text-neutral-900 leading-tight mb-6 font-serif ${
-          isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/40 rounded-lg p-1 hover:bg-neutral-100 transition cursor-text' : ''
+        className={`text-3xl sm:text-5xl font-black tracking-tight text-foreground leading-tight mb-6 font-serif ${
+          isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/40 rounded-lg p-1 hover:bg-muted/50 transition cursor-text' : ''
         }`}
       >
         {initialTitle}
       </h1>
 
-      <div className="flex items-center space-x-4 border-y border-neutral-200 py-4 mb-8 text-xs text-neutral-500 font-mono">
-        <span className="text-neutral-800 font-sans font-medium">Fabelo Editorial</span>
+      <div className="flex items-center space-x-4 border-y border-border py-4 mb-8 text-xs text-muted-foreground font-mono">
+        <span className="text-foreground font-sans font-medium">Fabelo Editorial</span>
         <span>•</span>
         <span>{publishedAt ? new Date(publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Editorial'}</span>
         <span>•</span>
@@ -140,7 +156,7 @@ export function ArticleLiveWrapper({
       </div>
 
       {coverUrl && (
-        <div className="mb-10 rounded-xl overflow-hidden border border-neutral-200 aspect-video bg-neutral-100 shadow-sm">
+        <div className="mb-10 rounded-xl overflow-hidden border border-border aspect-video bg-muted/40 shadow-sm">
           <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
         </div>
       )}
@@ -153,12 +169,12 @@ export function ArticleLiveWrapper({
         onFocus={() => { isTypingContent.current = true; }}
         onBlur={() => { isTypingContent.current = false; }}
         onInput={handleContentInput}
-        className={`prose prose-neutral prose-lg max-w-none font-sans leading-relaxed
-          prose-headings:font-serif prose-headings:text-neutral-900 prose-headings:tracking-tight
+        className={`prose dark:prose-invert prose-neutral prose-lg max-w-none font-sans leading-relaxed
+          prose-headings:font-serif prose-headings:text-foreground prose-headings:tracking-tight
           prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-          prose-img:rounded-xl prose-img:border prose-img:border-neutral-200
-          prose-blockquote:border-l-primary prose-blockquote:text-neutral-700 ${
-            isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/30 rounded-xl p-2 hover:bg-neutral-50 transition cursor-text' : ''
+          prose-img:rounded-xl prose-img:border prose-img:border-border
+          prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground ${
+            isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/30 rounded-xl p-2 hover:bg-muted/30 transition cursor-text' : ''
           }`}
         dangerouslySetInnerHTML={{ __html: initialContentHtml || '' }}
       />

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import {
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useTheme } from '@/providers/theme-provider';
 
 interface LivePreviewDrawerProps {
   post: {
@@ -27,11 +28,13 @@ interface LivePreviewDrawerProps {
 }
 
 export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
+  const { theme } = useTheme();
   const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [loading, setLoading] = useState(true);
   const [iframeKey, setIframeKey] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -50,6 +53,19 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
       document.body.style.overflow = 'unset';
     }
   }, [post]);
+
+  useEffect(() => {
+    // Send live theme change to iframe whenever user toggles theme in CMS
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        {
+          type: 'PANIC_THEME_CHANGE',
+          theme,
+        },
+        '*'
+      );
+    }
+  }, [theme]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -77,12 +93,12 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
   const getFrameWidth = () => {
     switch (deviceMode) {
       case 'mobile':
-        return 'w-[375px] h-[88vh] my-auto rounded-2xl border bg-white shadow-2xl';
+        return 'w-[375px] h-[88vh] my-auto rounded-2xl border border-border bg-background shadow-2xl';
       case 'tablet':
-        return 'w-[768px] h-[92vh] my-auto rounded-2xl border bg-white shadow-2xl';
+        return 'w-[768px] h-[92vh] my-auto rounded-2xl border border-border bg-background shadow-2xl';
       case 'desktop':
       default:
-        return 'w-full h-full border-0 bg-white';
+        return 'w-full h-full border-0 bg-background';
     }
   };
 
@@ -96,14 +112,14 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
         onClick={handleSmoothClose}
       />
 
-      {/* Smooth Slide-over Drawer (Sıfır üst boşluk, temiz aydınlık/modern tema) */}
+      {/* Smooth Slide-over Drawer (Tema duyarlı, sıfır üst boşluk) */}
       <aside
-        className={`relative z-[10000] flex h-screen w-full sm:w-[85vw] lg:w-[82vw] xl:w-[78vw] max-w-[1600px] flex-col border-l bg-background shadow-2xl transition-transform duration-320 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`relative z-[10000] flex h-screen w-full sm:w-[85vw] lg:w-[82vw] xl:w-[78vw] max-w-[1600px] flex-col border-l border-border bg-background shadow-2xl transition-transform duration-320 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Drawer Header (Tavana sıfır oturan, CMS ile birebir uyumlu) */}
-        <div className="flex h-12 items-center justify-between gap-3 border-b bg-background px-4 shrink-0">
+        {/* Drawer Header (CMS temasıyla tam senkron) */}
+        <div className="flex h-12 items-center justify-between gap-3 border-b border-border bg-background px-4 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <Badge variant={post?.status === 'published' ? 'default' : 'secondary'} className="capitalize text-xs font-normal shrink-0">
               {post?.status}
@@ -117,7 +133,7 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
           {/* Device Switcher & Actions */}
           <div className="flex items-center gap-2 shrink-0">
             {/* Device Mode Toggle */}
-            <div className="hidden sm:flex items-center rounded-lg border bg-muted/40 p-0.5">
+            <div className="hidden sm:flex items-center rounded-lg border border-border bg-muted/40 p-0.5">
               <Button
                 variant={deviceMode === 'desktop' ? 'secondary' : 'ghost'}
                 size="icon-xs"
@@ -183,7 +199,7 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
           </div>
         </div>
 
-        {/* Drawer Body (Aydınlık, ferah ve sıfır boşluk) */}
+        {/* Drawer Body (Tema uyumlu ve sıfır boşluk) */}
         <div className={`relative flex-1 bg-muted/20 overflow-hidden flex items-center justify-center ${deviceMode !== 'desktop' ? 'p-4 bg-muted/40' : 'p-0'}`}>
           {loading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-xs z-10 space-y-2">
@@ -193,11 +209,12 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
           )}
 
           {post && (
-            <div className={`transition-all duration-300 overflow-hidden bg-white ${getFrameWidth()}`}>
+            <div className={`transition-all duration-300 overflow-hidden bg-background ${getFrameWidth()}`}>
               <iframe
+                ref={iframeRef}
                 key={iframeKey}
-                src={`/${post.slug}`}
-                className="w-full h-full border-0 bg-white"
+                src={`/${post.slug}?theme=${theme}`}
+                className="w-full h-full border-0 bg-background"
                 onLoad={() => setLoading(false)}
                 title={post.title}
               />
