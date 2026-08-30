@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Package, FileDown, Briefcase, ShoppingCart, Check, ShieldCheck, Truck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Package, FileDown, Briefcase, ShoppingCart, Check, ShieldCheck, Truck, ChevronLeft, ChevronRight, ExternalLink, Sliders } from 'lucide-react';
 import { useCurrency } from '@/providers/currency-provider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,10 @@ export function ProductDetailClient({ product, variants = [] }: { product: any; 
   const activePrice = selectedVariant?.price ? selectedVariant.price : product.price;
 
   const handleAddToCart = () => {
+    if (product.checkoutUrl) {
+      window.open(product.checkoutUrl, '_blank');
+      return;
+    }
     setAdded(true);
     toast.success(`Added ${product.title} (${selectedVariant?.title || 'Standard'}) to cart!`);
     setTimeout(() => setAdded(false), 2000);
@@ -37,6 +41,8 @@ export function ProductDetailClient({ product, variants = [] }: { product: any; 
   const handleNextImage = () => {
     setActiveImageIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
   };
+
+  const specifications: any[] = Array.isArray(product.specificationsJson) ? product.specificationsJson : [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -96,6 +102,24 @@ export function ProductDetailClient({ product, variants = [] }: { product: any; 
                 <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Specifications & Highlights Box */}
+        {specifications.length > 0 && (
+          <div className="p-5 rounded-2xl border border-border bg-card space-y-3 mt-6">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <Sliders className="size-3.5 text-primary" />
+              <span>Specifications & Deliverables</span>
+            </h3>
+            <div className="divide-y divide-border text-xs">
+              {specifications.map((spec, idx) => (
+                <div key={idx} className="py-2 flex items-center justify-between">
+                  <span className="font-medium text-foreground">{spec.key}</span>
+                  <span className="text-muted-foreground font-mono">{spec.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -182,8 +206,8 @@ export function ProductDetailClient({ product, variants = [] }: { product: any; 
             onClick={handleAddToCart}
             className="flex-1 h-10 gap-2 font-medium text-xs shadow-md"
           >
-            {added ? <Check className="size-4" /> : <ShoppingCart className="size-4" />}
-            <span>{added ? 'Added to Cart!' : 'Add to Cart / Buy Now'}</span>
+            {added ? <Check className="size-4" /> : product.checkoutUrl ? <ExternalLink className="size-4" /> : <ShoppingCart className="size-4" />}
+            <span>{added ? 'Added to Cart!' : product.checkoutUrl ? 'Buy Now with Stripe' : 'Add to Cart / Buy Now'}</span>
           </Button>
         </div>
 

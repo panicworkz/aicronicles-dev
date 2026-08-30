@@ -55,11 +55,14 @@ export async function PUT(
       unlimitedStock,
       type,
       digitalAssetUrl,
+      checkoutUrl,
       status,
       categoryId,
       tagsJson,
+      specificationsJson,
       metaTitle,
       metaDescription,
+      variants,
     } = body;
 
     const [updatedProduct] = await db
@@ -80,15 +83,32 @@ export async function PUT(
         unlimitedStock: unlimitedStock !== undefined ? Boolean(unlimitedStock) : undefined,
         productType: type || 'physical',
         digitalAssetUrl,
+        checkoutUrl,
         status,
         categoryId: categoryId ? parseInt(String(categoryId), 10) : null,
         tagsJson,
+        specificationsJson,
         metaTitle,
         metaDescription,
         updatedAt: new Date(),
       } as any)
       .where(eq(schema.products.id, productId))
       .returning();
+
+    // Update variants if provided
+    if (variants && Array.isArray(variants)) {
+      await db.delete(schema.productVariants).where(eq(schema.productVariants.productId, productId));
+      for (const v of variants) {
+        await db.insert(schema.productVariants).values({
+          productId,
+          title: v.title,
+          sku: v.sku || null,
+          price: v.price ? String(v.price) : null,
+          inventory: v.inventory ? parseInt(String(v.inventory), 10) : 50,
+          optionsJson: v.optionsJson || {},
+        } as any);
+      }
+    }
 
     return NextResponse.json({ success: true, product: updatedProduct });
   } catch (err: any) {

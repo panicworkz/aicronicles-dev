@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -12,6 +12,8 @@ import {
   Coins,
   FileDown,
   Briefcase,
+  CreditCard,
+  FolderTree,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,12 +22,14 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { ProductGalleryUploader } from '@/components/ui/product-gallery-uploader';
 import { ProductSeoAeoSuite } from '@/components/studio/ProductSeoAeoSuite';
+import { ProductSpecificationsBuilder } from '@/components/studio/ProductSpecificationsBuilder';
 import { formatPrice } from '@/lib/currency';
 import { toast } from 'sonner';
 
 export default function PanicNewProductPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -36,15 +40,29 @@ export default function PanicNewProductPage() {
   const [inventory, setInventory] = useState('100');
   const [unlimitedStock, setUnlimitedStock] = useState(false);
   const [type, setType] = useState('physical');
+  const [categoryId, setCategoryId] = useState('');
   const [digitalAssetUrl, setDigitalAssetUrl] = useState('');
+  const [checkoutUrl, setCheckoutUrl] = useState('');
   const [status, setStatus] = useState('published');
   const [featuredImageUrl, setFeaturedImageUrl] = useState('');
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const [specifications, setSpecifications] = useState<any[]>([]);
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
-
-  // Variants list
   const [variants, setVariants] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/product-categories');
+        const data = await res.json();
+        if (data.categories) setCategories(data.categories);
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleTitleChange = (val: string) => {
     setTitle(val);
@@ -98,10 +116,13 @@ export default function PanicNewProductPage() {
           inventory: parseInt(inventory, 10) || 0,
           unlimitedStock,
           type,
+          categoryId: categoryId ? parseInt(categoryId, 10) : null,
           digitalAssetUrl,
+          checkoutUrl,
           status,
           featuredImageUrl,
           galleryUrls,
+          specificationsJson: specifications,
           metaTitle,
           metaDescription,
           variants,
@@ -136,7 +157,7 @@ export default function PanicNewProductPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Create New Product</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Physical goods, digital assets, services & multi-photo gallery</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Physical goods, digital assets, consulting & enterprise checkout</p>
           </div>
         </div>
 
@@ -164,7 +185,7 @@ export default function PanicNewProductPage() {
                 <Input
                   value={title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  placeholder="e.g. Premium Executive Course / Designer Tee"
+                  placeholder="e.g. Minimalist Ceramic Mug / AEO Masterclass"
                   required
                 />
               </div>
@@ -250,6 +271,12 @@ export default function PanicNewProductPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Product Specifications & Highlights */}
+          <ProductSpecificationsBuilder
+            specifications={specifications}
+            onChange={(s) => setSpecifications(s)}
+          />
 
           {/* Product SEO, AEO & SERP Simulator */}
           <ProductSeoAeoSuite
@@ -358,12 +385,31 @@ export default function PanicNewProductPage() {
             </CardContent>
           </Card>
 
-          {/* Product Type & Delivery */}
+          {/* Product Category & Type */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Classification & Type</CardTitle>
+              <CardTitle className="text-sm font-semibold">Classification & Category</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <FolderTree className="size-3.5 text-primary" />
+                  <span>Category</span>
+                </Label>
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full h-8 rounded-lg border bg-background px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">Uncategorized</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="space-y-1.5">
                 <Label>Product Type</Label>
                 <select
@@ -399,7 +445,22 @@ export default function PanicNewProductPage() {
                 </div>
               )}
 
-              <div className="space-y-1.5">
+              {/* Direct Checkout / Stripe URL */}
+              <div className="space-y-1.5 pt-2 border-t border-border">
+                <Label className="flex items-center gap-1.5 text-xs">
+                  <CreditCard className="size-3.5 text-primary" />
+                  <span>Direct Checkout URL (Optional)</span>
+                </Label>
+                <Input
+                  value={checkoutUrl}
+                  onChange={(e) => setCheckoutUrl(e.target.value)}
+                  placeholder="https://buy.stripe.com/... or Lemonsqueezy"
+                  className="text-xs font-mono"
+                />
+                <p className="text-[10px] text-muted-foreground">Optional Stripe/Payment link for instant 1-click external checkout.</p>
+              </div>
+
+              <div className="space-y-1.5 pt-2 border-t border-border">
                 <Label>Publication Status</Label>
                 <select
                   value={status}
