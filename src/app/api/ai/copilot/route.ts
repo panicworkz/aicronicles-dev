@@ -20,7 +20,6 @@ function cleanText(htmlOrText: string): string {
 // Helper: Extract complete sentences from body
 function getCompleteSentences(text: string): string[] {
   if (!text) return [];
-  // Split on sentence boundaries
   const raw = text.match(/[^.!?]+[.!?]+/g) || [text];
   return raw
     .map((s) => s.trim())
@@ -39,7 +38,7 @@ async function callGeminiIfAvailable(prompt: string): Promise<string | null> {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 300 },
+          generationConfig: { temperature: 0.3, maxOutputTokens: 400 },
         }),
       }
     );
@@ -52,10 +51,24 @@ async function callGeminiIfAvailable(prompt: string): Promise<string | null> {
 
 export async function POST(request: Request) {
   try {
-    const { action, title, description, contentHtml, text, filename, slug, excerpt } = await request.json();
+    const body = await request.json();
+    const {
+      action,
+      title,
+      description,
+      contentHtml,
+      text,
+      filename,
+      slug,
+      excerpt,
+      articleTitle,
+      articleContent,
+      currentAlt,
+      currentTitle,
+    } = body;
 
-    const rawText = cleanText(contentHtml || description || excerpt || text || '');
-    const cleanTitle = (title || filename || '')
+    const rawText = cleanText(articleContent || contentHtml || description || excerpt || text || '');
+    const cleanTitle = (articleTitle || title || filename || '')
       .replace(/\.[^/.]+$/, '')
       .replace(/[|\-_]+$/, '')
       .trim();
@@ -67,9 +80,8 @@ export async function POST(request: Request) {
     // 1. ARTICLE & PAGE SEO / SERP META GENERATOR
     // =========================================================================
     if (action === 'generateSeoMeta') {
-      // 1. Check if Gemini LLM can produce high-quality result
       if (process.env.GEMINI_API_KEY) {
-        const geminiPrompt = `You are a professional web editor. Write a natural, highly relevant SEO Meta Title (max 60 chars) and Meta Description (120-155 chars) for this page. Do not use generic filler words. Write in ${isTurkish ? 'Turkish' : 'English'}.
+        const geminiPrompt = `You are a senior digital editor. Write a natural, highly relevant SEO Meta Title (max 60 chars) and Meta Description (120-155 chars) for this page. Write in ${isTurkish ? 'Turkish' : 'English'}.
 Title: "${cleanTitle}"
 Slug: "${slug || ''}"
 Content: "${rawText.substring(0, 700)}"
@@ -88,69 +100,62 @@ Return JSON ONLY: {"metaTitle": "...", "metaDescription": "..."}`;
               });
             }
           } catch (e) {
-            // fallback to contextual generator
+            // fallback
           }
         }
       }
 
-      // 2. Specialized Meta Rules for Standard Corporate / Legal Pages
+      // Specialized Meta Rules for Standard Corporate / Legal Pages
       if (/about|hakkimizda|hakkinda/i.test(s) || /about|hakkımızda/i.test(cleanTitle)) {
         return NextResponse.json({
           success: true,
           metaTitle: isTurkish ? 'Hakkımızda | Fabelo' : 'About Us | Fabelo',
           metaDescription: isTurkish
-            ? 'Fabelo editoryal vizyonu, teknoloji yayıncılığı yaklaşımımız, yazar kadromuz ve kurumsal ilkelerimiz.'
-            : "Discover Fabelo's editorial mission, our story, technology insights, and the team behind our publications.",
+            ? 'Fabelo hakkında bilgi edinin: Vizyonumuz, yayın ilkelerimiz ve teknoloji odaklı içerik ekibimiz.'
+            : 'Learn about Fabelo, our editorial mission, values, and our commitment to independent technology research.',
         });
       }
 
-      if (/privacy|gizlilik|kvkk|data/i.test(s) || /privacy|gizlilik/i.test(cleanTitle)) {
+      if (/privacy|gizlilik/i.test(s) || /privacy|gizlilik/i.test(cleanTitle)) {
         return NextResponse.json({
           success: true,
-          metaTitle: isTurkish ? 'Gizlilik Politikası & KVKK | Fabelo' : 'Data & Privacy Policy | Fabelo',
+          metaTitle: isTurkish ? 'Gizlilik Politikası | Fabelo' : 'Privacy Policy | Fabelo',
           metaDescription: isTurkish
-            ? 'Fabelo kullanıcı gizliliği, veri güvenliği standartları, çerez politikası ve KVKK kapsamındaki haklarınız.'
-            : 'Learn how Fabelo collects, protects, and manages your personal data and privacy rights.',
+            ? 'Fabelo gizlilik politikası: Kişisel verilerinizin nasıl korunduğu ve işlendiği hakkında detaylı bilgi.'
+            : 'Read the Fabelo Privacy Policy to learn how we collect, protect, and process your personal data securely.',
         });
       }
 
-      if (/terms|sartlar|kosullar|agreement/i.test(s) || /terms|kullanım şartları/i.test(cleanTitle)) {
+      if (/terms|kullanim|şartlar/i.test(s) || /terms|şartlar/i.test(cleanTitle)) {
         return NextResponse.json({
           success: true,
-          metaTitle: isTurkish ? 'Kullanım Şartları & Sözleşme | Fabelo' : 'Terms & Conditions | Fabelo',
+          metaTitle: isTurkish ? 'Kullanım Koşulları | Fabelo' : 'Terms of Service | Fabelo',
           metaDescription: isTurkish
-            ? 'Fabelo platformu kullanım kuralları, kullanıcı sorumlulukları ve yasal sözleşme şartları.'
-            : 'Review the official terms of service, user agreements, and legal guidelines for using Fabelo.',
+            ? 'Fabelo web sitesi ve hizmetlerinin kullanım şartları, kuralları ve yasal bildirimler.'
+            : 'Review the Fabelo terms of service and conditions governing your use of our website and services.',
         });
       }
 
-      if (/sponsor|advertise|reklam|is-birligi/i.test(s) || /sponsor|advertise|reklam/i.test(cleanTitle)) {
+      if (/contact|iletisim|iletişim/i.test(s) || /contact|iletişim/i.test(cleanTitle)) {
         return NextResponse.json({
           success: true,
-          metaTitle: isTurkish ? 'Sponsorluk & Reklam | Fabelo' : 'Sponsor & Advertise | Fabelo',
+          metaTitle: isTurkish ? 'İletişim | Fabelo' : 'Contact Us | Fabelo',
           metaDescription: isTurkish
-            ? 'Fabelo ile sponsorluk ve reklam çözümleri, kitle etkileşimi ve markanıza özel iş birliği modelleri.'
-            : 'Explore sponsorship packages, advertising opportunities, and audience reach with Fabelo.',
+            ? 'Fabelo ekibi ile iletişime geçin. Görüş, öneri ve iş birliği talepleriniz için bize ulaşın.'
+            : 'Get in touch with the Fabelo team for editorial inquiries, feedback, and partnership opportunities.',
         });
       }
 
-      // 3. Dynamic Editorial Articles & Custom Pages
-      let metaTitle = cleanTitle;
-      if (!metaTitle.toLowerCase().includes('fabelo')) {
-        if (metaTitle.length <= 48) {
-          metaTitle = `${metaTitle} | Fabelo`;
-        }
-      }
+      // Default smart extraction from actual text
+      let metaTitle = `${cleanTitle} | Fabelo`;
       if (metaTitle.length > 60) {
-        metaTitle = cleanTitle.length <= 60 ? cleanTitle : cleanTitle.substring(0, 57).trim() + '...';
+        metaTitle = cleanTitle.length <= 58 ? cleanTitle : cleanTitle.substring(0, 55) + '...';
       }
 
-      // Extract real text from editor content
       let metaDescription = '';
       const sentences = getCompleteSentences(rawText);
 
       if (sentences.length > 0) {
-        // Take the first 1-2 actual sentences written by the author
         let combined = sentences[0].replace(/[.]+$/, '');
         if (combined.length < 110 && sentences.length > 1) {
           const second = sentences[1].replace(/[.]+$/, '');
@@ -168,7 +173,6 @@ Return JSON ONLY: {"metaTitle": "...", "metaDescription": "..."}`;
         }
       }
 
-      // Natural, context-specific fallback if editor is empty
       if (!metaDescription || metaDescription.length < 50) {
         if (isTurkish) {
           metaDescription = `${cleanTitle} rehberi: Temel kavramlar, pratik uygulama adımları ve dikkat edilmesi gereken noktalar.`;
@@ -184,32 +188,34 @@ Return JSON ONLY: {"metaTitle": "...", "metaDescription": "..."}`;
     // 2. MEDIA ASSET SEO & AEO SYNTHESIZER
     // =========================================================================
     if (action === 'generateMediaSeo') {
-      const { articleTitle, articleContent, currentAlt, currentTitle } = await request.json().catch(() => ({}));
+      const topicTitle = (articleTitle || title || '').replace(/[|\-_]+$/, '').trim();
+      const filenameRaw = (filename || '').split('/').pop() || '';
       
-      const cleanFileName = (filename || cleanTitle || 'image')
+      // Clean filename from numeric IDs and random hashes (e.g. pexels-photo-4050315 -> pexels photo)
+      const cleanFileName = filenameRaw
         .replace(/\.[^/.]+$/, '')
         .replace(/[-_0-9]+/g, ' ')
         .trim();
 
-      const words = cleanFileName
-        .split(' ')
-        .filter((w) => w.length > 0)
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
+      // Check if filename contains actual semantic words rather than generic IDs
+      const hasMeaningfulFilename = cleanFileName.length > 3 && !/^(pexels|unsplash|fabelo card|image|photo|img|asset)/i.test(cleanFileName);
 
       // If Gemini is available, generate context-aware Alt & SEO Caption
       if (process.env.GEMINI_API_KEY) {
-        const geminiPrompt = `You are an SEO & Image Accessibility specialist. Generate descriptive Alt text (max 100 chars, highly specific, no "image of"), image title, caption, and AEO context for this image.
-Article Title: "${articleTitle || cleanTitle || ''}"
-Image Filename / Subject: "${words || currentAlt || cleanFileName}"
-Context: "${cleanText(articleContent || rawText).substring(0, 400)}"
+        const geminiPrompt = `You are a professional web editor & SEO specialist. Generate high-quality, realistic, and specific image metadata.
+Article Topic: "${topicTitle}"
+Image Name/URL: "${filenameRaw}"
+Context: "${rawText.substring(0, 500)}"
+
+Do NOT use generic cliché filler (like "an editorial image", "visual demonstration", "görsel açıklaması").
+Write specific, natural English metadata describing what the image represents in the context of the article.
 
 Return JSON ONLY:
 {
-  "alt": "Descriptive, keyword-rich Alt text",
-  "title": "Clean concise image title",
-  "caption": "Helpful editorial caption explaining the image in context",
-  "aeoContext": "1-sentence AI answer engine semantic explanation"
+  "alt": "Specific, descriptive Alt text describing the subject and workflow",
+  "title": "Clean, concise 3-5 word image title",
+  "caption": "Helpful editorial caption providing meaningful context to the reader",
+  "aeoContext": "Key conceptual insight for AI search engines (Perplexity, SearchGPT)"
 }`;
 
         const llmResult = await callGeminiIfAvailable(geminiPrompt);
@@ -219,33 +225,47 @@ Return JSON ONLY:
             if (parsed.alt) {
               return NextResponse.json({
                 success: true,
-                title: parsed.title || words || 'Visual Illustration',
+                title: parsed.title,
                 alt: parsed.alt,
                 caption: parsed.caption || '',
                 aeoContext: parsed.aeoContext || '',
               });
             }
           } catch (e) {
-            // fallback to smart NLP
+            // fallback to contextual synthesis
           }
         }
       }
 
-      // Smart Contextual NLP Fallback
-      let autoAlt = currentAlt || words || 'Editorial Illustration';
-      if (articleTitle && !autoAlt.toLowerCase().includes(articleTitle.toLowerCase().substring(0, 15))) {
-        autoAlt = isTurkish
-          ? `${words || 'Görsel'} - ${articleTitle}`
-          : `${words || 'Illustration'} for ${articleTitle}`;
+      // Contextual High-Quality NLP Synthesis
+      const topicLower = topicTitle.toLowerCase();
+      let subjectDesc = 'modern workstation and digital workspace';
+      
+      if (/productivity|boost|efficient|time|task/i.test(topicLower)) {
+        subjectDesc = 'modern laptop workspace setup with notebook and coffee for digital productivity';
+      } else if (/career|job|interview|work|resume/i.test(topicLower)) {
+        subjectDesc = 'professional desktop workspace representing career development and remote work';
+      } else if (/finance|budget|money|saving|invest|wealth|credit/i.test(topicLower)) {
+        subjectDesc = 'financial planning workspace with digital charts, calculator, and analytical reports';
+      } else if (/freelance|developer|code|tech|software/i.test(topicLower)) {
+        subjectDesc = 'developer programming desk setup with code on screen and workspace accessories';
+      } else if (/chart|data|graph/i.test(filenameRaw)) {
+        subjectDesc = `comparative data breakdown and benchmark analysis for ${topicTitle}`;
+      } else if (hasMeaningfulFilename) {
+        subjectDesc = `${cleanFileName} setup`;
       }
 
-      const autoTitle = words || cleanTitle || 'Visual Asset';
-      const autoCaption = isTurkish
-        ? `${words || cleanTitle} görsel açıklaması ve detaylı görünüm.`
-        : `${words || cleanTitle} visual overview and editorial context.`;
-      const autoAeo = isTurkish
-        ? `${articleTitle || cleanTitle} rehberindeki görsel içeriği temsil eder.`
-        : `Illustrates key concepts discussed in ${articleTitle || cleanTitle}.`;
+      const autoAlt = currentAlt && currentAlt.length > 10 && !/^(image|photo|illustration)/i.test(currentAlt)
+        ? currentAlt
+        : `${subjectDesc.charAt(0).toUpperCase() + subjectDesc.slice(1)} related to ${topicTitle || 'the guide'}`;
+
+      const autoTitle = topicTitle
+        ? `${topicTitle.split(':')[0]} - Workspace Setup`
+        : 'Digital Productivity & Tools Setup';
+
+      const autoCaption = `Optimizing digital workflows and daily focus with modern tools in ${topicTitle || 'daily practice'}.`;
+
+      const autoAeo = `Visual context illustrating workflow execution and operational best practices for ${topicTitle || 'the topic'}.`;
 
       return NextResponse.json({
         success: true,
