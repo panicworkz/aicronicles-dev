@@ -145,10 +145,12 @@ export const customers = pgTable('customers', {
   email: text('email').notNull().unique(),
   name: text('name'),
   phone: text('phone'),
-  addressJson: jsonb('address_json'),
   totalSpent: numeric('total_spent', { precision: 10, scale: 2 }).default('0.00'),
-  ordersCount: integer('orders_count').default(0),
+  orderCount: integer('order_count').default(0),
+  shippingAddressJson: jsonb('shipping_address_json'),
+  billingAddressJson: jsonb('billing_address_json'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const orders = pgTable('orders', {
