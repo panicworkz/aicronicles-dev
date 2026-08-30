@@ -108,6 +108,18 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         setTargetReplaceImg({ src, alt, isCover });
         setSplitPickerOpen(true);
       }
+
+      if (event.data?.type === 'PANIC_UPDATE_COVER_ALT') {
+        const { alt } = event.data.payload || {};
+        if (alt) setFeaturedImageAlt(alt);
+        toast.success('Cover alt text updated');
+      }
+
+      if (event.data?.type === 'PANIC_DELETE_COVER_REQUEST') {
+        setFeaturedImageUrl('');
+        broadcastLiveSync(title, contentHtml, '');
+        toast.info('Cover image removed');
+      }
     };
 
     window.addEventListener('message', handleLiveMessage);
