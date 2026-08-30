@@ -678,10 +678,17 @@ export function ArticleLiveWrapper({
         onInput={handleContentInput}
         onClick={handleContentClick}
         className={`prose dark:prose-invert prose-neutral prose-lg max-w-none font-sans leading-relaxed
-          prose-headings:font-serif prose-headings:text-foreground prose-headings:tracking-tight
+          prose-headings:font-serif prose-headings:text-foreground prose-headings:tracking-tight prose-headings:scroll-mt-24
+          prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:font-bold prose-h2:mt-12 prose-h2:mb-4 prose-h2:pt-4
+          prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:font-semibold prose-h3:mt-8 prose-h3:mb-3
+          prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:mb-5
           prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-          prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground ${
-            isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/20 rounded-xl p-2 hover:bg-muted/20 transition cursor-text' : ''
+          prose-blockquote:border-l-4 prose-blockquote:border-l-primary prose-blockquote:bg-muted/20 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:text-muted-foreground
+          prose-table:w-full prose-table:my-8 prose-table:border-collapse
+          prose-th:border prose-th:border-border prose-th:bg-muted/40 prose-th:p-3 prose-th:text-left
+          prose-td:border prose-td:border-border prose-td:p-3
+          ${
+            isLiveMode ? "outline-none focus:ring-2 focus:ring-primary/20 rounded-xl p-2 hover:bg-muted/20 transition cursor-text" : ""
           }`}
         dangerouslySetInnerHTML={{ __html: initialContentHtml || '' }}
       />

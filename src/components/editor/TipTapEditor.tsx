@@ -49,6 +49,9 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3],
+          HTMLAttributes: {
+            class: "scroll-mt-24 font-serif",
+          },
         },
       }),
       CustomImageExtension.configure({
