@@ -107,21 +107,37 @@ export default function PanicEditPageStudio({ params }: { params: Promise<{ id: 
     }
   };
 
-  const handleAiAutoFill = () => {
+  const handleAiAutoFill = async () => {
     if (!title.trim()) {
       toast.error('Please enter a page title first');
       return;
     }
 
     setGeneratingAi(true);
-    setTimeout(() => {
-      setMetaTitle(`${title} | Official Documentation & Policies`);
-      setMetaDescription(
-        `Comprehensive details, guidelines, and official information regarding ${title} on Fabelo.`
-      );
+    try {
+      const res = await fetch('/api/ai/copilot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generateSeoMeta',
+          title,
+          slug,
+          contentHtml,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.metaTitle) setMetaTitle(data.metaTitle);
+        if (data.metaDescription) setMetaDescription(data.metaDescription);
+        toast.success('Dynamic AI SEO metadata generated!');
+      } else {
+        toast.error('Could not generate metadata');
+      }
+    } catch (e) {
+      toast.error('AI synthesis failed');
+    } finally {
       setGeneratingAi(false);
-      toast.success('AI SEO metadata generated!');
-    }, 400);
+    }
   };
 
   const handleDelete = async () => {

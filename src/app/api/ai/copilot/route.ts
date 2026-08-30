@@ -2,143 +2,240 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+// Helper: Strip HTML tags and clean whitespace
+function cleanText(htmlOrText: string): string {
+  if (!htmlOrText) return '';
+  return htmlOrText
+    .replace(/<script[^>]*>([\S\s]*?)<\/script>/gim, '')
+    .replace(/<style[^>]*>([\S\s]*?)<\/style>/gim, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Helper: Extract key sentences and semantic phrases from body
+function extractSemanticSnippets(text: string): string[] {
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  return sentences.map((s) => s.trim()).filter((s) => s.length > 20 && s.length < 200);
+}
+
+// Helper: Extract top keywords/entities from title and body
+function extractKeywords(title: string, body: string): string[] {
+  const stopWords = new Set([
+    'the', 'and', 'for', 'with', 'that', 'this', 'from', 'have', 'more', 'about',
+    'what', 'when', 'where', 'which', 'your', 'guide', 'complete', 'best', 'overview',
+    'bir', 've', 'için', 'ile', 'bu', 'olarak', 'daha', 'göre', 'olan', 'gibi'
+  ]);
+  const words = `${title} ${body}`
+    .toLowerCase()
+    .replace(/[^a-z0-9çğıöşü\s-]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !stopWords.has(w));
+
+  const freq: Record<string, number> = {};
+  for (const w of words) freq[w] = (freq[w] || 0) + 1;
+
+  return Object.keys(freq).sort((a, b) => freq[b] - freq[a]).slice(0, 6);
+}
+
+// Optional Gemini LLM caller if GEMINI_API_KEY is configured
+async function callGeminiIfAvailable(prompt: string): Promise<string | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.4, maxOutputTokens: 500 },
+        }),
+      }
+    );
+    const data = await res.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+  } catch (err) {
+    return null;
+  }
+}
+
 export async function POST(request: Request) {
   try {
-    const { action, title, description, contentHtml, text } = await request.json();
+    const { action, title, description, contentHtml, text, filename, slug } = await request.json();
 
-    const plainText = (contentHtml || text || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const rawText = cleanText(contentHtml || description || text || '');
+    const cleanTitle = (title || filename || '').replace(/\.[^/.]+$/, '').trim();
 
-    if (action === 'generateProductSeo') {
-      const pTitle = (title || 'Official Product').trim();
-      const pDesc = (description || '').trim();
+    // =========================================================================
+    // 1. DYNAMIC ARTICLE & PAGE SEO / SERP META GENERATOR
+    // =========================================================================
+    if (action === 'generateSeoMeta') {
+      const snippets = extractSemanticSnippets(rawText);
+      const keywords = extractKeywords(cleanTitle, rawText);
 
-      // 1. Precise, compelling, grammatical Meta Title (40 - 60 chars)
-      let metaTitle = `${pTitle} | Official Fabelo`;
-      if (metaTitle.length > 60) {
-        metaTitle = `${pTitle} | Fabelo`;
-      }
-      if (metaTitle.length > 60) {
-        metaTitle = pTitle.length <= 60 ? pTitle : pTitle.substring(0, 57).trim() + '...';
-      }
+      // Attempt LLM if available
+      const geminiPrompt = `You are a world-class SEO specialist and copywriter. Generate a dynamic, unique, non-boilerplate Meta Title (max 60 chars) and Meta Description (120-155 chars) based strictly on this specific article/page title and content.
+Title: "${cleanTitle}"
+Slug: "${slug || ''}"
+Content Snippet: "${rawText.substring(0, 800)}"
 
-      // 2. Complete, grammatical, high-converting Meta Description (130 - 155 chars)
-      let metaDescription = '';
-      if (pDesc) {
-        // Extract complete grammatical sentences
-        const sentences = pDesc.match(/[^.!?]+[.!?]+/g) || [pDesc];
-        let assembled = '';
-        for (const s of sentences) {
-          const cleanS = s.trim();
-          if ((assembled + ' ' + cleanS).trim().length <= 155) {
-            assembled = assembled ? `${assembled} ${cleanS}` : cleanS;
-          } else {
-            break;
+Return strictly valid JSON with keys "metaTitle" and "metaDescription". No markdown formatting or explanation.`;
+
+      const llmResult = await callGeminiIfAvailable(geminiPrompt);
+      if (llmResult) {
+        try {
+          const parsed = JSON.parse(llmResult.replace(/```json/g, '').replace(/```/g, '').trim());
+          if (parsed.metaTitle && parsed.metaDescription) {
+            return NextResponse.json({
+              success: true,
+              metaTitle: parsed.metaTitle.substring(0, 60),
+              metaDescription: parsed.metaDescription.substring(0, 160),
+            });
           }
+        } catch (e) {
+          // fallback to algorithmic semantic generation
         }
+      }
 
-        if (assembled.length >= 105 && assembled.length <= 155) {
-          metaDescription = assembled;
+      // Dynamic Meta Title Construction (strictly tailored to context)
+      let metaTitle = '';
+      const isTurkish = /[çğıöşü]/i.test(`${cleanTitle} ${rawText}`);
+      const isQuestion = /\?|nasıl|nedir|how|what|why|guide/i.test(cleanTitle);
+
+      if (cleanTitle.length <= 48) {
+        if (isQuestion) {
+          metaTitle = isTurkish ? `${cleanTitle} | Kapsamlı Analiz` : `${cleanTitle} | In-Depth Analysis`;
         } else {
-          // If first sentence is short, append clean complete closing sentence
-          const firstSentence = (sentences[0] || pDesc).trim().replace(/[.]+$/, '');
-          const candidate = `${firstSentence}. Order now with secure multi-currency checkout.`;
-          if (candidate.length >= 110 && candidate.length <= 155) {
-            metaDescription = candidate;
-          } else {
-            metaDescription = `Buy official ${pTitle}. Verified premium quality, instant fulfillment, and secure multi-currency payment with full guarantee.`;
-          }
+          metaTitle = `${cleanTitle} - Fabelo`;
         }
       } else {
-        metaDescription = `Shop the official ${pTitle}. Premium craftsmanship, instant global dispatch, and 100% verified authentic satisfaction guarantee.`;
+        metaTitle = cleanTitle.length <= 60 ? cleanTitle : cleanTitle.substring(0, 57).trim() + '...';
+      }
+
+      // Dynamic Meta Description Construction from real extracted content
+      let metaDescription = '';
+      if (snippets.length > 0) {
+        // Find the best snippet that introduces or summarizes the content
+        const bestSnippet = snippets.find((s) => s.length >= 80 && s.length <= 150) || snippets[0];
+        let assembled = bestSnippet.trim().replace(/[.]+$/, '');
+
+        if (assembled.length < 110 && snippets.length > 1) {
+          const secondSnippet = snippets[1].trim().replace(/[.]+$/, '');
+          if ((assembled + '. ' + secondSnippet).length <= 155) {
+            assembled = `${assembled}. ${secondSnippet}`;
+          }
+        }
+
+        if (assembled.length >= 90 && assembled.length <= 155) {
+          metaDescription = `${assembled}.`;
+        } else if (assembled.length > 155) {
+          metaDescription = assembled.substring(0, 152).trim() + '...';
+        }
+      }
+
+      // Fallback with dynamic keyword enrichment if content is short
+      if (!metaDescription || metaDescription.length < 80) {
+        const kwString = keywords.slice(0, 3).join(', ');
+        if (isTurkish) {
+          metaDescription = `${cleanTitle} hakkında detaylı inceleme, temel dinamikler ve ${kwString ? `${kwString} odaklı ` : ''}uzman değerlendirmeleri.`;
+        } else {
+          metaDescription = `Comprehensive overview of ${cleanTitle}, exploring core insights, actionable implications, and key takeaways on ${kwString || 'this topic'}.`;
+        }
       }
 
       return NextResponse.json({ success: true, metaTitle, metaDescription });
     }
 
-    if (action === 'generateFaq') {
-      const topic = title || 'General Guide';
-      const faqs = [
-        {
-          question: `What is the primary benefit of ${topic}?`,
-          answer: `The primary benefit is maximizing efficiency, authority, and measurable outcome based on modern industry standards and proven workflows.`,
-        },
-        {
-          question: `Who should follow the recommendations in ${topic}?`,
-          answer: `Professionals, content creators, and decision makers looking to optimize their workflow and achieve repeatable high-performance results.`,
-        },
-        {
-          question: `How quickly can I see results after implementing this?`,
-          answer: `Most users see immediate structural improvements right away, with compounding long-term gains within 2 to 4 weeks.`,
-        },
-        {
-          question: `Is technical expertise required to get started?`,
-          answer: `No extensive technical background is required; following the step-by-step instructions provided in the guide is sufficient.`,
-        },
-      ];
+    // =========================================================================
+    // 2. DYNAMIC MEDIA ASSET SEO & AEO CONTEXT SYNTHESIZER
+    // =========================================================================
+    if (action === 'generateMediaSeo') {
+      const cleanFileName = (filename || cleanTitle || 'image')
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[-_0-9]+/g, ' ')
+        .trim();
 
-      const faqHtml = `
-<div class="panic-faq-block my-8 p-6 rounded-xl border border-neutral-800 bg-neutral-900/50 space-y-4">
-  <h3 class="text-xl font-bold text-white mb-4">Frequently Asked Questions</h3>
-  ${faqs
-    .map(
-      (f) => `
-  <div class="border-b border-neutral-800 pb-3 last:border-0">
-    <h4 class="text-sm font-semibold text-amber-400 mb-1.5">${f.question}</h4>
-    <p class="text-xs text-neutral-300 leading-relaxed">${f.answer}</p>
-  </div>`
-    )
-    .join('')}
-</div>`;
+      const words = cleanFileName.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      const isTurkish = /[çğıöşü]/i.test(cleanFileName);
 
-      return NextResponse.json({ success: true, faqs, faqHtml });
+      // Determine asset category from filename clues
+      let assetType = 'graphic';
+      if (/screenshot|screen|capture|app|ui/i.test(cleanFileName)) assetType = 'interface screenshot';
+      else if (/chart|diagram|graph|stats|data/i.test(cleanFileName)) assetType = 'infographic chart';
+      else if (/logo|icon|brand|badge/i.test(cleanFileName)) assetType = 'vector logo asset';
+      else if (/cover|banner|hero|header/i.test(cleanFileName)) assetType = 'editorial cover visual';
+      else if (/product|desk|bag|leather|watch|item/i.test(cleanFileName)) assetType = 'product studio visual';
+      else assetType = 'illustrative asset';
+
+      const autoTitle = words;
+      let autoAlt = '';
+      let autoCaption = '';
+      let autoAeo = '';
+
+      if (isTurkish) {
+        autoAlt = `${words} - ${assetType === 'interface screenshot' ? 'Arayüz görünümü ve detayları' : `${words} detaylı görseli`}`;
+        autoCaption = `${words} hakkında özet görsel ve editoryal içerik.`;
+        autoAeo = `${words} kavramını açıklayan görsel materyal. Görsel veri, arama motorları ve Perplexity/ChatGPT gibi yapay zeka yanıt modelleri için ${cleanFileName} odağında dizayn edilmiştir.`;
+      } else {
+        autoAlt = `${words} - Detailed ${assetType} showing ${cleanFileName}`;
+        autoCaption = `Visual overview and reference illustrating ${words}.`;
+        autoAeo = `High-contrast semantic visual illustrating ${words}. Designed for multimodal Answer Engines, Google Image Graph, and Perplexity visual citations for "${cleanFileName}".`;
+      }
+
+      return NextResponse.json({
+        success: true,
+        title: autoTitle,
+        alt: autoAlt,
+        caption: autoCaption,
+        aeoContext: autoAeo,
+      });
     }
 
-    if (action === 'generateSummary') {
-      const summary = `A comprehensive, actionable breakdown covering core strategies, proven execution steps, and key optimization tips for ${title || 'this topic'}. Designed for high-impact decision making and fast implementation.`;
-      return NextResponse.json({ success: true, summary });
-    }
+    // =========================================================================
+    // 3. DYNAMIC PRODUCT SEO & COMMERCE SYNTHESIZER
+    // =========================================================================
+    if (action === 'generateProductSeo') {
+      const pTitle = cleanTitle || 'Official Product';
+      const pDesc = rawText;
+      const isTurkish = /[çğıöşü]/i.test(`${pTitle} ${pDesc}`);
 
-    if (action === 'generateSeoMeta') {
-      const metaTitle = `${title} | Complete 2026 Guide & Action Plan`;
-      const metaDescription = `Discover the ultimate guide on ${title}. Step-by-step strategies, expert insights, and actionable best practices to achieve measurable success.`;
+      let metaTitle = `${pTitle} | Fabelo Store`;
+      if (metaTitle.length > 60) metaTitle = `${pTitle} | Fabelo`;
+      if (metaTitle.length > 60) metaTitle = pTitle.substring(0, 57) + '...';
+
+      let metaDescription = '';
+      const snippets = extractSemanticSnippets(pDesc);
+      if (snippets.length > 0) {
+        metaDescription = snippets[0].length <= 155 ? snippets[0] : snippets[0].substring(0, 152) + '...';
+      } else {
+        metaDescription = isTurkish
+          ? `Orijinal ${pTitle}. Güvenli ödeme, anında teslimat ve onaylı kalite güvencesiyle Fabelo Store'da.`
+          : `Order authentic ${pTitle}. Verified premium quality, instant dispatch, and secure global checkout at Fabelo Store.`;
+      }
+
       return NextResponse.json({ success: true, metaTitle, metaDescription });
     }
 
-    if (action === 'generateProsCons') {
-      const prosConsHtml = `
-<div class="panic-pros-cons-block my-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-  <div class="p-5 rounded-xl border border-emerald-900/40 bg-emerald-950/20 space-y-2">
-    <h4 class="text-sm font-bold text-emerald-400 flex items-center gap-1.5">✓ Key Advantages</h4>
-    <ul class="text-xs text-neutral-300 space-y-1.5 list-disc list-inside">
-      <li>Fast execution and zero operational friction</li>
-      <li>High return on investment and scalable output</li>
-      <li>Complies with latest 2026 search and AI standards</li>
-    </ul>
-  </div>
-  <div class="p-5 rounded-xl border border-red-900/40 bg-red-950/20 space-y-2">
-    <h4 class="text-sm font-bold text-red-400 flex items-center gap-1.5">✗ Considerations</h4>
-    <ul class="text-xs text-neutral-300 space-y-1.5 list-disc list-inside">
-      <li>Requires consistent initial setup and diligence</li>
-      <li>Best results achieved with ongoing monitoring</li>
-    </ul>
-  </div>
-</div>`;
-      return NextResponse.json({ success: true, html: prosConsHtml });
-    }
-
-    if (action === 'generateCta') {
-      const ctaHtml = `
-<div class="panic-cta-block my-8 p-6 rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-950/20 text-center space-y-3">
-  <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-400">Featured Resource</span>
-  <h3 class="text-xl font-bold text-white">Ready to Master ${title || 'This Strategy'}?</h3>
-  <p class="text-xs text-neutral-300 max-w-md mx-auto">Get instant access to our curated checklists, templates, and actionable automation blueprints.</p>
-  <div>
-    <a href="/panic/products" class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-amber-500 text-black font-semibold text-xs hover:bg-amber-400 transition shadow-lg">
-      Get Instant Access →
-    </a>
-  </div>
-</div>`;
-      return NextResponse.json({ success: true, html: ctaHtml });
+    // =========================================================================
+    // 4. DYNAMIC SUMMARY
+    // =========================================================================
+    if (action === 'generateSummary') {
+      const snippets = extractSemanticSnippets(rawText);
+      const isTurkish = /[çğıöşü]/i.test(`${cleanTitle} ${rawText}`);
+      let summary = '';
+      if (snippets.length >= 2) {
+        summary = `${snippets[0]} ${snippets[1]}`;
+      } else {
+        summary = isTurkish
+          ? `${cleanTitle} konusuna dair temel çıkarımlar, stratejik dinamikler ve uygulanabilir optimizasyon adımlarının özeti.`
+          : `A focused, actionable breakdown of ${cleanTitle}, outlining primary findings, execution strategies, and key insights.`;
+      }
+      return NextResponse.json({ success: true, summary });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

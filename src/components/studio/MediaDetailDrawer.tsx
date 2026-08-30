@@ -105,28 +105,33 @@ export function MediaDetailDrawer({
     }
   };
 
-  const handleAiAutoDescribe = () => {
+  const handleAiAutoDescribe = async () => {
     setGeneratingAi(true);
-    setTimeout(() => {
-      const cleanName = (displayMedia.filename || '')
-        .replace(/\.[^/.]+$/, '')
-        .replace(/[-_0-9]+/g, ' ')
-        .trim();
-      const formattedTitle = cleanName
-        .split(' ')
-        .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
-
-      const autoAlt = `${formattedTitle} - High resolution visual asset`;
-      const autoCaption = `Official visual asset showcasing ${cleanName}.`;
-      const autoAeo = `Visual representation of ${cleanName}. High-contrast, web-optimized asset illustrating core concepts and system design for AI Answer Engines and multi-modal search models.`;
-
-      setAlt(autoAlt);
-      setCaption(autoCaption);
-      setAeoContext(autoAeo);
+    try {
+      const res = await fetch('/api/ai/copilot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generateMediaSeo',
+          filename: displayMedia.filename,
+          title: title || displayMedia.title,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.title && !title) setTitle(data.title);
+        if (data.alt) setAlt(data.alt);
+        if (data.caption) setCaption(data.caption);
+        if (data.aeoContext) setAeoContext(data.aeoContext);
+        toast.success('Dynamic AI SEO & AEO metadata generated!');
+      } else {
+        toast.error('Could not generate AI metadata');
+      }
+    } catch (e) {
+      toast.error('AI synthesis failed');
+    } finally {
       setGeneratingAi(false);
-      toast.success('AI SEO & AEO descriptions generated!');
-    }, 400);
+    }
   };
 
   const copyUrl = () => {

@@ -428,11 +428,47 @@ export default function PanicNewPostPage() {
 
           {/* Card 4: SEO Metadata */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                 <Globe className="w-4 h-4 text-primary" />
                 <span>SEO & AI Search</span>
               </CardTitle>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={async () => {
+                  if (!title.trim()) {
+                    toast.error('Please enter an article title first');
+                    return;
+                  }
+                  try {
+                    const res = await fetch('/api/ai/copilot', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        action: 'generateSeoMeta',
+                        title,
+                        slug,
+                        contentHtml,
+                        excerpt,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                      if (data.metaTitle) setMetaTitle(data.metaTitle);
+                      if (data.metaDescription) setMetaDescription(data.metaDescription);
+                      toast.success('Dynamic AI SEO metadata generated!');
+                    }
+                  } catch (e) {
+                    toast.error('AI synthesis failed');
+                  }
+                }}
+                className="h-6 gap-1 text-[11px] text-primary hover:text-primary font-medium"
+              >
+                <Sparkles className="size-3" />
+                <span>AI Auto-Fill ✨</span>
+              </Button>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-1">
