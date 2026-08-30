@@ -20,69 +20,26 @@ export function ArticleLiveWrapper({
 }: ArticleLiveWrapperProps) {
   const [coverUrl, setCoverUrl] = useState(initialCoverUrl);
   const [isLiveMode, setIsLiveMode] = useState(false);
+  const [hoveredImgRect, setHoveredImgRect] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+    src: string;
+    alt: string;
+    title: string;
+    caption: string;
+  } | null>(null);
 
   const titleRef = useRef<HTMLHeadingElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLElement>(null);
   const isTypingTitle = useRef(false);
   const isTypingContent = useRef(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Enhance all images inside contentRef in live mode with a single centered [Manage Image & AI] button
-  const enhanceContentImages = useCallback(() => {
-    if (!contentRef.current || typeof window === 'undefined') return;
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const inLive = urlParams.get('live') === '1' || window !== window.parent;
-    if (!inLive) return;
-
-    const imgs = contentRef.current.querySelectorAll('img');
-    imgs.forEach((img) => {
-      const parent = img.parentElement;
-      if (parent && parent.getAttribute('data-image-wrapper') === 'true') {
-        return;
-      }
-
-      // Create container identical to TipTap editor
-      const wrapper = document.createElement('div');
-      wrapper.setAttribute('data-image-wrapper', 'true');
-      wrapper.className = 'relative my-6 block group select-none max-w-3xl';
-
-      const innerBox = document.createElement('div');
-      innerBox.className = 'relative rounded-2xl overflow-hidden border border-border/80 bg-muted/20 shadow-md transition-all duration-200 inline-block w-full';
-
-      img.parentNode?.insertBefore(wrapper, img);
-      innerBox.appendChild(img);
-      wrapper.appendChild(innerBox);
-
-      img.className = 'w-full h-auto object-cover rounded-2xl block min-h-[140px] bg-muted/30';
-      img.onerror = () => {
-        img.src = '/media/fabelo-card-25.webp';
-      };
-
-      // Clean single centered [Manage Image & AI] button
-      const overlay = document.createElement('div');
-      overlay.className = 'absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center backdrop-blur-2xs';
-
-      const manageBtn = document.createElement('button');
-      manageBtn.type = 'button';
-      manageBtn.className = 'px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-2xl hover:bg-primary/90 flex items-center gap-2 transition cursor-pointer active:scale-95 border border-primary-foreground/20';
-      manageBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles size-3.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-        <span>Manage Image & AI</span>
-      `;
-      manageBtn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        triggerOpenImageStudio(img.src, img.alt, img.title, false);
-      };
-
-      overlay.appendChild(manageBtn);
-      innerBox.appendChild(overlay);
-    });
-  }, []);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Check URL parameters for live mode and theme
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('live') === '1' || window !== window.parent) {
@@ -97,7 +54,6 @@ export function ArticleLiveWrapper({
     }
 
     const handleMessage = (event: MessageEvent) => {
-      // Live Theme Synchronization
       if (event.data?.type === 'PANIC_THEME_CHANGE') {
         const theme = event.data.theme;
         if (theme === 'dark') {
@@ -120,7 +76,6 @@ export function ArticleLiveWrapper({
 
         if (newHtml !== undefined && contentRef.current && !isTypingContent.current) {
           contentRef.current.innerHTML = newHtml;
-          setTimeout(() => enhanceContentImages(), 20);
         }
 
         if (newCover !== undefined) {
@@ -131,18 +86,38 @@ export function ArticleLiveWrapper({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [enhanceContentImages]);
+  }, []);
 
-  // Set initial content and enhance on mount
-  useEffect(() => {
-    if (titleRef.current && !titleRef.current.innerText) {
-      titleRef.current.innerText = initialTitle;
+  // Event Delegation: Clean hover tracking over any <img> inside contentRef without mutating DOM
+  const handleContentMouseOver = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isLiveMode) return;
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'IMG') {
+      const img = target as HTMLImageElement;
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+
+      const imgRect = img.getBoundingClientRect();
+      const contRect = containerRef.current?.getBoundingClientRect() || { top: 0, left: 0 };
+
+      setHoveredImgRect({
+        top: imgRect.top - contRect.top,
+        left: imgRect.left - contRect.left,
+        width: imgRect.width,
+        height: imgRect.height,
+        src: img.getAttribute('src') || img.src,
+        alt: img.getAttribute('alt') || '',
+        title: img.getAttribute('title') || '',
+        caption: img.getAttribute('data-caption') || '',
+      });
     }
-    if (contentRef.current && !contentRef.current.innerHTML) {
-      contentRef.current.innerHTML = initialContentHtml;
-    }
-    setTimeout(() => enhanceContentImages(), 20);
-  }, [initialTitle, initialContentHtml, enhanceContentImages]);
+  };
+
+  const handleContentMouseLeave = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredImgRect(null);
+    }, 300);
+  };
 
   const handleTitleInput = (e: React.FormEvent<HTMLHeadingElement>) => {
     const newText = e.currentTarget.innerText;
@@ -178,12 +153,12 @@ export function ArticleLiveWrapper({
     }, 150);
   };
 
-  const triggerOpenImageStudio = (src: string, alt?: string, title?: string, isCover = false) => {
+  const triggerOpenImageStudio = (src: string, alt = '', title = '', caption = '', isCover = false) => {
     if (window.parent && window.parent !== window) {
       window.parent.postMessage(
         {
           type: 'PANIC_OPEN_IMAGE_STUDIO',
-          payload: { src, alt, title, isCover },
+          payload: { src, alt, title, caption, isCover },
         },
         '*'
       );
@@ -191,7 +166,7 @@ export function ArticleLiveWrapper({
   };
 
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 relative">
+    <main ref={containerRef} className="max-w-4xl mx-auto px-4 sm:px-6 py-12 relative">
       {isLiveMode && (
         <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono select-none">
           <span className="size-2 rounded-full bg-primary animate-ping" />
@@ -237,7 +212,7 @@ export function ArticleLiveWrapper({
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center backdrop-blur-2xs">
               <button
                 type="button"
-                onClick={() => triggerOpenImageStudio(coverUrl, 'Cover Image', 'Article Cover', true)}
+                onClick={() => triggerOpenImageStudio(coverUrl, 'Cover Image', 'Article Cover', '', true)}
                 className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-2xl hover:bg-primary/90 flex items-center gap-2 transition cursor-pointer active:scale-95 border border-primary-foreground/20"
                 title="Manage Cover Image, Replace & Generate AI Alt Text"
               >
@@ -257,14 +232,57 @@ export function ArticleLiveWrapper({
         onFocus={() => { isTypingContent.current = true; }}
         onBlur={() => { isTypingContent.current = false; }}
         onInput={handleContentInput}
+        onMouseOver={handleContentMouseOver}
+        onMouseLeave={handleContentMouseLeave}
         className={`prose dark:prose-invert prose-neutral prose-lg max-w-none font-sans leading-relaxed
           prose-headings:font-serif prose-headings:text-foreground prose-headings:tracking-tight
           prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+          prose-img:rounded-2xl prose-img:border prose-img:border-border/80 prose-img:shadow-md
           prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground ${
             isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/30 rounded-xl p-2 hover:bg-muted/30 transition cursor-text' : ''
           }`}
         dangerouslySetInnerHTML={{ __html: initialContentHtml || '' }}
       />
+
+      {/* Clean Floating React Hover Overlay for Inline Images */}
+      {isLiveMode && hoveredImgRect && (
+        <div
+          style={{
+            position: 'absolute',
+            top: hoveredImgRect.top,
+            left: hoveredImgRect.left,
+            width: hoveredImgRect.width,
+            height: hoveredImgRect.height,
+            pointerEvents: 'none',
+          }}
+          className="rounded-2xl flex items-center justify-center bg-black/40 backdrop-blur-2xs transition-all duration-150 z-20"
+          onMouseEnter={() => {
+            if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+          }}
+          onMouseLeave={handleContentMouseLeave}
+        >
+          <button
+            type="button"
+            style={{ pointerEvents: 'auto' }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              triggerOpenImageStudio(
+                hoveredImgRect.src,
+                hoveredImgRect.alt,
+                hoveredImgRect.title,
+                hoveredImgRect.caption,
+                false
+              );
+            }}
+            className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-2xl hover:bg-primary/90 flex items-center gap-2 transition cursor-pointer active:scale-95 border border-primary-foreground/20"
+            title="Manage Image, Replace & Generate AI Alt Text"
+          >
+            <Sparkles className="size-3.5" />
+            <span>Manage Image & AI</span>
+          </button>
+        </div>
+      )}
     </main>
   );
 }

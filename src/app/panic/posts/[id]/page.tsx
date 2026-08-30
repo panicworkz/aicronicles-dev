@@ -126,7 +126,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
               if (newData.alt) setFeaturedImageAlt(newData.alt);
               broadcastLiveSync(titleRef.current, contentHtmlRef.current, newData.src);
               try {
-                await fetch(`/api/posts/${postId}`, {
+                const res = await fetch(`/api/posts/${postId}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -142,7 +142,10 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                     metaDescription,
                   }),
                 });
-                toast.success('Cover image updated and saved!');
+                const resData = await res.json();
+                if (resData.success) {
+                  toast.success('Cover image updated and saved!');
+                }
               } catch (e) {
                 // silent
               }
@@ -155,7 +158,14 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
               imgs.forEach((im) => {
                 const imSrc = im.getAttribute('src') || '';
-                if (imSrc === src || src.endsWith(imSrc) || imSrc.endsWith(src) || im.src === src) {
+                const imFilename = imSrc.split('/').pop() || '';
+                const targetFilename = src.split('/').pop() || '';
+                if (
+                  imSrc === src ||
+                  src.endsWith(imSrc) ||
+                  imSrc.endsWith(src) ||
+                  (imFilename && targetFilename && imFilename === targetFilename)
+                ) {
                   matched = true;
                   im.setAttribute('src', newData.src);
                   im.setAttribute('alt', newData.alt || '');
@@ -175,7 +185,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
               broadcastLiveSync(titleRef.current, updatedHtml, featuredImageUrlRef.current);
 
               try {
-                await fetch(`/api/posts/${postId}`, {
+                const res = await fetch(`/api/posts/${postId}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -191,9 +201,14 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                     metaDescription,
                   }),
                 });
-                toast.success('Image settings applied and saved!');
-              } catch (e) {
-                // silent
+                const resData = await res.json();
+                if (resData.success) {
+                  toast.success('Image settings applied and saved!');
+                } else {
+                  toast.error(resData.error || 'Failed to save changes');
+                }
+              } catch (e: any) {
+                toast.error('Save error');
               }
             }
           },
