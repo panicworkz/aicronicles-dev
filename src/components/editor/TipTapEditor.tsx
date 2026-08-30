@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import ImageExtension from '@tiptap/extension-image';
@@ -24,9 +24,12 @@ import {
   Table as TableIcon,
   Undo,
   Redo,
+  Upload,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { MediaPickerModal } from '@/components/studio/MediaPickerModal';
+import { toast } from 'sonner';
 
 interface TipTapEditorProps {
   content: string;
@@ -34,6 +37,9 @@ interface TipTapEditorProps {
 }
 
 export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -44,6 +50,9 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
       ImageExtension.configure({
         inline: true,
         allowBase64: true,
+        HTMLAttributes: {
+          class: 'rounded-xl max-w-full my-6 border border-border/80 shadow-sm mx-auto object-cover',
+        },
       }),
       LinkExtension.configure({
         openOnClick: false,
@@ -75,6 +84,31 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
       attributes: {
         class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[500px] p-6 text-foreground text-sm sm:text-base leading-relaxed',
       },
+      handleDrop: (view, event, slice, moved) => {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+          const file = event.dataTransfer.files[0];
+          if (file.type.startsWith('image/')) {
+            event.preventDefault();
+            uploadAndInsertImage(file);
+            return true;
+          }
+        }
+        return false;
+      },
+      handlePaste: (view, event, slice) => {
+        const items = Array.from(event.clipboardData?.items || []);
+        for (const item of items) {
+          if (item.type.startsWith('image/')) {
+            const file = item.getAsFile();
+            if (file) {
+              event.preventDefault();
+              uploadAndInsertImage(file);
+              return true;
+            }
+          }
+        }
+        return false;
+      },
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML(), editor.getJSON());
@@ -87,16 +121,45 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
     }
   }, [content, editor]);
 
+  const uploadAndInsertImage = async (file: File) => {
+    if (!editor) return;
+    toast.loading('Uploading and optimizing image to WebP...');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/media', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      toast.dismiss();
+
+      if (data.success && data.media?.url) {
+        editor.chain().focus().setImage({ src: data.media.url, alt: data.media.alt || file.name }).run();
+        toast.success('Image inserted into publication');
+      } else {
+        toast.error(data.error || 'Upload failed');
+      }
+    } catch (err: any) {
+      toast.dismiss();
+      toast.error('Image upload failed');
+    }
+  };
+
+  const handleDirectFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadAndInsertImage(file);
+      e.target.value = '';
+    }
+  };
+
   if (!editor) {
     return <div className="h-96 rounded-xl border bg-card/50 animate-pulse" />;
   }
-
-  const addImage = () => {
-    const url = window.prompt('Enter image URL (e.g. /media/guide-cover.webp):');
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
-  };
 
   const setLink = () => {
     const previousUrl = editor.getAttributes('link').href;
@@ -226,16 +289,31 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
         >
           <LinkIcon className="w-4 h-4" />
         </Button>
+
+        {/* Rich Image Insertion with Modal Picker + Direct Upload */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-8 gap-1.5 px-2 text-xs font-medium text-primary hover:bg-primary/10 hover:text-primary"
+          onClick={() => setPickerOpen(true)}
+          title="Insert Image (Upload or Pick from Library)"
+        >
+          <ImageIcon className="w-4 h-4" />
+          <span className="hidden sm:inline">Image</span>
+        </Button>
+
         <Button
           type="button"
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0"
-          onClick={addImage}
-          title="Image"
+          onClick={() => fileInputRef.current?.click()}
+          title="Quick Upload Image from Computer"
         >
-          <ImageIcon className="w-4 h-4" />
+          <Upload className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
         </Button>
+
         <Button
           type="button"
           variant={editor.isActive('table') ? 'secondary' : 'ghost'}
@@ -277,6 +355,26 @@ export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
       <div className="flex-1 bg-card">
         <EditorContent editor={editor} />
       </div>
+
+      {/* Hidden File Input for Quick Direct Upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleDirectFileInput}
+        className="hidden"
+      />
+
+      {/* Media Picker Modal (Upload New or Pick from 509 Media Assets) */}
+      <MediaPickerModal
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(url) => {
+          if (editor) {
+            editor.chain().focus().setImage({ src: url }).run();
+          }
+        }}
+      />
     </div>
   );
 }
