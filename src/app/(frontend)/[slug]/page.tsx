@@ -66,16 +66,23 @@ export default async function ArticleDetailPage({ params }: PageProps) {
 
     return (
       <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-white transition-colors duration-200">
-        {/* Header */}
-        <header className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-50">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="text-xl font-bold text-foreground font-serif tracking-tight">
-              FABELO<span className="text-primary">.</span>
-            </Link>
-            <div className="flex items-center space-x-4 text-xs font-mono text-muted-foreground">
+        {/* Ghost Navigation Header */}
+        <header id="gh-navigation" className="gh-navigation is-stacked gh-outer border-b border-border/40 bg-background/95 backdrop-blur-md sticky top-0 z-50">
+          <div className="gh-navigation-inner gh-inner max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <div className="gh-navigation-brand flex items-center gap-6">
+              <Link className="gh-navigation-logo is-title text-2xl font-black font-serif tracking-tight text-foreground flex items-center gap-0.5" href="/">
+                FABELO<span className="text-primary">.</span>
+              </Link>
+              <nav className="gh-navigation-menu hidden md:flex items-center space-x-6 text-sm font-medium">
+                <Link href="/tag/ai-tech" className="hover:text-primary transition">AI & Tech</Link>
+                <Link href="/tag/personal-finance" className="hover:text-primary transition">Personal Finance</Link>
+                <Link href="/tag/career" className="hover:text-primary transition">Career</Link>
+              </nav>
+            </div>
+            <div className="gh-navigation-actions flex items-center space-x-4 text-xs font-mono text-muted-foreground">
               <Link href="/llms.txt" className="text-primary hover:underline font-medium">AEO / llms.txt</Link>
               <Link href={`/api/llm/${post.slug}`} className="hover:text-foreground">AI Raw View</Link>
-              <Link href={`/panic/posts/${post.id}`} className="text-primary hover:underline font-medium">Edit in CMS</Link>
+              <Link href={`/panic/posts/${post.id}`} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-sans font-semibold hover:bg-primary/90 transition">Edit in CMS</Link>
             </div>
           </div>
         </header>
@@ -92,11 +99,19 @@ export default async function ArticleDetailPage({ params }: PageProps) {
           category={category}
         />
 
-        {/* Footer */}
-        <footer className="border-t border-border bg-muted/30 py-12 mt-20 text-muted-foreground text-sm">
-          <div className="max-w-4xl mx-auto px-4 flex justify-between items-center">
-            <p>© {new Date().getFullYear()} Fabelo Editorial.</p>
-            <Link href="/" className="text-xs text-primary hover:underline font-medium">Back to Home</Link>
+        {/* Ghost Footer */}
+        <footer className="gh-footer gh-outer border-t border-border/40 bg-muted/20 py-12 mt-20 text-muted-foreground text-sm">
+          <div className="gh-footer-inner gh-inner max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-bold font-serif text-foreground">FABELO<span className="text-primary">.</span></span>
+              <span>© {new Date().getFullYear()} Fabelo. All rights reserved.</span>
+            </div>
+            <div className="flex items-center space-x-6 text-xs">
+              <Link href="/" className="text-primary hover:underline font-medium">Home</Link>
+              <Link href="/tag/ai-tech" className="hover:underline">AI & Tech</Link>
+              <Link href="/tag/personal-finance" className="hover:underline">Personal Finance</Link>
+              <Link href="/tag/career" className="hover:underline">Career</Link>
+            </div>
           </div>
         </footer>
       </div>

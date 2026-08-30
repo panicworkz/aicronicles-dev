@@ -105,7 +105,7 @@ export function ArticleLiveWrapper({
         newImg.alt = alt;
         if (title) newImg.title = title;
         newImg.className = 'w-full h-auto object-cover rounded-2xl block min-h-[140px] bg-muted/30';
-        newImg.setAttribute('onerror', "this.src='/media/fabelo-card-25.webp'");
+        newImg.setAttribute('onerror', "this.src='https://fabelo.io/content/images/size/w1200/2026/07/pexels-photo-7283714.webp'");
 
         const overlay = doc.createElement('div');
         overlay.className = 'absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center backdrop-blur-2xs pointer-events-none';
@@ -248,7 +248,7 @@ export function ArticleLiveWrapper({
     const handleMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('.panic-live-bubble-toolbar')) {
-        return; // Don't close when clicking inside toolbar
+        return;
       }
       setBubbleMenu((prev) => (prev.visible ? { ...prev, visible: false } : prev));
       setLinkInputOpen(false);
@@ -580,118 +580,118 @@ export function ArticleLiveWrapper({
   };
 
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 relative">
+    <div className="gh-viewport min-h-screen bg-background text-foreground transition-colors duration-200">
       {isLiveMode && (
-        <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono select-none">
-          <span className="size-2 rounded-full bg-primary animate-ping" />
-          <span>Live In-Context Studio (Highlight text to format, hover images to manage)</span>
+        <div className="fixed top-20 right-6 z-50 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-mono shadow-xl select-none animate-in fade-in">
+          <span className="size-2 rounded-full bg-white animate-ping" />
+          <span>Live In-Context Studio (Highlight text to format)</span>
         </div>
       )}
 
       {/* Floating Selection Bubble Formatting Toolbar */}
       {renderBubblePortal()}
 
-      {/* Category Badge */}
-      {category && (
-        <div className="mb-3">
-          <span className="inline-block px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider font-mono">
-            {category.name}
-          </span>
-        </div>
-      )}
+      {/* Main Ghost Article */}
+      <main className="gh-main py-10">
+        <article className={`gh-article post tag-${category?.slug || 'ai-tech'}`}>
+          <header className="gh-article-header gh-canvas">
+            {category && (
+              <Link className="gh-article-tag" href={`/tag/${category.slug}`}>
+                {category.name}
+              </Link>
+            )}
 
-      {/* Direct In-Context Editable Title */}
-      <h1
-        ref={titleRef}
-        contentEditable={isLiveMode}
-        suppressContentEditableWarning
-        onFocus={() => { isTypingTitle.current = true; }}
-        onBlur={() => { isTypingTitle.current = false; }}
-        onInput={handleTitleInput}
-        className={`text-3xl sm:text-5xl font-black tracking-tight text-foreground leading-tight mb-4 font-serif ${
-          isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/40 rounded-lg p-1 hover:bg-muted/30 transition cursor-text' : ''
-        }`}
-        dangerouslySetInnerHTML={{ __html: initialTitle }}
-      />
+            <h1
+              ref={titleRef}
+              contentEditable={isLiveMode}
+              suppressContentEditableWarning
+              onFocus={() => { isTypingTitle.current = true; }}
+              onBlur={() => { isTypingTitle.current = false; }}
+              onInput={handleTitleInput}
+              className={`gh-article-title is-title ${
+                isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/40 rounded-lg p-1 hover:bg-muted/30 transition cursor-text' : ''
+              }`}
+              dangerouslySetInnerHTML={{ __html: initialTitle }}
+            />
 
-      {/* Article Excerpt / Lead */}
-      {excerpt && (
-        <p className="text-lg text-muted-foreground leading-relaxed mb-6 font-serif">
-          {excerpt}
-        </p>
-      )}
+            {excerpt && (
+              <p className="gh-article-excerpt is-body">
+                {excerpt}
+              </p>
+            )}
 
-      {/* Author & Meta Row */}
-      <div className="flex items-center space-x-4 border-y border-border py-4 mb-8 text-xs text-muted-foreground font-mono">
-        <div className="flex items-center gap-2">
-          {author?.avatarUrl ? (
-            <img src={author.avatarUrl} alt={author.name} className="size-6 rounded-full object-cover border" />
-          ) : (
-            <div className="size-6 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px]">
-              {(author?.name || 'U')[0]}
+            <div className="gh-article-meta">
+              <div className="gh-article-author-image instapaper_ignore">
+                <Link href={`/author/${author?.slug || 'ufuk-yorulmaz'}`}>
+                  <img
+                    className="author-profile-image"
+                    src={author?.avatarUrl || 'https://fabelo.io/content/images/size/w160/2026/04/ufuk_square.png'}
+                    alt={author?.name || 'Ufuk Yorulmaz'}
+                  />
+                </Link>
+              </div>
+              <div className="gh-article-meta-wrapper">
+                <h4 className="gh-article-author-name">
+                  <Link href={`/author/${author?.slug || 'ufuk-yorulmaz'}`}>{author?.name || 'Ufuk Yorulmaz'}</Link>
+                </h4>
+                <div className="gh-article-meta-content">
+                  <time className="gh-article-meta-date" dateTime={publishedAt || '2026-07-02'}>
+                    {publishedAt ? new Date(publishedAt).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '02 Jul 2026'}
+                  </time>
+                  <span className="gh-article-meta-length">
+                    <span className="bull">—</span> {readingTime || '21 min read'}
+                  </span>
+                </div>
+              </div>
             </div>
-          )}
-          <span className="text-foreground font-sans font-semibold">
-            {author?.name || 'Ufuk Yorulmaz'}
-          </span>
-        </div>
-        <span>•</span>
-        <span>{publishedAt ? new Date(publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Editorial'}</span>
-        <span>•</span>
-        <span className="font-semibold text-primary">{readingTime || '5 min read'}</span>
-      </div>
 
-      {/* Featured Cover Image with [Manage Cover & AI] Center Button */}
-      {coverUrl && (
-        <div className="relative group mb-10 rounded-2xl overflow-hidden border border-border/80 bg-muted/20 shadow-md max-w-4xl select-none">
-          <img
-            src={coverUrl}
-            alt="Cover"
-            className="w-full aspect-video object-cover block rounded-2xl"
-            onError={(e) => {
-              e.currentTarget.src = '/media/fabelo-card-25.webp';
-            }}
+            {coverUrl && (
+              <figure className="gh-article-image relative group">
+                <img
+                  src={coverUrl}
+                  alt={initialTitle}
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://fabelo.io/content/images/size/w1200/2026/07/pexels-photo-7283714.webp';
+                  }}
+                />
+                <figcaption>
+                  <a href="https://www.pexels.com/photo/a-person-typing-on-the-laptop-7283714/" target="_blank" rel="noopener noreferrer">
+                    Photo by www.kaboompics.com on Pexels
+                  </a>
+                </figcaption>
+                {isLiveMode && (
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center backdrop-blur-2xs rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => triggerOpenImageStudio(coverUrl, 'Cover Image', 'Article Cover', '', true)}
+                      className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-2xl hover:bg-primary/90 flex items-center gap-2 transition cursor-pointer active:scale-95 border border-primary-foreground/20"
+                      title="Manage Cover Image, Replace & Generate AI Alt Text"
+                    >
+                      <Sparkles className="size-3.5" />
+                      <span>Manage Cover & AI</span>
+                    </button>
+                  </div>
+                )}
+              </figure>
+            )}
+          </header>
+
+          {/* Body Content Section using Native Ghost Source Canvas System */}
+          <section
+            ref={contentRef}
+            contentEditable={isLiveMode}
+            suppressContentEditableWarning
+            onFocus={() => { isTypingContent.current = true; }}
+            onBlur={() => { isTypingContent.current = false; }}
+            onInput={handleContentInput}
+            onClick={handleContentClick}
+            className={`gh-content gh-canvas is-body ${
+              isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/20 rounded-xl p-2 hover:bg-muted/20 transition cursor-text' : ''
+            }`}
+            dangerouslySetInnerHTML={{ __html: initialContentHtml || '' }}
           />
-          {isLiveMode && (
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center backdrop-blur-2xs">
-              <button
-                type="button"
-                onClick={() => triggerOpenImageStudio(coverUrl, 'Cover Image', 'Article Cover', '', true)}
-                className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-2xl hover:bg-primary/90 flex items-center gap-2 transition cursor-pointer active:scale-95 border border-primary-foreground/20"
-                title="Manage Cover Image, Replace & Generate AI Alt Text"
-              >
-                <Sparkles className="size-3.5" />
-                <span>Manage Cover & AI</span>
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Direct In-Context Editable Content Body */}
-      <div
-        ref={contentRef}
-        contentEditable={isLiveMode}
-        suppressContentEditableWarning
-        onFocus={() => { isTypingContent.current = true; }}
-        onBlur={() => { isTypingContent.current = false; }}
-        onInput={handleContentInput}
-        onClick={handleContentClick}
-        className={`prose dark:prose-invert prose-neutral prose-lg max-w-none font-sans leading-relaxed
-          prose-headings:font-serif prose-headings:text-foreground prose-headings:tracking-tight prose-headings:scroll-mt-24
-          prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:font-bold prose-h2:mt-12 prose-h2:mb-4 prose-h2:pt-4
-          prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:font-semibold prose-h3:mt-8 prose-h3:mb-3
-          prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:mb-5
-          prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-          prose-blockquote:border-l-4 prose-blockquote:border-l-primary prose-blockquote:bg-muted/20 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:text-muted-foreground
-          prose-table:w-full prose-table:my-8 prose-table:border-collapse
-          prose-th:border prose-th:border-border prose-th:bg-muted/40 prose-th:p-3 prose-th:text-left
-          prose-td:border prose-td:border-border prose-td:p-3
-          ${
-            isLiveMode ? "outline-none focus:ring-2 focus:ring-primary/20 rounded-xl p-2 hover:bg-muted/20 transition cursor-text" : ""
-          }`}
-        dangerouslySetInnerHTML={{ __html: initialContentHtml || '' }}
-      />
-    </main>
+        </article>
+      </main>
+    </div>
   );
 }
