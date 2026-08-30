@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Copy, Check, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 
 export default function PanicMediaPage() {
@@ -66,11 +66,11 @@ export default function PanicMediaPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Media Assets & Gallery</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Media Assets & Gallery</h1>
           <p className="text-xs text-muted-foreground mt-0.5">Automatic WebP optimization and instant CDN delivery</p>
         </div>
 

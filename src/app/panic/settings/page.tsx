@@ -22,9 +22,9 @@ export default function PanicSettingsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-20">
+    <div className="space-y-6 pb-20">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Project & Engine Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Project & Engine Settings</h1>
         <p className="text-xs text-muted-foreground mt-0.5">Configure site branding, AEO parameters, and modular features</p>
       </div>
 

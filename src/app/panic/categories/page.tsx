@@ -1,7 +1,7 @@
 import React from 'react';
 import { db, schema } from '@/db';
 import { desc } from 'drizzle-orm';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,13 +11,13 @@ export default async function PanicCategoriesPage() {
   });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Categories & Topics</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Categories & Topics</h1>
         <p className="text-xs text-muted-foreground mt-0.5">Organize editorial guides into taxonomies</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {tagList.map((tag) => (
           <Card key={tag.id}>
             <CardContent className="p-5 space-y-2">
