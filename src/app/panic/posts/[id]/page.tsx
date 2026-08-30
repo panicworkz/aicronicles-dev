@@ -20,6 +20,9 @@ import {
   History,
   Check,
   Share2,
+  Columns,
+  Eye,
+  Layout,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +48,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [autosaving, setAutosaving] = useState(false);
+  const [viewMode, setViewMode] = useState<'editor' | 'live' | 'split'>('editor');
   const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [activeTab, setActiveTab] = useState<'editor' | 'ai_aeo' | 'metadata'>('editor');
   const [iframeKey, setIframeKey] = useState(0);
@@ -393,31 +397,76 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           </div>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center rounded-lg border bg-muted/40 p-0.5 text-xs">
-          <Button
-            variant={activeTab === 'editor' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('editor')}
-          >
-            Visual Editor
-          </Button>
-          <Button
-            variant={activeTab === 'ai_aeo' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('ai_aeo')}
-            className="gap-1 text-primary"
-          >
-            <Sparkles className="size-3" />
-            <span>AI & AEO Suite</span>
-          </Button>
-          <Button
-            variant={activeTab === 'metadata' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('metadata')}
-          >
-            SEO & Metadata
-          </Button>
+        {/* Mode Switcher & Tab Controls */}
+        <div className="flex items-center gap-2">
+          {/* Main 3-Way Mode Switcher */}
+          <div className="flex items-center rounded-xl border border-border/80 bg-muted/30 p-0.5 text-xs shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setViewMode('editor')}
+              className={`px-3 py-1 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer ${
+                viewMode === 'editor'
+                  ? 'bg-background text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <FileText className="size-3.5 text-primary" />
+              <span>Visual Editor</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('live')}
+              className={`px-3 py-1 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer ${
+                viewMode === 'live'
+                  ? 'bg-background text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Eye className="size-3.5 text-emerald-500" />
+              <span>Live In-Context</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('split')}
+              className={`px-3 py-1 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer ${
+                viewMode === 'split'
+                  ? 'bg-background text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Columns className="size-3.5 text-blue-500" />
+              <span>Split View</span>
+            </button>
+          </div>
+
+          {/* Subtabs for Visual Editor (shown when in editor or split mode) */}
+          {viewMode !== 'live' && (
+            <div className="hidden sm:flex items-center rounded-lg border bg-muted/40 p-0.5 text-xs">
+              <Button
+                variant={activeTab === 'editor' ? 'secondary' : 'ghost'}
+                size="xs"
+                onClick={() => setActiveTab('editor')}
+              >
+                Editor
+              </Button>
+              <Button
+                variant={activeTab === 'ai_aeo' ? 'secondary' : 'ghost'}
+                size="xs"
+                onClick={() => setActiveTab('ai_aeo')}
+                className="gap-1 text-primary"
+              >
+                <Sparkles className="size-3" />
+                <span>AI & AEO</span>
+              </Button>
+              <Button
+                variant={activeTab === 'metadata' ? 'secondary' : 'ghost'}
+                size="xs"
+                onClick={() => setActiveTab('metadata')}
+              >
+                SEO Meta
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Right Actions */}
@@ -451,262 +500,284 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         </div>
       </div>
 
-      {/* Main Split Body: Left 50% Editor / Right 50% Live Web Canvas */}
+      {/* Main Mode Body */}
       <div className="flex flex-1 overflow-hidden">
-        {/* LEFT PANEL (50%) */}
-        <div className="w-full lg:w-1/2 border-r bg-background overflow-y-auto p-6 space-y-6">
-          {activeTab === 'editor' && (
-            <div className="space-y-4">
-              {/* Frameless Large Title */}
-              <div className="space-y-3">
-                <textarea
-                  rows={1}
-                  value={title}
-                  onChange={(e) => {
-                    handleTitleChange(e.target.value);
-                    e.target.style.height = 'auto';
-                    e.target.style.height = `${e.target.scrollHeight}px`;
-                  }}
-                  placeholder="Article Title..."
-                  className="w-full resize-none bg-transparent text-2xl sm:text-3xl font-bold tracking-tight text-foreground placeholder:text-muted-foreground/40 focus:outline-none border-0 p-0 leading-snug"
-                />
-
-                {/* URL Slug & Reading Time Bar */}
-                <div className="flex flex-wrap items-center gap-3 p-2 rounded-lg border bg-muted/20 text-xs">
-                  <div className="flex items-center gap-1.5 flex-1 min-w-[180px]">
-                    <Globe className="size-3.5 text-muted-foreground shrink-0" />
-                    <span className="text-muted-foreground truncate">fabelo.testworkz.com/</span>
-                    <input
-                      type="text"
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                      className="bg-transparent text-primary font-mono outline-none flex-1 min-w-[100px]"
+        {/* 1. VISUAL EDITOR PANEL (Full width in 'editor' mode, 50% in 'split' mode, hidden in 'live' mode) */}
+        {viewMode !== 'live' && (
+          <div
+            className={`overflow-y-auto bg-background ${
+              viewMode === 'editor'
+                ? 'w-full'
+                : 'w-full lg:w-1/2 border-r'
+            }`}
+          >
+            <div
+              className={`p-6 space-y-6 ${
+                viewMode === 'editor' ? 'max-w-4xl mx-auto py-8' : ''
+              }`}
+            >
+              {activeTab === 'editor' && (
+                <div className="space-y-4">
+                  {/* Frameless Large Title */}
+                  <div className="space-y-3">
+                    <textarea
+                      rows={1}
+                      value={title}
+                      onChange={(e) => {
+                        handleTitleChange(e.target.value);
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      placeholder="Article Title..."
+                      className="w-full resize-none bg-transparent text-2xl sm:text-3xl font-bold tracking-tight text-foreground placeholder:text-muted-foreground/40 focus:outline-none border-0 p-0 leading-snug"
                     />
+
+                    {/* URL Slug & Reading Time Bar */}
+                    <div className="flex flex-wrap items-center gap-3 p-2 rounded-lg border bg-muted/20 text-xs">
+                      <div className="flex items-center gap-1.5 flex-1 min-w-[180px]">
+                        <Globe className="size-3.5 text-muted-foreground shrink-0" />
+                        <span className="text-muted-foreground truncate">fabelo.testworkz.com/</span>
+                        <input
+                          type="text"
+                          value={slug}
+                          onChange={(e) => setSlug(e.target.value)}
+                          className="bg-transparent text-primary font-mono outline-none flex-1 min-w-[100px]"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1 text-muted-foreground border-l pl-3">
+                        <Clock className="size-3.5" />
+                        <input
+                          type="text"
+                          value={readingTime}
+                          onChange={(e) => setReadingTime(e.target.value)}
+                          className="bg-transparent text-foreground w-16 outline-none"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 text-muted-foreground border-l pl-3">
-                    <Clock className="size-3.5" />
-                    <input
-                      type="text"
-                      value={readingTime}
-                      onChange={(e) => setReadingTime(e.target.value)}
-                      className="bg-transparent text-foreground w-16 outline-none"
+
+                  {/* Rich Block Quick Insert Toolbar */}
+                  <BlockInsertToolbar
+                    title={title}
+                    contentHtml={contentHtml}
+                    onInsertHtml={handleInsertHtml}
+                  />
+
+                  {/* TipTap Rich Editor */}
+                  <div>
+                    <TipTapEditor
+                      content={contentHtml}
+                      onChange={handleContentChange}
+                      articleTitle={title}
                     />
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Rich Block Quick Insert Toolbar */}
-              <BlockInsertToolbar
-                title={title}
-                contentHtml={contentHtml}
-                onInsertHtml={handleInsertHtml}
-              />
-
-              {/* TipTap Rich Editor */}
-              <div>
-                <TipTapEditor
-                  content={contentHtml}
-                  onChange={handleContentChange}
-                  articleTitle={title}
-                />
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'ai_aeo' && (
-            <div className="space-y-6">
-              <AeoScoreMeter
-                title={title}
-                contentHtml={contentHtml}
-                excerpt={excerpt}
-                metaTitle={metaTitle}
-                metaDescription={metaDescription}
-              />
-
-              <SerpSocialPreview
-                title={title}
-                slug={slug}
-                excerpt={excerpt}
-                featuredImageUrl={featuredImageUrl}
-                metaTitle={metaTitle}
-                metaDescription={metaDescription}
-              />
-            </div>
-          )}
-
-          {activeTab === 'metadata' && (
-            <div className="space-y-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold">Publishing Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label>Publication Status</Label>
-                    <select
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value)}
-                      className="w-full h-8 rounded-lg border bg-background px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      <option value="published">Published (Live on web)</option>
-                      <option value="draft">Draft (Private)</option>
-                    </select>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold">Featured Cover Image</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <ImageUploadDropzone
-                    value={featuredImageUrl}
-                    onChange={(url) => {
-                      setFeaturedImageUrl(url);
-                      broadcastLiveSync(title, contentHtml, url);
-                    }}
-                    altValue={featuredImageAlt}
-                    onAltChange={(alt) => setFeaturedImageAlt(alt)}
-                    label=""
+              {activeTab === 'ai_aeo' && (
+                <div className="space-y-6">
+                  <AeoScoreMeter
+                    title={title}
+                    contentHtml={contentHtml}
+                    excerpt={excerpt}
+                    metaTitle={metaTitle}
+                    metaDescription={metaDescription}
                   />
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                  <CardTitle className="text-sm font-semibold">SEO & Google Search</CardTitle>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="xs"
-                    onClick={async () => {
-                      if (!title.trim()) {
-                        toast.error('Please enter an article title first');
-                        return;
-                      }
-                      try {
-                        const res = await fetch('/api/ai/copilot', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            action: 'generateSeoMeta',
-                            title,
-                            slug,
-                            contentHtml,
-                            excerpt,
-                          }),
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                          if (data.metaTitle) setMetaTitle(data.metaTitle);
-                          if (data.metaDescription) setMetaDescription(data.metaDescription);
-                          toast.success('Dynamic AI SEO metadata generated!');
-                        }
-                      } catch (e) {
-                        toast.error('AI synthesis failed');
-                      }
-                    }}
-                    className="h-6 gap-1 text-[11px] text-primary hover:text-primary font-medium"
-                  >
-                    <Sparkles className="size-3" />
-                    <span>AI Auto-Fill ✨</span>
-                  </Button>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label>Meta Title</Label>
-                    <Input
-                      value={metaTitle}
-                      onChange={(e) => setMetaTitle(e.target.value)}
-                      placeholder={title}
-                      className="text-xs"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Meta Description</Label>
-                    <Textarea
-                      rows={3}
-                      value={metaDescription}
-                      onChange={(e) => setMetaDescription(e.target.value)}
-                      placeholder="Meta description for search engines..."
-                      className="text-xs resize-none leading-relaxed"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </div>
+                  <SerpSocialPreview
+                    title={title}
+                    slug={slug}
+                    excerpt={excerpt}
+                    featuredImageUrl={featuredImageUrl}
+                    metaTitle={metaTitle}
+                    metaDescription={metaDescription}
+                  />
+                </div>
+              )}
 
-        {/* RIGHT PANEL: Live Web Studio (50%) */}
-        <div className="hidden lg:flex lg:w-1/2 flex-col bg-muted/30 overflow-hidden">
-          {/* Live Studio Bar */}
-          <div className="flex h-10 items-center justify-between gap-2 border-b bg-background/80 backdrop-blur-xs px-4 shrink-0">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Live In-Context Canvas</span>
-            </div>
+              {activeTab === 'metadata' && (
+                <div className="space-y-4">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-semibold">Publishing Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-1.5">
+                        <Label>Publication Status</Label>
+                        <select
+                          value={status}
+                          onChange={(e) => setStatus(e.target.value)}
+                          className="w-full h-8 rounded-lg border bg-background px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
+                        >
+                          <option value="published">Published (Live on web)</option>
+                          <option value="draft">Draft (Private)</option>
+                        </select>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-            {/* Device Switcher */}
-            <div className="flex items-center rounded-lg border bg-muted/40 p-0.5">
-              <Button
-                variant={deviceMode === 'desktop' ? 'secondary' : 'ghost'}
-                size="icon-xs"
-                onClick={() => setDeviceMode('desktop')}
-                title="Desktop 100%"
-              >
-                <Monitor className="size-3" />
-              </Button>
-              <Button
-                variant={deviceMode === 'tablet' ? 'secondary' : 'ghost'}
-                size="icon-xs"
-                onClick={() => setDeviceMode('tablet')}
-                title="Tablet 768px"
-              >
-                <Tablet className="size-3" />
-              </Button>
-              <Button
-                variant={deviceMode === 'mobile' ? 'secondary' : 'ghost'}
-                size="icon-xs"
-                onClick={() => setDeviceMode('mobile')}
-                title="Mobile 375px"
-              >
-                <Smartphone className="size-3" />
-              </Button>
-            </div>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-semibold">Featured Cover Image</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <ImageUploadDropzone
+                        value={featuredImageUrl}
+                        onChange={(url) => {
+                          setFeaturedImageUrl(url);
+                          broadcastLiveSync(title, contentHtml, url);
+                        }}
+                        altValue={featuredImageAlt}
+                        onAltChange={(alt) => setFeaturedImageAlt(alt)}
+                        label=""
+                      />
+                    </CardContent>
+                  </Card>
 
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={() => setIframeKey((prev) => prev + 1)}
-              title="Reload Frame"
-            >
-              <RefreshCw className="size-3" />
-            </Button>
-          </div>
-
-          {/* Responsive Live Frame Canvas */}
-          <div className="flex-1 p-4 overflow-hidden flex items-center justify-center">
-            <div
-              className={`h-full transition-all duration-300 rounded-xl overflow-hidden border border-border bg-background shadow-lg mx-auto ${getFrameWidth()}`}
-            >
-              {slug ? (
-                <iframe
-                  ref={iframeRef}
-                  key={`${slug}-${iframeKey}`}
-                  src={`/${slug}?live=1`}
-                  className="w-full h-full border-0 bg-background"
-                  title="Live Web Preview"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground font-mono">
-                  Loading live canvas preview...
+                  <Card>
+                    <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                      <CardTitle className="text-sm font-semibold">SEO & Google Search</CardTitle>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        onClick={async () => {
+                          if (!title.trim()) {
+                            toast.error('Please enter an article title first');
+                            return;
+                          }
+                          try {
+                            const res = await fetch('/api/ai/copilot', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                action: 'generateSeoMeta',
+                                title,
+                                slug,
+                                contentHtml,
+                                excerpt,
+                              }),
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                              if (data.metaTitle) setMetaTitle(data.metaTitle);
+                              if (data.metaDescription) setMetaDescription(data.metaDescription);
+                              toast.success('Dynamic AI SEO metadata generated!');
+                            }
+                          } catch (e) {
+                            toast.error('AI synthesis failed');
+                          }
+                        }}
+                        className="h-6 gap-1 text-[11px] text-primary hover:text-primary font-medium"
+                      >
+                        <Sparkles className="size-3" />
+                        <span>AI Auto-Fill ✨</span>
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="space-y-1.5">
+                        <Label>Meta Title</Label>
+                        <Input
+                          value={metaTitle}
+                          onChange={(e) => setMetaTitle(e.target.value)}
+                          placeholder={title}
+                          className="text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Meta Description</Label>
+                        <Textarea
+                          rows={3}
+                          value={metaDescription}
+                          onChange={(e) => setMetaDescription(e.target.value)}
+                          placeholder="Meta description for search engines..."
+                          className="text-xs resize-none leading-relaxed"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
             </div>
           </div>
-        </div>
+        )}
+
+        {/* 2. LIVE IN-CONTEXT CANVAS (Full width in 'live' mode, 50% in 'split' mode, hidden in 'editor' mode) */}
+        {viewMode !== 'editor' && (
+          <div
+            className={`flex flex-col bg-muted/30 overflow-hidden ${
+              viewMode === 'live'
+                ? 'w-full h-full'
+                : 'hidden lg:flex lg:w-1/2'
+            }`}
+          >
+            {/* Live Studio Control Bar */}
+            <div className="flex h-10 items-center justify-between gap-2 border-b bg-background/80 backdrop-blur-xs px-4 shrink-0">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Live In-Context Canvas</span>
+              </div>
+
+              {/* Device Switcher */}
+              <div className="flex items-center rounded-lg border bg-muted/40 p-0.5">
+                <Button
+                  variant={deviceMode === 'desktop' ? 'secondary' : 'ghost'}
+                  size="icon-xs"
+                  onClick={() => setDeviceMode('desktop')}
+                  title="Desktop 100%"
+                >
+                  <Monitor className="size-3" />
+                </Button>
+                <Button
+                  variant={deviceMode === 'tablet' ? 'secondary' : 'ghost'}
+                  size="icon-xs"
+                  onClick={() => setDeviceMode('tablet')}
+                  title="Tablet 768px"
+                >
+                  <Tablet className="size-3" />
+                </Button>
+                <Button
+                  variant={deviceMode === 'mobile' ? 'secondary' : 'ghost'}
+                  size="icon-xs"
+                  onClick={() => setDeviceMode('mobile')}
+                  title="Mobile 375px"
+                >
+                  <Smartphone className="size-3" />
+                </Button>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => setIframeKey((prev) => prev + 1)}
+                title="Reload Frame"
+              >
+                <RefreshCw className="size-3" />
+              </Button>
+            </div>
+
+            {/* Responsive Live Frame Canvas */}
+            <div className="flex-1 p-4 overflow-hidden flex items-center justify-center">
+              <div
+                className={`h-full transition-all duration-300 rounded-xl overflow-hidden border border-border bg-background shadow-lg mx-auto ${getFrameWidth()}`}
+              >
+                {slug ? (
+                  <iframe
+                    ref={iframeRef}
+                    key={`${slug}-${iframeKey}`}
+                    src={`/${slug}?live=1`}
+                    className="w-full h-full border-0 bg-background"
+                    title="Live Web Preview"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground font-mono">
+                    Loading live canvas preview...
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Revision History Drawer */}
