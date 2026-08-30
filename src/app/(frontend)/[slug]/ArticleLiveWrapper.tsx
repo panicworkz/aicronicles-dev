@@ -260,7 +260,19 @@ export function ArticleLiveWrapper({
       sel.addRange(savedRangeRef.current);
     }
 
-    document.execCommand(command, false, value);
+    try {
+      if (command === 'formatBlock' && value) {
+        // Support cross-browser formatBlock with uppercase tags
+        document.execCommand('formatBlock', false, `<${value.toUpperCase().replace(/[<>]/g, '')}>`);
+      } else {
+        document.execCommand(command, false, value);
+      }
+    } catch (e) {
+      try {
+        if (value) document.execCommand(command, false, value);
+        else document.execCommand(command);
+      } catch (err) {}
+    }
 
     if (sel && sel.rangeCount > 0) {
       savedRangeRef.current = sel.getRangeAt(0).cloneRange();
@@ -272,8 +284,16 @@ export function ArticleLiveWrapper({
   };
 
   const handleApplyLink = () => {
-    if (linkUrl.trim()) {
-      execFormat('createLink', linkUrl.trim());
+    if (linkUrl.trim() && savedRangeRef.current) {
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(savedRangeRef.current);
+      }
+      document.execCommand('createLink', false, linkUrl.trim());
+      if (contentRef.current) {
+        handleContentSync(contentRef.current.innerHTML);
+      }
     }
     setLinkInputOpen(false);
     setLinkUrl('');
@@ -388,7 +408,7 @@ export function ArticleLiveWrapper({
           }}
         >
           {linkInputOpen ? (
-            <div className="flex items-center gap-1.5 px-1 py-0.5">
+            <div className="flex items-center gap-1.5 px-1 py-0.5" onMouseDown={(e) => e.stopPropagation()}>
               <input
                 type="text"
                 value={linkUrl}
@@ -458,7 +478,7 @@ export function ArticleLiveWrapper({
               {/* Headings & Text */}
               <button
                 type="button"
-                onClick={() => execFormat('formatBlock', '<h2>')}
+                onClick={() => execFormat('formatBlock', 'h2')}
                 className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition font-semibold cursor-pointer"
                 title="Heading 2"
               >
@@ -466,7 +486,7 @@ export function ArticleLiveWrapper({
               </button>
               <button
                 type="button"
-                onClick={() => execFormat('formatBlock', '<h3>')}
+                onClick={() => execFormat('formatBlock', 'h3')}
                 className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition font-semibold cursor-pointer"
                 title="Heading 3"
               >
@@ -474,7 +494,7 @@ export function ArticleLiveWrapper({
               </button>
               <button
                 type="button"
-                onClick={() => execFormat('formatBlock', '<p>')}
+                onClick={() => execFormat('formatBlock', 'p')}
                 className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
                 title="Paragraph"
               >
@@ -486,7 +506,7 @@ export function ArticleLiveWrapper({
               {/* Blockquote, Lists, Indent */}
               <button
                 type="button"
-                onClick={() => execFormat('formatBlock', '<blockquote>')}
+                onClick={() => execFormat('formatBlock', 'blockquote')}
                 className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
                 title="Quote Block"
               >
@@ -530,7 +550,13 @@ export function ArticleLiveWrapper({
               {/* Link & Clear Format */}
               <button
                 type="button"
-                onClick={() => setLinkInputOpen(true)}
+                onClick={() => {
+                  const sel = window.getSelection();
+                  if (sel && sel.rangeCount > 0) {
+                    savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+                  }
+                  setLinkInputOpen(true);
+                }}
                 className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
                 title="Insert Link"
               >
