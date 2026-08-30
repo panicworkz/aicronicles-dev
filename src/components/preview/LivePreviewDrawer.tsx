@@ -29,39 +29,41 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
   const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [loading, setLoading] = useState(true);
   const [iframeKey, setIframeKey] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  const [animatingOut, setAnimatingOut] = useState(false);
+
+  useEffect(() => {
+    if (post) {
+      setMounted(true);
+      setAnimatingOut(false);
+      setLoading(true);
+      document.body.style.overflow = 'hidden';
+    } else if (mounted) {
+      setAnimatingOut(true);
+      const timer = setTimeout(() => {
+        setMounted(false);
+        setAnimatingOut(false);
+        document.body.style.overflow = 'unset';
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [post]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') handleSmoothClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  useEffect(() => {
-    if (post) {
-      setLoading(true);
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [post]);
+  if (!post && !mounted) return null;
 
-  if (!post) return null;
-
-  const getFrameWidth = () => {
-    switch (deviceMode) {
-      case 'mobile':
-        return 'w-[375px]';
-      case 'tablet':
-        return 'w-[768px]';
-      case 'desktop':
-      default:
-        return 'w-full';
-    }
+  const handleSmoothClose = () => {
+    setAnimatingOut(true);
+    setTimeout(() => {
+      onClose();
+    }, 280);
   };
 
   const handleRefresh = () => {
@@ -69,55 +71,74 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
     setIframeKey((prev) => prev + 1);
   };
 
+  const getFrameWidth = () => {
+    switch (deviceMode) {
+      case 'mobile':
+        return 'w-[375px] h-[85vh] my-auto rounded-2xl border border-neutral-800 shadow-2xl';
+      case 'tablet':
+        return 'w-[768px] h-[90vh] my-auto rounded-2xl border border-neutral-800 shadow-2xl';
+      case 'desktop':
+      default:
+        return 'w-full h-full border-0';
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex justify-end animate-in fade-in duration-200">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
+      {/* Darkened & Blurred Backdrop (arka fon çok az görünür) */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity cursor-pointer"
-        onClick={onClose}
+        className={`fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity duration-300 ease-out cursor-pointer ${
+          animatingOut ? 'opacity-0' : 'opacity-100'
+        }`}
+        onClick={handleSmoothClose}
       />
 
-      {/* Slide-over Drawer */}
+      {/* Smooth Slide-over Drawer (Üstte boşluk yok, kenara tam oturan) */}
       <aside
-        className="relative z-50 flex h-full w-full sm:w-[650px] lg:w-[850px] xl:w-[1000px] flex-col border-l border-border bg-background shadow-2xl animate-in slide-in-from-right duration-300"
+        className={`relative z-50 flex h-full w-full sm:w-[85vw] lg:w-[80vw] xl:w-[75vw] max-w-[1600px] flex-col border-l border-neutral-800 bg-neutral-950 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          animatingOut ? 'translate-x-full' : 'translate-x-0'
+        }`}
       >
-        {/* Drawer Header */}
-        <div className="flex h-14 items-center justify-between gap-3 border-b border-border bg-background px-4 shrink-0">
+        {/* Drawer Header (Üstte tam hizada) */}
+        <div className="flex h-12 items-center justify-between gap-3 border-b border-neutral-800/80 bg-neutral-950 px-4 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <Badge variant={post.status === 'published' ? 'default' : 'secondary'} className="capitalize text-xs font-normal shrink-0">
-              {post.status}
+            <Badge variant={post?.status === 'published' ? 'default' : 'secondary'} className="capitalize text-xs font-normal shrink-0">
+              {post?.status}
             </Badge>
             <div className="min-w-0 flex-1">
-              <h2 className="text-xs font-semibold text-foreground truncate">{post.title}</h2>
-              <p className="text-[11px] text-muted-foreground font-mono truncate">/{post.slug}</p>
+              <h2 className="text-xs font-semibold text-white truncate">{post?.title}</h2>
+              <p className="text-[11px] text-neutral-400 font-mono truncate">/{post?.slug}</p>
             </div>
           </div>
 
           {/* Device Switcher & Actions */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* Device Toggle */}
-            <div className="hidden sm:flex items-center rounded-lg border border-border bg-muted/30 p-0.5">
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Device Mode Toggle */}
+            <div className="hidden sm:flex items-center rounded-lg border border-neutral-800 bg-neutral-900/60 p-0.5">
               <Button
                 variant={deviceMode === 'desktop' ? 'secondary' : 'ghost'}
-                size="icon-sm"
+                size="icon-xs"
                 onClick={() => setDeviceMode('desktop')}
-                title="Desktop View (100%)"
+                title="Desktop (100%)"
+                className={deviceMode === 'desktop' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}
               >
                 <Monitor className="size-3.5" />
               </Button>
               <Button
                 variant={deviceMode === 'tablet' ? 'secondary' : 'ghost'}
-                size="icon-sm"
+                size="icon-xs"
                 onClick={() => setDeviceMode('tablet')}
-                title="Tablet View (768px)"
+                title="Tablet (768px)"
+                className={deviceMode === 'tablet' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}
               >
                 <Tablet className="size-3.5" />
               </Button>
               <Button
                 variant={deviceMode === 'mobile' ? 'secondary' : 'ghost'}
-                size="icon-sm"
+                size="icon-xs"
                 onClick={() => setDeviceMode('mobile')}
-                title="Mobile View (375px)"
+                title="Mobile (375px)"
+                className={deviceMode === 'mobile' ? 'bg-neutral-800 text-white' : 'text-neutral-400'}
               >
                 <Smartphone className="size-3.5" />
               </Button>
@@ -125,58 +146,64 @@ export function LivePreviewDrawer({ post, onClose }: LivePreviewDrawerProps) {
 
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-xs"
               onClick={handleRefresh}
-              title="Refresh Live Preview"
+              className="text-neutral-400 hover:text-white"
+              title="Refresh"
             >
               <RefreshCw className="size-3.5" />
             </Button>
 
-            <Link href={`/panic/posts/${post.id}`}>
-              <Button size="default" className="gap-1.5 hidden md:inline-flex">
-                <Edit3 className="size-3.5" />
-                <span>Edit</span>
-              </Button>
-            </Link>
+            {post && (
+              <Link href={`/panic/posts/${post.id}`}>
+                <Button size="sm" className="gap-1.5 h-8 text-xs font-medium">
+                  <Edit3 className="size-3.5" />
+                  <span>Edit in Studio</span>
+                </Button>
+              </Link>
+            )}
 
-            <Link href={`/${post.slug}`} target="_blank">
-              <Button variant="outline" size="default" className="gap-1.5">
-                <ExternalLink className="size-3.5" />
-                <span className="hidden sm:inline">Open New Tab</span>
-              </Button>
-            </Link>
+            {post && (
+              <Link href={`/${post.slug}`} target="_blank">
+                <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs text-neutral-300 border-neutral-800 hover:bg-neutral-900">
+                  <ExternalLink className="size-3.5" />
+                  <span className="hidden sm:inline">Open New Tab</span>
+                </Button>
+              </Link>
+            )}
 
             <Button
               variant="ghost"
-              size="icon"
-              onClick={onClose}
-              title="Close Preview (Esc)"
+              size="icon-xs"
+              onClick={handleSmoothClose}
+              className="text-neutral-400 hover:text-white ml-1"
+              title="Close (Esc)"
             >
               <X className="size-4" />
             </Button>
           </div>
         </div>
 
-        {/* Drawer Body with Responsive Frame */}
-        <div className="relative flex-1 bg-muted/40 p-2 sm:p-4 overflow-y-auto flex items-center justify-center">
+        {/* Drawer Body (Sıfır üst/yan boşluk) */}
+        <div className={`relative flex-1 bg-neutral-950 overflow-hidden flex items-center justify-center ${deviceMode !== 'desktop' ? 'p-4 bg-neutral-900/30' : 'p-0'}`}>
           {loading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/60 backdrop-blur-xs z-10 space-y-2">
-              <Loader2 className="size-6 text-primary animate-spin" />
-              <p className="text-xs text-muted-foreground font-medium">Loading live article preview...</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-950/80 backdrop-blur-xs z-10 space-y-2">
+              <Loader2 className="size-6 text-amber-500 animate-spin" />
+              <p className="text-xs text-neutral-400 font-medium">Loading live preview...</p>
             </div>
           )}
 
-          <div
-            className={`h-full transition-all duration-300 rounded-xl overflow-hidden border border-border bg-background shadow-lg mx-auto ${getFrameWidth()}`}
-          >
-            <iframe
-              key={iframeKey}
-              src={`/${post.slug}`}
-              className="w-full h-full border-0 bg-background"
-              onLoad={() => setLoading(false)}
-              title={post.title}
-            />
-          </div>
+          {post && (
+            <div className={`transition-all duration-300 overflow-hidden bg-neutral-950 ${getFrameWidth()}`}>
+              <iframe
+                key={iframeKey}
+                src={`/${post.slug}`}
+                className="w-full h-full border-0 bg-neutral-950"
+                onLoad={() => setLoading(false)}
+                title={post.title}
+              />
+            </div>
+          )}
         </div>
       </aside>
     </div>
