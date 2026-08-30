@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Sparkles,
   Bold,
@@ -38,6 +39,7 @@ export function ArticleLiveWrapper({
 }: ArticleLiveWrapperProps) {
   const [coverUrl, setCoverUrl] = useState(initialCoverUrl);
   const [isLiveMode, setIsLiveMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Floating selection bubble menu state
   const [bubbleMenu, setBubbleMenu] = useState<{
@@ -127,8 +129,8 @@ export function ArticleLiveWrapper({
     }
   };
 
-  // Mount-time uncontrolled initialization so React never reconciles or wipes contentEditable DOM nodes
   useEffect(() => {
+    setMounted(true);
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('live') === '1' || window !== window.parent) {
@@ -142,11 +144,7 @@ export function ArticleLiveWrapper({
       }
     }
 
-    if (titleRef.current && !titleRef.current.innerText) {
-      titleRef.current.innerText = initialTitle;
-    }
-
-    if (contentRef.current && !contentRef.current.innerHTML) {
+    if (contentRef.current && isLiveMode) {
       contentRef.current.innerHTML = formatContentWithLiveImages(initialContentHtml);
     }
 
@@ -183,7 +181,7 @@ export function ArticleLiveWrapper({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [initialTitle, initialContentHtml]);
+  }, [initialTitle, initialContentHtml, isLiveMode]);
 
   // Selection tracking on mouseup & keyup
   useEffect(() => {
@@ -262,7 +260,6 @@ export function ArticleLiveWrapper({
 
     try {
       if (command === 'formatBlock' && value) {
-        // Support cross-browser formatBlock with uppercase tags
         document.execCommand('formatBlock', false, `<${value.toUpperCase().replace(/[<>]/g, '')}>`);
       } else {
         document.execCommand(command, false, value);
@@ -320,7 +317,6 @@ export function ArticleLiveWrapper({
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     syncTimeoutRef.current = setTimeout(() => {
       if (window.parent && window.parent !== window) {
-        // Strip live wrapper elements before sending back to studio
         const parser = new DOMParser();
         const doc = parser.parseFromString(rawHtml, 'text/html');
         const liveFigures = doc.querySelectorAll('.panic-live-image-wrapper');
@@ -366,7 +362,6 @@ export function ArticleLiveWrapper({
     }
   };
 
-  // Pure click handler on container using event delegation
   const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     const btn = target.closest('button[data-panic-manage="true"]');
@@ -381,6 +376,194 @@ export function ArticleLiveWrapper({
     }
   };
 
+  const renderBubblePortal = () => {
+    if (!isLiveMode || !bubbleMenu.visible || !mounted) return null;
+
+    return createPortal(
+      <div
+        style={{
+          position: 'fixed',
+          top: `${bubbleMenu.top}px`,
+          left: `${bubbleMenu.left}px`,
+          transform: 'translateX(-50%)',
+          zIndex: 99999,
+        }}
+        className="panic-live-bubble-toolbar flex items-center gap-0.5 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md shadow-2xl p-1 animate-in fade-in zoom-in-95 duration-150 select-none text-xs"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
+        {linkInputOpen ? (
+          <div className="flex items-center gap-1.5 px-1 py-0.5" onMouseDown={(e) => e.stopPropagation()}>
+            <input
+              type="text"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="https://..."
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleApplyLink();
+                if (e.key === 'Escape') setLinkInputOpen(false);
+              }}
+              className="h-7 w-48 rounded-md border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
+            />
+            <button
+              type="button"
+              onClick={handleApplyLink}
+              className="p-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+              title="Apply Link"
+            >
+              <Check className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setLinkInputOpen(false)}
+              className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
+              title="Cancel"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => execFormat('bold')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition font-bold cursor-pointer"
+              title="Bold"
+            >
+              <Bold className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => execFormat('italic')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
+              title="Italic"
+            >
+              <Italic className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => execFormat('underline')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
+              title="Underline"
+            >
+              <Underline className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => execFormat('strikeThrough')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
+              title="Strikethrough"
+            >
+              <Strikethrough className="size-3.5" />
+            </button>
+
+            <span className="w-px h-4 bg-border mx-0.5" />
+
+            {/* Headings & Text */}
+            <button
+              type="button"
+              onClick={() => execFormat('formatBlock', 'h2')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition font-semibold cursor-pointer"
+              title="Heading 2"
+            >
+              <Heading2 className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => execFormat('formatBlock', 'h3')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition font-semibold cursor-pointer"
+              title="Heading 3"
+            >
+              <Heading3 className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => execFormat('formatBlock', 'p')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
+              title="Paragraph"
+            >
+              <Type className="size-3.5" />
+            </button>
+
+            <span className="w-px h-4 bg-border mx-0.5" />
+
+            {/* Blockquote, Lists, Indent */}
+            <button
+              type="button"
+              onClick={() => execFormat('formatBlock', 'blockquote')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
+              title="Quote Block"
+            >
+              <Quote className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => execFormat('insertUnorderedList')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
+              title="Bullet List"
+            >
+              <List className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => execFormat('insertOrderedList')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
+              title="Numbered List"
+            >
+              <ListOrdered className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => execFormat('indent')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
+              title="Increase Indent"
+            >
+              <Indent className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => execFormat('outdent')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
+              title="Decrease Indent"
+            >
+              <Outdent className="size-3.5" />
+            </button>
+
+            <span className="w-px h-4 bg-border mx-0.5" />
+
+            {/* Link & Clear Format */}
+            <button
+              type="button"
+              onClick={() => {
+                const sel = window.getSelection();
+                if (sel && sel.rangeCount > 0) {
+                  savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+                }
+                setLinkInputOpen(true);
+              }}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
+              title="Insert Link"
+            >
+              <Link2 className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => execFormat('removeFormat')}
+              className="p-1.5 rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition cursor-pointer"
+              title="Clear Formatting"
+            >
+              <RemoveFormatting className="size-3.5" />
+            </button>
+          </>
+        )}
+      </div>,
+      document.body
+    );
+  };
+
   return (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 relative">
       {isLiveMode && (
@@ -390,190 +573,8 @@ export function ArticleLiveWrapper({
         </div>
       )}
 
-      {/* Floating Selection Bubble Formatting Toolbar */}
-      {isLiveMode && bubbleMenu.visible && (
-        <div
-          style={{
-            position: 'fixed',
-            top: `${bubbleMenu.top}px`,
-            left: `${bubbleMenu.left}px`,
-            transform: 'translateX(-50%)',
-            zIndex: 99999,
-          }}
-          className="panic-live-bubble-toolbar flex items-center gap-0.5 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md shadow-2xl p-1 animate-in fade-in zoom-in-95 duration-150 select-none text-xs"
-          onMouseDown={(e) => {
-            // Prevent selection from collapsing when clicking anywhere on toolbar
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        >
-          {linkInputOpen ? (
-            <div className="flex items-center gap-1.5 px-1 py-0.5" onMouseDown={(e) => e.stopPropagation()}>
-              <input
-                type="text"
-                value={linkUrl}
-                onChange={(e) => setLinkUrl(e.target.value)}
-                placeholder="https://..."
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleApplyLink();
-                  if (e.key === 'Escape') setLinkInputOpen(false);
-                }}
-                className="h-7 w-48 rounded-md border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
-              />
-              <button
-                type="button"
-                onClick={handleApplyLink}
-                className="p-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
-                title="Apply Link"
-              >
-                <Check className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setLinkInputOpen(false)}
-                className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
-                title="Cancel"
-              >
-                <X className="size-3.5" />
-              </button>
-            </div>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => execFormat('bold')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition font-bold cursor-pointer"
-                title="Bold"
-              >
-                <Bold className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => execFormat('italic')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
-                title="Italic"
-              >
-                <Italic className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => execFormat('underline')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
-                title="Underline"
-              >
-                <Underline className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => execFormat('strikeThrough')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
-                title="Strikethrough"
-              >
-                <Strikethrough className="size-3.5" />
-              </button>
-
-              <span className="w-px h-4 bg-border mx-0.5" />
-
-              {/* Headings & Text */}
-              <button
-                type="button"
-                onClick={() => execFormat('formatBlock', 'h2')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition font-semibold cursor-pointer"
-                title="Heading 2"
-              >
-                <Heading2 className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => execFormat('formatBlock', 'h3')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition font-semibold cursor-pointer"
-                title="Heading 3"
-              >
-                <Heading3 className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => execFormat('formatBlock', 'p')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
-                title="Paragraph"
-              >
-                <Type className="size-3.5" />
-              </button>
-
-              <span className="w-px h-4 bg-border mx-0.5" />
-
-              {/* Blockquote, Lists, Indent */}
-              <button
-                type="button"
-                onClick={() => execFormat('formatBlock', 'blockquote')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
-                title="Quote Block"
-              >
-                <Quote className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => execFormat('insertUnorderedList')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
-                title="Bullet List"
-              >
-                <List className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => execFormat('insertOrderedList')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
-                title="Numbered List"
-              >
-                <ListOrdered className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => execFormat('indent')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
-                title="Increase Indent"
-              >
-                <Indent className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => execFormat('outdent')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
-                title="Decrease Indent"
-              >
-                <Outdent className="size-3.5" />
-              </button>
-
-              <span className="w-px h-4 bg-border mx-0.5" />
-
-              {/* Link & Clear Format */}
-              <button
-                type="button"
-                onClick={() => {
-                  const sel = window.getSelection();
-                  if (sel && sel.rangeCount > 0) {
-                    savedRangeRef.current = sel.getRangeAt(0).cloneRange();
-                  }
-                  setLinkInputOpen(true);
-                }}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-foreground transition cursor-pointer"
-                title="Insert Link"
-              >
-                <Link2 className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => execFormat('removeFormat')}
-                className="p-1.5 rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition cursor-pointer"
-                title="Clear Formatting"
-              >
-                <RemoveFormatting className="size-3.5" />
-              </button>
-            </>
-          )}
-        </div>
-      )}
+      {/* Floating Selection Bubble Formatting Toolbar (Portalled outside to never re-render article content) */}
+      {renderBubblePortal()}
 
       {/* Direct In-Context Editable Title */}
       <h1
@@ -586,7 +587,9 @@ export function ArticleLiveWrapper({
         className={`text-3xl sm:text-5xl font-black tracking-tight text-foreground leading-tight mb-6 font-serif ${
           isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/40 rounded-lg p-1 hover:bg-muted/30 transition cursor-text' : ''
         }`}
-      />
+      >
+        {initialTitle}
+      </h1>
 
       <div className="flex items-center space-x-4 border-y border-border py-4 mb-8 text-xs text-muted-foreground font-mono">
         <span className="text-foreground font-sans font-medium">Fabelo Editorial</span>
@@ -638,6 +641,7 @@ export function ArticleLiveWrapper({
           prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground ${
             isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/20 rounded-xl p-2 hover:bg-muted/20 transition cursor-text' : ''
           }`}
+        dangerouslySetInnerHTML={{ __html: initialContentHtml || '' }}
       />
     </main>
   );
