@@ -1,203 +1,170 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useTheme } from '@/providers/theme-provider';
-import {
-  Sun,
-  Moon,
-  Search,
-  Menu,
-  X,
-  Sparkles,
-  Flame,
-  Radio,
-  SlidersHorizontal,
-  Compass,
-  ArrowUpRight,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Search, Menu, X, Sun, Moon } from "lucide-react";
 
-export function MagazineHeader() {
-  const { theme, setTheme } = useTheme();
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
+// fabelo.io nav — birebir
+const NAV = [
+  { label: "Personal Finance", href: "/tag/personal-finance" },
+  { label: "Career", href: "/tag/career" },
+  { label: "AI & Tech", href: "/tag/ai-tech" },
+  { label: "About", href: "/about" },
+];
+
+export default function MagazineHeader() {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const [dark, setDark] = useState(false);
+  const [q, setQ] = useState("");
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const saved =
+      typeof window !== "undefined" && localStorage.getItem("panic_theme");
+    const isDark = saved === "dark";
+    setDark(isDark);
+    document.documentElement.dataset.theme = isDark ? "dark" : "light";
   }, []);
 
-  const navLinks = [
-    { label: 'AI & Intelligence', href: '/tag/ai-tech', highlight: true },
-    { label: 'Capital & Finance', href: '/tag/personal-finance' },
-    { label: 'Career Mobility', href: '/tag/career' },
-    { label: 'Digital Store', href: '/store' },
-    { label: 'Manifesto', href: '/about' },
-  ];
+  const toggleTheme = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.dataset.theme = next ? "dark" : "light";
+    localStorage.setItem("panic_theme", next ? "dark" : "light");
+  };
 
   return (
     <>
-      {/* Editorial Broadcast Top Strip (1920px) */}
-      <div className="border-b border-border/40 bg-card/40 backdrop-blur-md text-[11px] font-mono text-muted-foreground hidden md:block">
-        <div className="max-w-[1920px] mx-auto px-6 lg:px-12 h-9 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 text-amber-500 font-bold tracking-wider uppercase">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-              </span>
-              <span>LIVE DISPATCH:</span>
-            </div>
-            <Link
-              href="/best-free-ai-tools-to-boost-productivity-a-complete-guide"
-              className="hover:text-foreground transition flex items-center gap-2 truncate max-w-xl group text-foreground/80 font-medium"
-            >
-              <span>The Complete 2026 AI Productivity Playbook & Architecture Breakdown</span>
-              <span className="text-amber-500 group-hover:translate-x-0.5 transition">→</span>
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <span className="text-muted-foreground/80 font-semibold tracking-wider">
-              {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}
-            </span>
-            <span className="text-border">•</span>
-            <span className="text-primary font-bold">VOL. 47 // EDITION 2026</span>
-            <span className="text-border">•</span>
-            <Link href="/panic" className="hover:text-amber-500 transition font-bold flex items-center gap-1">
-              <span>PANIC STUDIO</span>
-              <ArrowUpRight className="size-3" />
-            </Link>
-          </div>
+      {/* ===== Billboard reklam (en üst) ===== */}
+      <div className="pt-6 pb-2" style={{ background: "var(--bg)" }}>
+        <div className="f-wide">
+          <div className="f-ad f-ad--billboard">Advertisement · 970×250</div>
         </div>
       </div>
 
-      {/* Main Luxury Magazine Header (1920px) */}
       <header
-        className={`sticky top-0 z-50 w-full transition-all duration-300 border-b ${
-          scrolled
-            ? 'bg-background/90 backdrop-blur-xl border-border/80 shadow-lg py-3'
-            : 'bg-background/80 backdrop-blur-md border-border/50 py-4.5'
-        }`}
+        className="sticky top-0 z-50 backdrop-blur-xl"
+        style={{
+          background: "color-mix(in oklab, var(--bg) 90%, transparent)",
+          borderBottom: "1px solid var(--line)",
+        }}
       >
-        <div className="max-w-[1920px] mx-auto px-6 lg:px-12 flex items-center justify-between gap-8">
-          {/* Brand Logo & Editorial Motto */}
-          <div className="flex items-center gap-12">
-            <Link href="/" className="flex items-center gap-3.5 shrink-0 group">
+        <div className="f-wide">
+          <div className="flex items-center justify-between h-[76px] gap-6">
+            {/* Logo — fabelo.io görsel logo (değişmez) */}
+            <Link
+              href="/"
+              className="flex items-center shrink-0"
+              aria-label="Fabelo home"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/images/fabelo-logo.webp"
-                alt="Fabelo Magazine"
-                className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-102"
+                alt="Fabelo"
+                className="h-10 w-auto"
               />
-              <span className="hidden xl:inline-block pl-4 border-l border-border/60 text-[11px] font-mono uppercase tracking-widest text-muted-foreground leading-tight">
-                Autonomous<br />Editorial Desk
-              </span>
             </Link>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${
-                    link.highlight
-                      ? 'text-foreground bg-primary/10 hover:bg-primary hover:text-primary-foreground font-bold shadow-2xs'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
-                  }`}
-                >
-                  <span>{link.label}</span>
-                </Link>
-              ))}
+            {/* Nav — fabelo.io birebir */}
+            <nav className="hidden lg:flex items-center gap-9">
+              {NAV.map((n) => {
+                const active = pathname.startsWith(n.href);
+                return (
+                  <Link
+                    key={n.label}
+                    href={n.href}
+                    className="f-link text-[14px] font-semibold tracking-tight"
+                    style={{ color: active ? "var(--accent)" : "var(--fg)" }}
+                  >
+                    {n.label}
+                  </Link>
+                );
+              })}
             </nav>
-          </div>
 
-          {/* Right Controls */}
-          <div className="flex items-center gap-3">
-            {/* Search Trigger */}
-            <button
-              type="button"
-              onClick={() => setSearchOpen((prev) => !prev)}
-              className="p-2.5 rounded-xl border border-border/60 bg-card/60 hover:bg-muted text-muted-foreground hover:text-foreground transition cursor-pointer shadow-2xs"
-              title="Search Fabelo Editorial"
-            >
-              <Search className="size-4" />
-            </button>
-
-            {/* Theme Toggle Button */}
-            <button
-              type="button"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2.5 rounded-xl border border-border/60 bg-card/60 hover:bg-muted text-muted-foreground hover:text-foreground transition cursor-pointer shadow-2xs"
-              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-            >
-              {theme === 'dark' ? <Sun className="size-4 text-amber-400" /> : <Moon className="size-4 text-slate-700" />}
-            </button>
-
-            {/* Panic CMS Studio Access */}
-            <Link href="/panic" className="hidden sm:inline-flex">
-              <Button
-                size="sm"
-                className="gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black border-none shadow-md"
+            <div className="flex items-center gap-2.5">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (q.trim())
+                    window.location.href = `/search?q=${encodeURIComponent(q)}`;
+                }}
+                className="hidden md:flex items-center gap-2 px-3.5 h-10 w-60 rounded-full border transition-colors focus-within:border-[var(--accent)]"
+                style={{
+                  borderColor: "var(--line)",
+                  background: "var(--bg-2)",
+                }}
               >
-                <SlidersHorizontal className="size-3.5" />
-                <span>Panic CMS</span>
-              </Button>
-            </Link>
+                <Search
+                  className="size-3.5"
+                  style={{ color: "var(--muted)" }}
+                />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search stories…"
+                  className="bg-transparent outline-none text-sm w-full"
+                  style={{ color: "var(--fg)" }}
+                />
+              </form>
 
-            {/* Mobile Hamburger Toggle */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen((prev) => !prev)}
-              className="lg:hidden p-2.5 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground transition cursor-pointer"
-            >
-              {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-            </button>
+              <button
+                onClick={toggleTheme}
+                className="inline-flex items-center justify-center size-10 rounded-full border transition-colors hover:border-[var(--accent)]"
+                style={{ borderColor: "var(--line)" }}
+                aria-label="Toggle theme"
+              >
+                {dark ? (
+                  <Sun className="size-4" />
+                ) : (
+                  <Moon className="size-4" />
+                )}
+              </button>
+
+              <a
+                href="#subscribe"
+                className="hidden sm:inline-flex items-center justify-center rounded-full px-5 h-10 text-sm font-semibold text-white transition-colors"
+                style={{ background: "var(--accent)" }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "var(--accent-hover)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "var(--accent)")
+                }
+              >
+                Subscribe
+              </a>
+
+              <button
+                onClick={() => setOpen((v) => !v)}
+                className="lg:hidden inline-flex items-center justify-center size-10 rounded-full border"
+                style={{ borderColor: "var(--line)" }}
+                aria-label="Menu"
+              >
+                {open ? <X className="size-4" /> : <Menu className="size-4" />}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Expandable Search Input */}
-        {searchOpen && (
-          <div className="max-w-[1920px] mx-auto px-6 lg:px-12 pt-4 pb-2 animate-in fade-in slide-in-from-top-3 duration-200">
-            <div className="relative max-w-3xl mx-auto">
-              <Search className="absolute left-4.5 top-1/2 -translate-y-1/2 size-5 text-amber-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search across 47+ deep dives, AI architectures, finance playbooks..."
-                autoFocus
-                className="w-full h-13 pl-13 pr-6 rounded-2xl border-2 border-primary/40 bg-card text-base text-foreground placeholder:text-muted-foreground outline-none focus:ring-4 focus:ring-primary/20 transition shadow-xl"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-background/98 backdrop-blur-2xl px-6 py-6 space-y-4 animate-in fade-in slide-in-from-top-4 duration-200">
-            <div className="flex flex-col space-y-2">
-              {navLinks.map((link) => (
+        {open && (
+          <div
+            className="lg:hidden border-t"
+            style={{ borderColor: "var(--line)", background: "var(--bg)" }}
+          >
+            <div className="f-wide py-5 flex flex-col gap-4">
+              {NAV.map((n) => (
                 <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-4 py-3 rounded-xl text-base font-bold text-foreground hover:bg-muted transition flex items-center justify-between"
+                  key={n.label}
+                  href={n.href}
+                  onClick={() => setOpen(false)}
+                  className="text-xl font-bold tracking-tight"
+                  style={{ color: "var(--fg)" }}
                 >
-                  <span>{link.label}</span>
+                  {n.label}
                 </Link>
               ))}
-            </div>
-
-            <div className="pt-4 border-t border-border flex items-center justify-between text-xs font-mono text-muted-foreground">
-              <Link href="/llms.txt" className="text-primary hover:underline">llms.txt (AEO)</Link>
-              <Link href="/panic" className="px-4 py-2 rounded-xl bg-amber-500 text-black font-sans font-bold">Panic CMS Studio</Link>
             </div>
           </div>
         )}

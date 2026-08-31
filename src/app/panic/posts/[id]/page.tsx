@@ -95,6 +95,8 @@ export default function PanicSplitLiveStudioPage({
   const [readingTime, setReadingTime] = useState("5 min read");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
+  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const contentHtmlRef = useRef(contentHtml);
@@ -107,6 +109,14 @@ export default function PanicSplitLiveStudioPage({
   featuredImageUrlRef.current = featuredImageUrl;
 
   useEffect(() => {
+    // Fetch Categories
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.categories) setCategories(data.categories);
+      })
+      .catch(() => {});
+
     const fetchPost = async () => {
       try {
         const res = await fetch(`/api/posts/${postId}`);
@@ -132,6 +142,7 @@ export default function PanicSplitLiveStudioPage({
           setReadingTime(p.readingTime || "5 min read");
           setMetaTitle(p.metaTitle || p.title || "");
           setMetaDescription(p.metaDescription || p.excerpt || "");
+          setCategoryId(p.categoryId || p.category_id || null);
         } else {
           toast.error("Article not found");
         }
@@ -351,6 +362,7 @@ export default function PanicSplitLiveStudioPage({
           readingTime,
           metaTitle,
           metaDescription,
+          categoryId,
         }),
       });
 
@@ -760,6 +772,29 @@ export default function PanicSplitLiveStudioPage({
                           Published (Live on web)
                         </option>
                         <option value="draft">Draft (Private)</option>
+                      </select>
+                    </CardContent>
+                  </Card>
+
+                  {/* Category & Taxonomy */}
+                  <Card>
+                    <CardHeader className="pb-2 pt-3 px-3">
+                      <CardTitle className="text-xs font-semibold">
+                        Category & Topic
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-3 pb-3">
+                      <select
+                        value={categoryId ? String(categoryId) : ""}
+                        onChange={(e) => setCategoryId(e.target.value ? parseInt(e.target.value, 10) : null)}
+                        className="w-full h-8 rounded-lg border bg-background px-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
+                      >
+                        <option value="">Select Primary Category</option>
+                        {categories.map((cat: any) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name} ({cat.slug})
+                          </option>
+                        ))}
                       </select>
                     </CardContent>
                   </Card>

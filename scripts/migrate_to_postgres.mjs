@@ -38,6 +38,18 @@ async function migrate() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
       );
 
+      CREATE TABLE IF NOT EXISTS categories (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        slug TEXT NOT NULL UNIQUE,
+        description TEXT,
+        parent_category_id INTEGER,
+        meta_title TEXT,
+        meta_description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+
       CREATE TABLE IF NOT EXISTS tags (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
@@ -70,6 +82,7 @@ async function migrate() {
         featured_image_url TEXT,
         status TEXT NOT NULL DEFAULT 'published',
         author_id INTEGER,
+        category_id INTEGER,
         tags_json JSONB DEFAULT '[]'::jsonb,
         reading_time TEXT DEFAULT '5 min read',
         meta_title TEXT,
@@ -115,8 +128,25 @@ async function migrate() {
     const sqlitePath = path.join(__dirname, '../payload.db');
     const sqlite = new Database(sqlitePath);
 
+    // Migrate Categories
+    console.log('3. Migrating Categories...');
+    const defaultCats = [
+      { id: 1, name: 'Personal Finance', slug: 'personal-finance', description: 'Actionable money guides, budgeting, high yield savings, and investing tactics.' },
+      { id: 2, name: 'Career', slug: 'career', description: 'Career pivots, remote work, salary negotiation, and future-proof skills.' },
+      { id: 3, name: 'AI & Tech', slug: 'ai-tech', description: 'Curated AI productivity tools, workplace automation, and LLM guides.' },
+      { id: 4, name: 'General', slug: 'general', description: 'General articles and guides.' }
+    ];
+    for (const c of defaultCats) {
+      await client.query(`
+        INSERT INTO categories (id, name, slug, description)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (slug) DO UPDATE SET name = $2, description = $4
+      `, [c.id, c.name, c.slug, c.description]);
+    }
+    console.log(`✓ Migrated ${defaultCats.length} categories.`);
+
     // Migrate Media
-    console.log('3. Migrating Media...');
+    console.log('4. Migrating Media...');
     const mediaRows = sqlite.prepare('SELECT * FROM media').all();
     for (const m of mediaRows) {
       await client.query(`
@@ -128,7 +158,7 @@ async function migrate() {
     console.log(`✓ Migrated ${mediaRows.length} media files.`);
 
     // Migrate Authors
-    console.log('4. Migrating Authors...');
+    console.log('5. Migrating Authors...');
     const authorRows = sqlite.prepare('SELECT * FROM authors').all();
     for (const a of authorRows) {
       await client.query(`
@@ -140,7 +170,7 @@ async function migrate() {
     console.log(`✓ Migrated ${authorRows.length} authors.`);
 
     // Migrate Tags
-    console.log('5. Migrating Tags...');
+    console.log('6. Migrating Tags...');
     const tagRows = sqlite.prepare('SELECT * FROM tags').all();
     for (const t of tagRows) {
       await client.query(`
@@ -151,8 +181,20 @@ async function migrate() {
     }
     console.log(`✓ Migrated ${tagRows.length} tags.`);
 
+    // Post relations
+    const rels = sqlite.prepare(`
+      SELECT r.parent_id, t.id as tag_id, t.name as tag_name, t.slug as tag_slug
+      FROM posts_rels r
+      JOIN tags t ON t.id = r.tags_id
+      WHERE r.path = 'tags'
+    `).all();
+    const postTagMap = new Map();
+    for (const r of rels) {
+      postTagMap.set(r.parent_id, r);
+    }
+
     // Migrate Posts
-    console.log('6. Migrating Posts...');
+    console.log('7. Migrating Posts...');
     const postRows = sqlite.prepare('SELECT * FROM posts').all();
     for (const p of postRows) {
       // Find featured image URL
@@ -162,26 +204,36 @@ async function migrate() {
         if (img) featUrl = img.url || `/media/${img.filename}`;
       }
 
+      const tagRel = postTagMap.get(p.id);
+      let catId = 4;
+      let tagsArr = [];
+      if (tagRel) {
+        if (tagRel.tag_slug === 'personal-finance') catId = 1;
+        else if (tagRel.tag_slug === 'career') catId = 2;
+        else if (tagRel.tag_slug === 'ai-tech') catId = 3;
+        tagsArr = [{ id: tagRel.tag_id, name: tagRel.tag_name, slug: tagRel.tag_slug }];
+      }
+
       await client.query(`
         INSERT INTO posts (
           id, title, slug, excerpt, content_html, featured_image_id, featured_image_url,
-          status, author_id, reading_time, meta_title, meta_description, published_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          status, author_id, category_id, tags_json, reading_time, meta_title, meta_description, published_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         ON CONFLICT (id) DO UPDATE SET
           title = $2, slug = $3, excerpt = $4, content_html = $5,
-          featured_image_url = $7, status = $8, updated_at = CURRENT_TIMESTAMP
+          featured_image_url = $7, status = $8, category_id = $10, tags_json = $11, updated_at = CURRENT_TIMESTAMP
       `, [
         p.id, p.title, p.slug, p.excerpt, p.content_html,
         p.featured_image_id, featUrl, p._status || 'published',
-        p.author_id || 1, p.reading_time || '5 min read',
+        p.author_id || 1, catId, JSON.stringify(tagsArr), p.reading_time || '5 min read',
         p.meta_title || p.title, p.meta_description || p.excerpt,
         p.published_at ? new Date(p.published_at) : new Date()
       ]);
     }
-    console.log(`✓ Migrated ${postRows.length} posts.`);
+    console.log(`✓ Migrated ${postRows.length} posts with category & tag mapping.`);
 
     // Migrate Pages
-    console.log('7. Migrating Pages...');
+    console.log('8. Migrating Pages...');
     const pageRows = sqlite.prepare('SELECT * FROM pages').all();
     for (const page of pageRows) {
       await client.query(`
@@ -201,6 +253,7 @@ async function migrate() {
       SELECT setval('media_id_seq', (SELECT MAX(id) FROM media));
       SELECT setval('authors_id_seq', (SELECT MAX(id) FROM authors));
       SELECT setval('tags_id_seq', (SELECT MAX(id) FROM tags));
+      SELECT setval('categories_id_seq', (SELECT MAX(id) FROM categories));
       SELECT setval('pages_id_seq', (SELECT MAX(id) FROM pages));
       SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
     `);

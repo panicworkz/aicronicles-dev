@@ -1,134 +1,145 @@
-import React from 'react';
-import { notFound } from 'next/navigation';
-import { db, schema } from '@/db';
-import { desc, eq } from 'drizzle-orm';
-import Link from 'next/link';
-import { MagazineHeader } from '@/components/magazine/MagazineHeader';
-import { MagazineFooter } from '@/components/magazine/MagazineFooter';
-import { UserCheck } from 'lucide-react';
+import React from "react";
+import { notFound } from "next/navigation";
+import { db, schema } from "@/db";
+import { desc, eq, or } from "drizzle-orm";
+import Link from "next/link";
+import MagazineHeader from "@/components/magazine/MagazineHeader";
+import MagazineFooter from "@/components/magazine/MagazineFooter";
+import { PostCard, AdSlot } from "@/components/magazine/PostCard";
+import type { Metadata } from "next";
+import { ArrowLeft, CheckCircle2, Award, Mail } from "lucide-react";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const author = await db.query.authors.findFirst({
     where: eq(schema.authors.slug, slug),
   });
-
   return {
-    title: author ? `${author.name} - Author Desk | Fabelo` : `${slug} | Fabelo`,
-    description: author?.bio || `Strategic articles, deep dives, and research published by ${author?.name || slug} on Fabelo.`,
+    title: author ? `${author.name} | Fabelo Editorial Staff` : `Author | Fabelo`,
+    description: author?.bio || "Fabelo contributor profile.",
   };
 }
 
-export default async function AuthorArchivePage({ params }: PageProps) {
+export default async function AuthorPage({ params }: PageProps) {
   const { slug } = await params;
-
   const author = await db.query.authors.findFirst({
     where: eq(schema.authors.slug, slug),
   });
 
-  let posts = [];
-  if (author) {
-    posts = await db.query.posts.findMany({
-      where: eq(schema.posts.authorId, author.id),
-      orderBy: [desc(schema.posts.publishedAt)],
-      limit: 30,
-    });
-  }
+  if (!author) notFound();
 
-  // Fallback if no specific author posts
-  if (posts.length === 0) {
-    posts = await db.query.posts.findMany({
-      where: eq(schema.posts.status, 'published'),
-      orderBy: [desc(schema.posts.publishedAt)],
-      limit: 30,
-    });
-  }
+  // Find posts by author ID or all published if staff
+  const allPosts = await db.query.posts.findMany({
+    where: eq(schema.posts.status, "published"),
+    orderBy: [desc(schema.posts.publishedAt)],
+  });
+
+  const posts = allPosts.filter((p) => {
+    if (p.authorId === author.id) return true;
+    if (author.slug === "fabelo") return true; // Editorial desk umbrella
+    return false;
+  });
+
+  const categories = await db.query.categories.findMany();
+  const categoryMap: Record<number, any> = {};
+  categories.forEach((c: any) => {
+    if (c?.id) categoryMap[c.id] = c;
+  });
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] flex flex-col selection:bg-[var(--accent)] selection:text-white">
       <MagazineHeader />
 
-      {/* Main Content Layout Container: Exactly 1536px */}
-      <main className="max-w-[1536px] mx-auto px-6 lg:px-12 py-12 space-y-16">
-        {/* Author Bio Header Card */}
-        <div className="rounded-3xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-8 sm:p-14 flex flex-col sm:flex-row items-start sm:items-center gap-10 shadow-sm">
-          <div className="size-28 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-3xl font-black text-primary uppercase overflow-hidden shrink-0 shadow-md">
-            {author?.avatarUrl ? (
-              <img src={author.avatarUrl} alt={author.name} className="w-full h-full object-cover" />
-            ) : (
-              author?.name?.slice(0, 2) || 'ED'
-            )}
-          </div>
-          <div className="space-y-3 flex-1">
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-mono font-bold bg-primary/10 text-primary">
-              <UserCheck className="size-3.5" />
-              <span>{author?.role || 'Senior Editorial Contributor'}</span>
-            </div>
-            <h1 className="text-4xl sm:text-5xl font-black font-serif tracking-tight text-foreground">
-              {author?.name || slug.replace(/-/g, ' ')}
-            </h1>
-            <p className="text-muted-foreground text-base sm:text-lg max-w-3xl leading-relaxed">
-              {author?.bio || 'Writes extensively on AI agent workflows, software architecture, personal finance systems, and high-leverage career engineering.'}
-            </p>
-            <div className="pt-2 text-xs font-mono text-muted-foreground font-bold">
-              {posts.length} Authored Publications
-            </div>
-          </div>
-        </div>
-
-        {/* Publications Grid */}
-        <div className="space-y-8">
-          <div className="flex items-center justify-between border-b border-border pb-5">
-            <h2 className="text-2xl sm:text-3xl font-black font-serif">Published Guides &amp; Analyses</h2>
-            <span className="text-xs font-mono text-muted-foreground font-bold">{posts.length} articles</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts.map((post) => (
-              <Link
-                key={post.id}
-                href={`/${post.slug}`}
-                className="group flex flex-col rounded-3xl overflow-hidden border border-border bg-card hover:border-primary/50 transition duration-300 shadow-sm"
-              >
-                <div className="aspect-[16/10] w-full overflow-hidden bg-muted/40 border-b border-border/60">
-                  <img
-                    src={post.featuredImageUrl || 'https://fabelo.io/content/images/size/w1200/2026/07/pexels-photo-7283714.webp'}
-                    alt={post.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-104"
-                    loading="lazy"
-                  />
+      <main className="f-content flex-1 py-10 space-y-12">
+        {/* ========================================================
+            AUTHOR PROFILE HERO
+            ======================================================== */}
+        <section className="p-8 sm:p-12 rounded-3xl bg-[var(--bg-2)] border border-[var(--line)]">
+          <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
+            <div className="size-28 sm:size-36 rounded-full overflow-hidden bg-[var(--accent-weak)] border-2 border-[var(--line)] shrink-0 shadow-md">
+              {author.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={author.avatarUrl}
+                  alt={author.name || "Author"}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full grid place-items-center text-4xl font-extrabold text-[var(--accent)]">
+                  {author.name[0]}
                 </div>
-                <div className="p-8 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2.5">
-                    <div className="flex items-center gap-2 text-xs font-mono text-primary font-bold">
-                      <span>GUIDE</span>
-                      <span>•</span>
-                      <span>{post.readingTime || '7 min read'}</span>
-                    </div>
-                    <h3 className="text-xl font-bold font-serif text-foreground group-hover:text-primary transition line-clamp-2 leading-snug">
-                      {post.title}
-                    </h3>
-                    <p className="text-muted-foreground text-sm line-clamp-3 leading-relaxed">
-                      {post.excerpt}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between pt-4 border-t border-border/40 text-xs font-semibold text-muted-foreground">
-                    <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '2026'}</span>
-                    <span className="text-primary font-bold group-hover:translate-x-1 transition inline-flex items-center gap-1">
-                      Read Guide →
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+              )}
+            </div>
+
+            <div className="space-y-3 flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-mono font-bold bg-[var(--accent-weak)] text-[var(--accent)]">
+                  <CheckCircle2 className="size-3.5" />
+                  Verified Columnist
+                </span>
+                <span className="text-xs font-mono text-[var(--muted)]">
+                  {posts.length} Published Articles
+                </span>
+              </div>
+
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--heading)]">
+                {author.name}
+              </h1>
+
+              {author.role && (
+                <p className="text-sm font-bold text-[var(--accent)]">
+                  {author.role}
+                </p>
+              )}
+
+              {author.bio && (
+                <p className="text-sm sm:text-base text-[var(--muted)] max-w-2xl leading-relaxed">
+                  {author.bio}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        </section>
+
+        {/* Sponsor Banner */}
+        <section className="py-2">
+          <AdSlot size="leaderboard" label="Sponsored Partner" />
+        </section>
+
+        {/* Author Articles Grid */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--line)]">
+            <h2 className="text-xl font-bold tracking-tight text-[var(--heading)]">
+              Articles by {author.name}
+            </h2>
+            <span className="text-xs font-mono text-[var(--muted)]">
+              {posts.length} Stories
+            </span>
+          </div>
+
+          {posts.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  author={{ name: author.name, slug: author.slug }}
+                  category={post.categoryId ? categoryMap[post.categoryId] : null}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="py-16 text-center text-[var(--muted)]">
+              <p>No articles published yet by this author.</p>
+            </div>
+          )}
+        </section>
       </main>
 
       <MagazineFooter />
