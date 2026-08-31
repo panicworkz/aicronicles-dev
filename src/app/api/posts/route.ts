@@ -52,7 +52,19 @@ export async function GET(req: Request) {
       });
     }
 
-    return NextResponse.json({ posts: postsList });
+    // Get true total counts
+    const allPosts = await db.query.posts.findMany({
+      columns: { id: true, status: true },
+    });
+
+    const total = allPosts.length;
+    const publishedTotal = allPosts.filter((p) => p.status === 'published').length;
+
+    return NextResponse.json({
+      posts: postsList,
+      total,
+      publishedTotal,
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -60,31 +72,33 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   try {
-    const data = await req.json();
-    const slug = data.slug || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    const body = await req.json();
+    const { title, slug, contentHtml, excerpt, featuredImageUrl, status, categoryId, authorId, tagsJson } = body;
 
-    const [newPost] = await db.insert(schema.posts).values({
-      title: data.title || 'Untitled Post',
+    if (!title || !slug) {
+      return NextResponse.json({ error: 'Title and Slug are required' }, { status: 400 });
+    }
+
+    const newPost = await db.insert(schema.posts).values({
+
+      title,
       slug,
-      excerpt: data.excerpt || '',
-      contentHtml: data.contentHtml || '',
-      contentJson: data.contentJson || null,
-      featuredImageUrl: data.featuredImageUrl || '/media/default.webp',
-      featuredImageId: data.featuredImageId || null,
-      status: data.status || 'draft',
-      authorId: data.authorId || session.userId,
-      categoryId: data.categoryId ? parseInt(String(data.categoryId), 10) : null,
-      tagsJson: data.tagsJson || [],
-      readingTime: data.readingTime || '5 min read',
-      metaTitle: data.metaTitle || data.title,
-      metaDescription: data.metaDescription || data.excerpt,
-      publishedAt: data.status === 'published' ? new Date() : null,
+      contentHtml: contentHtml || '',
+      excerpt: excerpt || null,
+      featuredImageUrl: featuredImageUrl || null,
+      status: status || 'draft',
+      categoryId: categoryId ? parseInt(categoryId, 10) : null,
+      authorId: authorId ? parseInt(authorId, 10) : session.userId,
+      tagsJson: tagsJson || [],
+      publishedAt: status === 'published' ? new Date() : null,
     } as any).returning();
 
-    return NextResponse.json({ success: true, post: newPost });
+    return NextResponse.json({ post: newPost[0] }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
