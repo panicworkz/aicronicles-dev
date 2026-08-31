@@ -2,6 +2,19 @@ import React from 'react';
 import Link from 'next/link';
 import { db, schema } from '@/db';
 import { desc, eq } from 'drizzle-orm';
+import { MagazineHeader } from '@/components/magazine/MagazineHeader';
+import { MagazineFooter } from '@/components/magazine/MagazineFooter';
+import {
+  TrendingUp,
+  Clock,
+  Sparkles,
+  ArrowRight,
+  Flame,
+  Zap,
+  DollarSign,
+  Briefcase,
+  ChevronRight,
+} from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,144 +22,386 @@ export default async function HomePage() {
   const posts = await db.query.posts.findMany({
     where: eq(schema.posts.status, 'published'),
     orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.createdAt)],
-    limit: 30,
+    limit: 47,
   });
 
-  const featuredPost = posts[0];
-  const gridPosts = posts.slice(1);
+  const authors = await db.query.authors.findMany();
+  const categories = await db.query.categories.findMany();
+
+  const authorMap: Record<number, any> = {};
+  authors.forEach((a: any) => { if (a?.id) authorMap[a.id] = a; });
+
+  const categoryMap: Record<number, any> = {};
+  categories.forEach((c: any) => { if (c?.id) categoryMap[c.id] = c; });
+
+  // Categorize posts
+  const leadStory = posts[0];
+  const trendingStories = posts.slice(1, 5);
+  
+  // AI & Tech posts
+  const aiPosts = posts.filter((p) => {
+    const cat = p.categoryId ? categoryMap[p.categoryId] : null;
+    return cat?.slug === 'ai-tech' || p.slug.includes('ai') || p.slug.includes('productivity');
+  }).slice(0, 4);
+
+  // Finance posts
+  const financePosts = posts.filter((p) => {
+    const cat = p.categoryId ? categoryMap[p.categoryId] : null;
+    return cat?.slug === 'personal-finance' || p.slug.includes('money') || p.slug.includes('invest') || p.slug.includes('budget') || p.slug.includes('interest') || p.slug.includes('savings');
+  }).slice(0, 3);
+
+  // Career posts
+  const careerPosts = posts.filter((p) => {
+    const cat = p.categoryId ? categoryMap[p.categoryId] : null;
+    return cat?.slug === 'career' || p.slug.includes('career') || p.slug.includes('job') || p.slug.includes('remote') || p.slug.includes('resume') || p.slug.includes('salary');
+  }).slice(0, 3);
+
+  // Remaining latest feed
+  const latestFeed = posts.slice(5, 23);
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 selection:bg-amber-500 selection:text-black">
-      {/* Header / Nav */}
-      <header className="border-b border-neutral-800/80 bg-neutral-950/80 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-black tracking-tight text-white font-serif">
-              FABELO<span className="text-amber-500">.</span>
-            </span>
-          </Link>
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-white transition-colors duration-200">
+      <MagazineHeader />
 
-          <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-neutral-400">
-            <Link href="/tag/personal-finance" className="hover:text-white transition">Finance</Link>
-            <Link href="/tag/career" className="hover:text-white transition">Career</Link>
-            <Link href="/tag/ai-tech" className="hover:text-white transition">AI & Tools</Link>
-            <Link href="/about" className="hover:text-white transition">About</Link>
-            <Link href="/panic" className="text-amber-500 hover:text-amber-400 transition font-semibold">Panic CMS</Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Category Pills */}
-        <div className="flex items-center space-x-3 overflow-x-auto pb-4 mb-8 scrollbar-none">
-          <Link href="/" className="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-amber-500 text-black">
-            All Editorial
-          </Link>
-          <Link href="/tag/personal-finance" className="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-900 border border-neutral-800 text-neutral-300 hover:border-amber-500 transition">
-            Personal Finance
-          </Link>
-          <Link href="/tag/career" className="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-900 border border-neutral-800 text-neutral-300 hover:border-amber-500 transition">
-            Career Mobility
-          </Link>
-          <Link href="/tag/ai-tech" className="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-900 border border-neutral-800 text-neutral-300 hover:border-amber-500 transition">
-            AI & Productivity
-          </Link>
-        </div>
-
-        {/* Featured Hero Post */}
-        {featuredPost && (
-          <div className="mb-14">
-            <Link
-              href={`/${featuredPost.slug}`}
-              className="group block relative rounded-2xl overflow-hidden border border-neutral-800/80 bg-neutral-900/50 hover:border-amber-500/50 transition duration-300"
-            >
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 lg:p-10 items-center">
-                <div className="lg:col-span-7 space-y-4">
-                  <div className="flex items-center space-x-3 text-xs font-mono text-amber-500">
-                    <span className="bg-amber-500/10 px-2.5 py-1 rounded-full uppercase tracking-wider font-semibold">Featured Guide</span>
-                    <span>•</span>
-                    <span>{featuredPost.readingTime || '5 min read'}</span>
-                  </div>
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white group-hover:text-amber-400 transition font-serif leading-tight">
-                    {featuredPost.title}
-                  </h1>
-                  <p className="text-neutral-400 line-clamp-3 text-base sm:text-lg leading-relaxed">
-                    {featuredPost.excerpt}
-                  </p>
-                </div>
-                <div className="lg:col-span-5 aspect-[16/10] rounded-xl overflow-hidden bg-neutral-800 border border-neutral-700/50">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-16">
+        
+        {/* SECTION 1: HERO LEAD STORY & TRENDING SIDE RAIL */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Lead Story Card (8 cols) */}
+          {leadStory && (
+            <div className="lg:col-span-8 group">
+              <Link href={`/${leadStory.slug}`} className="block space-y-4">
+                <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full rounded-2xl overflow-hidden bg-muted/40 border border-border shadow-md">
                   <img
-                    src={featuredPost.featuredImageUrl || '/media/default.webp'}
-                    alt={featuredPost.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                    src={leadStory.featuredImageUrl || 'https://fabelo.io/content/images/size/w1200/2026/07/pexels-photo-7283714.webp'}
+                    alt={leadStory.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-103"
                   />
+                  <div className="absolute top-4 left-4">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold font-mono uppercase tracking-wider bg-primary text-primary-foreground shadow-lg">
+                      Lead Story
+                    </span>
+                  </div>
                 </div>
+
+                <div className="space-y-2.5 pt-1">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono">
+                    <span className="text-primary font-semibold uppercase tracking-wider">
+                      {(leadStory.categoryId ? categoryMap[leadStory.categoryId]?.name : null) || 'AI & Tech'}
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="size-3" />
+                      <span>{leadStory.readingTime || '21 min read'}</span>
+                    </span>
+                    <span>•</span>
+                    <span>{leadStory.publishedAt ? new Date(leadStory.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Jul 2, 2026'}</span>
+                  </div>
+
+                  <h1 className="text-2xl sm:text-4xl font-black font-serif tracking-tight text-foreground group-hover:text-primary transition leading-tight">
+                    {leadStory.title}
+                  </h1>
+
+                  <p className="text-muted-foreground text-sm sm:text-base line-clamp-3 leading-relaxed">
+                    {leadStory.excerpt}
+                  </p>
+
+                  <div className="flex items-center gap-3 pt-2">
+                    <img
+                      src="https://fabelo.io/content/images/size/w160/2026/04/ufuk_square.png"
+                      alt="Ufuk Yorulmaz"
+                      className="size-7 rounded-full object-cover border border-border"
+                    />
+                    <span className="text-xs font-medium text-foreground">
+                      By {(leadStory.authorId ? authorMap[leadStory.authorId]?.name : null) || 'Ufuk Yorulmaz'}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          )}
+
+          {/* Trending Stories Rail (4 cols) */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider font-mono">
+                <Flame className="size-4 text-amber-500 fill-amber-500" />
+                <span>Trending Dispatches</span>
               </div>
+              <span className="text-[11px] font-mono text-muted-foreground">Most Read</span>
+            </div>
+
+            <div className="divide-y divide-border/60">
+              {trendingStories.map((post, idx) => (
+                <Link
+                  key={post.id}
+                  href={`/${post.slug}`}
+                  className="group py-4 flex items-start gap-4 block first:pt-1"
+                >
+                  <span className="text-2xl font-black font-serif text-muted-foreground/40 group-hover:text-primary transition w-6 shrink-0">
+                    0{idx + 1}
+                  </span>
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-primary font-semibold">
+                      {(post.categoryId ? categoryMap[post.categoryId]?.name : null) || 'Editorial'}
+                    </span>
+                    <h3 className="text-sm sm:text-base font-bold font-serif text-foreground group-hover:text-primary transition line-clamp-2 leading-snug">
+                      {post.title}
+                    </h3>
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-mono">
+                      <span>{post.readingTime || '6 min read'}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 2: AI & PRODUCTIVITY SYSTEMS */}
+        <section className="border-t border-border/80 pt-12 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-primary font-mono text-xs font-bold uppercase tracking-wider">
+                <Zap className="size-3.5" />
+                <span>Deep Focus</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold font-serif tracking-tight text-foreground">
+                AI &amp; Productivity Systems
+              </h2>
+            </div>
+            <Link
+              href="/tag/ai-tech"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline group"
+            >
+              <span>Explore all AI Guides</span>
+              <ChevronRight className="size-3.5 group-hover:translate-x-0.5 transition" />
             </Link>
           </div>
-        )}
 
-        {/* Latest Publications Grid */}
-        <div className="border-t border-neutral-800/60 pt-10">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold tracking-tight text-white font-serif">Latest Editorial Guides</h2>
-            <span className="text-xs text-neutral-500 font-mono uppercase tracking-widest">
-              {posts.length} Publications
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {gridPosts.map((post) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {aiPosts.map((post, index) => (
               <Link
                 key={post.id}
                 href={`/${post.slug}`}
-                className="group flex flex-col rounded-xl overflow-hidden border border-neutral-800/80 bg-neutral-900/30 hover:border-amber-500/50 hover:bg-neutral-900/60 transition duration-300"
+                className={`group rounded-2xl overflow-hidden border border-border bg-card hover:border-primary/50 transition duration-300 shadow-xs flex flex-col justify-between ${
+                  index === 0 ? 'md:col-span-2' : ''
+                }`}
               >
-                <div className="aspect-[16/9] w-full overflow-hidden bg-neutral-800 border-b border-neutral-800">
+                <div className="aspect-[16/10] w-full overflow-hidden bg-muted/40 border-b border-border/60 relative">
                   <img
-                    src={post.featuredImageUrl || '/media/default.webp'}
+                    src={post.featuredImageUrl || 'https://fabelo.io/content/images/size/w1200/2026/07/pexels-photo-7283714.webp'}
                     alt={post.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-104"
+                    loading="lazy"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-background/90 backdrop-blur-md text-foreground border border-border/60">
+                      {post.readingTime || '8 min read'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                  <div className="space-y-2">
+                    <h3 className={`font-bold font-serif text-foreground group-hover:text-primary transition leading-snug ${
+                      index === 0 ? 'text-lg sm:text-xl' : 'text-base line-clamp-2'
+                    }`}>
+                      {post.title}
+                    </h3>
+                    <p className="text-muted-foreground text-xs sm:text-sm line-clamp-2 leading-relaxed">
+                      {post.excerpt}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-border/40 text-[11px] font-mono text-muted-foreground">
+                    <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Jul 2026'}</span>
+                    <span className="text-primary font-semibold group-hover:translate-x-0.5 transition">Read →</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* SECTION 3: PERSONAL FINANCE & WEALTH */}
+        <section className="border-t border-border/80 pt-12 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider">
+                <DollarSign className="size-3.5" />
+                <span>Wealth &amp; Strategy</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold font-serif tracking-tight text-foreground">
+                Personal Finance &amp; Compounding
+              </h2>
+            </div>
+            <Link
+              href="/tag/personal-finance"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline group"
+            >
+              <span>View all Finance Playbooks</span>
+              <ChevronRight className="size-3.5 group-hover:translate-x-0.5 transition" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {financePosts.map((post) => (
+              <Link
+                key={post.id}
+                href={`/${post.slug}`}
+                className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-card hover:border-emerald-500/40 transition duration-300 shadow-xs"
+              >
+                <div className="aspect-[16/10] w-full overflow-hidden bg-muted/40 border-b border-border/60">
+                  <img
+                    src={post.featuredImageUrl || 'https://fabelo.io/content/images/size/w1200/2026/07/pexels-photo-5466808.jpeg'}
+                    alt={post.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-104"
                     loading="lazy"
                   />
                 </div>
                 <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
-                    <div className="flex items-center space-x-2 text-xs font-mono text-neutral-500">
-                      <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}</span>
+                    <div className="flex items-center gap-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <span>FINANCE GUIDE</span>
                       <span>•</span>
-                      <span>{post.readingTime || '4 min'}</span>
+                      <span>{post.readingTime || '7 min read'}</span>
                     </div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition font-serif line-clamp-2 leading-snug">
+                    <h3 className="text-lg font-bold font-serif text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
                       {post.title}
                     </h3>
-                    <p className="text-neutral-400 text-xs sm:text-sm line-clamp-3 leading-relaxed">
+                    <p className="text-muted-foreground text-xs sm:text-sm line-clamp-3 leading-relaxed">
                       {post.excerpt}
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-amber-500 group-hover:translate-x-1 transition duration-200 inline-flex items-center">
-                    Read Deep Dive →
+                  <span className="text-xs font-bold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition inline-flex items-center gap-1">
+                    <span>Read Analysis</span>
+                    <ArrowRight className="size-3 group-hover:translate-x-1 transition" />
                   </span>
                 </div>
               </Link>
             ))}
           </div>
-        </div>
+        </section>
+
+        {/* SECTION 4: CAREER ACCELERATION */}
+        <section className="border-t border-border/80 pt-12 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-mono text-xs font-bold uppercase tracking-wider">
+                <Briefcase className="size-3.5" />
+                <span>High-Leverage Work</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold font-serif tracking-tight text-foreground">
+                Career Acceleration &amp; Income
+              </h2>
+            </div>
+            <Link
+              href="/tag/career"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline group"
+            >
+              <span>All Career Strategy Guides</span>
+              <ChevronRight className="size-3.5 group-hover:translate-x-0.5 transition" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {careerPosts.map((post) => (
+              <Link
+                key={post.id}
+                href={`/${post.slug}`}
+                className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-card hover:border-blue-500/40 transition duration-300 shadow-xs"
+              >
+                <div className="aspect-[16/10] w-full overflow-hidden bg-muted/40 border-b border-border/60">
+                  <img
+                    src={post.featuredImageUrl || 'https://fabelo.io/content/images/size/w1200/2026/07/pexels-photo-5882683.jpeg'}
+                    alt={post.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-104"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-mono text-blue-600 dark:text-blue-400 font-semibold">
+                      <span>CAREER PLAYBOOK</span>
+                      <span>•</span>
+                      <span>{post.readingTime || '6 min read'}</span>
+                    </div>
+                    <h3 className="text-lg font-bold font-serif text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition line-clamp-2 leading-snug">
+                      {post.title}
+                    </h3>
+                    <p className="text-muted-foreground text-xs sm:text-sm line-clamp-3 leading-relaxed">
+                      {post.excerpt}
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition inline-flex items-center gap-1">
+                    <span>Read Playbook</span>
+                    <ArrowRight className="size-3 group-hover:translate-x-1 transition" />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* SECTION 5: LATEST PUBLICATIONS STREAM */}
+        <section className="border-t border-border/80 pt-12 space-y-8">
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <div className="space-y-1">
+              <h2 className="text-2xl sm:text-3xl font-extrabold font-serif tracking-tight text-foreground">
+                Latest Publications
+              </h2>
+              <p className="text-muted-foreground text-xs sm:text-sm">Explore all deep dives across AI, finance, and modern engineering.</p>
+            </div>
+            <span className="text-xs font-mono text-muted-foreground font-semibold">
+              {posts.length} Guides
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {latestFeed.map((post) => (
+              <Link
+                key={post.id}
+                href={`/${post.slug}`}
+                className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-card hover:border-primary/50 transition duration-300 shadow-xs"
+              >
+                <div className="aspect-[16/10] w-full overflow-hidden bg-muted/40 border-b border-border/60">
+                  <img
+                    src={post.featuredImageUrl || 'https://fabelo.io/content/images/size/w1200/2026/07/pexels-photo-7283714.webp'}
+                    alt={post.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-104"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-mono text-primary font-semibold">
+                      <span>{(post.categoryId ? categoryMap[post.categoryId]?.name : null) || 'EDITORIAL'}</span>
+                      <span>•</span>
+                      <span>{post.readingTime || '8 min read'}</span>
+                    </div>
+                    <h3 className="text-lg font-bold font-serif text-foreground group-hover:text-primary transition line-clamp-2 leading-snug">
+                      {post.title}
+                    </h3>
+                    <p className="text-muted-foreground text-xs sm:text-sm line-clamp-3 leading-relaxed">
+                      {post.excerpt}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between pt-3 border-t border-border/40 text-xs font-medium text-muted-foreground">
+                    <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '2026'}</span>
+                    <span className="text-primary font-semibold group-hover:translate-x-1 transition inline-flex items-center gap-1">
+                      Read Guide →
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-neutral-900 bg-neutral-950 py-12 mt-20 text-neutral-500 text-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p>© {new Date().getFullYear()} Fabelo. All rights reserved.</p>
-          <div className="flex space-x-6 text-xs">
-            <Link href="/sitemap.xml" className="hover:text-neutral-300">Sitemap</Link>
-            <Link href="/sitemap-news.xml" className="hover:text-neutral-300">News Sitemap</Link>
-            <Link href="/llms.txt" className="hover:text-neutral-300">llms.txt (AI)</Link>
-            <Link href="/panic" className="text-amber-500 hover:underline">Panic CMS</Link>
-          </div>
-        </div>
-      </footer>
+      <MagazineFooter />
     </div>
   );
 }

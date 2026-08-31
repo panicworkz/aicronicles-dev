@@ -3,6 +3,9 @@ import { notFound } from 'next/navigation';
 import { db, schema } from '@/db';
 import { desc, eq } from 'drizzle-orm';
 import Link from 'next/link';
+import { MagazineHeader } from '@/components/magazine/MagazineHeader';
+import { MagazineFooter } from '@/components/magazine/MagazineFooter';
+import { Clock, ArrowRight, UserCheck, Sparkles, BookOpen } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,8 +20,8 @@ export async function generateMetadata({ params }: PageProps) {
   });
 
   return {
-    title: author ? `${author.name} - Author Profile | Fabelo` : `${slug} | Fabelo`,
-    description: author?.bio || `Articles, analyses, and publications by ${author?.name || slug} on Fabelo.`,
+    title: author ? `${author.name} - Author Desk | Fabelo` : `${slug} | Fabelo`,
+    description: author?.bio || `Strategic articles, deep dives, and research published by ${author?.name || slug} on Fabelo.`,
   };
 }
 
@@ -48,47 +51,40 @@ export default async function AuthorArchivePage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-white">
-      <header className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/" className="text-2xl font-black tracking-tight text-foreground font-serif">
-            FABELO<span className="text-primary">.</span>
-          </Link>
-          <div className="flex items-center gap-4 text-xs font-mono">
-            <Link href="/" className="hover:underline">Home</Link>
-            <Link href="/store" className="hover:underline">Store</Link>
-            <Link href="/panic" className="text-primary hover:underline">Panic CMS</Link>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-white transition-colors duration-200">
+      <MagazineHeader />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
         {/* Author Bio Header Card */}
-        <div className="mb-12 p-8 rounded-2xl border border-border bg-card/60 backdrop-blur flex flex-col sm:flex-row items-start sm:items-center gap-6 shadow-xs">
-          <div className="size-20 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-2xl font-black text-primary uppercase overflow-hidden shrink-0 shadow-inner">
+        <div className="rounded-3xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-8 sm:p-12 flex flex-col sm:flex-row items-start sm:items-center gap-8 shadow-xs">
+          <div className="size-24 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-3xl font-black text-primary uppercase overflow-hidden shrink-0 shadow-md">
             {author?.avatarUrl ? (
               <img src={author.avatarUrl} alt={author.name} className="w-full h-full object-cover" />
             ) : (
               author?.name?.slice(0, 2) || 'ED'
             )}
           </div>
-          <div className="space-y-1.5 flex-1">
-            <span className="text-xs font-mono uppercase tracking-widest text-primary font-semibold">
-              {author?.role || 'Editorial Staff'}
-            </span>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground font-serif">
+          <div className="space-y-2 flex-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-mono font-bold bg-primary/10 text-primary">
+              <UserCheck className="size-3" />
+              <span>{author?.role || 'Senior Editorial Contributor'}</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-black font-serif tracking-tight text-foreground">
               {author?.name || slug.replace(/-/g, ' ')}
             </h1>
-            <p className="text-muted-foreground text-sm max-w-3xl leading-relaxed">
-              {author?.bio || 'Editorial contributor covering AI architecture, modern software engineering, and digital commerce insights.'}
+            <p className="text-muted-foreground text-sm sm:text-base max-w-3xl leading-relaxed">
+              {author?.bio || 'Writes extensively on AI agent workflows, software architecture, personal finance systems, and high-leverage career engineering.'}
             </p>
+            <div className="pt-2 text-xs font-mono text-muted-foreground font-semibold">
+              {posts.length} Authored Publications
+            </div>
           </div>
         </div>
 
         {/* Publications Grid */}
         <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <h2 className="text-lg font-bold font-serif">Published Guides & Analyses</h2>
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <h2 className="text-xl sm:text-2xl font-bold font-serif">Published Guides &amp; Analyses</h2>
             <span className="text-xs font-mono text-muted-foreground">{posts.length} articles</span>
           </div>
 
@@ -97,34 +93,44 @@ export default async function AuthorArchivePage({ params }: PageProps) {
               <Link
                 key={post.id}
                 href={`/${post.slug}`}
-                className="group flex flex-col rounded-xl overflow-hidden border border-border bg-card hover:border-primary/50 transition duration-300 shadow-xs"
+                className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-card hover:border-primary/50 transition duration-300 shadow-xs"
               >
-                <div className="aspect-[16/9] w-full overflow-hidden bg-muted/40 border-b border-border">
+                <div className="aspect-[16/10] w-full overflow-hidden bg-muted/40 border-b border-border/60">
                   <img
-                    src={post.featuredImageUrl || '/media/default.webp'}
+                    src={post.featuredImageUrl || 'https://fabelo.io/content/images/size/w1200/2026/07/pexels-photo-7283714.webp'}
                     alt={post.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-104"
                     loading="lazy"
                   />
                 </div>
                 <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
-                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition font-serif line-clamp-2 leading-snug">
+                    <div className="flex items-center gap-2 text-xs font-mono text-primary font-semibold">
+                      <span>GUIDE</span>
+                      <span>•</span>
+                      <span>{post.readingTime || '7 min read'}</span>
+                    </div>
+                    <h3 className="text-lg font-bold font-serif text-foreground group-hover:text-primary transition line-clamp-2 leading-snug">
                       {post.title}
                     </h3>
                     <p className="text-muted-foreground text-xs sm:text-sm line-clamp-3 leading-relaxed">
                       {post.excerpt}
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary group-hover:translate-x-1 transition duration-200 inline-flex items-center">
-                    Read Deep Dive →
-                  </span>
+                  <div className="flex items-center justify-between pt-3 border-t border-border/40 text-xs font-medium text-muted-foreground">
+                    <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '2026'}</span>
+                    <span className="text-primary font-semibold group-hover:translate-x-1 transition inline-flex items-center gap-1">
+                      Read Guide →
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}
           </div>
         </div>
       </main>
+
+      <MagazineFooter />
     </div>
   );
 }
