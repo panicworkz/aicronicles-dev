@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, use, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import React, { useState, useEffect, use, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   ArrowLeft,
   Save,
@@ -26,24 +26,31 @@ import {
   PanelRightClose,
   PanelRightOpen,
   ChevronRight,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import TipTapEditor from '@/components/editor/TipTapEditor';
-import { AeoScoreMeter } from '@/components/studio/AeoScoreMeter';
-import { SerpSocialPreview } from '@/components/studio/SerpSocialPreview';
-import { BlockInsertToolbar } from '@/components/studio/BlockInsertToolbar';
-import { RevisionHistoryDrawer } from '@/components/studio/RevisionHistoryDrawer';
-import { MediaPickerModal } from '@/components/studio/MediaPickerModal';
-import { ImageStudioDrawer, type ImageStudioTarget } from '@/components/studio/ImageStudioDrawer';
-import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import TipTapEditor from "@/components/editor/TipTapEditor";
+import { AeoScoreMeter } from "@/components/studio/AeoScoreMeter";
+import { SerpSocialPreview } from "@/components/studio/SerpSocialPreview";
+import { BlockInsertToolbar } from "@/components/studio/BlockInsertToolbar";
+import { RevisionHistoryDrawer } from "@/components/studio/RevisionHistoryDrawer";
+import { MediaPickerModal } from "@/components/studio/MediaPickerModal";
+import {
+  ImageStudioDrawer,
+  type ImageStudioTarget,
+} from "@/components/studio/ImageStudioDrawer";
+import { ImageUploadDropzone } from "@/components/ui/image-upload-dropzone";
+import { toast } from "sonner";
 
-export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{ id: string }> }) {
+export default function PanicSplitLiveStudioPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const resolvedParams = use(params);
   const router = useRouter();
   const postId = resolvedParams.id;
@@ -51,31 +58,43 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [autosaving, setAutosaving] = useState(false);
-  const [viewMode, setViewMode] = useState<'editor' | 'live' | 'split'>('editor');
-  const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  
+  const [viewMode, setViewMode] = useState<"editor" | "live" | "split">(
+    "editor",
+  );
+  const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">(
+    "desktop",
+  );
+
   // Right Inspector Sidebar state (collapsible, alongside editor, zero overlay)
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [sidebarTab, setSidebarTab] = useState<'settings' | 'ai_aeo'>('settings');
+  const [sidebarTab, setSidebarTab] = useState<"settings" | "ai_aeo">(
+    "settings",
+  );
 
   const [iframeKey, setIframeKey] = useState(0);
   const [showRevisions, setShowRevisions] = useState(false);
   const [splitPickerOpen, setSplitPickerOpen] = useState(false);
-  const [targetReplaceImg, setTargetReplaceImg] = useState<{ src: string; alt?: string; isCover?: boolean } | null>(null);
+  const [targetReplaceImg, setTargetReplaceImg] = useState<{
+    src: string;
+    alt?: string;
+    isCover?: boolean;
+  } | null>(null);
   const [studioOpen, setStudioOpen] = useState(false);
-  const [studioTarget, setStudioTarget] = useState<ImageStudioTarget | null>(null);
+  const [studioTarget, setStudioTarget] = useState<ImageStudioTarget | null>(
+    null,
+  );
 
-  const [title, setTitle] = useState('');
-  const [slug, setSlug] = useState('');
-  const [excerpt, setExcerpt] = useState('');
-  const [contentHtml, setContentHtml] = useState('');
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [contentHtml, setContentHtml] = useState("");
   const [contentJson, setContentJson] = useState<any>(null);
-  const [featuredImageUrl, setFeaturedImageUrl] = useState('');
-  const [featuredImageAlt, setFeaturedImageAlt] = useState('');
-  const [status, setStatus] = useState('published');
-  const [readingTime, setReadingTime] = useState('5 min read');
-  const [metaTitle, setMetaTitle] = useState('');
-  const [metaDescription, setMetaDescription] = useState('');
+  const [featuredImageUrl, setFeaturedImageUrl] = useState("");
+  const [featuredImageAlt, setFeaturedImageAlt] = useState("");
+  const [status, setStatus] = useState("published");
+  const [readingTime, setReadingTime] = useState("5 min read");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const contentHtmlRef = useRef(contentHtml);
@@ -94,24 +113,30 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         const data = await res.json();
         if (data.post) {
           const p = data.post;
-          const initialSlug = p.slug || p.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `article-${p.id}`;
-          setTitle(p.title || '');
+          const initialSlug =
+            p.slug ||
+            p.title
+              ?.toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-|-$/g, "") ||
+            `article-${p.id}`;
+          setTitle(p.title || "");
           setSlug(initialSlug);
           slugRef.current = initialSlug;
-          setExcerpt(p.excerpt || '');
-          setContentHtml(p.contentHtml || '');
+          setExcerpt(p.excerpt || "");
+          setContentHtml(p.contentHtml || "");
           setContentJson(p.contentJson || null);
-          setFeaturedImageUrl(p.featuredImageUrl || '');
-          setFeaturedImageAlt(p.metaTitle || p.title || '');
-          setStatus(p.status || 'published');
-          setReadingTime(p.readingTime || '5 min read');
-          setMetaTitle(p.metaTitle || p.title || '');
-          setMetaDescription(p.metaDescription || p.excerpt || '');
+          setFeaturedImageUrl(p.featuredImageUrl || "");
+          setFeaturedImageAlt(p.metaTitle || p.title || "");
+          setStatus(p.status || "published");
+          setReadingTime(p.readingTime || "5 min read");
+          setMetaTitle(p.metaTitle || p.title || "");
+          setMetaDescription(p.metaDescription || p.excerpt || "");
         } else {
-          toast.error('Article not found');
+          toast.error("Article not found");
         }
       } catch (err) {
-        toast.error('Failed to load post');
+        toast.error("Failed to load post");
       } finally {
         setLoading(false);
       }
@@ -121,8 +146,9 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
     // Listen for real-time edits or image manage requests made on the live canvas
     const handleLiveMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'PANIC_LIVE_TO_STUDIO_SYNC') {
-        const { title: liveTitle, contentHtml: liveHtml } = event.data.payload || {};
+      if (event.data?.type === "PANIC_LIVE_TO_STUDIO_SYNC") {
+        const { title: liveTitle, contentHtml: liveHtml } =
+          event.data.payload || {};
         if (liveTitle !== undefined) {
           setTitle(liveTitle);
           titleRef.current = liveTitle;
@@ -133,8 +159,14 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         }
       }
 
-      if (event.data?.type === 'PANIC_OPEN_IMAGE_STUDIO') {
-        const { src, alt, title: imgTitle, caption: imgCaption, isCover } = event.data.payload || {};
+      if (event.data?.type === "PANIC_OPEN_IMAGE_STUDIO") {
+        const {
+          src,
+          alt,
+          title: imgTitle,
+          caption: imgCaption,
+          isCover,
+        } = event.data.payload || {};
         setStudioTarget({
           src,
           alt,
@@ -145,11 +177,15 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
             if (isCover) {
               setFeaturedImageUrl(newData.src);
               if (newData.alt) setFeaturedImageAlt(newData.alt);
-              broadcastLiveSync(titleRef.current, contentHtmlRef.current, newData.src);
+              broadcastLiveSync(
+                titleRef.current,
+                contentHtmlRef.current,
+                newData.src,
+              );
               try {
                 const res = await fetch(`/api/posts/${postId}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     title: titleRef.current,
                     slug: slugRef.current,
@@ -165,35 +201,38 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                 });
                 const resData = await res.json();
                 if (resData.success) {
-                  toast.success('Cover image updated and saved!');
+                  toast.success("Cover image updated and saved!");
                 }
               } catch (e) {
                 // silent
               }
             } else {
-              const currentHtml = contentHtmlRef.current || '';
+              const currentHtml = contentHtmlRef.current || "";
               const parser = new DOMParser();
-              const doc = parser.parseFromString(currentHtml, 'text/html');
-              const imgs = doc.querySelectorAll('img');
+              const doc = parser.parseFromString(currentHtml, "text/html");
+              const imgs = doc.querySelectorAll("img");
               let matched = false;
 
               imgs.forEach((im) => {
-                const imSrc = im.getAttribute('src') || '';
-                const imFilename = imSrc.split('/').pop() || '';
-                const targetFilename = src.split('/').pop() || '';
+                const imSrc = im.getAttribute("src") || "";
+                const imFilename = imSrc.split("/").pop() || "";
+                const targetFilename = src.split("/").pop() || "";
                 if (
                   imSrc === src ||
                   src.endsWith(imSrc) ||
                   imSrc.endsWith(src) ||
-                  (imFilename && targetFilename && imFilename === targetFilename)
+                  (imFilename &&
+                    targetFilename &&
+                    imFilename === targetFilename)
                 ) {
                   matched = true;
-                  im.setAttribute('src', newData.src);
-                  im.setAttribute('alt', newData.alt || '');
-                  if (newData.title) im.setAttribute('title', newData.title);
-                  else im.removeAttribute('title');
-                  if (newData.caption) im.setAttribute('data-caption', newData.caption);
-                  else im.removeAttribute('data-caption');
+                  im.setAttribute("src", newData.src);
+                  im.setAttribute("alt", newData.alt || "");
+                  if (newData.title) im.setAttribute("title", newData.title);
+                  else im.removeAttribute("title");
+                  if (newData.caption)
+                    im.setAttribute("data-caption", newData.caption);
+                  else im.removeAttribute("data-caption");
                 }
               });
 
@@ -203,12 +242,16 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
               }
 
               setContentHtml(updatedHtml);
-              broadcastLiveSync(titleRef.current, updatedHtml, featuredImageUrlRef.current);
+              broadcastLiveSync(
+                titleRef.current,
+                updatedHtml,
+                featuredImageUrlRef.current,
+              );
 
               try {
                 const res = await fetch(`/api/posts/${postId}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     title: titleRef.current,
                     slug: slugRef.current,
@@ -224,12 +267,12 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                 });
                 const resData = await res.json();
                 if (resData.success) {
-                  toast.success('Image settings applied and saved!');
+                  toast.success("Image settings applied and saved!");
                 } else {
-                  toast.error(resData.error || 'Failed to save changes');
+                  toast.error(resData.error || "Failed to save changes");
                 }
               } catch (e: any) {
-                toast.error('Save error');
+                toast.error("Save error");
               }
             }
           },
@@ -238,23 +281,27 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
       }
     };
 
-    window.addEventListener('message', handleLiveMessage);
-    return () => window.removeEventListener('message', handleLiveMessage);
+    window.addEventListener("message", handleLiveMessage);
+    return () => window.removeEventListener("message", handleLiveMessage);
   }, [postId]);
 
-  const broadcastLiveSync = (newTitle: string, newHtml: string, newCover: string) => {
+  const broadcastLiveSync = (
+    newTitle: string,
+    newHtml: string,
+    newCover: string,
+  ) => {
     if (iframeRef.current && iframeRef.current.contentWindow) {
       iframeRef.current.contentWindow.postMessage(
         {
-          type: 'PANIC_STUDIO_LIVE_UPDATE',
-          source: 'studio_parent',
+          type: "PANIC_STUDIO_LIVE_UPDATE",
+          source: "studio_parent",
           payload: {
             title: newTitle,
             contentHtml: newHtml,
             featuredImageUrl: newCover,
           },
         },
-        '*'
+        "*",
       );
     }
   };
@@ -277,12 +324,12 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
     setContentHtml(combined);
     contentHtmlRef.current = combined;
     broadcastLiveSync(title, combined, featuredImageUrl);
-    toast.success('Block added to article');
+    toast.success("Block added to article");
   };
 
   const handleSave = async (isAuto = false) => {
     if (!title.trim()) {
-      if (!isAuto) toast.error('Please enter an article title');
+      if (!isAuto) toast.error("Please enter an article title");
       return;
     }
 
@@ -291,8 +338,8 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
     try {
       const res = await fetch(`/api/posts/${postId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
           slug: slugRef.current || slug,
@@ -310,13 +357,13 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
       const data = await res.json();
       if (data.success) {
         if (!isAuto) {
-          toast.success('Article saved successfully!');
+          toast.success("Article saved successfully!");
         }
       } else {
-        if (!isAuto) toast.error(data.error || 'Failed to save');
+        if (!isAuto) toast.error(data.error || "Failed to save");
       }
     } catch (err) {
-      if (!isAuto) toast.error('An error occurred while saving');
+      if (!isAuto) toast.error("An error occurred while saving");
     } finally {
       if (isAuto) setAutosaving(false);
       else setSaving(false);
@@ -327,8 +374,12 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
     if (rev.title) setTitle(rev.title);
     if (rev.contentHtml) setContentHtml(rev.contentHtml);
     if (rev.contentJson) setContentJson(rev.contentJson);
-    broadcastLiveSync(rev.title || title, rev.contentHtml || contentHtml, featuredImageUrl);
-    toast.success('Revision restored to editor');
+    broadcastLiveSync(
+      rev.title || title,
+      rev.contentHtml || contentHtml,
+      featuredImageUrl,
+    );
+    toast.success("Revision restored to editor");
   };
 
   if (loading) {
@@ -344,13 +395,13 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
   const getFrameWidth = () => {
     switch (deviceMode) {
-      case 'mobile':
-        return 'w-[375px]';
-      case 'tablet':
-        return 'w-[768px]';
-      case 'desktop':
+      case "mobile":
+        return "w-[375px]";
+      case "tablet":
+        return "w-[768px]";
+      case "desktop":
       default:
-        return 'w-full';
+        return "w-full";
     }
   };
 
@@ -364,7 +415,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           value={title}
           onChange={(e) => {
             handleTitleChange(e.target.value);
-            e.target.style.height = 'auto';
+            e.target.style.height = "auto";
             e.target.style.height = `${e.target.scrollHeight}px`;
           }}
           placeholder="Article Title..."
@@ -375,7 +426,9 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         <div className="flex flex-wrap items-center gap-3 p-2 rounded-lg border bg-muted/20 text-xs">
           <div className="flex items-center gap-1.5 flex-1 min-w-[180px]">
             <Globe className="size-3.5 text-muted-foreground shrink-0" />
-            <span className="text-muted-foreground truncate">fabelo.testworkz.com/</span>
+            <span className="text-muted-foreground truncate">
+              fabelo.testworkz.com/
+            </span>
             <input
               type="text"
               value={slug}
@@ -417,7 +470,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
   const renderLiveCanvas = () => (
     <div className="flex flex-col w-full h-full bg-muted/30 overflow-hidden relative">
       {/* Live Studio Control Bar */}
-      <div className="flex h-10 items-center justify-between gap-2 border-b bg-background/80 backdrop-blur-xs px-4 shrink-0">
+      <div className="flex h-9 items-center justify-between gap-2 border-b bg-background/80 backdrop-blur-xs px-4 shrink-0">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
           <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
           <span>Live In-Context Canvas</span>
@@ -426,25 +479,25 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         {/* Device Switcher */}
         <div className="flex items-center rounded-lg border bg-muted/40 p-0.5">
           <Button
-            variant={deviceMode === 'desktop' ? 'secondary' : 'ghost'}
+            variant={deviceMode === "desktop" ? "secondary" : "ghost"}
             size="icon-xs"
-            onClick={() => setDeviceMode('desktop')}
+            onClick={() => setDeviceMode("desktop")}
             title="Desktop 100%"
           >
             <Monitor className="size-3" />
           </Button>
           <Button
-            variant={deviceMode === 'tablet' ? 'secondary' : 'ghost'}
+            variant={deviceMode === "tablet" ? "secondary" : "ghost"}
             size="icon-xs"
-            onClick={() => setDeviceMode('tablet')}
+            onClick={() => setDeviceMode("tablet")}
             title="Tablet 768px"
           >
             <Tablet className="size-3" />
           </Button>
           <Button
-            variant={deviceMode === 'mobile' ? 'secondary' : 'ghost'}
+            variant={deviceMode === "mobile" ? "secondary" : "ghost"}
             size="icon-xs"
-            onClick={() => setDeviceMode('mobile')}
+            onClick={() => setDeviceMode("mobile")}
             title="Mobile 375px"
           >
             <Smartphone className="size-3" />
@@ -496,11 +549,14 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
             </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <Badge variant={status === 'published' ? 'default' : 'secondary'} className="capitalize text-[11px] font-normal">
+            <Badge
+              variant={status === "published" ? "default" : "secondary"}
+              className="capitalize text-[11px] font-normal"
+            >
               {status}
             </Badge>
             <span className="text-xs text-muted-foreground truncate max-w-[160px] font-medium hidden sm:inline">
-              {title || 'Untitled'}
+              {title || "Untitled"}
             </span>
           </div>
         </div>
@@ -509,11 +565,11 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         <div className="flex items-center rounded-xl border border-border/80 bg-muted/30 p-0.5 text-xs shadow-2xs">
           <button
             type="button"
-            onClick={() => setViewMode('editor')}
+            onClick={() => setViewMode("editor")}
             className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer ${
-              viewMode === 'editor'
-                ? 'bg-background text-foreground shadow-xs'
-                : 'text-muted-foreground hover:text-foreground'
+              viewMode === "editor"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <FileText className="size-3.5 text-primary" />
@@ -521,11 +577,11 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           </button>
           <button
             type="button"
-            onClick={() => setViewMode('live')}
+            onClick={() => setViewMode("live")}
             className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer ${
-              viewMode === 'live'
-                ? 'bg-background text-foreground shadow-xs'
-                : 'text-muted-foreground hover:text-foreground'
+              viewMode === "live"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Eye className="size-3.5 text-emerald-500" />
@@ -533,11 +589,11 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           </button>
           <button
             type="button"
-            onClick={() => setViewMode('split')}
+            onClick={() => setViewMode("split")}
             className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer ${
-              viewMode === 'split'
-                ? 'bg-background text-foreground shadow-xs'
-                : 'text-muted-foreground hover:text-foreground'
+              viewMode === "split"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Columns className="size-3.5 text-blue-500" />
@@ -549,13 +605,19 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         <div className="flex items-center gap-2">
           {/* Collapsible Inspector Sidebar Toggle Button */}
           <Button
-            variant={sidebarOpen ? 'secondary' : 'outline'}
+            variant={sidebarOpen ? "secondary" : "outline"}
             size="default"
             onClick={() => setSidebarOpen((prev) => !prev)}
             className="gap-1.5 text-xs font-medium cursor-pointer"
-            title={sidebarOpen ? 'Hide Settings Sidebar' : 'Show Settings Sidebar'}
+            title={
+              sidebarOpen ? "Hide Settings Sidebar" : "Show Settings Sidebar"
+            }
           >
-            {sidebarOpen ? <PanelRightClose className="size-3.5" /> : <PanelRightOpen className="size-3.5" />}
+            {sidebarOpen ? (
+              <PanelRightClose className="size-3.5" />
+            ) : (
+              <PanelRightOpen className="size-3.5" />
+            )}
             <span className="hidden sm:inline">Settings</span>
           </Button>
 
@@ -570,7 +632,11 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           </Button>
 
           <Link href={`/${slug}`} target="_blank">
-            <Button variant="outline" size="default" className="gap-1.5 hidden lg:inline-flex">
+            <Button
+              variant="outline"
+              size="default"
+              className="gap-1.5 hidden lg:inline-flex"
+            >
               <ExternalLink className="size-3.5" />
               <span>Live URL</span>
             </Button>
@@ -583,7 +649,13 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
             className="gap-1.5 font-medium"
           >
             <Save className="size-3.5" />
-            <span>{saving ? 'Saving...' : autosaving ? 'Autosaving...' : 'Save Changes'}</span>
+            <span>
+              {saving
+                ? "Saving..."
+                : autosaving
+                  ? "Autosaving..."
+                  : "Save Changes"}
+            </span>
           </Button>
         </div>
       </div>
@@ -593,23 +665,21 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         {/* Main Content / Canvas Area (Resizes automatically when sidebar is toggled) */}
         <div className="flex-1 h-full overflow-hidden bg-background">
           {/* Mode 1: Visual Editor */}
-          {viewMode === 'editor' && (
+          {viewMode === "editor" && (
             <div className="w-full h-full overflow-y-auto p-6">
-              <div className="max-w-4xl mx-auto py-4 space-y-6">
+              <div className="max-w-6xl mx-auto py-4 space-y-6">
                 {renderVisualEditorContent()}
               </div>
             </div>
           )}
 
           {/* Mode 2: Live In-Context Canvas */}
-          {viewMode === 'live' && (
-            <div className="w-full h-full">
-              {renderLiveCanvas()}
-            </div>
+          {viewMode === "live" && (
+            <div className="w-full h-full">{renderLiveCanvas()}</div>
           )}
 
           {/* Mode 3: Split View */}
-          {viewMode === 'split' && (
+          {viewMode === "split" && (
             <div className="flex w-full h-full overflow-hidden">
               <div className="w-full lg:w-1/2 border-r bg-background overflow-y-auto p-6 space-y-6">
                 {renderVisualEditorContent()}
@@ -625,8 +695,8 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
         <aside
           className={`border-l bg-background/95 backdrop-blur-xs shrink-0 flex flex-col h-full overflow-hidden shadow-xs transition-all duration-300 ease-in-out ${
             sidebarOpen
-              ? 'w-[340px] xl:w-[380px] opacity-100'
-              : 'w-0 opacity-0 border-l-0 pointer-events-none'
+              ? "w-[340px] xl:w-[380px] opacity-100"
+              : "w-0 opacity-0 border-l-0 pointer-events-none"
           }`}
         >
           <div className="w-[340px] xl:w-[380px] flex flex-col h-full overflow-hidden">
@@ -635,22 +705,22 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
               <div className="flex items-center rounded-lg border bg-muted/40 p-0.5 text-xs">
                 <button
                   type="button"
-                  onClick={() => setSidebarTab('settings')}
+                  onClick={() => setSidebarTab("settings")}
                   className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
-                    sidebarTab === 'settings'
-                      ? 'bg-background text-foreground shadow-2xs'
-                      : 'text-muted-foreground hover:text-foreground'
+                    sidebarTab === "settings"
+                      ? "bg-background text-foreground shadow-2xs"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Publishing & SEO
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSidebarTab('ai_aeo')}
+                  onClick={() => setSidebarTab("ai_aeo")}
                   className={`px-3 py-1 rounded-md font-medium transition flex items-center gap-1 cursor-pointer ${
-                    sidebarTab === 'ai_aeo'
-                      ? 'bg-background text-primary shadow-2xs'
-                      : 'text-muted-foreground hover:text-foreground'
+                    sidebarTab === "ai_aeo"
+                      ? "bg-background text-primary shadow-2xs"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <Sparkles className="size-3 text-primary" />
@@ -671,12 +741,14 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
 
             {/* Sidebar Scrollable Body */}
             <div className="flex-1 overflow-y-auto p-4 space-y-5">
-              {sidebarTab === 'settings' && (
+              {sidebarTab === "settings" && (
                 <div className="space-y-4">
                   {/* Publishing Status */}
                   <Card>
                     <CardHeader className="pb-2 pt-3 px-3">
-                      <CardTitle className="text-xs font-semibold">Publication Status</CardTitle>
+                      <CardTitle className="text-xs font-semibold">
+                        Publication Status
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="px-3 pb-3">
                       <select
@@ -684,7 +756,9 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                         onChange={(e) => setStatus(e.target.value)}
                         className="w-full h-8 rounded-lg border bg-background px-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
                       >
-                        <option value="published">Published (Live on web)</option>
+                        <option value="published">
+                          Published (Live on web)
+                        </option>
                         <option value="draft">Draft (Private)</option>
                       </select>
                     </CardContent>
@@ -693,7 +767,9 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                   {/* Featured Cover Image */}
                   <Card>
                     <CardHeader className="pb-2 pt-3 px-3">
-                      <CardTitle className="text-xs font-semibold">Featured Cover Image</CardTitle>
+                      <CardTitle className="text-xs font-semibold">
+                        Featured Cover Image
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="px-3 pb-3 space-y-2">
                       <ImageUploadDropzone
@@ -712,22 +788,24 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                   {/* SEO & Meta */}
                   <Card>
                     <CardHeader className="pb-2 pt-3 px-3 flex flex-row items-center justify-between">
-                      <CardTitle className="text-xs font-semibold">Google Search & Meta</CardTitle>
+                      <CardTitle className="text-xs font-semibold">
+                        Google Search & Meta
+                      </CardTitle>
                       <Button
                         type="button"
                         variant="ghost"
                         size="xs"
                         onClick={async () => {
                           if (!title.trim()) {
-                            toast.error('Please enter an article title first');
+                            toast.error("Please enter an article title first");
                             return;
                           }
                           try {
-                            const res = await fetch('/api/ai/copilot', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
+                            const res = await fetch("/api/ai/copilot", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({
-                                action: 'generateSeoMeta',
+                                action: "generateSeoMeta",
                                 title,
                                 slug,
                                 contentHtml,
@@ -737,11 +815,14 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                             const data = await res.json();
                             if (data.success) {
                               if (data.metaTitle) setMetaTitle(data.metaTitle);
-                              if (data.metaDescription) setMetaDescription(data.metaDescription);
-                              toast.success('Dynamic AI SEO metadata generated!');
+                              if (data.metaDescription)
+                                setMetaDescription(data.metaDescription);
+                              toast.success(
+                                "Dynamic AI SEO metadata generated!",
+                              );
                             }
                           } catch (e) {
-                            toast.error('AI synthesis failed');
+                            toast.error("AI synthesis failed");
                           }
                         }}
                         className="h-5 px-1.5 text-[10px] text-primary hover:text-primary font-medium gap-1"
@@ -775,7 +856,7 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
                 </div>
               )}
 
-              {sidebarTab === 'ai_aeo' && (
+              {sidebarTab === "ai_aeo" && (
                 <div className="space-y-5">
                   <AeoScoreMeter
                     title={title}
@@ -831,18 +912,22 @@ export default function PanicSplitLiveStudioPage({ params }: { params: Promise<{
           if (targetReplaceImg?.isCover) {
             setFeaturedImageUrl(newUrl);
             broadcastLiveSync(title, contentHtml, newUrl);
-            toast.success('Cover image replaced live!');
+            toast.success("Cover image replaced live!");
           } else if (targetReplaceImg?.src) {
             const oldSrc = targetReplaceImg.src;
-            const updatedHtml = (contentHtml || '').replaceAll(oldSrc, newUrl);
+            const updatedHtml = (contentHtml || "").replaceAll(oldSrc, newUrl);
             setContentHtml(updatedHtml);
             broadcastLiveSync(title, updatedHtml, featuredImageUrl);
-            toast.success('Image replaced in content!');
+            toast.success("Image replaced in content!");
           }
           setSplitPickerOpen(false);
           setTargetReplaceImg(null);
         }}
-        title={targetReplaceImg?.isCover ? 'Replace Cover Image' : 'Replace Image in Content'}
+        title={
+          targetReplaceImg?.isCover
+            ? "Replace Cover Image"
+            : "Replace Image in Content"
+        }
         currentUrl={targetReplaceImg?.src}
       />
     </div>

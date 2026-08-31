@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useRef } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import LinkExtension from '@tiptap/extension-link';
-import TableExtension from '@tiptap/extension-table';
-import TableRowExtension from '@tiptap/extension-table-row';
-import TableCellExtension from '@tiptap/extension-table-cell';
-import TableHeaderExtension from '@tiptap/extension-table-header';
-import { CustomImageExtension } from './CustomImageExtension';
+import React, { useEffect, useState, useRef } from "react";
+import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import LinkExtension from "@tiptap/extension-link";
+import TableExtension from "@tiptap/extension-table";
+import TableRowExtension from "@tiptap/extension-table-row";
+import TableCellExtension from "@tiptap/extension-table-cell";
+import TableHeaderExtension from "@tiptap/extension-table-header";
+import { CustomImageExtension } from "./CustomImageExtension";
 import {
   Bold,
   Italic,
@@ -25,12 +25,15 @@ import {
   Undo,
   Redo,
   Upload,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { MediaPickerModal } from '@/components/studio/MediaPickerModal';
-import { ImageStudioDrawer, type ImageStudioTarget } from '@/components/studio/ImageStudioDrawer';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { MediaPickerModal } from "@/components/studio/MediaPickerModal";
+import {
+  ImageStudioDrawer,
+  type ImageStudioTarget,
+} from "@/components/studio/ImageStudioDrawer";
+import { toast } from "sonner";
 
 interface TipTapEditorProps {
   content: string;
@@ -38,10 +41,16 @@ interface TipTapEditorProps {
   articleTitle?: string;
 }
 
-export default function TipTapEditor({ content, onChange, articleTitle }: TipTapEditorProps) {
+export default function TipTapEditor({
+  content,
+  onChange,
+  articleTitle,
+}: TipTapEditorProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [studioOpen, setStudioOpen] = useState(false);
-  const [studioTarget, setStudioTarget] = useState<ImageStudioTarget | null>(null);
+  const [studioTarget, setStudioTarget] = useState<ImageStudioTarget | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
@@ -65,37 +74,45 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
       LinkExtension.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-primary underline hover:opacity-80 transition',
+          class: "text-primary underline hover:opacity-80 transition",
         },
       }),
       TableExtension.configure({
         resizable: true,
         HTMLAttributes: {
-          class: 'border-collapse border border-border w-full my-4 rounded-lg overflow-hidden',
+          class:
+            "border-collapse border border-border w-full my-4 rounded-lg overflow-hidden",
         },
       }),
       TableRowExtension,
       TableHeaderExtension.configure({
         HTMLAttributes: {
-          class: 'border border-border bg-muted/60 p-2.5 text-left font-semibold text-foreground text-xs',
+          class:
+            "border border-border bg-muted/60 p-2.5 text-left font-semibold text-foreground text-xs",
         },
       }),
       TableCellExtension.configure({
         HTMLAttributes: {
-          class: 'border border-border p-2.5 text-muted-foreground text-xs',
+          class: "border border-border p-2.5 text-muted-foreground text-xs",
         },
       }),
     ],
-    content: content || '<p></p>',
+    content: content || "<p></p>",
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[500px] p-6 text-foreground text-sm sm:text-base leading-relaxed',
+        class:
+          "prose dark:prose-invert max-w-none focus:outline-none min-h-[500px] p-6 text-foreground text-sm sm:text-base leading-relaxed",
       },
       handleDrop: (view, event, slice, moved) => {
-        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+        if (
+          !moved &&
+          event.dataTransfer &&
+          event.dataTransfer.files &&
+          event.dataTransfer.files[0]
+        ) {
           const file = event.dataTransfer.files[0];
-          if (file.type.startsWith('image/')) {
+          if (file.type.startsWith("image/")) {
             event.preventDefault();
             uploadAndInsertImage(file);
             return true;
@@ -106,7 +123,7 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
       handlePaste: (view, event, slice) => {
         const items = Array.from(event.clipboardData?.items || []);
         for (const item of items) {
-          if (item.type.startsWith('image/')) {
+          if (item.type.startsWith("image/")) {
             const file = item.getAsFile();
             if (file) {
               event.preventDefault();
@@ -131,14 +148,14 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
 
   const uploadAndInsertImage = async (file: File) => {
     if (!editor) return;
-    toast.loading('Uploading and optimizing image to WebP...');
+    toast.loading("Uploading and optimizing image to WebP...");
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
-      const res = await fetch('/api/media', {
-        method: 'POST',
+      const res = await fetch("/api/media", {
+        method: "POST",
         body: formData,
       });
 
@@ -146,33 +163,41 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
       toast.dismiss();
 
       if (data.success && data.media?.url) {
-        const defaultAlt = (file.name || '')
-          .replace(/\.[^/.]+$/, '')
-          .replace(/[-_0-9]+/g, ' ')
+        const defaultAlt = (file.name || "")
+          .replace(/\.[^/.]+$/, "")
+          .replace(/[-_0-9]+/g, " ")
           .trim();
-        
-        editor.chain().focus().setImage({
-          src: data.media.url,
-          alt: data.media.alt || defaultAlt,
-        }).run();
-        toast.success('Image inserted with auto-generated Alt text');
+
+        editor
+          .chain()
+          .focus()
+          .setImage({
+            src: data.media.url,
+            alt: data.media.alt || defaultAlt,
+          })
+          .run();
+        toast.success("Image inserted with auto-generated Alt text");
       } else {
-        toast.error(data.error || 'Upload failed');
+        toast.error(data.error || "Upload failed");
       }
     } catch (err: any) {
       toast.dismiss();
-      toast.error('Image upload failed');
+      toast.error("Image upload failed");
     }
   };
 
   const handlePickerSelect = (url: string, alt?: string) => {
     if (!editor) return;
 
-    editor.chain().focus().setImage({
-      src: url,
-      alt: alt || 'Article illustration',
-    }).run();
-    toast.success('Image inserted into content');
+    editor
+      .chain()
+      .focus()
+      .setImage({
+        src: url,
+        alt: alt || "Article illustration",
+      })
+      .run();
+    toast.success("Image inserted into content");
     setPickerOpen(false);
   };
 
@@ -180,7 +205,7 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
     const file = e.target.files?.[0];
     if (file) {
       uploadAndInsertImage(file);
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
@@ -189,18 +214,22 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
   }
 
   const setLink = () => {
-    const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('Enter destination URL:', previousUrl);
+    const previousUrl = editor.getAttributes("link").href;
+    const url = window.prompt("Enter destination URL:", previousUrl);
     if (url === null) return;
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    if (url === "") {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   };
 
   const insertTable = () => {
-    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    editor
+      .chain()
+      .focus()
+      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+      .run();
   };
 
   return (
@@ -242,7 +271,7 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
           variant="ghost"
           size="icon-xs"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={editor.isActive('bold') ? 'bg-muted text-primary' : ''}
+          className={editor.isActive("bold") ? "bg-muted text-primary" : ""}
           title="Bold"
         >
           <Bold className="w-3.5 h-3.5" />
@@ -252,7 +281,7 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
           variant="ghost"
           size="icon-xs"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={editor.isActive('italic') ? 'bg-muted text-primary' : ''}
+          className={editor.isActive("italic") ? "bg-muted text-primary" : ""}
           title="Italic"
         >
           <Italic className="w-3.5 h-3.5" />
@@ -265,8 +294,14 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
           type="button"
           variant="ghost"
           size="icon-xs"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={editor.isActive('heading', { level: 1 }) ? 'bg-muted text-primary' : ''}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 1 }).run()
+          }
+          className={
+            editor.isActive("heading", { level: 1 })
+              ? "bg-muted text-primary"
+              : ""
+          }
           title="Heading 1"
         >
           <Heading1 className="w-3.5 h-3.5" />
@@ -275,8 +310,14 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
           type="button"
           variant="ghost"
           size="icon-xs"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={editor.isActive('heading', { level: 2 }) ? 'bg-muted text-primary' : ''}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 2 }).run()
+          }
+          className={
+            editor.isActive("heading", { level: 2 })
+              ? "bg-muted text-primary"
+              : ""
+          }
           title="Heading 2"
         >
           <Heading2 className="w-3.5 h-3.5" />
@@ -285,8 +326,14 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
           type="button"
           variant="ghost"
           size="icon-xs"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={editor.isActive('heading', { level: 3 }) ? 'bg-muted text-primary' : ''}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 3 }).run()
+          }
+          className={
+            editor.isActive("heading", { level: 3 })
+              ? "bg-muted text-primary"
+              : ""
+          }
           title="Heading 3"
         >
           <Heading3 className="w-3.5 h-3.5" />
@@ -300,7 +347,9 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
           variant="ghost"
           size="icon-xs"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={editor.isActive('bulletList') ? 'bg-muted text-primary' : ''}
+          className={
+            editor.isActive("bulletList") ? "bg-muted text-primary" : ""
+          }
           title="Bullet List"
         >
           <List className="w-3.5 h-3.5" />
@@ -310,7 +359,9 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
           variant="ghost"
           size="icon-xs"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={editor.isActive('orderedList') ? 'bg-muted text-primary' : ''}
+          className={
+            editor.isActive("orderedList") ? "bg-muted text-primary" : ""
+          }
           title="Numbered List"
         >
           <ListOrdered className="w-3.5 h-3.5" />
@@ -320,7 +371,9 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
           variant="ghost"
           size="icon-xs"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={editor.isActive('blockquote') ? 'bg-muted text-primary' : ''}
+          className={
+            editor.isActive("blockquote") ? "bg-muted text-primary" : ""
+          }
           title="Quote"
         >
           <Quote className="w-3.5 h-3.5" />
@@ -330,7 +383,9 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
           variant="ghost"
           size="icon-xs"
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          className={editor.isActive('codeBlock') ? 'bg-muted text-primary' : ''}
+          className={
+            editor.isActive("codeBlock") ? "bg-muted text-primary" : ""
+          }
           title="Code Block"
         >
           <Code className="w-3.5 h-3.5" />
@@ -344,7 +399,7 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
           variant="ghost"
           size="icon-xs"
           onClick={setLink}
-          className={editor.isActive('link') ? 'bg-muted text-primary' : ''}
+          className={editor.isActive("link") ? "bg-muted text-primary" : ""}
           title="Insert Link"
         >
           <LinkIcon className="w-3.5 h-3.5" />
@@ -413,7 +468,108 @@ export default function TipTapEditor({ content, onChange, articleTitle }: TipTap
       </div>
 
       {/* Editor Content Area */}
-      <EditorContent editor={editor} />
+      <div className="relative">
+        {editor && (
+          <BubbleMenu
+            editor={editor}
+            tippyOptions={{ duration: 100, maxWidth: "none" }}
+            className="flex items-center gap-0.5 rounded-lg border bg-background/95 backdrop-blur px-1 py-0.5 shadow-lg"
+          >
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={editor.isActive("bold") ? "bg-muted text-primary" : ""}
+              title="Bold"
+            >
+              <Bold className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={
+                editor.isActive("italic") ? "bg-muted text-primary" : ""
+              }
+              title="Italic"
+            >
+              <Italic className="w-3.5 h-3.5" />
+            </Button>
+            <Separator orientation="vertical" className="mx-1 h-4" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 2 }).run()
+              }
+              className={
+                editor.isActive("heading", { level: 2 })
+                  ? "bg-muted text-primary"
+                  : ""
+              }
+              title="Heading 2"
+            >
+              <Heading2 className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 3 }).run()
+              }
+              className={
+                editor.isActive("heading", { level: 3 })
+                  ? "bg-muted text-primary"
+                  : ""
+              }
+              title="Heading 3"
+            >
+              <Heading3 className="w-3.5 h-3.5" />
+            </Button>
+            <Separator orientation="vertical" className="mx-1 h-4" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              className={
+                editor.isActive("bulletList") ? "bg-muted text-primary" : ""
+              }
+              title="Bullet List"
+            >
+              <List className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+              className={
+                editor.isActive("codeBlock") ? "bg-muted text-primary" : ""
+              }
+              title="Code Block"
+            >
+              <Code className="w-3.5 h-3.5" />
+            </Button>
+            <Separator orientation="vertical" className="mx-1 h-4" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={setLink}
+              className={editor.isActive("link") ? "bg-muted text-primary" : ""}
+              title="Insert Link"
+            >
+              <LinkIcon className="w-3.5 h-3.5" />
+            </Button>
+          </BubbleMenu>
+        )}
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 }

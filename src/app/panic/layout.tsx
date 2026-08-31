@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
@@ -22,57 +22,63 @@ import {
   Sun,
   Moon,
   ChevronLeft,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { LiveRatesTicker } from '@/components/studio/LiveRatesTicker';
-import { useTheme } from '@/providers/theme-provider';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { LiveRatesTicker } from "@/components/studio/LiveRatesTicker";
+import { useTheme } from "@/providers/theme-provider";
+import { cn } from "@/lib/utils";
 
-export default function PanicAdminLayout({ children }: { children: React.ReactNode }) {
+export default function PanicAdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
 
-  if (pathname === '/panic/login') {
+  if (pathname === "/panic/login") {
     return <>{children}</>;
   }
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/panic/login');
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/panic/login");
     router.refresh();
   };
 
   const navSections = [
     {
-      title: 'CONTENT',
+      title: "CONTENT",
       items: [
-        { href: '/panic', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/panic/posts', label: 'Articles & Guides', icon: FileText },
-        { href: '/panic/pages', label: 'Static Pages', icon: Globe },
-        { href: '/panic/authors', label: 'Authors & Staff', icon: Users },
-        { href: '/panic/media', label: 'Media Library', icon: ImageIcon },
-        { href: '/panic/categories', label: 'Taxonomies', icon: Tags },
+        { href: "/panic", label: "Dashboard", icon: LayoutDashboard },
+        { href: "/panic/posts", label: "Articles & Guides", icon: FileText },
+        { href: "/panic/pages", label: "Static Pages", icon: Globe },
+        { href: "/panic/authors", label: "Authors & Staff", icon: Users },
+        { href: "/panic/media", label: "Media Library", icon: ImageIcon },
+        { href: "/panic/categories", label: "Taxonomies", icon: Tags },
       ],
     },
     {
-      title: 'COMMERCE',
+      title: "COMMERCE",
       items: [
-        { href: '/panic/products', label: 'Products & Store', icon: Package },
-        { href: '/panic/product-categories', label: 'Product Categories', icon: FolderTree },
-        { href: '/panic/orders', label: 'Orders & Sales', icon: ShoppingCart },
-        { href: '/panic/customers', label: 'Customers', icon: Users },
-        { href: '/panic/coupons', label: 'Coupons', icon: Ticket },
+        { href: "/panic/products", label: "Products & Store", icon: Package },
+        {
+          href: "/panic/product-categories",
+          label: "Product Categories",
+          icon: FolderTree,
+        },
+        { href: "/panic/orders", label: "Orders & Sales", icon: ShoppingCart },
+        { href: "/panic/customers", label: "Customers", icon: Users },
+        { href: "/panic/coupons", label: "Coupons", icon: Ticket },
       ],
     },
     {
-      title: 'SYSTEM',
-      items: [
-        { href: '/panic/settings', label: 'Settings', icon: Settings },
-      ],
+      title: "SYSTEM",
+      items: [{ href: "/panic/settings", label: "Settings", icon: Settings }],
     },
   ];
 
@@ -82,23 +88,23 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
       <aside
         className={cn(
           "flex flex-col border-r border-border bg-sidebar transition-all duration-300 shrink-0",
-          collapsed ? "w-16" : "w-64",
+          collapsed ? "w-16" : "w-60",
         )}
       >
         <div className="flex h-14 items-center gap-3 px-4 border-b border-border">
           {!collapsed && (
             <Link
               href="/panic"
-              className="flex items-center gap-2.5 font-bold text-base text-foreground tracking-tight"
+              className="flex items-center gap-2 font-semibold text-lg text-foreground"
             >
-              <div className="size-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-sm font-black shadow-xs">
+              <div className="size-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-xs">
                 P
               </div>
               <span>Panic CMS</span>
             </Link>
           )}
           {collapsed && (
-            <div className="size-8 mx-auto rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-sm font-black shadow-xs">
+            <div className="size-7 mx-auto rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-xs">
               P
             </div>
           )}
@@ -128,8 +134,8 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const isActive =
-                  item.href === '/panic'
-                    ? pathname === '/panic'
+                  item.href === "/panic"
+                    ? pathname === "/panic"
                     : pathname.startsWith(item.href);
 
                 return (
@@ -137,7 +143,7 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                      "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                       isActive
                         ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
                         : "text-sidebar-foreground hover:bg-sidebar-accent/50",
@@ -145,9 +151,11 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
                     title={collapsed ? item.label : undefined}
                   >
                     <span className="relative shrink-0">
-                      <Icon className="size-5" />
+                      <Icon className="size-4" />
                     </span>
-                    {!collapsed && <span className="truncate">{item.label}</span>}
+                    {!collapsed && (
+                      <span className="truncate">{item.label}</span>
+                    )}
                   </Link>
                 );
               })}
@@ -183,7 +191,7 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder="Search guides, products, orders..."
-              className="pl-9 bg-muted/50 border-none h-9 text-sm"
+              className="pl-9 bg-muted/50 border-none"
             />
           </div>
 
@@ -197,21 +205,32 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
             {/* Quick Actions & Navigation */}
             <div className="flex items-center gap-2">
               <Link href="/" target="_blank">
-                <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-semibold shadow-xs">
+                <Button
+                  variant="outline"
+                  size="xs"
+                  className="h-8 gap-1.5 text-xs font-medium"
+                >
                   <ExternalLink className="size-3.5" />
                   <span>Live Site</span>
                 </Button>
               </Link>
 
               <Link href="/store" target="_blank">
-                <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-semibold shadow-xs">
+                <Button
+                  variant="outline"
+                  size="xs"
+                  className="h-8 gap-1.5 text-xs font-medium"
+                >
                   <Package className="size-3.5" />
                   <span>Store</span>
                 </Button>
               </Link>
 
               <Link href="/panic/posts/new">
-                <Button size="sm" className="h-9 gap-1.5 text-xs font-semibold bg-primary text-primary-foreground shadow-xs">
+                <Button
+                  size="xs"
+                  className="h-8 gap-1.5 text-xs font-medium bg-primary text-primary-foreground"
+                >
                   <Plus className="size-3.5" />
                   <span>New Guide</span>
                 </Button>
@@ -226,10 +245,14 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
                 variant="ghost"
                 size="icon"
                 className="size-8"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                title={
+                  theme === "dark"
+                    ? "Switch to light theme"
+                    : "Switch to dark theme"
+                }
               >
-                {theme === 'dark' ? (
+                {theme === "dark" ? (
                   <Sun className="size-4" />
                 ) : (
                   <Moon className="size-4" />
@@ -244,10 +267,8 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8 bg-muted/20">
-          <div className="max-w-7xl mx-auto space-y-6">
-            {children}
-          </div>
+        <main className="flex-1 overflow-y-auto p-6 bg-background">
+          {children}
         </main>
       </div>
     </div>

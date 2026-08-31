@@ -1,25 +1,26 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { Plus, Search, Eye, Edit3, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import {
-  Plus,
-  Search,
-  Eye,
-  Edit3,
-  Trash2,
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { LivePreviewDrawer } from '@/components/preview/LivePreviewDrawer';
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import { LivePreviewDrawer } from "@/components/preview/LivePreviewDrawer";
 
 export default function PanicPostsListPage() {
   const [posts, setPosts] = useState<any[]>([]);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [previewPost, setPreviewPost] = useState<any | null>(null);
 
@@ -28,7 +29,7 @@ export default function PanicPostsListPage() {
     try {
       let url = `/api/posts?limit=100`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
-      if (statusFilter !== 'all') url += `&status=${statusFilter}`;
+      if (statusFilter !== "all") url += `&status=${statusFilter}`;
 
       const res = await fetch(url);
       const data = await res.json();
@@ -36,7 +37,7 @@ export default function PanicPostsListPage() {
         setPosts(data.posts);
       }
     } catch (err) {
-      console.error('Fetch posts error:', err);
+      console.error("Fetch posts error:", err);
     } finally {
       setLoading(false);
     }
@@ -52,15 +53,15 @@ export default function PanicPostsListPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this guide?')) return;
+    if (!confirm("Are you sure you want to delete this guide?")) return;
 
     try {
-      const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/posts/${id}`, { method: "DELETE" });
       if (res.ok) {
         setPosts(posts.filter((p) => p.id !== id));
       }
     } catch (err) {
-      alert('Failed to delete post');
+      alert("Failed to delete post");
     }
   };
 
@@ -69,12 +70,16 @@ export default function PanicPostsListPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Articles & Guides</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Manage publications, SEO metadata, and visual content</p>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Articles & Guides
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Manage publications, SEO metadata, and visual content
+          </p>
         </div>
         <Link href="/panic/posts/new">
-          <Button size="default" className="gap-2">
-            <Plus className="size-4" />
+          <Button size="sm" className="gap-2">
+            <Plus className="size-3.5" />
             <span>New Article</span>
           </Button>
         </Link>
@@ -94,11 +99,11 @@ export default function PanicPostsListPage() {
         </form>
 
         <div className="flex items-center gap-1.5 w-full sm:w-auto">
-          {['all', 'published', 'draft'].map((st) => (
+          {["all", "published", "draft"].map((st) => (
             <Button
               key={st}
-              variant={statusFilter === st ? 'default' : 'outline'}
-              size="default"
+              variant={statusFilter === st ? "default" : "outline"}
+              size="xs"
               onClick={() => setStatusFilter(st)}
               className="capitalize"
             >
@@ -124,13 +129,19 @@ export default function PanicPostsListPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-12 text-muted-foreground text-sm"
+                >
                   Loading publications...
                 </TableCell>
               </TableRow>
             ) : posts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-12 text-muted-foreground text-sm"
+                >
                   No articles found matching criteria.
                 </TableCell>
               </TableRow>
@@ -140,7 +151,7 @@ export default function PanicPostsListPage() {
                   <TableCell>
                     <div className="w-12 h-8 rounded-md bg-muted overflow-hidden border border-border">
                       <img
-                        src={post.featuredImageUrl || '/media/default.webp'}
+                        src={post.featuredImageUrl || "/media/default.webp"}
                         alt={post.title}
                         className="w-full h-full object-cover"
                       />
@@ -153,16 +164,31 @@ export default function PanicPostsListPage() {
                     >
                       {post.title}
                     </Link>
-                    <div className="text-[11px] text-muted-foreground font-mono">/{post.slug}</div>
+                    <div className="text-[11px] text-muted-foreground font-mono">
+                      /{post.slug}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={post.status === 'published' ? 'default' : 'secondary'} className="capitalize text-xs font-normal">
+                    <Badge
+                      variant={
+                        post.status === "published" ? "default" : "secondary"
+                      }
+                      className="capitalize text-xs font-normal"
+                    >
                       {post.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{post.readingTime}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Draft'}
+                    {post.readingTime}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {post.publishedAt
+                      ? new Date(post.publishedAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "Draft"}
                   </TableCell>
                   <TableCell className="text-right space-x-1">
                     <Button
@@ -175,7 +201,12 @@ export default function PanicPostsListPage() {
                       <Eye className="size-4" />
                     </Button>
                     <Link href={`/panic/posts/${post.id}`}>
-                      <Button variant="ghost" size="icon" className="text-primary hover:text-primary" title="Edit in Visual Editor">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-primary hover:text-primary"
+                        title="Edit in Visual Editor"
+                      >
                         <Edit3 className="size-4" />
                       </Button>
                     </Link>

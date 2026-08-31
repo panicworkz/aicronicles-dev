@@ -32,3 +32,8 @@ pnpm-debug.log*
 # system
 .DS_Store
 *.pem
+
+# local build backups & artifacts
+.next.old-*/
+*.bak.*
+tsconfig.tsbuildinfo

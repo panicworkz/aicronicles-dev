@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   ArrowLeft,
   Save,
@@ -15,44 +15,48 @@ import {
   Layers,
   FolderTree,
   ExternalLink,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import TipTapEditor from '@/components/editor/TipTapEditor';
-import { BlockInsertToolbar } from '@/components/studio/BlockInsertToolbar';
-import { AeoScoreMeter } from '@/components/studio/AeoScoreMeter';
-import { SerpSocialPreview } from '@/components/studio/SerpSocialPreview';
-import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import TipTapEditor from "@/components/editor/TipTapEditor";
+import { BlockInsertToolbar } from "@/components/studio/BlockInsertToolbar";
+import { AeoScoreMeter } from "@/components/studio/AeoScoreMeter";
+import { SerpSocialPreview } from "@/components/studio/SerpSocialPreview";
+import { ImageUploadDropzone } from "@/components/ui/image-upload-dropzone";
+import { toast } from "sonner";
 
 export default function PanicNewPostPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [generatingAi, setGeneratingAi] = useState(false);
-  const [activeTab, setActiveTab] = useState<'editor' | 'ai_aeo' | 'metadata'>('editor');
+  const [activeTab, setActiveTab] = useState<"editor" | "ai_aeo" | "metadata">(
+    "editor",
+  );
   const [categories, setCategories] = useState<any[]>([]);
 
   // Post State
-  const [title, setTitle] = useState('');
-  const [slug, setSlug] = useState('');
-  const [excerpt, setExcerpt] = useState('');
-  const [contentHtml, setContentHtml] = useState('');
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [contentHtml, setContentHtml] = useState("");
   const [contentJson, setContentJson] = useState<any>(null);
-  const [featuredImageUrl, setFeaturedImageUrl] = useState('/media/default.webp');
-  const [featuredImageAlt, setFeaturedImageAlt] = useState('');
-  const [status, setStatus] = useState('draft');
-  const [readingTime, setReadingTime] = useState('5 min read');
-  const [metaTitle, setMetaTitle] = useState('');
-  const [metaDescription, setMetaDescription] = useState('');
+  const [featuredImageUrl, setFeaturedImageUrl] = useState(
+    "/media/default.webp",
+  );
+  const [featuredImageAlt, setFeaturedImageAlt] = useState("");
+  const [status, setStatus] = useState("draft");
+  const [readingTime, setReadingTime] = useState("5 min read");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
   const [categoryId, setCategoryId] = useState<number | null>(null);
 
   // Fetch Categories
   useEffect(() => {
-    fetch('/api/categories')
+    fetch("/api/categories")
       .then((res) => res.json())
       .then((data) => {
         if (data.categories) setCategories(data.categories);
@@ -62,20 +66,32 @@ export default function PanicNewPostPage() {
 
   const handleTitleChange = (val: string) => {
     setTitle(val);
-    if (!slug || slug === title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')) {
-      setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
+    if (
+      !slug ||
+      slug ===
+        title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)+/g, "")
+    ) {
+      setSlug(
+        val
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)+/g, ""),
+      );
     }
   };
 
   const handleInsertHtml = (htmlToInsert: string) => {
-    setContentHtml((prev) => `${prev || ''}\n\n${htmlToInsert}`);
-    toast.success('AI Block added to publication');
+    setContentHtml((prev) => `${prev || ""}\n\n${htmlToInsert}`);
+    toast.success("AI Block added to publication");
   };
 
   // AI Auto-Fill for Excerpt & SEO Metadata
   const handleAiAutoFillMeta = () => {
     if (!title.trim()) {
-      toast.error('Please enter an article title first');
+      toast.error("Please enter an article title first");
       return;
     }
 
@@ -89,21 +105,21 @@ export default function PanicNewPostPage() {
       setMetaTitle(generatedMetaTitle);
       setMetaDescription(generatedMetaDesc);
       setGeneratingAi(false);
-      toast.success('AI Excerpt and SEO Metadata synthesized!');
+      toast.success("AI Excerpt and SEO Metadata synthesized!");
     }, 400);
   };
 
   const handleSave = async () => {
     if (!title.trim()) {
-      toast.error('Please enter an article title');
+      toast.error("Please enter an article title");
       return;
     }
 
     setSaving(true);
     try {
-      const res = await fetch('/api/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
           slug,
@@ -120,61 +136,73 @@ export default function PanicNewPostPage() {
 
       const data = await res.json();
       if (data.success && data.post) {
-        toast.success('Article created successfully');
+        toast.success("Article created successfully");
         router.push(`/panic/posts/${data.post.id}`);
       } else {
-        toast.error(data.error || 'Failed to create article');
+        toast.error(data.error || "Failed to create article");
       }
     } catch (err: any) {
-      toast.error(err.message || 'Creation error');
+      toast.error(err.message || "Creation error");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div className="flex items-center gap-3">
           <Link href="/panic/posts">
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0" title="Back to Articles">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title="Back to Articles"
+            >
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <Badge variant={status === 'published' ? 'default' : 'secondary'} className="capitalize text-[11px] font-normal">
+              <Badge
+                variant={status === "published" ? "default" : "secondary"}
+                className="capitalize text-[11px] font-normal"
+              >
                 {status}
               </Badge>
-              <h1 className="text-base font-semibold text-foreground">Create New Publication</h1>
+              <h1 className="text-base font-semibold text-foreground">
+                Create New Publication
+              </h1>
             </div>
-            <p className="text-xs text-muted-foreground">Draft a new article, analysis, or guide with AI Copilot</p>
+            <p className="text-xs text-muted-foreground">
+              Draft a new article, analysis, or guide with AI Copilot
+            </p>
           </div>
         </div>
 
         {/* Tab Switcher */}
         <div className="flex items-center rounded-lg border bg-muted/40 p-0.5 text-xs">
           <Button
-            variant={activeTab === 'editor' ? 'secondary' : 'ghost'}
+            variant={activeTab === "editor" ? "secondary" : "ghost"}
             size="sm"
-            onClick={() => setActiveTab('editor')}
+            onClick={() => setActiveTab("editor")}
           >
             Visual Editor
           </Button>
           <Button
-            variant={activeTab === 'ai_aeo' ? 'secondary' : 'ghost'}
+            variant={activeTab === "ai_aeo" ? "secondary" : "ghost"}
             size="sm"
-            onClick={() => setActiveTab('ai_aeo')}
+            onClick={() => setActiveTab("ai_aeo")}
             className="gap-1 text-primary"
           >
             <Sparkles className="size-3" />
             <span>AI & AEO Suite</span>
           </Button>
           <Button
-            variant={activeTab === 'metadata' ? 'secondary' : 'ghost'}
+            variant={activeTab === "metadata" ? "secondary" : "ghost"}
             size="sm"
-            onClick={() => setActiveTab('metadata')}
+            onClick={() => setActiveTab("metadata")}
           >
             Publishing & SEO
           </Button>
@@ -188,7 +216,7 @@ export default function PanicNewPostPage() {
             className="gap-1.5 font-medium"
           >
             <Save className="w-3.5 h-3.5" />
-            <span>{saving ? 'Creating...' : 'Publish / Save Draft'}</span>
+            <span>{saving ? "Creating..." : "Publish / Save Draft"}</span>
           </Button>
         </div>
       </div>
@@ -197,7 +225,7 @@ export default function PanicNewPostPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Main Left Column (Col 8) */}
         <div className="lg:col-span-8 space-y-4">
-          {activeTab === 'editor' && (
+          {activeTab === "editor" && (
             <div className="space-y-4">
               {/* Frameless Large Title */}
               <div className="space-y-3">
@@ -206,7 +234,7 @@ export default function PanicNewPostPage() {
                   value={title}
                   onChange={(e) => {
                     handleTitleChange(e.target.value);
-                    e.target.style.height = 'auto';
+                    e.target.style.height = "auto";
                     e.target.style.height = `${e.target.scrollHeight}px`;
                   }}
                   placeholder="Article Title..."
@@ -217,7 +245,9 @@ export default function PanicNewPostPage() {
                 <div className="flex flex-wrap items-center gap-3 p-2.5 rounded-lg border border-border bg-card text-xs">
                   <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
                     <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    <span className="text-muted-foreground truncate">fabelo.testworkz.com/</span>
+                    <span className="text-muted-foreground truncate">
+                      fabelo.testworkz.com/
+                    </span>
                     <input
                       type="text"
                       value={slug}
@@ -258,7 +288,7 @@ export default function PanicNewPostPage() {
             </div>
           )}
 
-          {activeTab === 'ai_aeo' && (
+          {activeTab === "ai_aeo" && (
             <div className="space-y-6">
               <AeoScoreMeter
                 title={title}
@@ -279,11 +309,13 @@ export default function PanicNewPostPage() {
             </div>
           )}
 
-          {activeTab === 'metadata' && (
+          {activeTab === "metadata" && (
             <div className="space-y-4">
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold">SEO & Google Search Snippet</CardTitle>
+                  <CardTitle className="text-sm font-semibold">
+                    SEO & Google Search Snippet
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-1.5">
@@ -291,12 +323,14 @@ export default function PanicNewPostPage() {
                     <Input
                       value={metaTitle}
                       onChange={(e) => setMetaTitle(e.target.value)}
-                      placeholder={title || 'Meta Title for Search Engines'}
+                      placeholder={title || "Meta Title for Search Engines"}
                       className="text-xs"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Meta Description</Label>
+                    <Label className="text-xs font-semibold">
+                      Meta Description
+                    </Label>
                     <Textarea
                       rows={3}
                       value={metaDescription}
@@ -342,7 +376,7 @@ export default function PanicNewPostPage() {
               className="gap-1.5 text-xs text-primary font-semibold shrink-0"
             >
               <Bot className="size-3.5" />
-              <span>{generatingAi ? 'Generating...' : 'Auto-Fill'}</span>
+              <span>{generatingAi ? "Generating..." : "Auto-Fill"}</span>
             </Button>
           </div>
 
@@ -371,8 +405,12 @@ export default function PanicNewPostPage() {
                 <div className="space-y-1.5">
                   <Label className="text-xs">Editorial Category</Label>
                   <select
-                    value={categoryId || ''}
-                    onChange={(e) => setCategoryId(e.target.value ? parseInt(e.target.value, 10) : null)}
+                    value={categoryId || ""}
+                    onChange={(e) =>
+                      setCategoryId(
+                        e.target.value ? parseInt(e.target.value, 10) : null,
+                      )
+                    }
                     className="w-full h-8 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary"
                   >
                     <option value="">Select Category...</option>
@@ -439,15 +477,15 @@ export default function PanicNewPostPage() {
                 size="xs"
                 onClick={async () => {
                   if (!title.trim()) {
-                    toast.error('Please enter an article title first');
+                    toast.error("Please enter an article title first");
                     return;
                   }
                   try {
-                    const res = await fetch('/api/ai/copilot', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+                    const res = await fetch("/api/ai/copilot", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
-                        action: 'generateSeoMeta',
+                        action: "generateSeoMeta",
                         title,
                         slug,
                         contentHtml,
@@ -457,11 +495,12 @@ export default function PanicNewPostPage() {
                     const data = await res.json();
                     if (data.success) {
                       if (data.metaTitle) setMetaTitle(data.metaTitle);
-                      if (data.metaDescription) setMetaDescription(data.metaDescription);
-                      toast.success('Dynamic AI SEO metadata generated!');
+                      if (data.metaDescription)
+                        setMetaDescription(data.metaDescription);
+                      toast.success("Dynamic AI SEO metadata generated!");
                     }
                   } catch (e) {
-                    toast.error('AI synthesis failed');
+                    toast.error("AI synthesis failed");
                   }
                 }}
                 className="h-6 gap-1 text-[11px] text-primary hover:text-primary font-medium"
