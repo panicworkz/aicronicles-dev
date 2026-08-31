@@ -21,6 +21,7 @@ import {
   Type,
   Check,
   X,
+  ZoomIn,
 } from 'lucide-react';
 
 interface ArticleLiveWrapperProps {
@@ -42,6 +43,21 @@ interface ArticleLiveWrapperProps {
   } | null;
 }
 
+// Clean and normalize heading IDs so TOC anchor links match 100%
+export function cleanHeadingIds(rawHtml: string): string {
+  if (!rawHtml) return '';
+  return rawHtml.replace(/<h([1-6])([^>]*)id=["']([^"']+)["']([^>]*)>/gi, (match, level, before, id, after) => {
+    let cleanId = decodeURIComponent(id);
+    cleanId = cleanId
+      .toLowerCase()
+      .replace(/[—–]/g, '-')
+      .replace(/[^a-z0-9-_]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    return `<h${level}${before}id="${cleanId}"${after}>`;
+  });
+}
+
 export function ArticleLiveWrapper({
   initialTitle,
   initialContentHtml,
@@ -55,6 +71,19 @@ export function ArticleLiveWrapper({
   const [coverUrl, setCoverUrl] = useState(initialCoverUrl);
   const [isLiveMode, setIsLiveMode] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // Lightbox Modal State
+  const [lightboxData, setLightboxData] = useState<{
+    open: boolean;
+    src: string;
+    alt: string;
+    caption?: string;
+  }>({
+    open: false,
+    src: '',
+    alt: '',
+    caption: '',
+  });
 
   // Floating selection bubble menu state
   const [bubbleMenu, setBubbleMenu] = useState<{
@@ -77,12 +106,15 @@ export function ArticleLiveWrapper({
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const savedRangeRef = useRef<Range | null>(null);
 
+  const formattedHtml = cleanHeadingIds(initialContentHtml);
+
   // Helper to format raw HTML with GPU-accelerated CSS hover overlays for all images
   const formatContentWithLiveImages = (rawHtml: string) => {
     if (!rawHtml || typeof window === 'undefined') return rawHtml;
     try {
+      const normalized = cleanHeadingIds(rawHtml);
       const parser = new DOMParser();
-      const doc = parser.parseFromString(rawHtml, 'text/html');
+      const doc = parser.parseFromString(normalized, 'text/html');
       const imgs = doc.querySelectorAll('img');
 
       imgs.forEach((img) => {
@@ -265,6 +297,17 @@ export function ArticleLiveWrapper({
     };
   }, [isLiveMode, linkInputOpen]);
 
+  // Keydown listener for Lightbox (ESC to close)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && lightboxData.open) {
+        setLightboxData({ open: false, src: '', alt: '', caption: '' });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxData.open]);
+
   // Execute rich text formatting commands and preserve selection
   const execFormat = (command: string, value: string | undefined = undefined) => {
     const sel = window.getSelection();
@@ -379,6 +422,8 @@ export function ArticleLiveWrapper({
 
   const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
+    
+    // Live Manage button clicked
     const btn = target.closest('button[data-panic-manage="true"]');
     if (btn) {
       e.preventDefault();
@@ -388,6 +433,23 @@ export function ArticleLiveWrapper({
       const title = btn.getAttribute('data-title') || '';
       const caption = btn.getAttribute('data-caption') || '';
       triggerOpenImageStudio(src, alt, title, caption, false);
+      return;
+    }
+
+    // Image clicked in live reader mode -> Open Lightbox!
+    if (target.tagName === 'IMG' && !isLiveMode) {
+      e.preventDefault();
+      const src = target.getAttribute('src') || '';
+      const alt = target.getAttribute('alt') || '';
+      const figure = target.closest('figure');
+      const figcaption = figure?.querySelector('figcaption');
+      const caption = figcaption ? figcaption.innerHTML : target.getAttribute('data-caption') || '';
+      setLightboxData({
+        open: true,
+        src,
+        alt,
+        caption,
+      });
     }
   };
 
@@ -579,6 +641,50 @@ export function ArticleLiveWrapper({
     );
   };
 
+  // Render Full-Screen Lightbox Portal
+  const renderLightboxPortal = () => {
+    if (!lightboxData.open || !mounted) return null;
+
+    return createPortal(
+      <div
+        className="fixed inset-0 z-[100000] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-200"
+        onClick={() => setLightboxData({ open: false, src: '', alt: '', caption: '' })}
+      >
+        {/* Close Button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setLightboxData({ open: false, src: '', alt: '', caption: '' });
+          }}
+          className="absolute top-5 right-5 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition cursor-pointer"
+          title="Close (Esc)"
+        >
+          <X className="size-6" />
+        </button>
+
+        {/* Zoomed Image Container */}
+        <div
+          className="relative max-w-5xl max-h-[85vh] flex flex-col items-center justify-center animate-in zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <img
+            src={lightboxData.src}
+            alt={lightboxData.alt}
+            className="max-h-[75vh] w-auto max-w-full rounded-xl object-contain shadow-2xl border border-white/10"
+          />
+          {lightboxData.caption && (
+            <div
+              className="mt-4 text-xs sm:text-sm text-neutral-300 text-center max-w-3xl leading-relaxed italic"
+              dangerouslySetInnerHTML={{ __html: lightboxData.caption }}
+            />
+          )}
+        </div>
+      </div>,
+      document.body
+    );
+  };
+
   return (
     <div className="gh-viewport min-h-screen bg-background text-foreground transition-colors duration-200">
       {isLiveMode && (
@@ -590,6 +696,9 @@ export function ArticleLiveWrapper({
 
       {/* Floating Selection Bubble Formatting Toolbar */}
       {renderBubblePortal()}
+
+      {/* Full-Screen Image / Chart Lightbox */}
+      {renderLightboxPortal()}
 
       {/* Main Ghost Article */}
       <main className="gh-main py-10">
@@ -650,6 +759,17 @@ export function ArticleLiveWrapper({
                 <img
                   src={coverUrl}
                   alt={initialTitle}
+                  onClick={(e) => {
+                    if (!isLiveMode) {
+                      e.preventDefault();
+                      setLightboxData({
+                        open: true,
+                        src: coverUrl,
+                        alt: initialTitle,
+                        caption: '<a href="https://www.pexels.com/photo/a-person-typing-on-the-laptop-7283714/" target="_blank" rel="noopener noreferrer">Photo by www.kaboompics.com on Pexels</a>',
+                      });
+                    }
+                  }}
                   onError={(e) => {
                     e.currentTarget.src = 'https://fabelo.io/content/images/size/w1200/2026/07/pexels-photo-7283714.webp';
                   }}
@@ -688,7 +808,7 @@ export function ArticleLiveWrapper({
             className={`gh-content gh-canvas is-body ${
               isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/20 rounded-xl p-2 hover:bg-muted/20 transition cursor-text' : ''
             }`}
-            dangerouslySetInnerHTML={{ __html: initialContentHtml || '' }}
+            dangerouslySetInnerHTML={{ __html: formattedHtml || '' }}
           />
         </article>
       </main>
