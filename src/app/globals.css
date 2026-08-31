@@ -1,5 +1,4 @@
-@import "../styles/ghost.css";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,700&family=Inter:wght@300;400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,72 +6,266 @@
 
 @layer base {
   :root {
-    --background: oklch(0.98 0.01 240);
-    --foreground: oklch(0.15 0.03 260);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.15 0.03 260);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.15 0.03 260);
-    --primary: oklch(0.55 0.22 260);
-    --primary-foreground: oklch(0.98 0 0);
-    --secondary: oklch(0.95 0.02 240);
-    --secondary-foreground: oklch(0.35 0.08 260);
-    --muted: oklch(0.95 0.02 240);
-    --muted-foreground: oklch(0.55 0.05 260);
-    --accent: oklch(0.92 0.05 240);
-    --accent-foreground: oklch(0.25 0.08 260);
-    --destructive: oklch(0.58 0.24 27);
-    --destructive-foreground: oklch(0.98 0 0);
-    --border: oklch(0.9 0.03 240);
-    --input: oklch(0.9 0.03 240);
-    --ring: oklch(0.55 0.22 260);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.97 0.01 240);
-    --sidebar-foreground: oklch(0.2 0.03 260);
-    --sidebar-primary: oklch(0.55 0.22 260);
-    --sidebar-primary-foreground: oklch(0.98 0 0);
-    --sidebar-accent: oklch(0.92 0.04 240);
-    --sidebar-accent-foreground: oklch(0.2 0.08 260);
-    --sidebar-border: oklch(0.88 0.03 240);
-    --sidebar-ring: oklch(0.55 0.22 260);
+    --background: #fafafa;
+    --foreground: #09090b;
+    --card: #ffffff;
+    --card-foreground: #09090b;
+    --popover: #ffffff;
+    --popover-foreground: #09090b;
+    --primary: #f59e0b; /* Amber Gold Luxury Accent */
+    --primary-foreground: #000000;
+    --secondary: #f4f4f5;
+    --secondary-foreground: #18181b;
+    --muted: #f4f4f5;
+    --muted-foreground: #71717a;
+    --accent: #f4f4f5;
+    --accent-foreground: #18181b;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #e4e4e7;
+    --input: #e4e4e7;
+    --ring: #f59e0b;
+    --radius: 1rem;
   }
 
   .dark {
-    --background: oklch(0.13 0.03 260);
-    --foreground: oklch(0.95 0.01 240);
-    --card: oklch(0.18 0.03 260);
-    --card-foreground: oklch(0.95 0.01 240);
-    --popover: oklch(0.18 0.03 260);
-    --popover-foreground: oklch(0.95 0.01 240);
-    --primary: oklch(0.6 0.2 260);
-    --primary-foreground: oklch(0.13 0.03 260);
-    --secondary: oklch(0.22 0.04 260);
-    --secondary-foreground: oklch(0.95 0.01 240);
-    --muted: oklch(0.22 0.04 260);
-    --muted-foreground: oklch(0.65 0.04 260);
-    --accent: oklch(0.25 0.06 260);
-    --accent-foreground: oklch(0.95 0.01 240);
-    --destructive: oklch(0.58 0.24 27);
-    --destructive-foreground: oklch(0.95 0.01 240);
-    --border: oklch(0.25 0.04 260);
-    --input: oklch(0.28 0.04 260);
-    --ring: oklch(0.6 0.2 260);
-    --sidebar: oklch(0.15 0.03 260);
-    --sidebar-foreground: oklch(0.9 0.02 240);
-    --sidebar-primary: oklch(0.6 0.2 260);
-    --sidebar-primary-foreground: oklch(0.13 0.03 260);
-    --sidebar-accent: oklch(0.22 0.04 260);
-    --sidebar-accent-foreground: oklch(0.9 0.02 240);
-    --sidebar-border: oklch(0.22 0.04 260);
-    --sidebar-ring: oklch(0.6 0.2 260);
+    --background: #09090b;
+    --foreground: #fafafa;
+    --card: #121215;
+    --card-foreground: #fafafa;
+    --popover: #121215;
+    --popover-foreground: #fafafa;
+    --primary: #f59e0b;
+    --primary-foreground: #000000;
+    --secondary: #1f1f23;
+    --secondary-foreground: #fafafa;
+    --muted: #18181b;
+    --muted-foreground: #a1a1aa;
+    --accent: #1f1f23;
+    --accent-foreground: #fafafa;
+    --destructive: #7f1d1d;
+    --destructive-foreground: #fafafa;
+    --border: #27272a;
+    --input: #27272a;
+    --ring: #f59e0b;
   }
 
   * {
     border-color: var(--border);
   }
+
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  h1, h2, h3, h4, h5, h6, .font-serif, .font-display {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* =========================================================================
+   FABELO BESPOKE EDITORIAL MAGAZINE PROSE SYSTEM
+   ========================================================================= */
+.fabelo-magazine-article {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.85;
+  color: #27272a;
+}
+
+.dark .fabelo-magazine-article {
+  color: #d4d4d8;
+}
+
+.fabelo-magazine-article p {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.125rem;
+  line-height: 1.85;
+}
+
+.fabelo-magazine-article h1,
+.fabelo-magazine-article h2,
+.fabelo-magazine-article h3,
+.fabelo-magazine-article h4 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  color: #09090b;
+  letter-spacing: -0.025em;
+  scroll-margin-top: 6rem;
+}
+
+.dark .fabelo-magazine-article h1,
+.dark .fabelo-magazine-article h2,
+.dark .fabelo-magazine-article h3,
+.dark .fabelo-magazine-article h4 {
+  color: #ffffff;
+}
+
+.fabelo-magazine-article h2 {
+  font-size: 1.85rem;
+  line-height: 1.25;
+  margin-top: 3rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.fabelo-magazine-article h3 {
+  font-size: 1.45rem;
+  line-height: 1.3;
+  margin-top: 2.25rem;
+  margin-bottom: 1rem;
+}
+
+.fabelo-magazine-article strong,
+.fabelo-magazine-article b {
+  font-weight: 700;
+  color: #09090b;
+}
+
+.dark .fabelo-magazine-article strong,
+.dark .fabelo-magazine-article b {
+  color: #ffffff;
+}
+
+.fabelo-magazine-article a {
+  color: #f59e0b;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.fabelo-magazine-article a:hover {
+  color: #d97706;
+}
+
+.fabelo-magazine-article ul,
+.fabelo-magazine-article ol {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-left: 1.75rem;
+}
+
+.fabelo-magazine-article ul {
+  list-style-type: disc;
+}
+
+.fabelo-magazine-article ol {
+  list-style-type: decimal;
+}
+
+.fabelo-magazine-article li {
+  margin-top: 0.6rem;
+  margin-bottom: 0.6rem;
+  line-height: 1.75;
+}
+
+.fabelo-magazine-article blockquote {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  padding: 1.25rem 1.75rem;
+  border-left: 4px solid #f59e0b;
+  background: var(--muted);
+  border-radius: 0 1rem 1rem 0;
+  font-style: italic;
+  font-size: 1.15rem;
+  color: var(--foreground);
+}
+
+.fabelo-magazine-article img {
+  width: 100%;
+  height: auto;
+  border-radius: 1.25rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: zoom-in;
+}
+
+.fabelo-magazine-article img:hover {
+  transform: scale(1.01);
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.15);
+}
+
+.fabelo-magazine-article figure {
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.fabelo-magazine-article figcaption {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
+.fabelo-magazine-article table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.fabelo-magazine-article th {
+  background: var(--muted);
+  padding: 0.85rem 1rem;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.fabelo-magazine-article td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+.fabelo-magazine-article tr:last-child td {
+  border-bottom: none;
+}
+
+.fabelo-magazine-article tr:nth-child(even) {
+  background: rgba(120, 120, 120, 0.03);
+}
+
+.fabelo-magazine-article pre,
+.fabelo-magazine-article code {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.fabelo-magazine-article pre {
+  background: #18181b;
+  color: #fafafa;
+  padding: 1.25rem 1.5rem;
+  border-radius: 1rem;
+  overflow-x: auto;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  border: 1px solid #27272a;
+}
+
+.fabelo-magazine-article :not(pre) > code {
+  background: var(--muted);
+  color: #f59e0b;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.4rem;
+  font-size: 0.875em;
+  font-weight: 600;
 }
