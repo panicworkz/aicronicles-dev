@@ -8,6 +8,7 @@ import MagazineFooter from "@/components/magazine/MagazineFooter";
 import { PostCard, HorizontalStoryCard, AdSlot, fmtDate } from "@/components/magazine/PostCard";
 import type { Metadata } from "next";
 import { Sparkles, ArrowLeft, BookOpen, Layers } from "lucide-react";
+import ClientForm from "@/components/magazine/ClientForm";
 
 export const dynamic = "force-dynamic";
 
@@ -210,10 +211,7 @@ export default async function TagArchivePage({ params }: PageProps) {
               </p>
             </div>
 
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              className="flex flex-col sm:flex-row gap-2 w-full md:w-auto shrink-0"
-            >
+            <ClientForm className="flex flex-col sm:flex-row gap-2 w-full md:w-auto shrink-0">
               <input
                 type="email"
                 required
@@ -226,7 +224,7 @@ export default async function TagArchivePage({ params }: PageProps) {
               >
                 Join Track
               </button>
-            </form>
+            </ClientForm>
           </div>
         </section>
       </main>

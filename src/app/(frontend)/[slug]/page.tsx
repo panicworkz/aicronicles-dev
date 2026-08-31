@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db, schema } from "@/db";
 import { eq, desc, ne, and } from "drizzle-orm";
 import Link from "next/link";
+import ClientForm from "@/components/magazine/ClientForm";
 import type { Metadata } from "next";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
@@ -341,7 +342,7 @@ export default async function ArticlePage({ params }: PageProps) {
               <p className="text-xs text-white/85 leading-relaxed">
                 Join 42K+ readers. Two high-impact briefings delivered weekly.
               </p>
-              <form onSubmit={(e) => e.preventDefault()} className="space-y-2 pt-1">
+              <ClientForm className="space-y-2 pt-1">
                 <input
                   type="email"
                   required
@@ -354,7 +355,7 @@ export default async function ArticlePage({ params }: PageProps) {
                 >
                   Join Free
                 </button>
-              </form>
+              </ClientForm>
             </div>
 
             {/* Half-Page Skyscraper Sponsor Unit (300x600) */}

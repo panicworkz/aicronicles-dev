@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db, schema } from "@/db";
 import { desc, eq } from "drizzle-orm";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
+import ClientForm from "@/components/magazine/ClientForm";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
 import {
   PostCard,
@@ -110,10 +111,7 @@ export default async function HomePage() {
                   Join 42,000+ ambitious operators, builders, and executives. Field-tested frameworks, actionable money tactics, and curated AI workflows twice a week.
                 </p>
 
-                <form
-                  onSubmit={(e) => e.preventDefault()}
-                  className="mt-8 flex flex-col sm:flex-row gap-3 max-w-lg"
-                >
+                <ClientForm className="mt-8 flex flex-col sm:flex-row gap-3 max-w-lg">
                   <div className="relative flex-1">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                     <input
@@ -129,7 +127,7 @@ export default async function HomePage() {
                   >
                     Subscribe Free
                   </button>
-                </form>
+                </ClientForm>
 
                 <div className="mt-5 flex flex-wrap items-center gap-6 text-[12.5px] text-white/75">
                   <div className="flex items-center gap-1.5">
