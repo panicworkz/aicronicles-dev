@@ -7,7 +7,6 @@ import type { Metadata } from 'next';
 import { ArticleLiveWrapper } from './ArticleLiveWrapper';
 import { MagazineHeader } from '@/components/magazine/MagazineHeader';
 import { MagazineFooter } from '@/components/magazine/MagazineFooter';
-import { Clock, ArrowRight, Share2, Sparkles, BookOpen } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,8 +80,8 @@ export default async function ArticleDetailPage({ params }: PageProps) {
       <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-white transition-colors duration-200">
         <MagazineHeader />
 
-        {/* Main Article Container */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Content Layout Container: Exactly 1536px */}
+        <main className="max-w-[1536px] mx-auto px-6 lg:px-12 py-10">
           <ArticleLiveWrapper
             initialTitle={post.title}
             initialContentHtml={post.contentHtml || ''}
@@ -94,27 +93,27 @@ export default async function ArticleDetailPage({ params }: PageProps) {
             category={category}
           />
 
-          {/* Recommended / Related Stories Grid */}
+          {/* Recommended / Related Stories Grid (1536px canvas) */}
           {relatedPosts.length > 0 && (
-            <section className="border-t border-border/80 mt-16 pt-12 space-y-8 max-w-4xl mx-auto">
-              <div className="flex items-center justify-between border-b border-border pb-4">
-                <div className="space-y-1">
+            <section className="border-t border-border/80 mt-20 pt-16 space-y-10 max-w-5xl mx-auto">
+              <div className="flex items-center justify-between border-b border-border pb-5">
+                <div className="space-y-1.5">
                   <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider">Related Dispatches</span>
-                  <h3 className="text-2xl font-black font-serif tracking-tight text-foreground">
+                  <h3 className="text-2xl sm:text-3xl font-black font-serif tracking-tight text-foreground">
                     Continue Reading on Fabelo
                   </h3>
                 </div>
-                <Link href="/" className="text-xs font-semibold text-primary hover:underline">
+                <Link href="/" className="text-sm font-bold text-primary hover:underline">
                   All Editorial →
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {relatedPosts.map((rel) => (
                   <Link
                     key={rel.id}
                     href={`/${rel.slug}`}
-                    className="group flex flex-col rounded-xl overflow-hidden border border-border bg-card hover:border-primary/50 transition duration-300 shadow-xs"
+                    className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-card hover:border-primary/50 transition duration-300 shadow-sm"
                   >
                     <div className="aspect-[16/10] w-full overflow-hidden bg-muted/40 border-b border-border/60">
                       <img
@@ -124,16 +123,16 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                         loading="lazy"
                       />
                     </div>
-                    <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                      <div className="space-y-1.5">
-                        <span className="text-[11px] font-mono text-primary font-semibold">
+                    <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                      <div className="space-y-2">
+                        <span className="text-xs font-mono text-primary font-bold">
                           {rel.readingTime || '6 min read'}
                         </span>
-                        <h4 className="text-sm font-bold font-serif text-foreground group-hover:text-primary transition line-clamp-2 leading-snug">
+                        <h4 className="text-base font-bold font-serif text-foreground group-hover:text-primary transition line-clamp-2 leading-snug">
                           {rel.title}
                         </h4>
                       </div>
-                      <span className="text-xs font-semibold text-primary group-hover:translate-x-1 transition inline-flex items-center gap-1">
+                      <span className="text-xs font-bold text-primary group-hover:translate-x-1 transition inline-flex items-center gap-1">
                         Read Story →
                       </span>
                     </div>
@@ -142,7 +141,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
               </div>
             </section>
           )}
-        </div>
+        </main>
 
         <MagazineFooter />
       </div>
@@ -159,15 +158,17 @@ export default async function ArticleDetailPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <MagazineHeader />
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <header className="mb-10 space-y-3 border-b border-border pb-6">
-          <span className="text-xs font-mono uppercase tracking-widest text-primary font-bold">Fabelo Editorial</span>
-          <h1 className="text-4xl sm:text-5xl font-black font-serif tracking-tight text-foreground">{page.title}</h1>
-        </header>
-        <div
-          className="gh-content is-body leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: page.contentHtml || '' }}
-        />
+      <main className="max-w-[1536px] mx-auto px-6 lg:px-12 py-16">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <header className="space-y-3 border-b border-border pb-6">
+            <span className="text-xs font-mono uppercase tracking-widest text-primary font-bold">Fabelo Editorial</span>
+            <h1 className="text-4xl sm:text-5xl font-black font-serif tracking-tight text-foreground">{page.title}</h1>
+          </header>
+          <div
+            className="gh-content is-body leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: page.contentHtml || '' }}
+          />
+        </div>
       </main>
       <MagazineFooter />
     </div>

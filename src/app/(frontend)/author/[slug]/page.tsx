@@ -5,7 +5,7 @@ import { desc, eq } from 'drizzle-orm';
 import Link from 'next/link';
 import { MagazineHeader } from '@/components/magazine/MagazineHeader';
 import { MagazineFooter } from '@/components/magazine/MagazineFooter';
-import { Clock, ArrowRight, UserCheck, Sparkles, BookOpen } from 'lucide-react';
+import { UserCheck } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,38 +54,39 @@ export default async function AuthorArchivePage({ params }: PageProps) {
     <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-white transition-colors duration-200">
       <MagazineHeader />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+      {/* Main Content Layout Container: Exactly 1536px */}
+      <main className="max-w-[1536px] mx-auto px-6 lg:px-12 py-12 space-y-16">
         {/* Author Bio Header Card */}
-        <div className="rounded-3xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-8 sm:p-12 flex flex-col sm:flex-row items-start sm:items-center gap-8 shadow-xs">
-          <div className="size-24 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-3xl font-black text-primary uppercase overflow-hidden shrink-0 shadow-md">
+        <div className="rounded-3xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-8 sm:p-14 flex flex-col sm:flex-row items-start sm:items-center gap-10 shadow-sm">
+          <div className="size-28 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-3xl font-black text-primary uppercase overflow-hidden shrink-0 shadow-md">
             {author?.avatarUrl ? (
               <img src={author.avatarUrl} alt={author.name} className="w-full h-full object-cover" />
             ) : (
               author?.name?.slice(0, 2) || 'ED'
             )}
           </div>
-          <div className="space-y-2 flex-1">
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-mono font-bold bg-primary/10 text-primary">
-              <UserCheck className="size-3" />
+          <div className="space-y-3 flex-1">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-mono font-bold bg-primary/10 text-primary">
+              <UserCheck className="size-3.5" />
               <span>{author?.role || 'Senior Editorial Contributor'}</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black font-serif tracking-tight text-foreground">
+            <h1 className="text-4xl sm:text-5xl font-black font-serif tracking-tight text-foreground">
               {author?.name || slug.replace(/-/g, ' ')}
             </h1>
-            <p className="text-muted-foreground text-sm sm:text-base max-w-3xl leading-relaxed">
+            <p className="text-muted-foreground text-base sm:text-lg max-w-3xl leading-relaxed">
               {author?.bio || 'Writes extensively on AI agent workflows, software architecture, personal finance systems, and high-leverage career engineering.'}
             </p>
-            <div className="pt-2 text-xs font-mono text-muted-foreground font-semibold">
+            <div className="pt-2 text-xs font-mono text-muted-foreground font-bold">
               {posts.length} Authored Publications
             </div>
           </div>
         </div>
 
         {/* Publications Grid */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-border pb-4">
-            <h2 className="text-xl sm:text-2xl font-bold font-serif">Published Guides &amp; Analyses</h2>
-            <span className="text-xs font-mono text-muted-foreground">{posts.length} articles</span>
+        <div className="space-y-8">
+          <div className="flex items-center justify-between border-b border-border pb-5">
+            <h2 className="text-2xl sm:text-3xl font-black font-serif">Published Guides &amp; Analyses</h2>
+            <span className="text-xs font-mono text-muted-foreground font-bold">{posts.length} articles</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -93,7 +94,7 @@ export default async function AuthorArchivePage({ params }: PageProps) {
               <Link
                 key={post.id}
                 href={`/${post.slug}`}
-                className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-card hover:border-primary/50 transition duration-300 shadow-xs"
+                className="group flex flex-col rounded-3xl overflow-hidden border border-border bg-card hover:border-primary/50 transition duration-300 shadow-sm"
               >
                 <div className="aspect-[16/10] w-full overflow-hidden bg-muted/40 border-b border-border/60">
                   <img
@@ -103,23 +104,23 @@ export default async function AuthorArchivePage({ params }: PageProps) {
                     loading="lazy"
                   />
                 </div>
-                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-mono text-primary font-semibold">
+                <div className="p-8 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2.5">
+                    <div className="flex items-center gap-2 text-xs font-mono text-primary font-bold">
                       <span>GUIDE</span>
                       <span>•</span>
                       <span>{post.readingTime || '7 min read'}</span>
                     </div>
-                    <h3 className="text-lg font-bold font-serif text-foreground group-hover:text-primary transition line-clamp-2 leading-snug">
+                    <h3 className="text-xl font-bold font-serif text-foreground group-hover:text-primary transition line-clamp-2 leading-snug">
                       {post.title}
                     </h3>
-                    <p className="text-muted-foreground text-xs sm:text-sm line-clamp-3 leading-relaxed">
+                    <p className="text-muted-foreground text-sm line-clamp-3 leading-relaxed">
                       {post.excerpt}
                     </p>
                   </div>
-                  <div className="flex items-center justify-between pt-3 border-t border-border/40 text-xs font-medium text-muted-foreground">
+                  <div className="flex items-center justify-between pt-4 border-t border-border/40 text-xs font-semibold text-muted-foreground">
                     <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '2026'}</span>
-                    <span className="text-primary font-semibold group-hover:translate-x-1 transition inline-flex items-center gap-1">
+                    <span className="text-primary font-bold group-hover:translate-x-1 transition inline-flex items-center gap-1">
                       Read Guide →
                     </span>
                   </div>
