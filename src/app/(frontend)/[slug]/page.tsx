@@ -65,53 +65,117 @@ export default async function ArticleDetailPage({ params }: PageProps) {
     }
 
     return (
-      <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-white transition-colors duration-200">
-        {/* Ghost Navigation Header */}
-        <header id="gh-navigation" className="gh-navigation is-stacked gh-outer border-b border-border/40 bg-background/95 backdrop-blur-md sticky top-0 z-50">
-          <div className="gh-navigation-inner gh-inner max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <div className="gh-navigation-brand flex items-center gap-6">
-              <Link className="gh-navigation-logo is-title text-2xl font-black font-serif tracking-tight text-foreground flex items-center gap-0.5" href="/">
-                FABELO<span className="text-primary">.</span>
+      <div className="gh-site min-h-screen bg-background text-foreground transition-colors duration-200">
+        {/* Ghost 1:1 Navigation Header */}
+        <header id="gh-navigation" className="gh-navigation is-stacked gh-outer">
+          <div className="gh-navigation-inner gh-inner">
+            <div className="gh-navigation-brand">
+              <Link className="gh-navigation-logo is-title" href="/">
+                <img
+                  src="https://fabelo.io/content/images/2026/04/fabelo-logo-256.webp"
+                  alt="Fabelo"
+                  className="h-8 w-auto object-contain"
+                />
               </Link>
-              <nav className="gh-navigation-menu hidden md:flex items-center space-x-6 text-sm font-medium">
-                <Link href="/tag/ai-tech" className="hover:text-primary transition">AI & Tech</Link>
-                <Link href="/tag/personal-finance" className="hover:text-primary transition">Personal Finance</Link>
-                <Link href="/tag/career" className="hover:text-primary transition">Career</Link>
-              </nav>
             </div>
-            <div className="gh-navigation-actions flex items-center space-x-4 text-xs font-mono text-muted-foreground">
-              <Link href="/llms.txt" className="text-primary hover:underline font-medium">AEO / llms.txt</Link>
-              <Link href={`/api/llm/${post.slug}`} className="hover:text-foreground">AI Raw View</Link>
-              <Link href={`/panic/posts/${post.id}`} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-sans font-semibold hover:bg-primary/90 transition">Edit in CMS</Link>
+
+            <nav className="gh-navigation-menu">
+              <ul className="nav">
+                <li className="nav-personal-finance">
+                  <Link href="/tag/personal-finance">Personal Finance</Link>
+                </li>
+                <li className="nav-career">
+                  <Link href="/tag/career">Career</Link>
+                </li>
+                <li className="nav-ai-tech">
+                  <Link href="/tag/ai-tech">AI &amp; Tech</Link>
+                </li>
+                <li className="nav-about">
+                  <Link href="/about">About</Link>
+                </li>
+              </ul>
+            </nav>
+
+            <div className="gh-navigation-actions">
+              <div className="gh-navigation-members flex items-center gap-3">
+                <Link href={`/api/llm/${post.slug}`} className="text-xs font-mono text-muted-foreground hover:text-foreground hidden sm:inline">
+                  AI Raw
+                </Link>
+                <Link href={`/panic/posts/${post.id}`} className="gh-button gh-button-secondary text-xs">
+                  CMS Edit
+                </Link>
+              </div>
             </div>
           </div>
         </header>
 
-        {/* Article with Live Sync & Dynamic Theme Adaptation */}
-        <ArticleLiveWrapper
-          initialTitle={post.title}
-          initialContentHtml={post.contentHtml || ''}
-          initialCoverUrl={post.featuredImageUrl}
-          excerpt={post.excerpt}
-          readingTime={post.readingTime}
-          publishedAt={post.publishedAt ? post.publishedAt.toISOString() : null}
-          author={author}
-          category={category}
-        />
+        {/* Ghost Page Main Container */}
+        <div className="gh-page">
+          <ArticleLiveWrapper
+            initialTitle={post.title}
+            initialContentHtml={post.contentHtml || ''}
+            initialCoverUrl={post.featuredImageUrl}
+            excerpt={post.excerpt}
+            readingTime={post.readingTime}
+            publishedAt={post.publishedAt ? post.publishedAt.toISOString() : null}
+            author={author}
+            category={category}
+          />
+        </div>
 
-        {/* Ghost Footer */}
-        <footer className="gh-footer gh-outer border-t border-border/40 bg-muted/20 py-12 mt-20 text-muted-foreground text-sm">
-          <div className="gh-footer-inner gh-inner max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold font-serif text-foreground">FABELO<span className="text-primary">.</span></span>
-              <span>© {new Date().getFullYear()} Fabelo. All rights reserved.</span>
+        {/* Ghost 1:1 Footer */}
+        <footer className="gh-footer gh-outer">
+          <div className="gh-footer-inner gh-inner">
+            <div className="gh-footer-bar">
+              <span className="gh-footer-logo is-title">
+                <img
+                  src="https://fabelo.io/content/images/2026/04/fabelo-logo-256.webp"
+                  alt="Fabelo"
+                  className="h-7 w-auto object-contain"
+                />
+              </span>
+              <nav className="gh-footer-menu">
+                <ul className="nav">
+                  <li className="nav-advertise">
+                    <Link href="/advertise">Advertise</Link>
+                  </li>
+                  <li className="nav-sponsor">
+                    <Link href="/sponsor">Sponsor</Link>
+                  </li>
+                  <li className="nav-terms-conditions">
+                    <Link href="/terms-and-conditions">Terms &amp; conditions</Link>
+                  </li>
+                  <li className="nav-data-privacy">
+                    <Link href="/data-and-privacy">Data &amp; privacy</Link>
+                  </li>
+                </ul>
+              </nav>
+              <div className="gh-footer-copyright">
+                Powered by <Link href="/panic" className="font-semibold text-primary hover:underline">Panic CMS</Link>
+              </div>
             </div>
-            <div className="flex items-center space-x-6 text-xs">
-              <Link href="/" className="text-primary hover:underline font-medium">Home</Link>
-              <Link href="/tag/ai-tech" className="hover:underline">AI & Tech</Link>
-              <Link href="/tag/personal-finance" className="hover:underline">Personal Finance</Link>
-              <Link href="/tag/career" className="hover:underline">Career</Link>
-            </div>
+
+            <section className="gh-footer-signup">
+              <h2 className="gh-footer-signup-header is-title">
+                Fabelo
+              </h2>
+              <p className="gh-footer-signup-subhead is-body">
+                Personal finance tips, career strategies, and AI tool reviews for ambitious professionals.
+              </p>
+              <form className="gh-form">
+                <input
+                  className="gh-form-input"
+                  id="footer-email"
+                  name="email"
+                  type="email"
+                  placeholder="jamie@example.com"
+                  required
+                />
+                <button className="gh-button" type="button">
+                  <span>Subscribe</span>
+                </button>
+              </form>
+            </section>
           </div>
         </footer>
       </div>
@@ -126,21 +190,29 @@ export default async function ArticleDetailPage({ params }: PageProps) {
   if (!page) notFound();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-foreground font-serif">
-            FABELO<span className="text-primary">.</span>
-          </Link>
+    <div className="gh-site min-h-screen bg-background text-foreground">
+      <header id="gh-navigation" className="gh-navigation is-stacked gh-outer">
+        <div className="gh-navigation-inner gh-inner">
+          <div className="gh-navigation-brand">
+            <Link className="gh-navigation-logo is-title" href="/">
+              <img
+                src="https://fabelo.io/content/images/2026/04/fabelo-logo-256.webp"
+                alt="Fabelo"
+                className="h-8 w-auto"
+              />
+            </Link>
+          </div>
         </div>
       </header>
-      <article className="max-w-4xl mx-auto px-4 py-16">
-        <h1 className="text-4xl font-extrabold tracking-tight text-foreground mb-8 font-serif">{page.title}</h1>
-        <div
-          className="prose dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: page.contentHtml || '' }}
-        />
-      </article>
+      <div className="gh-page">
+        <article className="gh-article gh-canvas py-16">
+          <h1 className="gh-article-title is-title mb-8">{page.title}</h1>
+          <div
+            className="gh-content is-body"
+            dangerouslySetInnerHTML={{ __html: page.contentHtml || '' }}
+          />
+        </article>
+      </div>
     </div>
   );
 }

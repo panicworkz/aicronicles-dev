@@ -21,7 +21,6 @@ import {
   Type,
   Check,
   X,
-  ZoomIn,
 } from 'lucide-react';
 
 interface ArticleLiveWrapperProps {
@@ -43,7 +42,6 @@ interface ArticleLiveWrapperProps {
   } | null;
 }
 
-// Clean and normalize heading IDs so TOC anchor links match 100%
 export function cleanHeadingIds(rawHtml: string): string {
   if (!rawHtml) return '';
   return rawHtml.replace(/<h([1-6])([^>]*)id=["']([^"']+)["']([^>]*)>/gi, (match, level, before, id, after) => {
@@ -423,6 +421,37 @@ export function ArticleLiveWrapper({
   const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     
+    // Check if clicked an internal TOC anchor link
+    const link = target.closest('a');
+    if (link) {
+      const href = link.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        e.preventDefault();
+        const targetId = href.substring(1);
+        let el = document.getElementById(targetId) ||
+                 document.getElementById(decodeURIComponent(targetId)) ||
+                 document.getElementById(encodeURIComponent(targetId));
+        
+        if (!el) {
+          const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+          for (const h of headings) {
+            const hId = (h.getAttribute('id') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const cleanTarget = targetId.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (hId === cleanTarget || (h.textContent || '').toLowerCase().includes(targetId.toLowerCase().replace(/-/g, ' ').slice(0, 15))) {
+              el = h as HTMLElement;
+              break;
+            }
+          }
+        }
+
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          window.history.pushState(null, '', href);
+        }
+        return;
+      }
+    }
+
     // Live Manage button clicked
     const btn = target.closest('button[data-panic-manage="true"]');
     if (btn) {
@@ -686,7 +715,7 @@ export function ArticleLiveWrapper({
   };
 
   return (
-    <div className="gh-viewport min-h-screen bg-background text-foreground transition-colors duration-200">
+    <>
       {isLiveMode && (
         <div className="fixed top-20 right-6 z-50 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-mono shadow-xl select-none animate-in fade-in">
           <span className="size-2 rounded-full bg-white animate-ping" />
@@ -700,118 +729,116 @@ export function ArticleLiveWrapper({
       {/* Full-Screen Image / Chart Lightbox */}
       {renderLightboxPortal()}
 
-      {/* Main Ghost Article */}
-      <main className="gh-main py-10">
-        <article className={`gh-article post tag-${category?.slug || 'ai-tech'}`}>
-          <header className="gh-article-header gh-canvas">
-            {category && (
-              <Link className="gh-article-tag" href={`/tag/${category.slug}`}>
-                {category.name}
-              </Link>
-            )}
+      {/* Main Ghost Article with 1:1 Source Theme DOM */}
+      <article className={`gh-article post tag-${category?.slug || 'ai-tech'}`}>
+        <header className="gh-article-header gh-canvas">
+          {category && (
+            <Link className="gh-article-tag" href={`/tag/${category.slug}`}>
+              {category.name}
+            </Link>
+          )}
 
-            <h1
-              ref={titleRef}
-              contentEditable={isLiveMode}
-              suppressContentEditableWarning
-              onFocus={() => { isTypingTitle.current = true; }}
-              onBlur={() => { isTypingTitle.current = false; }}
-              onInput={handleTitleInput}
-              className={`gh-article-title is-title ${
-                isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/40 rounded-lg p-1 hover:bg-muted/30 transition cursor-text' : ''
-              }`}
-              dangerouslySetInnerHTML={{ __html: initialTitle }}
-            />
-
-            {excerpt && (
-              <p className="gh-article-excerpt is-body">
-                {excerpt}
-              </p>
-            )}
-
-            <div className="gh-article-meta">
-              <div className="gh-article-author-image instapaper_ignore">
-                <Link href={`/author/${author?.slug || 'ufuk-yorulmaz'}`}>
-                  <img
-                    className="author-profile-image"
-                    src={author?.avatarUrl || 'https://fabelo.io/content/images/size/w160/2026/04/ufuk_square.png'}
-                    alt={author?.name || 'Ufuk Yorulmaz'}
-                  />
-                </Link>
-              </div>
-              <div className="gh-article-meta-wrapper">
-                <h4 className="gh-article-author-name">
-                  <Link href={`/author/${author?.slug || 'ufuk-yorulmaz'}`}>{author?.name || 'Ufuk Yorulmaz'}</Link>
-                </h4>
-                <div className="gh-article-meta-content">
-                  <time className="gh-article-meta-date" dateTime={publishedAt || '2026-07-02'}>
-                    {publishedAt ? new Date(publishedAt).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '02 Jul 2026'}
-                  </time>
-                  <span className="gh-article-meta-length">
-                    <span className="bull">—</span> {readingTime || '21 min read'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {coverUrl && (
-              <figure className="gh-article-image relative group">
-                <img
-                  src={coverUrl}
-                  alt={initialTitle}
-                  onClick={(e) => {
-                    if (!isLiveMode) {
-                      e.preventDefault();
-                      setLightboxData({
-                        open: true,
-                        src: coverUrl,
-                        alt: initialTitle,
-                        caption: '<a href="https://www.pexels.com/photo/a-person-typing-on-the-laptop-7283714/" target="_blank" rel="noopener noreferrer">Photo by www.kaboompics.com on Pexels</a>',
-                      });
-                    }
-                  }}
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://fabelo.io/content/images/size/w1200/2026/07/pexels-photo-7283714.webp';
-                  }}
-                />
-                <figcaption>
-                  <a href="https://www.pexels.com/photo/a-person-typing-on-the-laptop-7283714/" target="_blank" rel="noopener noreferrer">
-                    Photo by www.kaboompics.com on Pexels
-                  </a>
-                </figcaption>
-                {isLiveMode && (
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center backdrop-blur-2xs rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => triggerOpenImageStudio(coverUrl, 'Cover Image', 'Article Cover', '', true)}
-                      className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-2xl hover:bg-primary/90 flex items-center gap-2 transition cursor-pointer active:scale-95 border border-primary-foreground/20"
-                      title="Manage Cover Image, Replace & Generate AI Alt Text"
-                    >
-                      <Sparkles className="size-3.5" />
-                      <span>Manage Cover & AI</span>
-                    </button>
-                  </div>
-                )}
-              </figure>
-            )}
-          </header>
-
-          {/* Body Content Section using Native Ghost Source Canvas System */}
-          <section
-            ref={contentRef}
+          <h1
+            ref={titleRef}
             contentEditable={isLiveMode}
             suppressContentEditableWarning
-            onFocus={() => { isTypingContent.current = true; }}
-            onBlur={() => { isTypingContent.current = false; }}
-            onInput={handleContentInput}
-            onClick={handleContentClick}
-            className={`gh-content gh-canvas is-body ${
-              isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/20 rounded-xl p-2 hover:bg-muted/20 transition cursor-text' : ''
+            onFocus={() => { isTypingTitle.current = true; }}
+            onBlur={() => { isTypingTitle.current = false; }}
+            onInput={handleTitleInput}
+            className={`gh-article-title is-title ${
+              isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/40 rounded-lg p-1 hover:bg-muted/30 transition cursor-text' : ''
             }`}
-            dangerouslySetInnerHTML={{ __html: formattedHtml || '' }}
+            dangerouslySetInnerHTML={{ __html: initialTitle }}
           />
-        </article>
-      </main>
-    </div>
+
+          {excerpt && (
+            <p className="gh-article-excerpt is-body">
+              {excerpt}
+            </p>
+          )}
+
+          <div className="gh-article-meta">
+            <div className="gh-article-author-image instapaper_ignore">
+              <Link href={`/author/${author?.slug || 'ufuk-yorulmaz'}`}>
+                <img
+                  className="author-profile-image"
+                  src={author?.avatarUrl || 'https://fabelo.io/content/images/size/w160/2026/04/ufuk_square.png'}
+                  alt={author?.name || 'Ufuk Yorulmaz'}
+                />
+              </Link>
+            </div>
+            <div className="gh-article-meta-wrapper">
+              <h4 className="gh-article-author-name">
+                <Link href={`/author/${author?.slug || 'ufuk-yorulmaz'}`}>{author?.name || 'Ufuk Yorulmaz'}</Link>
+              </h4>
+              <div className="gh-article-meta-content">
+                <time className="gh-article-meta-date" dateTime={publishedAt || '2026-07-02'}>
+                  {publishedAt ? new Date(publishedAt).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '02 Jul 2026'}
+                </time>
+                <span className="gh-article-meta-length">
+                  <span className="bull">—</span> {readingTime || '21 min read'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {coverUrl && (
+            <figure className="gh-article-image relative group">
+              <img
+                src={coverUrl}
+                alt={initialTitle}
+                onClick={(e) => {
+                  if (!isLiveMode) {
+                    e.preventDefault();
+                    setLightboxData({
+                      open: true,
+                      src: coverUrl,
+                      alt: initialTitle,
+                      caption: '<a href="https://www.pexels.com/photo/a-person-typing-on-the-laptop-7283714/" target="_blank" rel="noopener noreferrer">Photo by www.kaboompics.com on Pexels</a>',
+                    });
+                  }
+                }}
+                onError={(e) => {
+                  e.currentTarget.src = 'https://fabelo.io/content/images/size/w1200/2026/07/pexels-photo-7283714.webp';
+                }}
+              />
+              <figcaption>
+                <a href="https://www.pexels.com/photo/a-person-typing-on-the-laptop-7283714/" target="_blank" rel="noopener noreferrer">
+                  Photo by www.kaboompics.com on Pexels
+                </a>
+              </figcaption>
+              {isLiveMode && (
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center backdrop-blur-2xs rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => triggerOpenImageStudio(coverUrl, 'Cover Image', 'Article Cover', '', true)}
+                    className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-2xl hover:bg-primary/90 flex items-center gap-2 transition cursor-pointer active:scale-95 border border-primary-foreground/20"
+                    title="Manage Cover Image, Replace & Generate AI Alt Text"
+                  >
+                    <Sparkles className="size-3.5" />
+                    <span>Manage Cover & AI</span>
+                  </button>
+                </div>
+              )}
+            </figure>
+          )}
+        </header>
+
+        {/* Body Content Section using Native Ghost Source Canvas System */}
+        <section
+          ref={contentRef}
+          contentEditable={isLiveMode}
+          suppressContentEditableWarning
+          onFocus={() => { isTypingContent.current = true; }}
+          onBlur={() => { isTypingContent.current = false; }}
+          onInput={handleContentInput}
+          onClick={handleContentClick}
+          className={`gh-content gh-canvas is-body ${
+            isLiveMode ? 'outline-none focus:ring-2 focus:ring-primary/20 rounded-xl p-2 hover:bg-muted/20 transition cursor-text' : ''
+          }`}
+          dangerouslySetInnerHTML={{ __html: formattedHtml || '' }}
+        />
+      </article>
+    </>
   );
 }
