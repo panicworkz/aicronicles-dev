@@ -22,7 +22,6 @@ import {
   Sun,
   Moon,
   ChevronLeft,
-  TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,35 +77,35 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Hubz Sidebar */}
+    <div className="flex h-screen overflow-hidden bg-background text-foreground font-sans">
+      {/* Hubz-Standard Sidebar */}
       <aside
         className={cn(
-          "flex flex-col border-r bg-sidebar transition-all duration-300 shrink-0",
-          collapsed ? "w-16" : "w-60",
+          "flex flex-col border-r border-border bg-sidebar transition-all duration-300 shrink-0",
+          collapsed ? "w-16" : "w-64",
         )}
       >
-        <div className="flex h-14 items-center gap-2 px-4 border-b">
+        <div className="flex h-14 items-center gap-3 px-4 border-b border-border">
           {!collapsed && (
             <Link
               href="/panic"
-              className="flex items-center gap-2 font-semibold text-lg"
+              className="flex items-center gap-2.5 font-bold text-base text-foreground tracking-tight"
             >
-              <div className="size-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-xs">
+              <div className="size-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-sm font-black shadow-xs">
                 P
               </div>
               <span>Panic CMS</span>
             </Link>
           )}
           {collapsed && (
-            <div className="size-7 mx-auto rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-xs">
+            <div className="size-8 mx-auto rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-sm font-black shadow-xs">
               P
             </div>
           )}
           <Button
             variant="ghost"
-            size="icon-sm"
-            className="ml-auto"
+            size="icon"
+            className="ml-auto size-8"
             onClick={() => setCollapsed(!collapsed)}
           >
             <ChevronLeft
@@ -118,11 +117,11 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
           </Button>
         </div>
 
-        <div className="flex-1 py-3 overflow-y-auto space-y-4">
+        <div className="flex-1 py-4 overflow-y-auto space-y-6">
           {navSections.map((section, idx) => (
-            <div key={idx} className="px-2 space-y-1">
+            <div key={idx} className="px-3 space-y-1.5">
               {!collapsed && (
-                <div className="px-3 py-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                <div className="px-3 py-1 text-xs font-bold tracking-wider text-muted-foreground uppercase">
                   {section.title}
                 </div>
               )}
@@ -138,7 +137,7 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                       isActive
                         ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
                         : "text-sidebar-foreground hover:bg-sidebar-accent/50",
@@ -146,7 +145,7 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
                     title={collapsed ? item.label : undefined}
                   >
                     <span className="relative shrink-0">
-                      <Icon className="size-4" />
+                      <Icon className="size-5" />
                     </span>
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
@@ -157,20 +156,20 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
         </div>
 
         <Separator />
-        <div className="p-2 flex items-center justify-between">
+        <div className="p-3 flex items-center justify-between">
           {!collapsed ? (
-            <div className="px-3 py-2 text-xs text-muted-foreground">
+            <div className="px-3 py-2 text-xs font-mono text-muted-foreground">
               Panic CMS v2.0
             </div>
           ) : null}
           <Button
             variant="ghost"
-            size="icon-sm"
+            size="icon"
             onClick={handleLogout}
-            className="text-muted-foreground hover:text-destructive shrink-0 mx-auto"
+            className="text-muted-foreground hover:text-destructive shrink-0 size-8 mx-auto"
             title="Logout"
           >
-            <LogOut className="size-3.5" />
+            <LogOut className="size-4" />
           </Button>
         </div>
       </aside>
@@ -178,80 +177,77 @@ export default function PanicAdminLayout({ children }: { children: React.ReactNo
       {/* Main Column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Hubz Header with Grouped Actions & Right-Aligned Currencies */}
-        <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-6 shrink-0">
+        <header className="flex h-14 items-center justify-between gap-4 border-b border-border bg-background px-6 shrink-0">
           {/* Left: Global Search Input */}
-          <div className="relative flex-1 max-w-xs xl:max-w-sm">
+          <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder="Search guides, products, orders..."
-              className="pl-9 bg-muted/50 border-none h-8 text-xs"
+              className="pl-9 bg-muted/50 border-none h-9 text-sm"
             />
           </div>
 
           {/* Right: Grouped Badges, Quick Actions, and Profile */}
           <div className="flex items-center gap-3 ml-auto">
-            {/* GROUP 1: Live TCMB Exchange Rates */}
+            {/* Live TCMB Exchange Rates */}
             <LiveRatesTicker />
 
-            {/* DIVIDER 1 */}
-            <div className="hidden xl:block h-4 w-px bg-border shrink-0" />
+            <div className="hidden xl:block h-5 w-px bg-border shrink-0" />
 
-            {/* GROUP 2: Navigation & Quick Creation Buttons */}
-            <div className="flex items-center gap-1.5">
+            {/* Quick Actions & Navigation */}
+            <div className="flex items-center gap-2">
               <Link href="/" target="_blank">
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-medium">
-                  <ExternalLink className="size-3.5 text-muted-foreground" />
+                <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-semibold shadow-xs">
+                  <ExternalLink className="size-3.5" />
                   <span>Live Site</span>
                 </Button>
               </Link>
 
               <Link href="/store" target="_blank">
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-medium">
-                  <Package className="size-3.5 text-muted-foreground" />
+                <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-semibold shadow-xs">
+                  <Package className="size-3.5" />
                   <span>Store</span>
                 </Button>
               </Link>
 
               <Link href="/panic/posts/new">
-                <Button size="sm" className="h-8 gap-1.5 text-xs font-medium">
+                <Button size="sm" className="h-9 gap-1.5 text-xs font-semibold bg-primary text-primary-foreground shadow-xs">
                   <Plus className="size-3.5" />
                   <span>New Guide</span>
                 </Button>
               </Link>
             </div>
 
-            {/* DIVIDER 2 */}
-            <div className="h-4 w-px bg-border shrink-0" />
+            <div className="h-5 w-px bg-border shrink-0" />
 
-            {/* GROUP 3: Theme Toggle & User Profile */}
-            <div className="flex items-center gap-2">
+            {/* Grouped Profile & Theme Toggle */}
+            <div className="flex items-center gap-1 border border-border rounded-lg p-0.5 bg-background shadow-xs">
               <Button
                 variant="ghost"
-                size="icon-xs"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                size="icon"
                 className="size-8"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
               >
-                {theme === "dark" ? (
+                {theme === 'dark' ? (
                   <Sun className="size-4" />
                 ) : (
                   <Moon className="size-4" />
                 )}
               </Button>
 
-              <div className="size-8 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center border border-primary/20">
+              <div className="size-7 rounded-md bg-primary/10 text-primary flex items-center justify-center text-xs font-bold font-mono">
                 UY
               </div>
             </div>
           </div>
         </header>
 
-        {/* Scrollable Main Area */}
-        <main
-          data-hubz-scroll-main
-          className="flex-1 overflow-y-auto scroll-smooth p-6 bg-background"
-        >
-          {children}
+        {/* Content Area */}
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8 bg-muted/20">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {children}
+          </div>
         </main>
       </div>
     </div>
