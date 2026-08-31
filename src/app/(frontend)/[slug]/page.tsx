@@ -7,6 +7,7 @@ import type { Metadata } from 'next';
 import { ArticleLiveWrapper } from './ArticleLiveWrapper';
 import { MagazineHeader } from '@/components/magazine/MagazineHeader';
 import { MagazineFooter } from '@/components/magazine/MagazineFooter';
+import { AdBanner } from '@/components/magazine/AdBanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,21 +82,87 @@ export default async function ArticleDetailPage({ params }: PageProps) {
         <MagazineHeader />
 
         {/* Main Content Layout Container: Exactly 1536px */}
-        <main className="max-w-[1536px] mx-auto px-6 lg:px-12 py-10">
-          <ArticleLiveWrapper
-            initialTitle={post.title}
-            initialContentHtml={post.contentHtml || ''}
-            initialCoverUrl={post.featuredImageUrl}
-            excerpt={post.excerpt}
-            readingTime={post.readingTime}
-            publishedAt={post.publishedAt ? post.publishedAt.toISOString() : null}
-            author={author}
-            category={category}
+        <main className="max-w-[1536px] mx-auto px-6 lg:px-12 py-8 space-y-12">
+          
+          {/* Top Billboard Sponsor Bar */}
+          <AdBanner
+            slot="billboard"
+            sponsorName="Fabelo Pro Executive AI Stack"
+            sponsorTagline="The definitive daily briefing for tech leaders, algorithmic traders, and software founders."
+            sponsorUrl="/panic"
+            ctaText="Join Executive Circle"
           />
+
+          {/* 2-Column Editorial & Sidebar Architecture */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            
+            {/* Left 8 Cols: Main Article Body Canvas */}
+            <div className="lg:col-span-8 space-y-12">
+              <ArticleLiveWrapper
+                initialTitle={post.title}
+                initialContentHtml={post.contentHtml || ''}
+                initialCoverUrl={post.featuredImageUrl}
+                excerpt={post.excerpt}
+                readingTime={post.readingTime}
+                publishedAt={post.publishedAt ? post.publishedAt.toISOString() : null}
+                author={author}
+                category={category}
+              />
+
+              {/* In-Article Mid-Roll Leaderboard Ad */}
+              <AdBanner
+                slot="leaderboard"
+                sponsorName="Panic Media Cloud Infrastructure"
+                sponsorTagline="Enterprise high-availability media hosting with auto-scaling headless edge APIs."
+                sponsorUrl="/panic"
+                ctaText="Deploy on Cloud"
+              />
+            </div>
+
+            {/* Right 4 Cols: Sticky Desktop Magazine Sidebar with Skyscraper Ad */}
+            <aside className="lg:col-span-4 space-y-8 sticky top-24">
+              {/* Author Quick Profile Widget */}
+              <div className="p-6 rounded-3xl border border-border bg-card/60 backdrop-blur-sm space-y-4 shadow-xs">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-primary">WRITTEN BY</span>
+                <div className="flex items-center gap-4">
+                  <div className="size-14 rounded-2xl bg-primary/10 border border-primary/20 overflow-hidden shrink-0">
+                    <img
+                      src={author?.avatarUrl || 'https://fabelo.io/content/images/size/w160/2026/04/ufuk_square.png'}
+                      alt={author?.name || 'Author'}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-bold font-serif text-foreground">{author?.name || 'Ufuk Yorulmaz'}</h4>
+                    <p className="text-xs text-muted-foreground">{author?.role || 'Lead Editor & Architect'}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+                  {author?.bio || 'Covering AI productivity workflows, high-income career engineering, and modern software architectures.'}
+                </p>
+                <Link
+                  href={`/author/${author?.slug || 'ufuk-yorulmaz'}`}
+                  className="w-full py-2 rounded-xl bg-muted/60 hover:bg-muted text-xs font-semibold text-foreground transition flex items-center justify-center gap-1"
+                >
+                  <span>View Author Desk</span>
+                  <span>→</span>
+                </Link>
+              </div>
+
+              {/* REKLAM ALANI: STICKY HALF-PAGE SKYSCRAPER AD (300x600) */}
+              <AdBanner
+                slot="halfpage"
+                sponsorName="Panic Studio AI Suite"
+                sponsorTagline="Automate your entire digital media operation with AI copilots, real-time analytics, and headless delivery."
+                sponsorUrl="/panic"
+                ctaText="Get Started"
+              />
+            </aside>
+          </div>
 
           {/* Recommended / Related Stories Grid (1536px canvas) */}
           {relatedPosts.length > 0 && (
-            <section className="border-t border-border/80 mt-20 pt-16 space-y-10 max-w-5xl mx-auto">
+            <section className="border-t border-border/80 mt-20 pt-16 space-y-10">
               <div className="flex items-center justify-between border-b border-border pb-5">
                 <div className="space-y-1.5">
                   <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider">Related Dispatches</span>
@@ -113,7 +180,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                   <Link
                     key={rel.id}
                     href={`/${rel.slug}`}
-                    className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-card hover:border-primary/50 transition duration-300 shadow-sm"
+                    className="group flex flex-col rounded-3xl overflow-hidden border border-border bg-card hover:border-primary/50 transition duration-300 shadow-sm"
                   >
                     <div className="aspect-[16/10] w-full overflow-hidden bg-muted/40 border-b border-border/60">
                       <img
@@ -123,7 +190,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                         loading="lazy"
                       />
                     </div>
-                    <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                    <div className="p-8 flex-1 flex flex-col justify-between space-y-4">
                       <div className="space-y-2">
                         <span className="text-xs font-mono text-primary font-bold">
                           {rel.readingTime || '6 min read'}
@@ -142,6 +209,9 @@ export default async function ArticleDetailPage({ params }: PageProps) {
             </section>
           )}
         </main>
+
+        {/* Bottom Floating Adhesive Banner */}
+        <AdBanner slot="sticky-bottom" />
 
         <MagazineFooter />
       </div>
