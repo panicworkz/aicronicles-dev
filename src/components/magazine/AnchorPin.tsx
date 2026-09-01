@@ -57,10 +57,32 @@ export default function AnchorPin() {
       if (!el) return;
 
       hedef = el;
-      birakildi = false;
-      bitis = performance.now() + 2500; // en fazla 2.5sn izle
-      beklenenKonum = Math.round(window.scrollY);
-      requestAnimationFrame(sabitle);
+      birakildi = true; // kaydirma bitene kadar KARISMA
+
+      /**
+       * Yumusak kaydirma suruyorken sabitlemeye baslarsak hareketi daha
+       * basinda kesiyoruz ve sayfa "pat" diye ziplamis gibi oluyor.
+       * Bu yuzden once kaydirmanin durmasini bekliyoruz: konum ust uste
+       * uc olcumde ayni kalinca hareket bitmis demektir.
+       */
+      let sonKonum = -1;
+      let sabitSayac = 0;
+      const bekle = () => {
+        const simdi = Math.round(window.scrollY);
+        sabitSayac = simdi === sonKonum ? sabitSayac + 1 : 0;
+        sonKonum = simdi;
+
+        if (sabitSayac >= 3) {
+          // Hareket bitti; simdi kisa sure hedefi yerinde tut
+          birakildi = false;
+          bitis = performance.now() + 1500;
+          beklenenKonum = simdi;
+          requestAnimationFrame(sabitle);
+          return;
+        }
+        requestAnimationFrame(bekle);
+      };
+      requestAnimationFrame(bekle);
     };
 
     // Kullanici kendi kaydirmaya baslarsa karisma
