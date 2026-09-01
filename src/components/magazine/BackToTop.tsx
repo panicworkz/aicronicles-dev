@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { ArrowUp } from "lucide-react";
 
 /**
@@ -10,13 +10,28 @@ import { ArrowUp } from "lucide-react";
  * sectiyse aninda yukari cikar.
  */
 export default function BackToTop() {
-  const [gorunur, setGorunur] = useState(false);
+  const ref = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const onScroll = () => setGorunur(window.scrollY > window.innerHeight * 0.9);
+    // Gorunurlugu dogrudan DOM uzerinden yonetiyoruz. React state kullansaydik
+    // tarayici sekmeyi arka plana aldiginda guncellemeler ertelenip buton
+    // gorunmez kalabiliyordu.
+    const onScroll = () => {
+      const el = ref.current;
+      if (!el) return;
+      const goster = window.scrollY > window.innerHeight * 0.9;
+      el.style.opacity = goster ? "1" : "0";
+      el.style.transform = goster ? "translateY(0)" : "translateY(12px)";
+      el.style.pointerEvents = goster ? "auto" : "none";
+      el.setAttribute("aria-hidden", goster ? "false" : "true");
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
 
   const yukari = () => {
@@ -39,6 +54,7 @@ export default function BackToTop() {
 
   return (
     <button
+      ref={ref}
       onClick={yukari}
       aria-label="Sayfanın başına dön"
       title="Başa dön"
@@ -47,9 +63,9 @@ export default function BackToTop() {
         background: "var(--ink)",
         color: "var(--paper)",
         border: "1px solid var(--ink)",
-        opacity: gorunur ? 1 : 0,
-        transform: gorunur ? "translateY(0)" : "translateY(12px)",
-        pointerEvents: gorunur ? "auto" : "none",
+        opacity: 0,
+        transform: "translateY(12px)",
+        pointerEvents: "none",
       }}
     >
       <ArrowUp className="size-[18px] transition-transform duration-300 group-hover:-translate-y-0.5" />
