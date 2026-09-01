@@ -5,10 +5,10 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-panic}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-panic_pass}
       POSTGRES_DB: ${POSTGRES_DB:-panic_cms}
     volumes:
-      - panic_pgdata:/var/lib/postgresql/data
+      - /opt/panic/postgres_data:/var/lib/postgresql/data
     networks:
       - panic-net
     healthcheck:
@@ -27,20 +27,18 @@ services:
       - "127.0.0.1:8230:3000"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-panic}:${POSTGRES_PASSWORD}@panic-postgres:5432/${POSTGRES_DB:-panic_cms}}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-panic}:${POSTGRES_PASSWORD:-panic_pass}@panic-postgres:5432/${POSTGRES_DB:-panic_cms}}
       JWT_SECRET: ${JWT_SECRET}
+      MEDIA_DIR: /opt/panic/media
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://fabelo.testworkz.com}
       NEXT_PUBLIC_SITE_DOMAIN: ${NEXT_PUBLIC_SITE_DOMAIN:-fabelo.testworkz.com}
     volumes:
-      - ./media:/app/public/media
+      - /opt/panic/media:/opt/panic/media
     networks:
       - panic-net
     depends_on:
       panic-postgres:
         condition: service_healthy
-
-volumes:
-  panic_pgdata:
 
 networks:
   panic-net:
