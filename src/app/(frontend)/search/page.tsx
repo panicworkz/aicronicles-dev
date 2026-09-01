@@ -32,10 +32,10 @@ export default async function SearchPage({
   const authors = await db.query.authors.findMany();
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] flex flex-col selection:bg-[var(--accent)] selection:text-white">
+    <div className="mag min-h-screen">
       <MagazineHeader />
 
-      <main className="f-content flex-1 py-10 space-y-10">
+      <main className="mag-wrap py-12 sm:py-16">
         <SearchClient
           initialQuery={initialQuery}
           initialCategory={initialCategory}

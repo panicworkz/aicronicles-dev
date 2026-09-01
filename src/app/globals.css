@@ -194,3 +194,98 @@
   .mag .marquee-track { animation: none; }
   .mag .plate img { transition: none; }
 }
+
+/* --- Yazi govdesi: editoryel okuma tipografisi -------------------------- */
+.mag .article-body { max-width: 68ch; color: var(--ink); }
+.mag .article-body > * + * { margin-top: 1.15em; }
+.mag .article-body p { line-height: 1.82; }
+.mag .article-body h2 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.6rem, 2.6vw, 2.15rem);
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+  margin-top: 2.4em;
+  margin-bottom: 0.1em;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--rule);
+}
+.mag .article-body h3 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  line-height: 1.25;
+  margin-top: 1.9em;
+  margin-bottom: 0.05em;
+}
+.mag .article-body h4 { font-weight: 700; font-size: 1.05rem; margin-top: 1.7em; }
+.mag .article-body a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+}
+.mag .article-body a:hover { color: var(--accent-ink); }
+.mag .article-body ul, .mag .article-body ol { padding-left: 1.35em; }
+.mag .article-body ul { list-style: none; }
+.mag .article-body ul > li { position: relative; padding-left: 0.15em; margin-top: 0.55em; }
+.mag .article-body ul > li::before {
+  content: "—";
+  position: absolute;
+  left: -1.2em;
+  color: var(--accent);
+}
+.mag .article-body ol { list-style: decimal; }
+.mag .article-body ol > li { margin-top: 0.55em; padding-left: 0.25em; }
+.mag .article-body ol > li::marker {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.85em;
+  color: var(--accent-ink);
+}
+.mag .article-body blockquote {
+  margin-block: 2em;
+  padding: 0.2em 0 0.2em 1.6em;
+  border-left: 2px solid var(--accent);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.32em;
+  line-height: 1.45;
+  font-style: italic;
+  color: var(--ink);
+}
+.mag .article-body img { width: 100%; height: auto; margin-block: 2em; }
+.mag .article-body figcaption,
+.mag .article-body .kg-card figcaption {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  margin-top: 0.6em;
+}
+.mag .article-body table { width: 100%; border-collapse: collapse; margin-block: 2em; font-size: 0.94rem; }
+.mag .article-body th {
+  text-align: left;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0.7em 0.9em;
+  border-bottom: 2px solid var(--ink);
+}
+.mag .article-body td { padding: 0.75em 0.9em; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.mag .article-body code {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.88em;
+  background: var(--paper-2);
+  padding: 0.15em 0.4em;
+  border: 1px solid var(--rule);
+}
+.mag .article-body pre {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 1.4em;
+  overflow-x: auto;
+  margin-block: 2em;
+  font-size: 0.88rem;
+}
+.mag .article-body pre code { background: none; border: 0; padding: 0; color: inherit; }
+.mag .article-body hr { border: 0; border-top: 1px solid var(--rule); margin-block: 2.6em; }

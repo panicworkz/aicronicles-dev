@@ -3,24 +3,19 @@ import { notFound } from "next/navigation";
 import { db, schema } from "@/db";
 import { eq, desc, ne, and } from "drizzle-orm";
 import Link from "next/link";
-import ClientForm from "@/components/magazine/ClientForm";
 import type { Metadata } from "next";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
-import { PostCard, NumberedTrendingCard, AdSlot, fmtDate } from "@/components/magazine/PostCard";
-import {
-  Clock,
-  ArrowLeft,
-  ChevronRight,
-  Share2,
-  Bookmark,
-  Sparkles,
-  Check,
-  Twitter,
-  Linkedin,
-  Copy,
-} from "lucide-react";
+import ClientForm from "@/components/magazine/ClientForm";
 import ArticleClientActions from "./ArticleClientActions";
+import {
+  HorizontalStoryCard,
+  NumberedTrendingCard,
+  AdSlot,
+  fmtDate,
+  type CardPost,
+} from "@/components/magazine/PostCard";
+import { decodeEntities, tagLabel } from "@/lib/taxonomy";
 
 export const dynamic = "force-dynamic";
 
@@ -30,14 +25,10 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = await db.query.posts.findFirst({
-    where: eq(schema.posts.slug, slug),
-  });
+  const post = await db.query.posts.findFirst({ where: eq(schema.posts.slug, slug) });
 
   if (!post) {
-    const page = await db.query.pages.findFirst({
-      where: eq(schema.pages.slug, slug),
-    });
+    const page = await db.query.pages.findFirst({ where: eq(schema.pages.slug, slug) });
     if (!page) return { title: "Not Found | Fabelo" };
     return {
       title: `${page.metaTitle || page.title} | Fabelo`,
@@ -59,352 +50,287 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
 
-  // 1. Check if it's a post
-  const post = await db.query.posts.findFirst({
-    where: eq(schema.posts.slug, slug),
-  });
+  const post = await db.query.posts.findFirst({ where: eq(schema.posts.slug, slug) });
 
-  // 2. Check if it's a static page (about, advertise, sponsor, terms, privacy)
+  /* ---------------------------------------------------------------
+     CMS sayfasi (About, Advertise, Sponsor, Terms, Privacy...)
+     --------------------------------------------------------------- */
   if (!post) {
-    const page = await db.query.pages.findFirst({
-      where: eq(schema.pages.slug, slug),
-    });
-
+    const page = await db.query.pages.findFirst({ where: eq(schema.pages.slug, slug) });
     if (!page) notFound();
 
     return (
-      <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] flex flex-col">
+      <div className="mag min-h-screen">
         <MagazineHeader />
-
-        <main className="f-content flex-1 py-14 max-w-4xl">
-          <div className="space-y-4 pb-8 border-b border-[var(--line)]">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--accent)] hover:underline"
-            >
-              <ArrowLeft className="size-3.5" />
-              <span>Back to Index</span>
-            </Link>
-            <h1 className="f-manifesto text-[clamp(2.2rem,4.5vw,3.6rem)]">
-              {page.title}
-            </h1>
+        <main className="mag-wrap py-16 sm:py-24">
+          <div className="mx-auto max-w-[760px]">
+            <div className="folio mb-4">§ FABELO</div>
+            <h1 className="display mb-8 text-[clamp(2.4rem,5vw,4rem)]">{decodeEntities(page.title)}</h1>
+            <div className="rule mb-10" />
+            <div
+              className="article-body text-[1.06rem] leading-[1.78]"
+              dangerouslySetInnerHTML={{ __html: page.contentHtml || "<p></p>" }}
+            />
           </div>
-
-          <div
-            className="f-prose mt-8 leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: page.contentHtml || "<p></p>" }}
-          />
         </main>
-
         <MagazineFooter />
       </div>
     );
   }
 
-  // Fetch author & category info
+  /* ---------------------------------------------------------------
+     Yazi
+     --------------------------------------------------------------- */
   const author = post.authorId
-    ? await db.query.authors.findFirst({
-        where: eq(schema.authors.id, post.authorId),
-      })
+    ? await db.query.authors.findFirst({ where: eq(schema.authors.id, post.authorId) })
     : null;
 
   const category = post.categoryId
-    ? await db.query.categories.findFirst({
-        where: eq(schema.categories.id, post.categoryId),
-      })
+    ? await db.query.categories.findFirst({ where: eq(schema.categories.id, post.categoryId) })
     : null;
 
-  // Related & Trending posts
-  const relatedPosts = await db.query.posts.findMany({
-    where: and(
-      eq(schema.posts.status, "published"),
-      ne(schema.posts.id, post.id)
-    ),
+  const others = await db.query.posts.findMany({
+    where: and(eq(schema.posts.status, "published"), ne(schema.posts.id, post.id)),
     orderBy: [desc(schema.posts.publishedAt)],
-    limit: 4,
+    limit: 9,
   });
 
-  const trendingPosts = await db.query.posts.findMany({
-    where: and(
-      eq(schema.posts.status, "published"),
-      ne(schema.posts.id, post.id)
-    ),
-    orderBy: [desc(schema.posts.publishedAt)],
-    limit: 5,
+  const authors = await db.query.authors.findMany();
+  const categories = await db.query.categories.findMany();
+  const authorById = new Map(authors.map((a: any) => [a.id, a]));
+  const catById = new Map(categories.map((c: any) => [c.id, c]));
+
+  const toCard = (p: any): CardPost => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    excerpt: p.excerpt,
+    featuredImageUrl: p.featuredImageUrl,
+    readingTime: p.readingTime,
+    publishedAt: p.publishedAt,
+    createdAt: p.createdAt,
+    authorName: authorById.get(p.authorId)?.name ?? null,
+    categoryName: catById.get(p.categoryId)?.name ?? null,
+    categorySlug: catById.get(p.categoryId)?.slug ?? null,
   });
+
+  const related = others.slice(0, 4).map(toCard);
+  const trending = others.slice(4, 9).map(toCard);
+
+  /* Yazinin tag'leri — tagsJson (fabelo.io tag'leri buraya yaziliyor) */
+  const rawTags: string[] = Array.isArray(post.tagsJson) ? (post.tagsJson as string[]) : [];
+  const tagSlugs = rawTags
+    .map((t) => String(t).toLowerCase().replace(/\s*&\s*/g, "-").replace(/\s+/g, "-"))
+    .filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] flex flex-col selection:bg-[var(--accent)] selection:text-white">
+    <div className="mag min-h-screen">
       <ArticleClientActions title={post.title} />
       <MagazineHeader />
 
-      <main className="f-content flex-1 py-8 sm:py-12">
-        {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-xs font-semibold text-[var(--muted)] mb-6">
-          <Link href="/" className="hover:text-[var(--fg)] transition">
-            Home
-          </Link>
-          <ChevronRight className="size-3 text-[var(--muted)]/60" />
-          {category ? (
-            <Link
-              href={`/tag/${category.slug}`}
-              className="text-[var(--accent)] hover:underline"
-            >
-              {category.name}
+      <main>
+        {/* ============== BASLIK BLOGU (tam genislik hissi) ============== */}
+        <header className="mag-wrap pt-10 sm:pt-14">
+          <nav className="byline mb-7 flex items-center gap-2">
+            <Link href="/" className="hover:text-[var(--accent-ink)]">
+              HOME
             </Link>
-          ) : (
-            <span>Editorial</span>
-          )}
-          <ChevronRight className="size-3 text-[var(--muted)]/60" />
-          <span className="truncate max-w-[240px] text-[var(--fg)] opacity-70">
-            {post.title}
-          </span>
-        </nav>
+            <span style={{ color: "var(--rule)" }}>/</span>
+            {category && (
+              <>
+                <Link href={`/category/${category.slug}`} className="hover:text-[var(--accent-ink)]">
+                  {category.name.toUpperCase()}
+                </Link>
+                <span style={{ color: "var(--rule)" }}>/</span>
+              </>
+            )}
+            <span className="truncate" style={{ color: "var(--ink-3)" }}>
+              {decodeEntities(post.title).slice(0, 48)}…
+            </span>
+          </nav>
 
-        <div className="grid lg:grid-cols-12 gap-12 items-start">
-          {/* ========================================================
-              ARTICLE COLUMN (8 cols)
-              ======================================================== */}
-          <article className="lg:col-span-8 space-y-8">
-            {/* Header Area */}
-            <header className="space-y-4">
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-9">
               {category && (
-                <Link
-                  href={`/tag/${category.slug}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[var(--accent-weak)] text-[var(--accent)] text-xs font-bold uppercase tracking-wider transition hover:opacity-85"
-                >
-                  {category.name}
+                <Link href={`/category/${category.slug}`} className="folio mb-4 inline-block">
+                  § {category.name.toUpperCase()}
                 </Link>
               )}
-
-              <h1 className="f-display text-[clamp(2.2rem,4.5vw,3.6rem)] font-extrabold text-[var(--heading)] leading-[1.08] tracking-tight">
-                {post.title}
+              <h1 className="display mb-6 text-[clamp(2.4rem,5.6vw,4.6rem)]">
+                {decodeEntities(post.title)}
               </h1>
-
               {post.excerpt && (
-                <p className="text-[17px] sm:text-[19px] text-[var(--muted)] leading-relaxed font-serif italic border-l-2 border-[var(--accent)] pl-4 py-0.5">
-                  {post.excerpt}
+                <p
+                  className="mb-7 max-w-[62ch] text-[1.15rem] leading-relaxed sm:text-[1.28rem]"
+                  style={{ color: "var(--ink-2)" }}
+                >
+                  {decodeEntities(post.excerpt)}
                 </p>
               )}
-
-              {/* Author & Meta Row */}
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-[var(--line)] text-xs sm:text-sm text-[var(--muted)]">
-                <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-full overflow-hidden bg-[var(--bg-2)] border border-[var(--line)]">
-                    {author?.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={author.avatarUrl}
-                        alt={author.name || "Author"}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full grid place-items-center font-bold text-[var(--accent)]">
-                        F
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <Link
-                      href={author ? `/author/${author.slug}` : "/"}
-                      className="font-bold text-[var(--fg)] hover:text-[var(--accent)] transition"
-                    >
-                      {author?.name || "Fabelo Staff"}
-                    </Link>
-                    <div className="text-xs text-[var(--muted)]">
-                      {author?.role || "Editorial Desk"}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 text-xs font-medium">
-                  <span>{fmtDate(post.publishedAt)}</span>
-                  <span>·</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="size-3.5" />
-                    {post.readingTime || "5 min read"}
-                  </span>
-                </div>
+              <div className="rule flex flex-wrap items-center gap-x-3 gap-y-2 pt-5">
+                {author && (
+                  <Link href={`/author/${author.slug}`} className="byline hover:text-[var(--accent-ink)]">
+                    BY {author.name.toUpperCase()}
+                  </Link>
+                )}
+                <span className="byline" style={{ color: "var(--rule)" }}>
+                  ·
+                </span>
+                <span className="byline">{fmtDate(post.publishedAt || post.createdAt)}</span>
+                {post.readingTime && (
+                  <>
+                    <span className="byline" style={{ color: "var(--rule)" }}>
+                      ·
+                    </span>
+                    <span className="byline">{post.readingTime.replace(" read", "").toUpperCase()}</span>
+                  </>
+                )}
               </div>
-            </header>
+            </div>
+          </div>
 
-            {/* Featured Image */}
-            {post.featuredImageUrl && (
-              <figure className="rounded-2xl overflow-hidden bg-[var(--bg-2)] border border-[var(--line)] shadow-xs">
+          {post.featuredImageUrl && (
+            <figure className="mt-10">
+              <div className="plate w-full" style={{ aspectRatio: "21 / 9" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={post.featuredImageUrl}
-                  alt={post.title}
-                  className="w-full h-auto object-cover max-h-[560px]"
+                  alt={decodeEntities(post.title)}
+                  className="size-full object-cover"
                 />
-              </figure>
-            )}
+              </div>
+            </figure>
+          )}
+        </header>
 
-            {/* Main Article Prose Content */}
-            <div
-              className="f-prose f-dropcap text-[17px] sm:text-[18px] leading-[1.8] text-[var(--fg)] font-sans"
-              dangerouslySetInnerHTML={{
-                __html: post.contentHtml || "<p></p>",
-              }}
-            />
+        {/* ============== GOVDE + KENAR ============== */}
+        <div className="mag-wrap pt-14">
+          <div className="grid gap-14 lg:grid-cols-12">
+            {/* Metin — 8 kolon, olcu 68ch */}
+            <article className="lg:col-span-8">
+              <div
+                className="article-body dropcap text-[1.06rem] leading-[1.82]"
+                dangerouslySetInnerHTML={{ __html: post.contentHtml || "<p></p>" }}
+              />
 
-            {/* Mid-Article In-Read Ad Placement */}
-            <div className="my-8">
-              <AdSlot size="inread" label="Sponsor Dispatch" />
-            </div>
-
-            {/* Tags & Taxonomy List */}
-            {post.tagsJson && Array.isArray(post.tagsJson) && post.tagsJson.length > 0 && (
-              <div className="pt-6 border-t border-[var(--line)] space-y-3">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--muted)] block">
-                  Categorized Topics:
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {(post.tagsJson as any[]).map((t: any, idx: number) => {
-                    const tagSlug = typeof t === "string" ? t : t.slug || t.name;
-                    const tagName = typeof t === "string" ? t : t.name || t.slug;
-                    return (
+              {/* Tag'ler */}
+              {tagSlugs.length > 0 && (
+                <div className="rule mt-14 pt-7">
+                  <div className="folio mb-4">§ FILED UNDER</div>
+                  <div className="flex flex-wrap gap-2.5">
+                    {tagSlugs.map((t) => (
                       <Link
-                        key={idx}
-                        href={`/tag/${tagSlug}`}
-                        className="px-3 py-1 rounded-full text-xs font-medium bg-[var(--bg-2)] border border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition"
+                        key={t}
+                        href={`/tag/${t}`}
+                        className="kicker px-4 py-2 transition-colors hover:text-[var(--accent-ink)]"
+                        style={{ border: "1px solid var(--rule)" }}
                       >
-                        #{tagName}
+                        {tagLabel(t)}
                       </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Author Profile Bio Box */}
-            {author && (
-              <div className="rounded-2xl p-6 sm:p-8 bg-[var(--bg-2)] border border-[var(--line)] flex flex-col sm:flex-row gap-6 items-start">
-                <div className="size-20 rounded-full overflow-hidden bg-[var(--accent-weak)] shrink-0 border border-[var(--line)]">
-                  {author.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={author.avatarUrl}
-                      alt={author.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full grid place-items-center text-xl font-bold text-[var(--accent)]">
-                      {author.name[0]}
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2 flex-1 min-w-0">
-                  <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[var(--accent)]">
-                    Published By Author
-                  </div>
-                  <Link
-                    href={`/author/${author.slug}`}
-                    className="text-xl font-bold text-[var(--heading)] hover:text-[var(--accent)] transition inline-block"
-                  >
-                    {author.name}
-                  </Link>
-                  {author.role && (
-                    <p className="text-xs font-semibold text-[var(--muted)]">
-                      {author.role}
-                    </p>
-                  )}
-                  {author.bio && (
-                    <p className="text-sm text-[var(--muted)] leading-relaxed pt-1">
-                      {author.bio}
-                    </p>
-                  )}
-                  <div className="pt-2">
-                    <Link
-                      href={`/author/${author.slug}`}
-                      className="text-xs font-bold text-[var(--accent)] hover:underline"
-                    >
-                      View all articles by {author.name} →
-                    </Link>
+                    ))}
                   </div>
                 </div>
-              </div>
-            )}
-          </article>
+              )}
 
-          {/* ========================================================
-              STICKY SIDEBAR COLUMN (4 cols)
-              ======================================================== */}
-          <aside className="lg:col-span-4 space-y-8 lg:sticky lg:top-24">
-            {/* Newsletter Mini Card */}
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-[#3b4bc8] to-[#1f2987] text-white space-y-3 shadow-md">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-white/80 font-bold">
-                The Fabelo Dispatch
-              </span>
-              <h3 className="text-lg font-extrabold leading-snug">
-                Never miss an in-depth breakdown.
-              </h3>
-              <p className="text-xs text-white/85 leading-relaxed">
-                Join 42K+ readers. Two high-impact briefings delivered weekly.
-              </p>
-              <ClientForm className="space-y-2 pt-1">
-                <input
-                  type="email"
-                  required
-                  placeholder="Your email address…"
-                  className="w-full h-10 px-3.5 rounded-xl bg-white text-gray-900 text-xs font-medium outline-none shadow-inner"
-                />
-                <button
-                  type="submit"
-                  className="w-full h-10 rounded-xl bg-gray-950 hover:bg-black text-white font-bold text-xs transition"
+              {/* Yazi ici reklam */}
+              <div className="mt-12">
+                <AdSlot size="leaderboard" label="Advertisement" />
+              </div>
+
+              {/* Yazar kunyesi */}
+              {author && (
+                <section
+                  className="mt-14 flex flex-col gap-5 p-8 sm:flex-row"
+                  style={{ background: "var(--paper-2)", border: "1px solid var(--rule)" }}
                 >
-                  Join Free
-                </button>
-              </ClientForm>
-            </div>
+                  <div
+                    className="display grid size-16 shrink-0 place-items-center rounded-full text-2xl"
+                    style={{ background: "var(--ink)", color: "var(--paper)" }}
+                  >
+                    {author.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="folio mb-1.5">§ WRITTEN BY</div>
+                    <Link href={`/author/${author.slug}`}>
+                      <h3 className="display headline-link mb-2 text-[1.5rem]">{author.name}</h3>
+                    </Link>
+                    {author.bio && (
+                      <p className="text-[0.96rem] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                        {decodeEntities(author.bio)}
+                      </p>
+                    )}
+                  </div>
+                </section>
+              )}
+            </article>
 
-            {/* Half-Page Skyscraper Sponsor Unit (300x600) */}
-            <AdSlot size="skyscraper" label="Sponsored Partner" />
+            {/* Kenar — 4 kolon */}
+            <aside className="lg:col-span-4 lg:rule-v lg:pl-14">
+              <div className="sticky top-44 flex flex-col gap-10">
+                <div>
+                  <div className="rule-heavy pt-3">
+                    <div className="folio mb-1.5">§ MOST READ</div>
+                    <h2 className="display mb-4 text-[1.6rem]">On the desk</h2>
+                  </div>
+                  {trending.map((p, i) => (
+                    <NumberedTrendingCard key={p.slug} post={p} index={i + 1} />
+                  ))}
+                </div>
 
-            {/* Trending In Focus */}
-            <div className="p-6 rounded-2xl bg-[var(--bg-2)] border border-[var(--line)]">
-              <div className="pb-3 mb-3 border-b border-[var(--line)] flex items-center justify-between">
-                <h3 className="text-sm font-bold uppercase tracking-wider font-mono text-[var(--heading)]">
-                  Top Trending
-                </h3>
-                <span className="text-[10px] font-mono text-[var(--muted)]">RANKED</span>
+                <AdSlot size="skyscraper" label="Sponsor" />
               </div>
-              <div className="divide-y divide-[var(--line)]">
-                {trendingPosts.map((tp, i) => (
-                  <NumberedTrendingCard
-                    key={tp.id}
-                    post={tp}
-                    index={i + 1}
-                    category={tp.categoryId ? { name: "Trending", slug: "trending" } : null}
-                  />
-                ))}
-              </div>
-            </div>
-          </aside>
+            </aside>
+          </div>
         </div>
 
-        {/* Bottom Related Stories Grid */}
-        {relatedPosts.length > 0 && (
-          <section className="mt-20 pt-10 border-t-2 border-[var(--heading)] space-y-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-extrabold tracking-tight text-[var(--heading)]">
-                More From The Fabelo Journal
-              </h2>
-              <Link
-                href="/"
-                className="text-xs sm:text-sm font-bold text-[var(--accent)] hover:underline"
-              >
-                Browse all stories →
-              </Link>
+        {/* ============== DISPATCH ============== */}
+        <section className="mt-20 sm:mt-28" style={{ background: "var(--ink)" }}>
+          <div className="mag-wrap py-14 sm:py-20">
+            <div className="grid gap-8 lg:grid-cols-12 lg:gap-14">
+              <div className="lg:col-span-7">
+                <div className="folio mb-3" style={{ color: "var(--accent)" }}>
+                  § THE FABELO DISPATCH
+                </div>
+                <h2 className="display text-[clamp(1.9rem,4vw,3rem)]" style={{ color: "var(--paper)" }}>
+                  Liked this? Get the next one <em>in your inbox</em>.
+                </h2>
+              </div>
+              <div className="lg:col-span-5">
+                <ClientForm className="flex flex-col gap-3">
+                  <input
+                    type="email"
+                    required
+                    placeholder="you@company.com"
+                    className="h-12 w-full bg-transparent px-0 text-[1.05rem] outline-none"
+                    style={{ borderBottom: "1px solid #3a4048", color: "var(--paper)" }}
+                  />
+                  <button
+                    type="submit"
+                    className="h-12 w-full text-[0.82rem] font-bold tracking-[0.14em]"
+                    style={{ background: "var(--accent)", color: "#08181c" }}
+                  >
+                    SUBSCRIBE FREE
+                  </button>
+                </ClientForm>
+              </div>
             </div>
+          </div>
+        </section>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedPosts.map((rp) => (
-                <PostCard key={rp.id} post={rp} />
-              ))}
-            </div>
-          </section>
-        )}
+        {/* ============== ILGILI YAZILAR ============== */}
+        <section className="mag-wrap pt-16 sm:pt-24">
+          <div className="mb-8 rule-heavy pt-4">
+            <div className="folio mb-2">§ NEXT</div>
+            <h2 className="display text-[2rem] sm:text-[2.6rem]">Keep reading</h2>
+          </div>
+          <div className="grid gap-x-14 gap-y-0 lg:grid-cols-2">
+            {related.map((p) => (
+              <HorizontalStoryCard key={p.slug} post={p} />
+            ))}
+          </div>
+        </section>
+
+        <div className="h-20 sm:h-28" />
       </main>
 
       <MagazineFooter />

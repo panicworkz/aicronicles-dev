@@ -1,13 +1,12 @@
 import React from "react";
 import { notFound } from "next/navigation";
 import { db, schema } from "@/db";
-import { desc, eq, or } from "drizzle-orm";
-import Link from "next/link";
+import { eq, desc, and } from "drizzle-orm";
+import type { Metadata } from "next";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
-import { PostCard, AdSlot } from "@/components/magazine/PostCard";
-import type { Metadata } from "next";
-import { ArrowLeft, CheckCircle2, Award, Mail } from "lucide-react";
+import { PostCard, HorizontalStoryCard, AdSlot, type CardPost } from "@/components/magazine/PostCard";
+import { decodeEntities } from "@/lib/taxonomy";
 
 export const dynamic = "force-dynamic";
 
@@ -17,129 +16,113 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const author = await db.query.authors.findFirst({
-    where: eq(schema.authors.slug, slug),
-  });
+  const author = await db.query.authors.findFirst({ where: eq(schema.authors.slug, slug) });
+  if (!author) return { title: "Not Found | Fabelo" };
   return {
-    title: author ? `${author.name} | Fabelo Editorial Staff` : `Author | Fabelo`,
-    description: author?.bio || "Fabelo contributor profile.",
+    title: `${author.name} | Fabelo`,
+    description: author.bio || `Stories written by ${author.name} for Fabelo.`,
   };
 }
 
 export default async function AuthorPage({ params }: PageProps) {
   const { slug } = await params;
-  const author = await db.query.authors.findFirst({
-    where: eq(schema.authors.slug, slug),
-  });
 
+  const author = await db.query.authors.findFirst({ where: eq(schema.authors.slug, slug) });
   if (!author) notFound();
 
-  // Find posts by author ID or all published if staff
-  const allPosts = await db.query.posts.findMany({
-    where: eq(schema.posts.status, "published"),
-    orderBy: [desc(schema.posts.publishedAt)],
-  });
-
-  const posts = allPosts.filter((p) => {
-    if (p.authorId === author.id) return true;
-    if (author.slug === "fabelo") return true; // Editorial desk umbrella
-    return false;
+  const rows = await db.query.posts.findMany({
+    where: and(eq(schema.posts.status, "published"), eq(schema.posts.authorId, author.id)),
+    orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.createdAt)],
+    limit: 60,
   });
 
   const categories = await db.query.categories.findMany();
-  const categoryMap: Record<number, any> = {};
-  categories.forEach((c: any) => {
-    if (c?.id) categoryMap[c.id] = c;
-  });
+  const catById = new Map(categories.map((c: any) => [c.id, c]));
+
+  const posts: CardPost[] = rows.map((p: any) => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    excerpt: p.excerpt,
+    featuredImageUrl: p.featuredImageUrl,
+    readingTime: p.readingTime,
+    publishedAt: p.publishedAt,
+    createdAt: p.createdAt,
+    authorName: author.name,
+    categoryName: catById.get(p.categoryId)?.name ?? null,
+    categorySlug: catById.get(p.categoryId)?.slug ?? null,
+  }));
+
+  const [lead, ...rest] = posts;
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] flex flex-col selection:bg-[var(--accent)] selection:text-white">
+    <div className="mag min-h-screen">
       <MagazineHeader />
 
-      <main className="f-content flex-1 py-10 space-y-12">
-        {/* ========================================================
-            AUTHOR PROFILE HERO
-            ======================================================== */}
-        <section className="p-8 sm:p-12 rounded-3xl bg-[var(--bg-2)] border border-[var(--line)]">
-          <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-            <div className="size-28 sm:size-36 rounded-full overflow-hidden bg-[var(--accent-weak)] border-2 border-[var(--line)] shrink-0 shadow-md">
-              {author.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={author.avatarUrl}
-                  alt={author.name || "Author"}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full grid place-items-center text-4xl font-extrabold text-[var(--accent)]">
-                  {author.name[0]}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-3 flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-mono font-bold bg-[var(--accent-weak)] text-[var(--accent)]">
-                  <CheckCircle2 className="size-3.5" />
-                  Verified Columnist
-                </span>
-                <span className="text-xs font-mono text-[var(--muted)]">
-                  {posts.length} Published Articles
-                </span>
-              </div>
-
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--heading)]">
-                {author.name}
-              </h1>
-
-              {author.role && (
-                <p className="text-sm font-bold text-[var(--accent)]">
-                  {author.role}
-                </p>
-              )}
-
+      <main>
+        {/* --- Yazar kunyesi --- */}
+        <header className="mag-wrap pt-12 sm:pt-16">
+          <div className="rule-heavy grid gap-8 pt-6 lg:grid-cols-12">
+            <div className="lg:col-span-8">
+              <div className="folio mb-3">§ CONTRIBUTOR</div>
+              <h1 className="display mb-4 text-[clamp(2.6rem,6.5vw,5rem)]">{author.name}</h1>
               {author.bio && (
-                <p className="text-sm sm:text-base text-[var(--muted)] max-w-2xl leading-relaxed">
-                  {author.bio}
+                <p className="max-w-[58ch] text-[1.1rem] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                  {decodeEntities(author.bio)}
                 </p>
               )}
+              <div className="byline mt-5">{posts.length} STORIES PUBLISHED</div>
+            </div>
+            <div className="lg:col-span-4 lg:flex lg:justify-end">
+              <div
+                className="display grid size-28 place-items-center rounded-full text-5xl"
+                style={{ background: "var(--ink)", color: "var(--paper)" }}
+              >
+                {author.name.charAt(0)}
+              </div>
             </div>
           </div>
-        </section>
+        </header>
 
-        {/* Sponsor Banner */}
-        <section className="py-2">
-          <AdSlot size="leaderboard" label="Sponsored Partner" />
-        </section>
-
-        {/* Author Articles Grid */}
-        <section className="space-y-6">
-          <div className="flex items-center justify-between pb-3 border-b border-[var(--line)]">
-            <h2 className="text-xl font-bold tracking-tight text-[var(--heading)]">
-              Articles by {author.name}
-            </h2>
-            <span className="text-xs font-mono text-[var(--muted)]">
-              {posts.length} Stories
-            </span>
+        {posts.length === 0 ? (
+          <div className="mag-wrap py-24">
+            <p className="display text-3xl">No stories published yet.</p>
           </div>
+        ) : (
+          <>
+            <section className="mag-wrap pt-12">
+              <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+                <div className="lg:col-span-7">
+                  <PostCard post={lead} size="lg" showImage />
+                </div>
+                <div className="lg:col-span-5 lg:rule-v lg:pl-14">
+                  {rest.slice(0, 4).map((p) => (
+                    <HorizontalStoryCard key={p.slug} post={p} />
+                  ))}
+                  <div className="mt-9">
+                    <AdSlot size="rectangle" label="Sponsor" />
+                  </div>
+                </div>
+              </div>
+            </section>
 
-          {posts.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  author={{ name: author.name, slug: author.slug }}
-                  category={post.categoryId ? categoryMap[post.categoryId] : null}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="py-16 text-center text-[var(--muted)]">
-              <p>No articles published yet by this author.</p>
-            </div>
-          )}
-        </section>
+            {rest.length > 4 && (
+              <section className="mag-wrap pt-16">
+                <div className="mb-8 rule-heavy pt-4">
+                  <div className="folio mb-2">§ ARCHIVE</div>
+                  <h2 className="display text-[2rem] sm:text-[2.6rem]">More by {author.name}</h2>
+                </div>
+                <div className="grid gap-9 sm:grid-cols-2 lg:grid-cols-3">
+                  {rest.slice(4).map((p) => (
+                    <PostCard key={p.slug} post={p} size="sm" showImage />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
+        <div className="h-20 sm:h-28" />
       </main>
 
       <MagazineFooter />
