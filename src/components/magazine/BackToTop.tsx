@@ -41,26 +41,8 @@ export default function BackToTop() {
       if (halka) halka.style.strokeDashoffset = String(CEVRE * (1 - oran));
     };
 
-    /**
-     * Koyu zeminli footer'in uzerine gelindiginde rengi ters cevir.
-     * Butonun merkezinin footer'a girip girmedigine bakiyoruz.
-     */
-    const zeminKontrol = () => {
-      const footer = document.querySelector("footer");
-      if (!footer) return;
-      const f = footer.getBoundingClientRect();
-      const b = kok.getBoundingClientRect();
-      const merkez = b.top + b.height / 2;
-      const koyuZeminde = merkez >= f.top && merkez <= f.bottom;
-      kok.dataset.koyu = koyuZeminde ? "1" : "0";
-      kok.style.background = koyuZeminde ? "var(--paper)" : "var(--ink)";
-      kok.style.color = koyuZeminde ? "var(--ink)" : "var(--paper)";
-      kok.style.borderColor = koyuZeminde ? "var(--paper)" : "var(--ink)";
-    };
-
     const onScroll = () => {
       guncelle();
-      zeminKontrol();
     };
 
     onScroll();
@@ -88,13 +70,16 @@ export default function BackToTop() {
       ref={kokRef}
       onClick={yukari}
       aria-label="Sayfanın başına dön"
-      className="group fixed bottom-8 right-8 z-50 grid place-items-center rounded-full"
+      className="mag group fixed bottom-8 right-8 z-50 grid place-items-center rounded-full"
       style={{
         width: BOYUT,
         height: BOYUT,
         background: "var(--ink)",
         color: "var(--paper)",
-        border: "1px solid var(--ink)",
+        borderWidth: 1,
+        borderStyle: "solid",
+        borderColor: "var(--ink)",
+        boxShadow: "0 0 0 2px var(--paper), 0 10px 30px -12px rgba(0,0,0,.45)",
         opacity: 0,
         transform: "translateY(10px) scale(0.96)",
         pointerEvents: "none",
