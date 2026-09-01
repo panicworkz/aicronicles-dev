@@ -13,6 +13,22 @@
 
 export type MediaBoyut = { width: number | null; height: number | null };
 
+/**
+ * URL'nin kendisinde olcu ipucu var mi?
+ *   quickchart.io/chart?w=1400&h=700   -> 1400x700
+ *   .../size/w1200/...                 -> genislik 1200
+ *   ...?w=1200                         -> genislik 1200
+ * Yalniz genislik bulunursa 3:2 varsayilan oraniyla yukseklik uretiyoruz;
+ * amac piksel dogrulugu degil, tarayicinin YER AYIRMASI.
+ */
+function urldenOlcu(src: string): MediaBoyut | null {
+  const w = Number(src.match(/[?&]w=(\d{2,5})/)?.[1] ?? src.match(/\/size\/w(\d{2,5})\//)?.[1]);
+  const h = Number(src.match(/[?&]h=(\d{2,5})/)?.[1]);
+  if (w && h) return { width: w, height: h };
+  if (w) return { width: w, height: Math.round((w * 2) / 3) };
+  return null;
+}
+
 /** URL'den dosya adini cikar: /media/foo-123.webp -> foo-123.webp */
 function dosyaAdi(src: string): string {
   try {
@@ -28,7 +44,6 @@ export function enrichArticleHtml(
   boyutlar: Map<string, MediaBoyut>
 ): string {
   if (!html) return "<p></p>";
-  if (boyutlar.size === 0) return html;
 
   return html.replace(/<img\b[^>]*>/gi, (etiket) => {
     // Zaten olculendirilmisse dokunma
@@ -37,11 +52,20 @@ export function enrichArticleHtml(
     const src = etiket.match(/\bsrc\s*=\s*["']([^"']+)["']/i)?.[1];
     if (!src) return etiket;
 
-    const olcu = boyutlar.get(dosyaAdi(src));
-    if (!olcu?.width || !olcu?.height) return etiket;
-
-    // Kendi kendine kapanan etiketi bozmadan nitelikleri ekle
+    // Once yerel medya kaydi, sonra URL ipucu
+    const olcu = boyutlar.get(dosyaAdi(src)) ?? urldenOlcu(src);
     const govde = etiket.replace(/\s*\/?>$/, "");
-    return `${govde} width="${olcu.width}" height="${olcu.height}">`;
+
+    if (olcu?.width && olcu?.height) {
+      return `${govde} width="${olcu.width}" height="${olcu.height}">`;
+    }
+
+    // Olcusu hic bilinemeyen gorsel: tembel birakirsak okuyucu asagi
+    // atladiginda yuklenip sayfayi uzatiyor ve cipa kayiyor. Bunlari sayfa
+    // aciilirken yukle; oncelikligi dusuk tutup manseti yavaslatmiyoruz.
+    const eager = govde
+      .replace(/\s*loading\s*=\s*["'][^"']*["']/i, "")
+      .replace(/\s*fetchpriority\s*=\s*["'][^"']*["']/i, "");
+    return `${eager} loading="eager" fetchpriority="low">`;
   });
 }
