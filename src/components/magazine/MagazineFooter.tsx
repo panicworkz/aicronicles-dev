@@ -90,8 +90,10 @@ export default function MagazineFooter() {
             <Liste items={MASTHEAD_LINKS} />
           </nav>
 
-          {/* Abonelik — ortadaki bosluğu doldurur ve footer'a amac katar */}
-          <div className="lg:col-span-3">
+          {/* Abonelik — ortadaki bosluğu doldurur ve footer'a amac katar.
+              Kunyedeki "THE DISPATCH" ve "Subscribe" buraya geliyor: bu form
+              HER sayfada var, ana sayfadaki bolum ise yalnizca ana sayfada. */}
+          <div id="subscribe" className="lg:col-span-3">
             <SutunBasligi>THE DISPATCH</SutunBasligi>
             <p className="mb-4 text-[0.92rem] leading-relaxed" style={{ color: "#9aa1aa" }}>
               Twice a week. Money, career and AI — without the noise.

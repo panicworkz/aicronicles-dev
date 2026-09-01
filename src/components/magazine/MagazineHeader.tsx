@@ -72,7 +72,7 @@ export default function MagazineHeader() {
             {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </span>
           <span className="folio">FABELO — INDEPENDENT MONEY, CAREER &amp; AI DESK</span>
-          <a href="/#dispatch" className="byline hidden sm:block hover:text-[var(--accent-ink)]">
+          <a href="#subscribe" className="byline hidden sm:block hover:text-[var(--accent-ink)]">
             THE DISPATCH →
           </a>
         </div>
@@ -138,7 +138,7 @@ export default function MagazineHeader() {
               {dark ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
             </button>
             <a
-              href="/#dispatch"
+              href="#subscribe"
               className="hidden sm:inline-flex h-9 items-center rounded-full px-5 text-[0.78rem] font-semibold tracking-wide"
               style={{ background: "var(--ink)", color: "var(--paper)" }}
             >
