@@ -1,30 +1,68 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { ArrowUp } from "lucide-react";
+
+const BOYUT = 54; // px
+const CIZGI = 1.5; // ilerleme halkasi kalinligi
+const YARICAP = (BOYUT - CIZGI) / 2;
+const CEVRE = 2 * Math.PI * YARICAP;
 
 /**
- * Sayfanin basina don. Bir ekran boyu asagi inilince beliriyor.
- * Kaydirma, cipa baglantilariyla ayni yumusak hareketi kullanir;
- * rAF bogulmussa (arka plan sekmesi) veya kullanici hareketi azaltmayi
- * sectiyse aninda yukari cikar.
+ * Basa don. Editoryel dil: ince daire, okuma ilerlemesini gosteren halka,
+ * mono "TOP" etiketi.
+ *
+ * Iki onemli davranis:
+ *  - Koyu footer uzerine gelince renk ters cevriliyor; aksi halde buton da
+ *    footer da ayni murekkep rengi oldugu icin gorunmez oluyordu.
+ *  - Gorunurluk React state yerine dogrudan DOM'dan yonetiliyor; sekme arka
+ *    plandayken React guncellemeleri ertelenip buton kayboluyordu.
  */
 export default function BackToTop() {
-  const ref = useRef<HTMLButtonElement>(null);
+  const kokRef = useRef<HTMLButtonElement>(null);
+  const halkaRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
-    // Gorunurlugu dogrudan DOM uzerinden yonetiyoruz. React state kullansaydik
-    // tarayici sekmeyi arka plana aldiginda guncellemeler ertelenip buton
-    // gorunmez kalabiliyordu.
-    const onScroll = () => {
-      const el = ref.current;
-      if (!el) return;
-      const goster = window.scrollY > window.innerHeight * 0.9;
-      el.style.opacity = goster ? "1" : "0";
-      el.style.transform = goster ? "translateY(0)" : "translateY(12px)";
-      el.style.pointerEvents = goster ? "auto" : "none";
-      el.setAttribute("aria-hidden", goster ? "false" : "true");
+    const kok = kokRef.current;
+    if (!kok) return;
+
+    const guncelle = () => {
+      const halka = halkaRef.current;
+      const uzunluk = document.documentElement.scrollHeight - window.innerHeight;
+      const oran = uzunluk > 0 ? Math.min(1, Math.max(0, window.scrollY / uzunluk)) : 0;
+
+      // Bir ekran boyu inilince belir
+      const goster = window.scrollY > window.innerHeight * 0.6;
+      kok.style.opacity = goster ? "1" : "0";
+      kok.style.transform = goster ? "translateY(0) scale(1)" : "translateY(10px) scale(0.96)";
+      kok.style.pointerEvents = goster ? "auto" : "none";
+      kok.setAttribute("aria-hidden", goster ? "false" : "true");
+      kok.setAttribute("tabindex", goster ? "0" : "-1");
+
+      if (halka) halka.style.strokeDashoffset = String(CEVRE * (1 - oran));
     };
+
+    /**
+     * Koyu zeminli footer'in uzerine gelindiginde rengi ters cevir.
+     * Butonun merkezinin footer'a girip girmedigine bakiyoruz.
+     */
+    const zeminKontrol = () => {
+      const footer = document.querySelector("footer");
+      if (!footer) return;
+      const f = footer.getBoundingClientRect();
+      const b = kok.getBoundingClientRect();
+      const merkez = b.top + b.height / 2;
+      const koyuZeminde = merkez >= f.top && merkez <= f.bottom;
+      kok.dataset.koyu = koyuZeminde ? "1" : "0";
+      kok.style.background = koyuZeminde ? "var(--paper)" : "var(--ink)";
+      kok.style.color = koyuZeminde ? "var(--ink)" : "var(--paper)";
+      kok.style.borderColor = koyuZeminde ? "var(--paper)" : "var(--ink)";
+    };
+
+    const onScroll = () => {
+      guncelle();
+      zeminKontrol();
+    };
+
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
@@ -35,51 +73,86 @@ export default function BackToTop() {
   }, []);
 
   const yukari = () => {
-    const azaltilmisHareket =
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-
-    if (azaltilmisHareket || document.visibilityState === "hidden") {
-      window.scrollTo({ top: 0, behavior: "auto" });
+    // SmoothScroll'un Lenis ornegiyle ayni hareket
+    const glide = (window as any).__fabeloScrollTop;
+    if (typeof glide === "function") {
+      glide();
       return;
     }
-
-    const baslangic = window.scrollY;
-    window.scrollTo({ top: 0, behavior: "smooth" });
-
-    // Guvenlik agi: 150ms icinde hareket yoksa dogrudan tepeye git
-    window.setTimeout(() => {
-      if (Math.abs(window.scrollY - baslangic) < 2) window.scrollTo({ top: 0, behavior: "auto" });
-    }, 150);
+    const azaltilmis = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    window.scrollTo({ top: 0, behavior: azaltilmis ? "auto" : "smooth" });
   };
 
   return (
     <button
-      ref={ref}
+      ref={kokRef}
       onClick={yukari}
       aria-label="Sayfanın başına dön"
-      title="Başa dön"
-      className="group fixed bottom-7 right-7 z-40 grid size-12 place-items-center transition-all duration-500"
+      className="group fixed bottom-8 right-8 z-50 grid place-items-center rounded-full"
       style={{
+        width: BOYUT,
+        height: BOYUT,
         background: "var(--ink)",
         color: "var(--paper)",
         border: "1px solid var(--ink)",
         opacity: 0,
-        transform: "translateY(12px)",
+        transform: "translateY(10px) scale(0.96)",
         pointerEvents: "none",
+        transition: "opacity .45s cubic-bezier(.22,1,.36,1), transform .45s cubic-bezier(.22,1,.36,1), background .35s, color .35s, border-color .35s",
       }}
     >
-      <ArrowUp className="size-[18px] transition-transform duration-300 group-hover:-translate-y-0.5" />
+      {/* Okuma ilerlemesi halkasi */}
+      <svg
+        width={BOYUT}
+        height={BOYUT}
+        viewBox={`0 0 ${BOYUT} ${BOYUT}`}
+        className="pointer-events-none absolute inset-0 -rotate-90"
+        aria-hidden="true"
+      >
+        <circle
+          ref={halkaRef}
+          cx={BOYUT / 2}
+          cy={BOYUT / 2}
+          r={YARICAP}
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth={CIZGI}
+          strokeLinecap="round"
+          strokeDasharray={CEVRE}
+          strokeDashoffset={CEVRE}
+          style={{ transition: "stroke-dashoffset .12s linear" }}
+        />
+      </svg>
+
+      {/* Ok — hover'da yukari kayar */}
+      <span className="relative block h-4 w-3 overflow-hidden">
+        <svg
+          viewBox="0 0 12 16"
+          fill="none"
+          className="absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover:-translate-y-4"
+        >
+          <path d="M6 15V2M6 2L1.5 6.5M6 2l4.5 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+        <svg
+          viewBox="0 0 12 16"
+          fill="none"
+          className="absolute inset-0 translate-y-4 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover:translate-y-0"
+        >
+          <path d="M6 15V2M6 2L1.5 6.5M6 2l4.5 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+      </span>
+
+      {/* Mono etiket — hover'da belirir */}
       <span
-        className="pointer-events-none absolute -top-8 right-0 whitespace-nowrap px-2 py-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        className="pointer-events-none absolute right-full mr-3 whitespace-nowrap opacity-0 transition-all duration-300 group-hover:opacity-100"
         style={{
-          background: "var(--ink)",
-          color: "var(--paper)",
           fontFamily: "var(--font-mono), monospace",
-          fontSize: "0.62rem",
-          letterSpacing: "0.14em",
+          fontSize: "0.6rem",
+          letterSpacing: "0.2em",
+          color: "var(--ink-3)",
         }}
       >
-        TOP
+        BAŞA DÖN
       </span>
     </button>
   );

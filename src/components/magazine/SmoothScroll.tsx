@@ -30,6 +30,19 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     const reducedMotion = () =>
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
+    /** Sayfanin basina yumusak donus (logo tiklamasi ve basa-don butonu icin) */
+    const basaDon = () => {
+      if (reducedMotion() || document.visibilityState === "hidden") {
+        window.scrollTo({ top: 0, behavior: "auto" });
+        return;
+      }
+      const onceki = window.scrollY;
+      lenis.scrollTo(0, { duration: 1.1 });
+      window.setTimeout(() => {
+        if (Math.abs(window.scrollY - onceki) < 2) window.scrollTo({ top: 0, behavior: "auto" });
+      }, 150);
+    };
+
     /** Hedefin, yapiskan kunyenin TAM altina gelecegi mutlak konum */
     const hedefKonum = (el: Element) =>
       Math.max(0, Math.round(el.getBoundingClientRect().top + window.scrollY - measureHeader()));
@@ -96,7 +109,16 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       const url = new URL(href, window.location.href);
       // Farkli sayfaya gidiyorsa karisma
       if (url.origin !== window.location.origin || url.pathname !== window.location.pathname) return;
-      if (!url.hash || url.hash === "#") return;
+
+      // Ayni sayfaya cipa'siz baglanti (ornegin ana sayfadayken logo) —
+      // tarayici pat diye tepeye atmasin, yumusakca cikalim.
+      if (!url.hash || url.hash === "#") {
+        if (window.scrollY < 2) return; // zaten tepedeyiz, dokunma
+        e.preventDefault();
+        e.stopPropagation();
+        basaDon();
+        return;
+      }
 
       if (glideTo(url.hash)) {
         // Yakalama fazindayiz: Next.js Link kendi anlik kaydirmasini
@@ -115,7 +137,11 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       requestAnimationFrame(() => glideTo(window.location.hash, false));
     }
 
+    // Basa-don butonu da ayni yumusak hareketi kullansin
+    (window as any).__fabeloScrollTop = basaDon;
+
     return () => {
+      delete (window as any).__fabeloScrollTop;
       document.removeEventListener("click", onClick, true);
       cancelAnimationFrame(raf);
       lenis.destroy();
