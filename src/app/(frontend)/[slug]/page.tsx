@@ -55,7 +55,8 @@ async function medyaBoyutlari(): Promise<Map<string, MediaBoyut>> {
   const satirlar = await db.query.media.findMany();
   const harita = new Map<string, MediaBoyut>();
   for (const m of satirlar as any[]) {
-    if (m?.filename) harita.set(m.filename, { width: m.width ?? null, height: m.height ?? null });
+    if (m?.filename)
+      harita.set(m.filename, { width: m.width ?? null, height: m.height ?? null, url: m.url ?? null });
   }
   return harita;
 }

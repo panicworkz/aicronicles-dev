@@ -11,7 +11,7 @@
  * ayiriyor: hem cipa kaymasi hem de gorsel yuklendikce olusan zipzip biter.
  */
 
-export type MediaBoyut = { width: number | null; height: number | null };
+export type MediaBoyut = { width: number | null; height: number | null; url?: string | null };
 
 /**
  * URL'nin kendisinde olcu ipucu var mi?
@@ -53,8 +53,22 @@ export function enrichArticleHtml(
     if (!src) return etiket;
 
     // Once yerel medya kaydi, sonra URL ipucu
-    const olcu = boyutlar.get(dosyaAdi(src)) ?? urldenOlcu(src);
-    const govde = etiket.replace(/\s*\/?>$/, "");
+    const yerel = boyutlar.get(dosyaAdi(src));
+    const olcu = yerel ?? urldenOlcu(src);
+    let govde = etiket.replace(/\s*\/?>$/, "");
+
+    /**
+     * Goc sirasinda gorseller sunucuya indirilmis ama yazi icindeki adresler
+     * guncellenmemis: hala eski Ghost sitesini (fabelo.io) ve pexels CDN'ini
+     * gosteriyorlar. Ayni dosya bizde varsa kendi adresimize ceviriyoruz.
+     * Boylece dis siteye bagimlilik biter, sayfa hizlanir ve en onemlisi
+     * olculeri kesin bilindigi icin gorsel yuklenirken sayfa kaymaz.
+     */
+    if (yerel?.url && !src.startsWith("/")) {
+      govde = govde.replace(/(\bsrc\s*=\s*)["'][^"']+["']/i, `$1"${yerel.url}"`);
+      // Farkli boyuttaki kopyalari isaret eden srcset artik gecersiz
+      govde = govde.replace(/\s+srcset\s*=\s*["'][^"']*["']/i, "");
+    }
 
     if (olcu?.width && olcu?.height) {
       return `${govde} width="${olcu.width}" height="${olcu.height}">`;
