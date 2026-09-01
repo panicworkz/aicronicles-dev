@@ -3,47 +3,75 @@
 import { useEffect } from "react";
 
 /**
- * Cipa hedefini varista YERINDE TUTAR.
+ * Cipa baglantilari icin hedefi TAKIP EDEN yumusak kaydirma.
  *
- * Tarayicinin cipa mantigi hedefin konumunu tiklama aninda cozer. Sayfa o
- * andan sonra yeniden yerlesirse (yazi tipi degisimi, gec yuklenen bir gorsel,
- * gomulu icerik) hedef kayar ve okuyucu yanlis yerde kalir. Hicbir kutuphane
- * bunu cozmez; hepsi ayni sekilde tek seferlik olcum yapar.
+ * Sorun neydi: hem tarayicinin kendi yumusak kaydirmasi hem de butun hazir
+ * kutuphaneler, hedefin piksel konumunu TIKLAMA ANINDA bir kez hesaplar ve o
+ * sabit noktaya dogru yol alir. Yolculuk ~700ms surer; bu sirada ekrana giren
+ * tembel gorseller yuklenir, sayfa yeniden yerlesir ve hedef kayar. Tarayici
+ * ise hala eski noktaya gittigi icin yanlis yerde durur.
  *
- * Burada tiklamadan sonra kisa bir sure hedefi izliyoruz: hedef kayarsa VE
- * kullanici bu sirada kendisi kaydirmadiysa, sayfayi sessizce hedefe geri
- * sabitliyoruz. Kullanici kaydirmaya baslarsa derhal birakiyoruz.
+ * Aninda kaydirmada bu olmaz: yolculuk yoktur, hedefe hemen varilir ve
+ * sonraki yerlesmelerde tarayicinin kendi kaydirma cipasi konumu korur.
+ * Kullanicinin gozlemi de tam boyleydi - "pat diye" calisiyor, yumusakta
+ * sasiyordu.
+ *
+ * Cozum: her karede hedefin GUNCEL konumunu yeniden olcup oraya dogru
+ * ilerliyoruz. Yol boyunca sayfa yeniden yerlesse bile hedefi kaybetmiyoruz.
  */
+
+const SURE = 650; // ms
+
 export default function AnchorPin() {
   useEffect(() => {
-    let hedef: Element | null = null;
-    let birakildi = true;
-    let beklenenKonum = 0;
-    let bitis = 0;
+    let calisiyor = false;
+    let iptal = false;
 
     const kunye = () => {
       const el = document.querySelector("header");
       return el ? Math.round(el.getBoundingClientRect().height) : 145;
     };
 
-    const sabitle = () => {
-      if (birakildi || !hedef) return;
-      if (performance.now() > bitis) {
-        birakildi = true;
-        return;
-      }
-      const olmasiGereken = Math.round(
-        hedef.getBoundingClientRect().top + window.scrollY - kunye()
-      );
-      // Hedef kaydiysa (sayfa yeniden yerlesti) sessizce geri hizala
-      if (Math.abs(olmasiGereken - Math.round(window.scrollY)) > 2) {
-        beklenenKonum = olmasiGereken;
-        window.scrollTo({ top: olmasiGereken, behavior: "instant" as ScrollBehavior });
-      }
-      requestAnimationFrame(sabitle);
+    const hedefKonumu = (el: Element) =>
+      Math.max(0, Math.round(el.getBoundingClientRect().top + window.scrollY - kunye()));
+
+    const git = (el: Element) => {
+      const baslangic = window.scrollY;
+      const t0 = performance.now();
+      calisiyor = true;
+      iptal = false;
+
+      const kare = (simdi: number) => {
+        if (iptal) {
+          calisiyor = false;
+          return;
+        }
+
+        const p = Math.min(1, (simdi - t0) / SURE);
+        // yumusak giris-cikis (ease-out cubic)
+        const e = 1 - Math.pow(1 - p, 3);
+
+        // HEDEFI HER KAREDE YENIDEN OLC — yol boyunca sayfa kayabilir
+        const hedef = hedefKonumu(el);
+        const y = Math.round(baslangic + (hedef - baslangic) * e);
+
+        window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
+
+        if (p < 1) {
+          requestAnimationFrame(kare);
+        } else {
+          // Son karede tam hedefe otur
+          window.scrollTo({ top: hedefKonumu(el), behavior: "instant" as ScrollBehavior });
+          calisiyor = false;
+        }
+      };
+
+      requestAnimationFrame(kare);
     };
 
     const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
       const link = (e.target as HTMLElement)?.closest?.("a");
       const href = link?.getAttribute("href");
       if (!href || !href.startsWith("#") || href === "#") return;
@@ -56,50 +84,34 @@ export default function AnchorPin() {
       }
       if (!el) return;
 
-      hedef = el;
-      birakildi = true; // kaydirma bitene kadar KARISMA
+      e.preventDefault();
 
-      /**
-       * Yumusak kaydirma suruyorken sabitlemeye baslarsak hareketi daha
-       * basinda kesiyoruz ve sayfa "pat" diye ziplamis gibi oluyor.
-       * Bu yuzden once kaydirmanin durmasini bekliyoruz: konum ust uste
-       * uc olcumde ayni kalinca hareket bitmis demektir.
-       */
-      let sonKonum = -1;
-      let sabitSayac = 0;
-      const bekle = () => {
-        const simdi = Math.round(window.scrollY);
-        sabitSayac = simdi === sonKonum ? sabitSayac + 1 : 0;
-        sonKonum = simdi;
+      const azaltilmis = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+      if (azaltilmis) {
+        window.scrollTo({ top: hedefKonumu(el), behavior: "instant" as ScrollBehavior });
+      } else {
+        git(el);
+      }
 
-        if (sabitSayac >= 3) {
-          // Hareket bitti; simdi kisa sure hedefi yerinde tut
-          birakildi = false;
-          bitis = performance.now() + 1500;
-          beklenenKonum = simdi;
-          requestAnimationFrame(sabitle);
-          return;
-        }
-        requestAnimationFrame(bekle);
-      };
-      requestAnimationFrame(bekle);
+      history.replaceState(null, "", href);
     };
 
-    // Kullanici kendi kaydirmaya baslarsa karisma
-    const kullaniciMudahalesi = () => {
-      if (!birakildi && Math.abs(window.scrollY - beklenenKonum) > 120) birakildi = true;
+    // Kullanici araya girerse hareketi birak
+    const birak = () => {
+      if (calisiyor) iptal = true;
     };
 
     document.addEventListener("click", onClick);
-    window.addEventListener("wheel", () => (birakildi = true), { passive: true });
-    window.addEventListener("touchstart", () => (birakildi = true), { passive: true });
-    window.addEventListener("keydown", () => (birakildi = true));
-    window.addEventListener("scroll", kullaniciMudahalesi, { passive: true });
+    window.addEventListener("wheel", birak, { passive: true });
+    window.addEventListener("touchstart", birak, { passive: true });
+    window.addEventListener("keydown", birak);
 
     return () => {
+      iptal = true;
       document.removeEventListener("click", onClick);
-      window.removeEventListener("scroll", kullaniciMudahalesi);
-      birakildi = true;
+      window.removeEventListener("wheel", birak);
+      window.removeEventListener("touchstart", birak);
+      window.removeEventListener("keydown", birak);
     };
   }, []);
 
