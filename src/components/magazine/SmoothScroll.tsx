@@ -104,7 +104,10 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       if (!link) return;
 
       const href = link.getAttribute("href");
-      if (!href || !href.includes("#")) return;
+      // Cipa'siz ayni-sayfa baglantilarini da yakalamamiz gerekiyor (logo "/"),
+      // bu yuzden burada "#" sarti aranmaz.
+      if (!href) return;
+      if (link.hasAttribute("download") || link.getAttribute("target") === "_blank") return;
 
       const url = new URL(href, window.location.href);
       // Farkli sayfaya gidiyorsa karisma
