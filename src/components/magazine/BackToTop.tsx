@@ -55,14 +55,9 @@ export default function BackToTop() {
   }, []);
 
   const yukari = () => {
-    // SmoothScroll'un Lenis ornegiyle ayni hareket
-    const glide = (window as any).__fabeloScrollTop;
-    if (typeof glide === "function") {
-      glide();
-      return;
-    }
-    const azaltilmis = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    window.scrollTo({ top: 0, behavior: azaltilmis ? "auto" : "smooth" });
+    // Yumusak hareket CSS'teki scroll-behavior ile geliyor; hareket azaltma
+    // tercihi de orada isleniyor.
+    window.scrollTo({ top: 0 });
   };
 
   return (
