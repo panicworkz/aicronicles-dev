@@ -5,6 +5,7 @@ import { desc, eq, ilike, or } from 'drizzle-orm';
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
+import { handleApiError, apiUnauthorized, apiBadRequest } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,11 @@ const MEDIA_DIR = process.env.MEDIA_DIR || path.join(process.cwd(), 'public', 'm
 
 export async function GET(request: Request) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
     const limit = parseInt(searchParams.get('limit') || '1000', 10);
@@ -31,13 +37,18 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({ success: true, media: mediaList, total: mediaList.length });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return handleApiError(error, 'GET /api/media');
   }
 }
 
 export async function POST(req: Request) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const alt = (formData.get('alt') as string) || '';
@@ -46,7 +57,7 @@ export async function POST(req: Request) {
     const aeoContext = (formData.get('aeoContext') as string) || '';
 
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+      return apiBadRequest('No file provided');
     }
 
     if (!fs.existsSync(MEDIA_DIR)) {
@@ -79,19 +90,23 @@ export async function POST(req: Request) {
     } as any).returning();
 
     return NextResponse.json({ success: true, media: newMedia });
-  } catch (error: any) {
-    console.error('Media upload error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return handleApiError(error, 'POST /api/media');
   }
 }
 
 export async function PUT(req: Request) {
   try {
-    const body = await req.json();
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
+    const body = await req.json().catch(() => ({}));
     const { id, title, alt, caption, aeoContext } = body;
 
     if (!id) {
-      return NextResponse.json({ error: 'Media ID is required' }, { status: 400 });
+      return apiBadRequest('Media ID is required');
     }
 
     const [updated] = await db
@@ -106,18 +121,23 @@ export async function PUT(req: Request) {
       .returning();
 
     return NextResponse.json({ success: true, media: updated });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return handleApiError(error, 'PUT /api/media');
   }
 }
 
 export async function DELETE(req: Request) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: 'Media ID is required' }, { status: 400 });
+      return apiBadRequest('Media ID is required');
     }
 
     const mediaId = parseInt(id, 10);
@@ -126,7 +146,6 @@ export async function DELETE(req: Request) {
     });
 
     if (item) {
-      // Try to remove file from disk if exists
       try {
         const filePath = path.join(MEDIA_DIR, item.filename);
         if (fs.existsSync(filePath)) {
@@ -140,7 +159,7 @@ export async function DELETE(req: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return handleApiError(error, 'DELETE /api/media');
   }
 }

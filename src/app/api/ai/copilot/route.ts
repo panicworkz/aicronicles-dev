@@ -1,4 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
+import { getSession } from '@/lib/auth';
+import { checkRateLimit, recordAttempt } from '@/lib/rate-limiter';
+import { handleApiError, apiUnauthorized, apiTooManyRequests } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,8 +52,25 @@ async function callGeminiIfAvailable(prompt: string): Promise<string | null> {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized('Admin authentication required for AI Copilot.');
+    }
+
+    const forwarded = request.headers.get('x-forwarded-for');
+    const realIp = request.headers.get('x-real-ip');
+    const cfIp = request.headers.get('cf-connecting-ip');
+    const clientIp = cfIp || realIp || (forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1');
+
+    const rateLimitKey = `copilot:${clientIp}`;
+    const check = checkRateLimit(rateLimitKey, 30, 60 * 1000); // 30 req / min
+    if (!check.success) {
+      return apiTooManyRequests('Copilot request rate limit exceeded. Please wait a moment.', check.resetInMs);
+    }
+    recordAttempt(rateLimitKey);
+
     const body = await request.json();
     const {
       action,
@@ -298,7 +318,7 @@ Return JSON ONLY:
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'POST /api/ai/copilot');
   }
 }

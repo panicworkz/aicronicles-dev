@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { desc, like, or, eq, and } from 'drizzle-orm';
+import { handleApiError, apiUnauthorized, apiBadRequest } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
     const status = searchParams.get('status');
@@ -41,14 +48,19 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({ success: true, products: productList });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'GET /api/products');
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
+    const body = await request.json().catch(() => ({}));
     const {
       title,
       slug,
@@ -76,7 +88,7 @@ export async function POST(request: Request) {
     } = body;
 
     if (!title || !slug) {
-      return NextResponse.json({ error: 'Title and Slug are required' }, { status: 400 });
+      return apiBadRequest('Title and Slug are required');
     }
 
     const [newProduct] = await db
@@ -122,7 +134,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, product: newProduct });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'POST /api/products');
   }
 }

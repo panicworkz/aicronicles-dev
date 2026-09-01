@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { desc, like, or, eq, and } from 'drizzle-orm';
+import { handleApiError, apiUnauthorized, apiBadRequest } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
     const segment = searchParams.get('segment');
@@ -83,18 +90,23 @@ export async function GET(request: Request) {
         totalRevenue: totalSpentSum,
       },
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'GET /api/customers');
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
+    const body = await request.json().catch(() => ({}));
     const { email, name, phone, shippingAddressJson } = body;
 
     if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+      return apiBadRequest('Email is required');
     }
 
     const [newCust] = await db
@@ -110,7 +122,7 @@ export async function POST(request: Request) {
       .returning();
 
     return NextResponse.json({ success: true, customer: newCust });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'POST /api/customers');
   }
 }

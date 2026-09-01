@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { desc, eq } from 'drizzle-orm';
+import { handleApiError, apiUnauthorized, apiBadRequest } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +11,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { id } = await params;
     const postId = parseInt(id, 10);
 
@@ -19,8 +26,8 @@ export async function GET(
     });
 
     return NextResponse.json({ success: true, revisions });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'GET /api/posts/[id]/revisions');
   }
 }
 
@@ -29,9 +36,19 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { id } = await params;
     const postId = parseInt(id, 10);
-    const { title, contentHtml, contentJson, excerpt, authorName = 'Editor' } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const { title, contentHtml, contentJson, excerpt, authorName = 'Editor' } = body;
+
+    if (!title) {
+      return apiBadRequest('Title is required');
+    }
 
     const [newRevision] = await db
       .insert(schema.postRevisions)
@@ -46,7 +63,7 @@ export async function POST(
       .returning();
 
     return NextResponse.json({ success: true, revision: newRevision });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'POST /api/posts/[id]/revisions');
   }
 }

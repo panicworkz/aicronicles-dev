@@ -289,3 +289,12 @@
 }
 .mag .article-body pre code { background: none; border: 0; padding: 0; color: inherit; }
 .mag .article-body hr { border: 0; border-top: 1px solid var(--rule); margin-block: 2.6em; }
+
+/* --- Cipa hedefleri: yapiskan kunyenin altinda kalmasin ----------------- */
+/* JS devre disiysa veya tarayici dogrudan ziplarsa da baslik gorunur kalir. */
+.mag section[id],
+.mag [id="dispatch"],
+.mag h2[id],
+.mag h3[id] {
+  scroll-margin-top: 8.25rem; /* ~132px: kisalmis kunye + nefes payi */
+}

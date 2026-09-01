@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { desc, like, or, eq, and, inArray } from 'drizzle-orm';
+import { handleApiError, apiUnauthorized, apiBadRequest } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
     const paymentStatus = searchParams.get('paymentStatus');
@@ -59,30 +66,30 @@ export async function GET(request: Request) {
       const types = Array.from(new Set(items.map((i) => i.productType || 'physical')));
       return {
         ...o,
-        items,
+        itemCount: items.reduce((acc, i) => acc + (i.quantity || 1), 0),
         productTypes: types,
-        primaryType: types[0] || 'physical',
       };
     });
 
-    // Filter by type if requested
+    // Filter by product type if requested
     const filteredOrders = typeFilter && typeFilter !== 'all'
       ? enrichedOrders.filter((o) => o.productTypes.includes(typeFilter))
       : enrichedOrders;
 
-    // Calculate revenue stats
-    const allOrders = await db.query.orders.findMany();
-    let totalRevenue = 0;
-    let paidCount = 0;
-    let pendingFulfillmentCount = 0;
+    // Calculate metrics
+    let totalRev = 0;
+    let pendingFulfillment = 0;
+    let digitalCount = 0;
 
-    for (const o of allOrders) {
+    for (const o of enrichedOrders) {
       if (o.paymentStatus === 'paid') {
-        totalRevenue += parseFloat(String(o.total || '0'));
-        paidCount++;
+        totalRev += parseFloat(String(o.total || '0'));
       }
-      if (o.orderStatus === 'processing' || o.orderStatus === 'unfulfilled') {
-        pendingFulfillmentCount++;
+      if (o.orderStatus === 'processing') {
+        pendingFulfillment++;
+      }
+      if (o.productTypes.includes('digital')) {
+        digitalCount++;
       }
     }
 
@@ -90,20 +97,25 @@ export async function GET(request: Request) {
       success: true,
       orders: filteredOrders,
       stats: {
-        totalRevenue,
-        totalOrders: allOrders.length,
-        paidCount,
-        pendingFulfillmentCount,
+        totalOrders: enrichedOrders.length,
+        totalRevenue: totalRev,
+        pendingFulfillment,
+        digitalOrders: digitalCount,
       },
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'GET /api/orders');
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
+    const body = await request.json().catch(() => ({}));
     const {
       customerId,
       customerEmail,
@@ -119,6 +131,10 @@ export async function POST(request: Request) {
       shippingAddressJson,
       notes,
     } = body;
+
+    if (!customerEmail || total === undefined) {
+      return apiBadRequest('customerEmail and total are required.');
+    }
 
     const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
 
@@ -150,13 +166,13 @@ export async function POST(request: Request) {
         productType: item.productType || 'physical',
         digitalAssetUrl: item.digitalAssetUrl || null,
         quantity: item.quantity || 1,
-        unitPrice: String(item.unitPrice || item.price),
-        totalPrice: String(item.totalPrice || (item.unitPrice || item.price) * (item.quantity || 1)),
+        unitPrice: String(item.unitPrice || item.price || '0.00'),
+        totalPrice: String(item.totalPrice || (item.unitPrice || item.price || 0) * (item.quantity || 1)),
       } as any);
     }
 
     return NextResponse.json({ success: true, order: newOrder });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'POST /api/orders');
   }
 }

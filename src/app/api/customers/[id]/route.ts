@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { eq, desc } from 'drizzle-orm';
+import { handleApiError, apiUnauthorized, apiNotFound } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +11,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { id } = await params;
     const customerId = parseInt(id, 10);
 
@@ -17,7 +24,7 @@ export async function GET(
     });
 
     if (!customer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+      return apiNotFound('Customer not found');
     }
 
     // Find orders for this customer by email
@@ -27,8 +34,8 @@ export async function GET(
     });
 
     return NextResponse.json({ success: true, customer, orders: customerOrders });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'GET /api/customers/[id]');
   }
 }
 
@@ -37,9 +44,14 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { id } = await params;
     const customerId = parseInt(id, 10);
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
 
     const { name, phone, shippingAddressJson } = body;
 
@@ -55,8 +67,8 @@ export async function PUT(
       .returning();
 
     return NextResponse.json({ success: true, customer: updatedCust });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'PUT /api/customers/[id]');
   }
 }
 
@@ -65,12 +77,17 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { id } = await params;
     const customerId = parseInt(id, 10);
 
     await db.delete(schema.customers).where(eq(schema.customers.id, customerId));
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'DELETE /api/customers/[id]');
   }
 }

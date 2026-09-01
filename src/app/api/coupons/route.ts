@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { desc, eq } from 'drizzle-orm';
+import { handleApiError, apiUnauthorized, apiBadRequest } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const couponList = await db.query.coupons.findMany({
       orderBy: [desc(schema.coupons.createdAt)],
     });
@@ -31,18 +38,23 @@ export async function GET() {
         maxDiscount,
       },
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'GET /api/coupons');
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
+    const body = await request.json().catch(() => ({}));
     const { code, type = 'percentage', value, minOrderAmount = 0, usageLimit = null, active = true, expiresAt = null } = body;
 
     if (!code || value === undefined) {
-      return NextResponse.json({ error: 'Code and discount value are required' }, { status: 400 });
+      return apiBadRequest('Code and discount value are required');
     }
 
     const cleanCode = code.trim().toUpperCase();
@@ -62,18 +74,23 @@ export async function POST(request: Request) {
       .returning();
 
     return NextResponse.json({ success: true, coupon: newCoupon });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'POST /api/coupons');
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const body = await request.json();
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
+    const body = await request.json().catch(() => ({}));
     const { id, active, usageLimit, minOrderAmount } = body;
 
     if (!id) {
-      return NextResponse.json({ error: 'Coupon ID is required' }, { status: 400 });
+      return apiBadRequest('Coupon ID is required');
     }
 
     const [updated] = await db
@@ -87,23 +104,28 @@ export async function PUT(request: Request) {
       .returning();
 
     return NextResponse.json({ success: true, coupon: updated });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'PUT /api/coupons');
   }
 }
 
 export async function DELETE(request: Request) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: 'Coupon ID is required' }, { status: 400 });
+      return apiBadRequest('Coupon ID is required');
     }
 
     await db.delete(schema.coupons).where(eq(schema.coupons.id, parseInt(id, 10)));
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'DELETE /api/coupons');
   }
 }

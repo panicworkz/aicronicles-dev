@@ -1,14 +1,30 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { db, schema } from '@/db';
 import { eq } from 'drizzle-orm';
+import { checkRateLimit, recordAttempt } from '@/lib/rate-limiter';
+import { handleApiError, apiTooManyRequests, apiBadRequest, apiNotFound } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { code, cartTotal = 0 } = await request.json();
+    const forwarded = request.headers.get('x-forwarded-for');
+    const realIp = request.headers.get('x-real-ip');
+    const cfIp = request.headers.get('cf-connecting-ip');
+    const clientIp = cfIp || realIp || (forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1');
 
-    if (!code) {
+    // Rate limit: 20 coupon validations per minute per IP
+    const rateLimitKey = `coupon_validate:${clientIp}`;
+    const check = checkRateLimit(rateLimitKey, 20, 60 * 1000);
+    if (!check.success) {
+      return apiTooManyRequests('Too many coupon validation attempts. Please slow down.', check.resetInMs);
+    }
+    recordAttempt(rateLimitKey);
+
+    const body = await request.json().catch(() => ({}));
+    const { code, cartTotal = 0 } = body;
+
+    if (!code || typeof code !== 'string') {
       return NextResponse.json({ valid: false, error: 'Please enter a coupon code' }, { status: 400 });
     }
 
@@ -35,7 +51,8 @@ export async function POST(request: Request) {
     }
 
     const minAmount = parseFloat(String(coupon.minOrderAmount || '0'));
-    if (cartTotal < minAmount) {
+    const parsedTotal = parseFloat(String(cartTotal || '0'));
+    if (parsedTotal < minAmount) {
       return NextResponse.json({
         valid: false,
         error: `Minimum order amount of $${minAmount.toFixed(2)} required for this coupon`,
@@ -46,13 +63,13 @@ export async function POST(request: Request) {
     let discountAmount = 0;
 
     if (coupon.type === 'percentage') {
-      discountAmount = (cartTotal * discountVal) / 100;
+      discountAmount = (parsedTotal * discountVal) / 100;
     } else {
       discountAmount = discountVal;
     }
 
-    if (discountAmount > cartTotal) discountAmount = cartTotal;
-    const finalTotal = Math.max(0, cartTotal - discountAmount);
+    if (discountAmount > parsedTotal) discountAmount = parsedTotal;
+    const finalTotal = Math.max(0, parsedTotal - discountAmount);
 
     return NextResponse.json({
       valid: true,
@@ -66,7 +83,7 @@ export async function POST(request: Request) {
       finalTotal,
       message: coupon.type === 'percentage' ? `${discountVal}% discount applied!` : `$${discountVal.toFixed(2)} discount applied!`,
     });
-  } catch (err: any) {
-    return NextResponse.json({ valid: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'POST /api/coupons/validate');
   }
 }

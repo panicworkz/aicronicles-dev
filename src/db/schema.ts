@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, boolean, integer, jsonb, numeric } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, boolean, integer, jsonb, numeric, index } from 'drizzle-orm/pg-core';
 
 // ==========================================
 // CORE CONTENT TABLES (Hubz Standard)
@@ -21,8 +21,12 @@ export const authors = pgTable('authors', {
   role: text('role').default('Editorial Staff'),
   bio: text('bio'),
   avatarUrl: text('avatar_url'),
+  socialLinks: jsonb('social_links').default({}),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('authors_slug_idx').on(table.slug),
+]);
 
 export const categories = pgTable('categories', {
   id: serial('id').primaryKey(),
@@ -34,7 +38,9 @@ export const categories = pgTable('categories', {
   metaDescription: text('meta_description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('categories_slug_idx').on(table.slug),
+]);
 
 export const tags = pgTable('tags', {
   id: serial('id').primaryKey(),
@@ -43,39 +49,9 @@ export const tags = pgTable('tags', {
   description: text('description'),
   color: text('color').default('#2563eb'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
-
-export const posts = pgTable('posts', {
-  id: serial('id').primaryKey(),
-  title: text('title').notNull(),
-  slug: text('slug').notNull().unique(),
-  excerpt: text('excerpt'),
-  contentHtml: text('content_html'),
-  contentJson: jsonb('content_json'),
-  featuredImageId: integer('featured_image_id'),
-  featuredImageUrl: text('featured_image_url'),
-  status: text('status').notNull().default('published'),
-  authorId: integer('author_id'),
-  categoryId: integer('category_id'),
-  tagsJson: jsonb('tags_json').default([]),
-  readingTime: text('reading_time').default('5 min read'),
-  metaTitle: text('meta_title'),
-  metaDescription: text('meta_description'),
-  publishedAt: timestamp('published_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
-export const postRevisions = pgTable('post_revisions', {
-  id: serial('id').primaryKey(),
-  postId: integer('post_id').notNull(),
-  title: text('title').notNull(),
-  contentHtml: text('content_html'),
-  contentJson: jsonb('content_json'),
-  excerpt: text('excerpt'),
-  authorName: text('author_name').default('Admin'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('tags_slug_idx').on(table.slug),
+]);
 
 export const media = pgTable('media', {
   id: serial('id').primaryKey(),
@@ -92,6 +68,46 @@ export const media = pgTable('media', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+export const posts = pgTable('posts', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  slug: text('slug').notNull().unique(),
+  excerpt: text('excerpt'),
+  contentHtml: text('content_html'),
+  contentJson: jsonb('content_json'),
+  featuredImageId: integer('featured_image_id').references(() => media.id, { onDelete: 'set null' }),
+  featuredImageUrl: text('featured_image_url'),
+  status: text('status').notNull().default('published'),
+  authorId: integer('author_id').references(() => authors.id, { onDelete: 'set null' }),
+  categoryId: integer('category_id').references(() => categories.id, { onDelete: 'set null' }),
+  tagsJson: jsonb('tags_json').default([]),
+  readingTime: text('reading_time').default('5 min read'),
+  metaTitle: text('meta_title'),
+  metaDescription: text('meta_description'),
+  publishedAt: timestamp('published_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('posts_slug_idx').on(table.slug),
+  index('posts_status_idx').on(table.status),
+  index('posts_category_id_idx').on(table.categoryId),
+  index('posts_author_id_idx').on(table.authorId),
+  index('posts_published_at_idx').on(table.publishedAt),
+]);
+
+export const postRevisions = pgTable('post_revisions', {
+  id: serial('id').primaryKey(),
+  postId: integer('post_id').notNull().references(() => posts.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  contentHtml: text('content_html'),
+  contentJson: jsonb('content_json'),
+  excerpt: text('excerpt'),
+  authorName: text('author_name').default('Admin'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('post_revisions_post_id_idx').on(table.postId),
+]);
+
 export const pages = pgTable('pages', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
@@ -103,7 +119,10 @@ export const pages = pgTable('pages', {
   metaDescription: text('meta_description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('pages_slug_idx').on(table.slug),
+  index('pages_status_idx').on(table.status),
+]);
 
 export const siteSettings = pgTable('site_settings', {
   key: text('key').primaryKey(),
@@ -122,7 +141,9 @@ export const productCategories = pgTable('product_categories', {
   description: text('description'),
   imageUrl: text('image_url'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('product_categories_slug_idx').on(table.slug),
+]);
 
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
@@ -143,25 +164,31 @@ export const products = pgTable('products', {
   digitalAssetUrl: text('digital_asset_url'),
   checkoutUrl: text('checkout_url'),
   status: text('status').notNull().default('published'),
-  categoryId: integer('category_id'),
+  categoryId: integer('category_id').references(() => productCategories.id, { onDelete: 'set null' }),
   tagsJson: jsonb('tags_json').default([]),
   specificationsJson: jsonb('specifications_json').default([]),
   metaTitle: text('meta_title'),
   metaDescription: text('meta_description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('products_slug_idx').on(table.slug),
+  index('products_category_id_idx').on(table.categoryId),
+  index('products_status_idx').on(table.status),
+]);
 
 export const productVariants = pgTable('product_variants', {
   id: serial('id').primaryKey(),
-  productId: integer('product_id').notNull(),
+  productId: integer('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   sku: text('sku'),
   price: numeric('price', { precision: 10, scale: 2 }),
   inventory: integer('inventory').default(50),
   optionsJson: jsonb('options_json').default({}),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('product_variants_product_id_idx').on(table.productId),
+]);
 
 export const customers = pgTable('customers', {
   id: serial('id').primaryKey(),
@@ -174,12 +201,14 @@ export const customers = pgTable('customers', {
   billingAddressJson: jsonb('billing_address_json'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('customers_email_idx').on(table.email),
+]);
 
 export const orders = pgTable('orders', {
   id: serial('id').primaryKey(),
   orderNumber: text('order_number').notNull().unique(),
-  customerId: integer('customer_id'),
+  customerId: integer('customer_id').references(() => customers.id, { onDelete: 'set null' }),
   customerEmail: text('customer_email').notNull(),
   customerName: text('customer_name'),
   total: numeric('total', { precision: 10, scale: 2 }).notNull(),
@@ -197,12 +226,16 @@ export const orders = pgTable('orders', {
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('orders_customer_id_idx').on(table.customerId),
+  index('orders_order_status_idx').on(table.orderStatus),
+  index('orders_created_at_idx').on(table.createdAt),
+]);
 
 export const orderItems = pgTable('order_items', {
   id: serial('id').primaryKey(),
-  orderId: integer('order_id').notNull(),
-  productId: integer('product_id').notNull(),
+  orderId: integer('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  productId: integer('product_id').notNull().references(() => products.id, { onDelete: 'set null' }),
   variantId: integer('variant_id'),
   title: text('title').notNull(),
   productType: text('product_type').default('physical'),
@@ -211,7 +244,10 @@ export const orderItems = pgTable('order_items', {
   unitPrice: numeric('unit_price', { precision: 10, scale: 2 }).notNull(),
   totalPrice: numeric('total_price', { precision: 10, scale: 2 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('order_items_order_id_idx').on(table.orderId),
+  index('order_items_product_id_idx').on(table.productId),
+]);
 
 export const coupons = pgTable('coupons', {
   id: serial('id').primaryKey(),
@@ -224,4 +260,7 @@ export const coupons = pgTable('coupons', {
   active: boolean('active').notNull().default(true),
   expiresAt: timestamp('expires_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('coupons_code_idx').on(table.code),
+  index('coupons_active_idx').on(table.active),
+]);

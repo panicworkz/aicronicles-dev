@@ -1,19 +1,25 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
-import { desc, eq, ilike, or, and, sql } from 'drizzle-orm';
+import { desc, eq, ilike, or, and } from 'drizzle-orm';
+import { handleApiError, apiUnauthorized, apiBadRequest } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search');
     const status = searchParams.get('status');
     const categoryId = searchParams.get('categoryId');
     const authorId = searchParams.get('authorId');
     const tag = searchParams.get('tag');
-    const limit = parseInt(searchParams.get('limit') || '100');
+    const limit = parseInt(searchParams.get('limit') || '100', 10);
 
     const conditions = [];
 
@@ -65,27 +71,26 @@ export async function GET(req: Request) {
       total,
       publishedTotal,
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return handleApiError(error, 'GET /api/posts');
   }
 }
 
 export async function POST(req: Request) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
-    const body = await req.json();
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
+    const body = await req.json().catch(() => ({}));
     const { title, slug, contentHtml, excerpt, featuredImageUrl, status, categoryId, authorId, tagsJson } = body;
 
     if (!title || !slug) {
-      return NextResponse.json({ error: 'Title and Slug are required' }, { status: 400 });
+      return apiBadRequest('Title and Slug are required');
     }
 
     const newPost = await db.insert(schema.posts).values({
-
       title,
       slug,
       contentHtml: contentHtml || '',
@@ -99,7 +104,7 @@ export async function POST(req: Request) {
     } as any).returning();
 
     return NextResponse.json({ post: newPost[0] }, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return handleApiError(error, 'POST /api/posts');
   }
 }

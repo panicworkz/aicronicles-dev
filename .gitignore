@@ -6,7 +6,7 @@ node_modules
 .next/
 out/
 
-# payload
+# payload & sqlite
 payload-types.ts
 payload.db
 payload.db-journal
@@ -17,11 +17,10 @@ payload.db-journal
 build/
 dist/
 
-# env files
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# env files (all env files except example)
+.env
+.env.*
+!.env.example
 
 # logs
 npm-debug.log*

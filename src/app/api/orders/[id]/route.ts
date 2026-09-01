@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { eq } from 'drizzle-orm';
+import { handleApiError, apiUnauthorized, apiNotFound } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +11,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { id } = await params;
     const orderId = parseInt(id, 10);
 
@@ -17,7 +24,7 @@ export async function GET(
     });
 
     if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return apiNotFound('Order not found');
     }
 
     const items = await db.query.orderItems.findMany({
@@ -25,8 +32,8 @@ export async function GET(
     });
 
     return NextResponse.json({ success: true, order, items });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'GET /api/orders/[id]');
   }
 }
 
@@ -35,9 +42,14 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { id } = await params;
     const orderId = parseInt(id, 10);
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
 
     const { paymentStatus, orderStatus, carrier, trackingNumber, shippingAddressJson, notes } = body;
 
@@ -56,7 +68,7 @@ export async function PUT(
       .returning();
 
     return NextResponse.json({ success: true, order: updatedOrder });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'PUT /api/orders/[id]');
   }
 }

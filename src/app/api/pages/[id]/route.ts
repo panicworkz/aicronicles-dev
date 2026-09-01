@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { eq } from 'drizzle-orm';
+import { handleApiError, apiUnauthorized, apiNotFound } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,19 +11,23 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { id } = await params;
     const page = await db.query.pages.findFirst({
       where: eq(schema.pages.id, parseInt(id, 10)),
     });
 
     if (!page) {
-      return NextResponse.json({ error: 'Page not found' }, { status: 404 });
+      return apiNotFound('Page not found');
     }
 
     return NextResponse.json({ page });
-  } catch (err: any) {
-    console.error('Error fetching page:', err);
-    return NextResponse.json({ error: err.message || 'Failed to fetch page' }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'GET /api/pages/[id]');
   }
 }
 
@@ -30,8 +36,13 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { id } = await params;
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { title, slug, contentHtml, contentJson, status, metaTitle, metaDescription } = body;
 
     const updateData: any = {
@@ -55,9 +66,8 @@ export async function PUT(
       .returning();
 
     return NextResponse.json({ success: true, page: updatedPage });
-  } catch (err: any) {
-    console.error('Error updating page:', err);
-    return NextResponse.json({ error: err.message || 'Failed to update page' }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'PUT /api/pages/[id]');
   }
 }
 
@@ -66,11 +76,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const { id } = await params;
     await db.delete(schema.pages).where(eq(schema.pages.id, parseInt(id, 10)));
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    console.error('Error deleting page:', err);
-    return NextResponse.json({ error: err.message || 'Failed to delete page' }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'DELETE /api/pages/[id]');
   }
 }

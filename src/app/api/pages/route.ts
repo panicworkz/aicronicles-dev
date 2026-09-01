@@ -1,28 +1,39 @@
 import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { desc } from 'drizzle-orm';
+import { handleApiError, apiUnauthorized, apiBadRequest } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
     const allPages = await db.query.pages.findMany({
       orderBy: [desc(schema.pages.createdAt)],
     });
     return NextResponse.json({ pages: allPages });
-  } catch (err: any) {
-    console.error('Error fetching pages:', err);
-    return NextResponse.json({ error: err.message || 'Failed to fetch pages' }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'GET /api/pages');
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const session = await getSession();
+    if (!session) {
+      return apiUnauthorized();
+    }
+
+    const body = await req.json().catch(() => ({}));
     const { title, slug, contentHtml, contentJson, status, metaTitle, metaDescription } = body;
 
     if (!title || !slug) {
-      return NextResponse.json({ error: 'Title and Slug are required' }, { status: 400 });
+      return apiBadRequest('Title and Slug are required');
     }
 
     const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -43,8 +54,7 @@ export async function POST(req: Request) {
       .returning();
 
     return NextResponse.json({ success: true, page: newPage });
-  } catch (err: any) {
-    console.error('Error creating page:', err);
-    return NextResponse.json({ error: err.message || 'Failed to create page' }, { status: 500 });
+  } catch (err: unknown) {
+    return handleApiError(err, 'POST /api/pages');
   }
 }

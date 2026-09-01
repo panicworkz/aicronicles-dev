@@ -4,15 +4,23 @@ import bcrypt from 'bcryptjs';
 import { db, schema } from '@/db';
 import { eq } from 'drizzle-orm';
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'panic_cms_super_secret_jwt_key_2026');
-const COOKIE_NAME = 'panic_session';
+function getJwtSecretKey(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.trim().length === 0) {
+    throw new Error('FATAL SECURITY ERROR: JWT_SECRET environment variable is missing. Set a strong JWT_SECRET.');
+  }
+  return new TextEncoder().encode(secret);
+}
+
+export const COOKIE_NAME = 'panic_session';
 
 export async function createSession(userId: number, email: string) {
+  const secretKey = getJwtSecretKey();
   const token = await new SignJWT({ userId, email })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('30d')
-    .sign(JWT_SECRET);
+    .sign(secretKey);
 
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
@@ -32,7 +40,8 @@ export async function getSession() {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const secretKey = getJwtSecretKey();
+    const { payload } = await jwtVerify(token, secretKey);
     return payload as { userId: number; email: string };
   } catch {
     return null;
