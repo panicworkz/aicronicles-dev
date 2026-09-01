@@ -46,9 +46,9 @@ export default function MagazineHeader() {
             {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </span>
           <span className="folio">FABELO — INDEPENDENT MONEY, CAREER &amp; AI DESK</span>
-          <Link href="/#dispatch" className="byline hidden sm:block hover:text-[var(--accent-ink)]">
+          <a href="/#dispatch" className="byline hidden sm:block hover:text-[var(--accent-ink)]">
             THE DISPATCH →
-          </Link>
+          </a>
         </div>
       </div>
 
@@ -58,7 +58,19 @@ export default function MagazineHeader() {
         style={{ borderBottom: "1px solid var(--rule)", height: 72 }}
       >
         <div className="mag-shell flex h-full items-center justify-between gap-6">
-          <Link href="/" className="flex items-center gap-3 shrink-0" aria-label="Fabelo">
+          <Link
+            href="/"
+            className="flex items-center gap-3 shrink-0"
+            aria-label="Fabelo"
+            onClick={(e) => {
+              // Zaten bu sayfadaysak Next yeniden yonlendirip tepeye pat diye
+              // atiyor; bunun yerine tarayicinin yumusak kaydirmasini kullan.
+              if (window.location.pathname === "/") {
+                e.preventDefault();
+                window.scrollTo({ top: 0 });
+              }
+            }}
+          >
             <Image
               src="/images/fabelo-logo.webp"
               alt="Fabelo"
@@ -99,13 +111,13 @@ export default function MagazineHeader() {
             >
               {dark ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
             </button>
-            <Link
+            <a
               href="/#dispatch"
               className="hidden sm:inline-flex h-9 items-center rounded-full px-5 text-[0.78rem] font-semibold tracking-wide"
               style={{ background: "var(--ink)", color: "var(--paper)" }}
             >
               Subscribe
-            </Link>
+            </a>
             <button
               onClick={() => setOpen(!open)}
               aria-label="Menu"

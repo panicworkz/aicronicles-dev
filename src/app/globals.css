@@ -312,3 +312,12 @@ html {
 .mag [id] {
   scroll-margin-top: 143px;
 }
+
+/* Dispatch bolumunun kendi ic bosluğu var (py-16 / sm:py-24). Cipa hedefi
+   bolumun ustu oldugu icin varista o bosluk ekranda kocaman bir bosluk gibi
+   duruyordu. Payi o kadar kisaltiyoruz: bolumun ust dolgusu kunyenin altinda
+   kaliyor, basligin kendisi kunyenin hemen altina oturuyor. */
+.mag #dispatch { scroll-margin-top: calc(143px - 4rem); }
+@media (min-width: 640px) {
+  .mag #dispatch { scroll-margin-top: calc(143px - 6rem); }
+}
