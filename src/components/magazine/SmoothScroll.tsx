@@ -4,11 +4,14 @@ import React, { useEffect, useRef } from "react";
 import Lenis from "lenis";
 
 /**
- * Yapiskan kunyenin yuksekligi. Sayfa kaydirilinca kunye kisaliyor
- * (padding 1.15rem -> 0.55rem), bu yuzden hedefe varildigindaki "kisa"
- * yukseklige gore pay birakiyoruz + biraz nefes payi.
+ * Cipa hedefi, yapiskan kunyenin TAM altina otursun; ustte bosluk kalmasin.
+ * Kunye yuksekligi duruma gore degisiyor (kaydirinca kisaliyor, mobilde farkli),
+ * bu yuzden sabit sayi yerine tiklama aninda olcuyoruz.
  */
-const HEADER_OFFSET = 132;
+const measureHeader = () => {
+  const el = document.querySelector("header");
+  return el ? Math.round(el.getBoundingClientRect().height) : 148;
+};
 
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
@@ -29,7 +32,8 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
 
     /** Yedek: Lenis calismazsa tarayicinin kendi kaydirmasi (CSS scroll-margin devrede) */
     const nativeTo = (el: Element) => {
-      el.scrollIntoView({ behavior: "auto", block: "start" });
+      const y = el.getBoundingClientRect().top + window.scrollY - measureHeader();
+      window.scrollTo({ top: Math.max(0, y), behavior: "auto" });
     };
 
     /** Hedefe kunye payini birakarak yumusakca kaydir */
@@ -46,7 +50,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
 
       const oncekiKonum = window.scrollY;
       lenis.scrollTo(el as HTMLElement, {
-        offset: -HEADER_OFFSET,
+        offset: -measureHeader(),
         duration: 1.2,
       });
 

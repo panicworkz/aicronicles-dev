@@ -296,5 +296,5 @@
 .mag [id="dispatch"],
 .mag h2[id],
 .mag h3[id] {
-  scroll-margin-top: 8.25rem; /* ~132px: kisalmis kunye + nefes payi */
+  scroll-margin-top: 9.25rem; /* 148px: yapiskan kunye yuksekligi (ustte bosluk birakmaz) */
 }

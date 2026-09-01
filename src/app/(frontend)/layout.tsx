@@ -2,6 +2,7 @@ import React from "react";
 import { ThemeProvider } from "@/providers/theme-provider";
 import SmoothScroll from "@/components/magazine/SmoothScroll";
 import CustomCursor from "@/components/magazine/CustomCursor";
+import BackToTop from "@/components/magazine/BackToTop";
 import "./globals.css";
 
 export default function FrontendLayout({
@@ -15,6 +16,7 @@ export default function FrontendLayout({
         <div className="theme-fabelo min-h-screen">{children}</div>
       </SmoothScroll>
       <CustomCursor />
+      <BackToTop />
     </ThemeProvider>
   );
 }
