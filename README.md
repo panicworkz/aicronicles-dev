@@ -1,6 +1,6 @@
-# Payload CMS v3 & Next.js 15 Publishing Platform (Fabelo & AI Chronicles Architecture)
+# Panic CMS — Next.js 15 Publishing & Commerce Platform (Fabelo & AI Chronicles Architecture)
 
-A state-of-the-art, 100% open-source (MIT), ultra-fast headless publishing platform built with **Payload CMS v3** and **Next.js 15 (App Router)**. Designed to replace legacy CMS platforms (such as Ghost/WordPress) with extreme performance, instant search engine indexation, and native **AEO / GEO (Answer Engine Optimization)**.
+A state-of-the-art, 100% open-source (MIT), ultra-fast publishing platform built with **Panic CMS** on **Next.js 15 (App Router)**, Drizzle ORM and PostgreSQL. Designed to replace legacy CMS platforms (such as Ghost/WordPress) with extreme performance, instant search engine indexation, and native **AEO / GEO (Answer Engine Optimization)**.
 
 ---
 
@@ -24,24 +24,24 @@ A state-of-the-art, 100% open-source (MIT), ultra-fast headless publishing platf
 
 ```
 ├── Dockerfile                  # Multi-stage optimized Docker build
-├── docker-compose.yml          # PostgreSQL 16 + Payload CMS container setup
+├── docker-compose.yml          # PostgreSQL 16 + Panic CMS container setup
 ├── media/                      # Uploaded images and media assets
 ├── migration_data/             # Scraped Ghost export data & original assets
 ├── scripts/
 │   ├── scrape_fabelo.mjs       # Live Ghost scraper engine
-│   └── import_fabelo.ts        # Database importer into Payload Local API
+│   └── import_fabelo.ts        # Database importer
 └── src/
     ├── app/
-    │   ├── (frontend)/         # High-CTR modern UI (Home, Articles, Tags, Authors)
-    │   ├── (payload)/          # Payload CMS Admin panel (/admin) & API (/api)
+    │   ├── (frontend)/         # Public site (Home, Articles, Categories, Tags, Authors, Store)
+    │   ├── panic/              # Panic CMS admin panel (/panic, login at /panic/login)
+    │   ├── api/                # REST API (posts, categories, tags, media, orders, auth, ai)
     │   ├── api/llm/[slug]/     # Clean Markdown API for AI crawlers
     │   ├── llms.txt/           # LLMS.txt AEO index endpoint
     │   ├── sitemap.xml/        # Standard XML Sitemap
     │   └── sitemap-news.xml/   # Google News XML Sitemap
-    ├── collections/            # Payload Collections (Posts, Authors, Tags, Pages, Media, AiTools, Users)
-    ├── components/             # Reusable UI components (Header, Footer, Cards, ThemeToggle)
-    ├── lib/                    # Helpers (getPayload)
-    └── payload.config.ts       # Central Payload CMS v3 configuration
+    ├── components/             # Reusable UI components (magazine, studio, dashboard, editor)
+    ├── db/                     # Drizzle ORM schema & database client
+    └── lib/                    # Helpers (auth, utilities)
 ```
 
 ---
@@ -57,7 +57,7 @@ pnpm dev
 
 # 3. Access the platform:
 # - Frontend: http://localhost:3000
-# - Payload Admin: http://localhost:3000/admin
+# - Panic CMS Admin: http://localhost:3000/panic
 ```
 
 ---
