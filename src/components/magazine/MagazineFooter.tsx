@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ClientForm from "./ClientForm";
 import { FABELO_TAGS, tagLabel } from "@/lib/taxonomy";
+import PanicWorkzNetwork from "./PanicWorkzNetwork";
 
 /** fabelo.io footer'iyla birebir baglantilar */
 const MASTHEAD_LINKS = [
@@ -136,6 +137,9 @@ export default function MagazineFooter() {
           ))}
         </ul>
       </div>
+
+      {/* --- PanicWorkz ekosistem agi -------------------------------------- */}
+      <PanicWorkzNetwork />
 
       {/* --- Alt serit -----------------------------------------------------
           Sagda basa-don butonu duruyor; yaziyi ezmemesi icin pay birakiyoruz. */}
