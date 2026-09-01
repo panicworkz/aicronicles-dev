@@ -16,6 +16,7 @@ import {
   type CardPost,
 } from "@/components/magazine/PostCard";
 import { decodeEntities, tagLabel } from "@/lib/taxonomy";
+import { enrichArticleHtml, type MediaBoyut } from "@/components/magazine/enrichArticleHtml";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+
+/** Dosya adi -> {width,height} haritasi; gorsellere yer ayirmak icin */
+async function medyaBoyutlari(): Promise<Map<string, MediaBoyut>> {
+  const satirlar = await db.query.media.findMany();
+  const harita = new Map<string, MediaBoyut>();
+  for (const m of satirlar as any[]) {
+    if (m?.filename) harita.set(m.filename, { width: m.width ?? null, height: m.height ?? null });
+  }
+  return harita;
+}
+
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
 
@@ -69,7 +81,9 @@ export default async function ArticlePage({ params }: PageProps) {
             <div className="rule mb-10" />
             <div
               className="article-body text-[1.06rem] leading-[1.78]"
-              dangerouslySetInnerHTML={{ __html: page.contentHtml || "<p></p>" }}
+              dangerouslySetInnerHTML={{
+                __html: enrichArticleHtml(page.contentHtml, await medyaBoyutlari()),
+              }}
             />
           </div>
         </main>
@@ -113,6 +127,8 @@ export default async function ArticlePage({ params }: PageProps) {
     categoryName: catById.get(p.categoryId)?.name ?? null,
     categorySlug: catById.get(p.categoryId)?.slug ?? null,
   });
+
+  const boyutlar = await medyaBoyutlari();
 
   const related = others.slice(0, 4).map(toCard);
   const trending = others.slice(4, 9).map(toCard);
@@ -210,7 +226,9 @@ export default async function ArticlePage({ params }: PageProps) {
             <article className="lg:col-span-8">
               <div
                 className="article-body dropcap text-[1.06rem] leading-[1.82]"
-                dangerouslySetInnerHTML={{ __html: post.contentHtml || "<p></p>" }}
+                dangerouslySetInnerHTML={{
+                  __html: enrichArticleHtml(post.contentHtml, boyutlar),
+                }}
               />
 
               {/* Tag'ler */}
