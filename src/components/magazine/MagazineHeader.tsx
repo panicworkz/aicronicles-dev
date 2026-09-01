@@ -55,9 +55,9 @@ export default function MagazineHeader() {
       {/* --- Kunye ---------------------------------------------------------- */}
       <div
         className="transition-all duration-300"
-        style={{ borderBottom: "1px solid var(--rule)", paddingBlock: stuck ? "0.55rem" : "1.15rem" }}
+        style={{ borderBottom: "1px solid var(--rule)", height: 72 }}
       >
-        <div className="mag-shell flex items-center justify-between gap-6">
+        <div className="mag-shell flex h-full items-center justify-between gap-6">
           <Link href="/" className="flex items-center gap-3 shrink-0" aria-label="Fabelo">
             <Image
               src="/images/fabelo-logo.webp"
