@@ -138,7 +138,7 @@ export default function MagazineHeader() {
               {dark ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
             </button>
             <a
-              href="#subscribe"
+              href="/#dispatch"
               className="hidden sm:inline-flex h-9 items-center rounded-full px-5 text-[0.78rem] font-semibold tracking-wide"
               style={{ background: "var(--ink)", color: "var(--paper)" }}
             >
