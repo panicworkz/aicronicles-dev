@@ -54,7 +54,10 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
      */
     const duzelt = (el: Element) => {
       const fark = Math.round(el.getBoundingClientRect().top - measureHeader());
-      if (Math.abs(fark) > 1) window.scrollTo({ top: window.scrollY + fark, behavior: "auto" });
+      if (Math.abs(fark) <= 1) return;
+      // Lenis uzerinden duzelt: native scrollTo, Lenis'in ic hedefiyle
+      // cakisip animasyonu geri cekiyor ve gorunur bir sicrama yaratiyordu.
+      lenis.scrollTo(window.scrollY + fark, { immediate: true });
     };
 
     const nativeTo = (el: Element) => {
@@ -81,13 +84,13 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
         onComplete: () => duzelt(el),
       });
 
-      // Guvenlik agi: hareket hic baslamadiysa tarayiciya birak
+      // Guvenlik agi: hareket hic baslamadiysa (rAF bogulmus vb.) tarayiciya
+      // birak. Hedef zaten yakinsa dokunma; kisa mesafede bosuna tetiklenmesin.
       window.setTimeout(() => {
-        if (Math.abs(window.scrollY - oncekiKonum) < 2) nativeTo(el);
+        const hareketsiz = Math.abs(window.scrollY - oncekiKonum) < 2;
+        const uzak = Math.abs(hedefKonum(el) - window.scrollY) > 4;
+        if (hareketsiz && uzak) nativeTo(el);
       }, 150);
-
-      // Kunye kisalmasi animasyon sirasinda oldugu icin sonda bir kez daha duzelt
-      window.setTimeout(() => duzelt(el), 1400);
 
       return true;
     };
