@@ -4,12 +4,12 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "sonner";
 import { Inter, Geist_Mono, Newsreader } from "next/font/google";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "block" });
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: "block" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "optional" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: "optional" });
 const newsreader = Newsreader({
   subsets: ["latin"],
   variable: "--font-display",
-  display: "block",
+  display: "optional",
   style: ["normal", "italic"],
   weight: ["400", "500", "600", "700"],
 });
