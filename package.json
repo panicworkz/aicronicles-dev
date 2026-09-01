@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "db:push": "drizzle-kit push",
-    "db:migrate": "node scripts/migrate_to_postgres.mjs"
+    "db:migrate": "node scripts/migrate_to_postgres.mjs",
+    "db:migrate:v2": "node scripts/apply_security_migration.mjs"
   },
   "dependencies": {
     "@tiptap/core": "^2.11.5",
