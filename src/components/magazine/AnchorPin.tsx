@@ -83,11 +83,28 @@ export default function AnchorPin() {
 
       const link = (e.target as HTMLElement)?.closest?.("a");
       const href = link?.getAttribute("href");
-      if (!href || !href.startsWith("#") || href === "#") return;
+      if (!href) return;
+
+      /**
+       * Iki bicimi de karsiliyoruz:
+       *   "#subscribe"        — ayni sayfada
+       *   "/#dispatch"        — yol + cipa; yalnizca ZATEN o sayfadaysak.
+       * Ikincisi yazi sayfasindan tiklandiginda dokunmuyoruz, tarayici ana
+       * sayfaya gitsin. Ana sayfadayken ise gereksiz yeniden yukleme yerine
+       * yumusak kaydirma yapiyoruz.
+       */
+      let cipa: string | null = null;
+      if (href.startsWith("#")) {
+        cipa = href;
+      } else if (href.startsWith("/") && href.includes("#")) {
+        const [yol, parca] = href.split("#");
+        if (parca && yol === window.location.pathname) cipa = `#${parca}`;
+      }
+      if (!cipa || cipa === "#") return;
 
       let el: Element | null = null;
       try {
-        el = document.querySelector(href);
+        el = document.querySelector(cipa);
       } catch {
         return;
       }
@@ -102,7 +119,7 @@ export default function AnchorPin() {
         git(el);
       }
 
-      history.replaceState(null, "", href);
+      history.replaceState(null, "", cipa);
     };
 
     // Kullanici araya girerse hareketi birak
