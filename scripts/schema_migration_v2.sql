@@ -1,5 +1,5 @@
 -- =========================================================================
--- PANIC CMS — SCHEMA V2 SECURITY, FOREIGN KEYS & INDEXES MIGRATION
+-- PANIC CMS — SCHEMA V2 SECURITY, FOREIGN KEYS, INDEXES & ADS MIGRATION
 -- Safe, transactional, idempotent migration script for PostgreSQL 16
 -- =========================================================================
 
@@ -9,7 +9,24 @@ BEGIN;
 ALTER TABLE IF EXISTS authors ADD COLUMN IF NOT EXISTS social_links JSONB DEFAULT '{}'::jsonb;
 ALTER TABLE IF EXISTS authors ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
--- 2. Clean any orphaned foreign key references before adding constraints
+-- 2. Create Ads Management Table if not exists
+CREATE TABLE IF NOT EXISTS ads (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  placement TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  alt TEXT,
+  target_url TEXT NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  starts_at TIMESTAMP,
+  ends_at TIMESTAMP,
+  impressions INTEGER NOT NULL DEFAULT 0,
+  clicks INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+-- 3. Clean any orphaned foreign key references before adding constraints
 -- Posts -> Categories
 UPDATE posts 
 SET category_id = NULL 
@@ -58,7 +75,7 @@ SET product_id = NULL
 WHERE product_id IS NOT NULL 
   AND product_id NOT IN (SELECT id FROM products);
 
--- 3. Add Foreign Key Constraints Safely
+-- 4. Add Foreign Key Constraints Safely
 -- posts -> categories
 DO $$ 
 BEGIN
@@ -158,7 +175,7 @@ BEGIN
   END IF;
 END $$;
 
--- 4. Create Performance and Query Indexes
+-- 5. Create Performance and Query Indexes
 CREATE INDEX IF NOT EXISTS posts_slug_idx ON posts(slug);
 CREATE INDEX IF NOT EXISTS posts_status_idx ON posts(status);
 CREATE INDEX IF NOT EXISTS posts_category_id_idx ON posts(category_id);
@@ -186,5 +203,11 @@ CREATE INDEX IF NOT EXISTS order_items_product_id_idx ON order_items(product_id)
 CREATE INDEX IF NOT EXISTS post_revisions_post_id_idx ON post_revisions(post_id);
 CREATE INDEX IF NOT EXISTS coupons_code_idx ON coupons(code);
 CREATE INDEX IF NOT EXISTS coupons_active_idx ON coupons(active);
+
+-- Ads Indexes
+CREATE INDEX IF NOT EXISTS ads_placement_idx ON ads(placement);
+CREATE INDEX IF NOT EXISTS ads_is_active_idx ON ads(is_active);
+CREATE INDEX IF NOT EXISTS ads_starts_at_idx ON ads(starts_at);
+CREATE INDEX IF NOT EXISTS ads_ends_at_idx ON ads(ends_at);
 
 COMMIT;

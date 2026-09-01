@@ -3,7 +3,7 @@ import { jwtVerify } from 'jose';
 
 const COOKIE_NAME = 'panic_session';
 
-// Public API endpoints that do not require authentication
+// Public API endpoints that do not require authentication for any HTTP method
 const PUBLIC_API_PREFIXES = [
   '/api/auth/login',
   '/api/llm',
@@ -11,19 +11,33 @@ const PUBLIC_API_PREFIXES = [
   '/api/coupons/validate',
 ];
 
-function isPublicApiPath(pathname: string): boolean {
-  return PUBLIC_API_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  );
+function isPublicApiRequest(pathname: string, method: string): boolean {
+  // Always public prefixes
+  if (PUBLIC_API_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
+    return true;
+  }
+
+  // Public Ads endpoints
+  if (method === 'GET' && pathname === '/api/ads') {
+    return true;
+  }
+
+  // Public Ad impression & click tracking
+  if (method === 'POST' && (pathname.includes('/click') || pathname.includes('/impression')) && pathname.startsWith('/api/ads/')) {
+    return true;
+  }
+
+  return false;
 }
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  const method = request.method;
   const jwtSecretEnv = process.env.JWT_SECRET;
 
   // 1. Handle /api routes
   if (path.startsWith('/api')) {
-    if (isPublicApiPath(path)) {
+    if (isPublicApiRequest(path, method)) {
       return NextResponse.next();
     }
 

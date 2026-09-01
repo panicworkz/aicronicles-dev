@@ -264,3 +264,25 @@ export const coupons = pgTable('coupons', {
   index('coupons_code_idx').on(table.code),
   index('coupons_active_idx').on(table.active),
 ]);
+
+export const ads = pgTable('ads', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  placement: text('placement').notNull(), // 'billboard' | 'leaderboard' | 'skyscraper' | 'rectangle' | 'inread' | 'native'
+  imageUrl: text('image_url').notNull(),
+  alt: text('alt'),
+  targetUrl: text('target_url').notNull(),
+  isActive: boolean('is_active').notNull().default(true),
+  startsAt: timestamp('starts_at'),
+  endsAt: timestamp('ends_at'),
+  impressions: integer('impressions').default(0).notNull(),
+  clicks: integer('clicks').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('ads_placement_idx').on(table.placement),
+  index('ads_is_active_idx').on(table.isActive),
+  index('ads_starts_at_idx').on(table.startsAt),
+  index('ads_ends_at_idx').on(table.endsAt),
+]);
+

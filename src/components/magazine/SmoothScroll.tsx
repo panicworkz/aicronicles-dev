@@ -30,10 +30,24 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     const reducedMotion = () =>
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
-    /** Yedek: Lenis calismazsa tarayicinin kendi kaydirmasi (CSS scroll-margin devrede) */
+    /** Hedefin, yapiskan kunyenin TAM altina gelecegi mutlak konum */
+    const hedefKonum = (el: Element) =>
+      Math.max(0, Math.round(el.getBoundingClientRect().top + window.scrollY - measureHeader()));
+
+    /**
+     * Varista kunye yuksekligi degismis olabilir (kaydirinca kisaliyor).
+     * Bu yuzden hareket bitince olcup 1px'e kadar duzeltiyoruz; boylece
+     * bolum her zaman kunyenin tam altina oturur, ustte bosluk kalmaz.
+     */
+    const duzelt = (el: Element) => {
+      const fark = Math.round(el.getBoundingClientRect().top - measureHeader());
+      if (Math.abs(fark) > 1) window.scrollTo({ top: window.scrollY + fark, behavior: "auto" });
+    };
+
     const nativeTo = (el: Element) => {
-      const y = el.getBoundingClientRect().top + window.scrollY - measureHeader();
-      window.scrollTo({ top: Math.max(0, y), behavior: "auto" });
+      window.scrollTo({ top: hedefKonum(el), behavior: "auto" });
+      requestAnimationFrame(() => duzelt(el));
+      window.setTimeout(() => duzelt(el), 60);
     };
 
     /** Hedefe kunye payini birakarak yumusakca kaydir */
@@ -41,25 +55,26 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       const el = document.querySelector(hash);
       if (!el) return false;
 
-      // Sekme arka plandaysa veya kullanici hareketi azaltmayi sectiyse
-      // rAF durur; Lenis animasyon suremez. Dogrudan tarayiciya birak.
       if (!animate || reducedMotion() || document.visibilityState === "hidden") {
         nativeTo(el);
         return true;
       }
 
       const oncekiKonum = window.scrollY;
-      lenis.scrollTo(el as HTMLElement, {
-        offset: -measureHeader(),
+      // Eleman yerine MUTLAK KONUM veriyoruz: boylece CSS scroll-margin ile
+      // Lenis'in kendi hesabi ust uste binip payi ikiye katlamiyor.
+      lenis.scrollTo(hedefKonum(el), {
         duration: 1.2,
+        onComplete: () => duzelt(el),
       });
 
-      // Guvenlik agi: 150ms icinde hicbir hareket yoksa (rAF bogulmus,
-      // Lenis olmemis vb.) kullanici tiklayip hicbir sey olmadigini
-      // gormesin diye tarayicinin kendi kaydirmasina dus.
+      // Guvenlik agi: hareket hic baslamadiysa tarayiciya birak
       window.setTimeout(() => {
         if (Math.abs(window.scrollY - oncekiKonum) < 2) nativeTo(el);
       }, 150);
+
+      // Kunye kisalmasi animasyon sirasinda oldugu icin sonda bir kez daha duzelt
+      window.setTimeout(() => duzelt(el), 1400);
 
       return true;
     };

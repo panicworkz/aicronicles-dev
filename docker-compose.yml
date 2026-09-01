@@ -1,46 +1,47 @@
 services:
-  fabelo-postgres:
+  panic-postgres:
     image: postgres:16-alpine
-    container_name: fabelo-postgres
+    container_name: panic-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: fabelo_user
-      POSTGRES_PASSWORD: fabelo_secure_db_pass_2026
-      POSTGRES_DB: fabelo_db
+      POSTGRES_USER: ${POSTGRES_USER:-panic}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-panic_cms}
     volumes:
-      - fabelo_pgdata:/var/lib/postgresql/data
+      - panic_pgdata:/var/lib/postgresql/data
     networks:
-      - fabelo-net
+      - panic-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fabelo_user -d fabelo_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-panic} -d ${POSTGRES_DB:-panic_cms}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  fabelo-cms:
+  panic-cms:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: fabelo-cms
+    container_name: panic-cms
     restart: unless-stopped
     ports:
       - "127.0.0.1:8230:3000"
     environment:
       NODE_ENV: production
-      DATABASE_URI: file:/app/data/payload.db
-      PAYLOAD_SECRET: fabelo-secret-key-9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d
-      NEXT_PUBLIC_SITE_URL: https://fabelo.testworkz.com
-      NEXT_PUBLIC_SITE_DOMAIN: fabelo.testworkz.com
-      INDEXNOW_KEY: fabelo_indexnow_key_2026
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-panic}:${POSTGRES_PASSWORD}@panic-postgres:5432/${POSTGRES_DB:-panic_cms}}
+      JWT_SECRET: ${JWT_SECRET}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://fabelo.testworkz.com}
+      NEXT_PUBLIC_SITE_DOMAIN: ${NEXT_PUBLIC_SITE_DOMAIN:-fabelo.testworkz.com}
     volumes:
-      - /opt/payload/media:/app/media
-      - /opt/payload/data:/app/data
+      - ./media:/app/public/media
     networks:
-      - fabelo-net
+      - panic-net
+    depends_on:
+      panic-postgres:
+        condition: service_healthy
 
 volumes:
-  fabelo_pgdata:
+  panic_pgdata:
 
 networks:
-  fabelo-net:
+  panic-net:
     driver: bridge
