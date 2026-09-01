@@ -64,8 +64,13 @@ export function enrichArticleHtml(
      * Boylece dis siteye bagimlilik biter, sayfa hizlanir ve en onemlisi
      * olculeri kesin bilindigi icin gorsel yuklenirken sayfa kaymaz.
      */
-    if (yerel?.url && !src.startsWith("/")) {
-      govde = govde.replace(/(\bsrc\s*=\s*)["'][^"']+["']/i, `$1"${yerel.url}"`);
+    // Medya kaydinin url alanina guvenmiyoruz: 509 kaydin 155'inde hala eski
+    // dis adres yaziyor. Dosya kutuphanede oldugu icin yerel yolu dosya
+    // adindan kuruyoruz; nginx /media altini zaten sunuyor.
+    const yerelAdres = yerel ? `/media/${dosyaAdi(src)}` : null;
+
+    if (yerelAdres && !src.startsWith("/")) {
+      govde = govde.replace(/(\bsrc\s*=\s*)["'][^"']+["']/i, `$1"${yerelAdres}"`);
       // Farkli boyuttaki kopyalari isaret eden srcset artik gecersiz
       govde = govde.replace(/\s+srcset\s*=\s*["'][^"']*["']/i, "");
     }
