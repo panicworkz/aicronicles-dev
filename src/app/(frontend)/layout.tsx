@@ -2,6 +2,7 @@ import React from "react";
 import { ThemeProvider } from "@/providers/theme-provider";
 import CustomCursor from "@/components/magazine/CustomCursor";
 import BackToTop from "@/components/magazine/BackToTop";
+import AnchorPin from "@/components/magazine/AnchorPin";
 import "./globals.css";
 
 export default function FrontendLayout({
@@ -14,6 +15,8 @@ export default function FrontendLayout({
       <div className="theme-fabelo min-h-screen">{children}</div>
       <CustomCursor />
       <BackToTop />
+      {/* Kunyedeki cipa baglantilari her sayfada var; isleyici de burada durmali. */}
+      <AnchorPin />
     </ThemeProvider>
   );
 }
