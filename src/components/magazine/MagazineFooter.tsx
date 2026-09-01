@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import ClientForm from "./ClientForm";
 import { FABELO_TAGS, tagLabel } from "@/lib/taxonomy";
 
 /** fabelo.io footer'iyla birebir baglantilar */
@@ -19,95 +20,131 @@ const SECTIONS = [
   { label: "Store", href: "/store" },
 ];
 
+/** Sutun basligi — bolum isaretleriyle ayni dil */
+function SutunBasligi({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="folio mb-5" style={{ color: "var(--accent)" }}>
+      § {children}
+    </div>
+  );
+}
+
+function Liste({ items }: { items: { label: string; href: string }[] }) {
+  return (
+    <ul className="flex flex-col gap-3">
+      {items.map((s) => (
+        <li key={s.href}>
+          <Link
+            href={s.href}
+            className="text-[0.95rem] transition-colors hover:text-[var(--accent)]"
+            style={{ color: "#d6dae0" }}
+          >
+            {s.label}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function MagazineFooter() {
   return (
     <footer style={{ background: "var(--ink)", color: "var(--paper)" }}>
-      {/* --- Ust: kunye + sutunlar --------------------------------------- */}
-      <div className="mag-shell pt-16 pb-12 sm:pt-20">
-        <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
-          {/* Kunye */}
-          <div className="lg:col-span-5">
+      {/* --- Ust: kunye + sutunlar ---------------------------------------
+          Dort sutun tek satirda: kimlik / bolumler / kurumsal / abonelik.
+          Onceki duzende kurumsal baglantilar iki kolona bolundugu icin okuma
+          sirasi zikzak yapiyordu; artik her sutun tek kolon. */}
+      <div className="mag-shell pb-14 pt-16 sm:pt-20">
+        <div className="grid gap-x-10 gap-y-12 md:grid-cols-2 lg:grid-cols-12 lg:gap-x-12">
+          {/* Kimlik */}
+          <div className="lg:col-span-4">
             <div className="mb-5 flex items-center gap-3">
               <Image
                 src="/images/fabelo-logo.webp"
                 alt="Fabelo"
-                width={46}
-                height={46}
+                width={42}
+                height={42}
                 className="rounded-[3px]"
               />
-              <span className="display text-[2rem] leading-none" style={{ letterSpacing: "-0.04em" }}>
+              <span className="display text-[1.9rem] leading-none" style={{ letterSpacing: "-0.04em" }}>
                 Fabelo<span style={{ color: "var(--accent)" }}>.</span>
               </span>
             </div>
-            <p className="max-w-[42ch] text-[0.98rem] leading-relaxed" style={{ color: "#b7bcc4" }}>
+            <p className="max-w-[38ch] text-[0.95rem] leading-relaxed" style={{ color: "#9aa1aa" }}>
               An independent desk covering personal finance, career strategy and the AI tools that
-              actually earn their subscription — for professionals who read to the end.
+              actually earn their subscription.
             </p>
-            <div className="folio mt-6" style={{ color: "#7d848d" }}>
+            <div className="folio mt-6" style={{ color: "#6b7178" }}>
               ISTANBUL · LONDON · REMOTE
             </div>
           </div>
 
-          {/* Bolumler */}
-          <nav className="lg:col-span-3">
-            <div className="folio mb-5" style={{ color: "var(--accent)" }}>
-              § SECTIONS
-            </div>
-            <ul className="flex flex-col gap-3">
-              {SECTIONS.map((s) => (
-                <li key={s.href}>
-                  <Link href={s.href} className="text-[0.98rem] transition-colors hover:text-[var(--accent)]">
-                    {s.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <nav className="lg:col-span-2">
+            <SutunBasligi>SECTIONS</SutunBasligi>
+            <Liste items={SECTIONS} />
           </nav>
 
-          {/* Kurumsal */}
-          <nav className="lg:col-span-4">
-            <div className="folio mb-5" style={{ color: "var(--accent)" }}>
-              § MASTHEAD
-            </div>
-            <ul className="grid grid-cols-2 gap-3">
-              {MASTHEAD_LINKS.map((s) => (
-                <li key={s.href}>
-                  <Link href={s.href} className="text-[0.98rem] transition-colors hover:text-[var(--accent)]">
-                    {s.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <nav className="lg:col-span-3">
+            <SutunBasligi>MASTHEAD</SutunBasligi>
+            <Liste items={MASTHEAD_LINKS} />
           </nav>
+
+          {/* Abonelik — ortadaki bosluğu doldurur ve footer'a amac katar */}
+          <div className="lg:col-span-3">
+            <SutunBasligi>THE DISPATCH</SutunBasligi>
+            <p className="mb-4 text-[0.92rem] leading-relaxed" style={{ color: "#9aa1aa" }}>
+              Twice a week. Money, career and AI — without the noise.
+            </p>
+            <ClientForm className="flex flex-col gap-2.5">
+              <input
+                type="email"
+                required
+                placeholder="you@company.com"
+                aria-label="E-posta adresiniz"
+                className="h-11 w-full bg-transparent px-0 text-[0.95rem] outline-none"
+                style={{ borderBottom: "1px solid #3a4048", color: "var(--paper)" }}
+              />
+              <button
+                type="submit"
+                className="h-11 w-full text-[0.72rem] font-bold tracking-[0.16em] transition-opacity hover:opacity-90"
+                style={{ background: "var(--accent)", color: "#08181c" }}
+              >
+                SUBSCRIBE FREE
+              </button>
+            </ClientForm>
+          </div>
         </div>
       </div>
 
-      {/* --- Tag dizini ---------------------------------------------------- */}
-      <div className="mag-shell pb-12" style={{ borderTop: "1px solid #2a3038", paddingTop: "2.5rem" }}>
-        <div className="folio mb-5" style={{ color: "#7d848d" }}>
+      {/* --- Konu dizini --------------------------------------------------
+          Dagınık sarma yerine hizali kolonlar; 19 basligi taramak kolaylasiyor. */}
+      <div className="mag-shell pb-12" style={{ borderTop: "1px solid #262c33", paddingTop: "2.5rem" }}>
+        <div className="folio mb-6" style={{ color: "#6b7178" }}>
           § TOPIC INDEX — {FABELO_TAGS.length} SUBJECTS
         </div>
-        <div className="flex flex-wrap gap-x-6 gap-y-3">
+        <ul className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3 lg:grid-cols-5">
           {FABELO_TAGS.map((t) => (
-            <Link
-              key={t}
-              href={`/tag/${t}`}
-              className="text-[0.88rem] transition-colors"
-              style={{ color: "#8b9098" }}
-            >
-              {tagLabel(t)}
-            </Link>
+            <li key={t}>
+              <Link
+                href={`/tag/${t}`}
+                className="text-[0.88rem] transition-colors hover:text-[var(--accent)]"
+                style={{ color: "#9aa1aa" }}
+              >
+                {tagLabel(t)}
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
 
-      {/* --- Alt serit ----------------------------------------------------- */}
-      <div style={{ borderTop: "1px solid #2a3038" }}>
-        <div className="mag-shell flex flex-col items-center justify-between gap-3 py-6 sm:flex-row sm:pr-20">
-          <span className="byline" style={{ color: "#7d848d" }}>
+      {/* --- Alt serit -----------------------------------------------------
+          Sagda basa-don butonu duruyor; yaziyi ezmemesi icin pay birakiyoruz. */}
+      <div style={{ borderTop: "1px solid #262c33" }}>
+        <div className="mag-shell flex flex-col items-center justify-between gap-3 py-6 sm:flex-row sm:pr-24">
+          <span className="byline" style={{ color: "#6b7178" }}>
             © {new Date().getFullYear()} FABELO — ALL RIGHTS RESERVED
           </span>
-          <span className="byline" style={{ color: "#7d848d" }}>
+          <span className="byline" style={{ color: "#6b7178" }}>
             PUBLISHED WITH PANIC CMS
           </span>
         </div>
