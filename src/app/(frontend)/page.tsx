@@ -189,7 +189,9 @@ export default async function HomePage() {
 
         {/* ================= THE DISPATCH (newsletter) ================= */}
         <section id="dispatch" className="mt-16 sm:mt-24" style={{ background: "var(--ink)" }}>
-          <div className="mag-wrap py-16 sm:py-24">
+          {/* Ust dolgu bilerek dar: cipa ile gelindiginde kunye ile baslik
+              arasinda kocaman bir koyu bosluk kalmasin. */}
+          <div className="mag-wrap pb-16 pt-10 sm:pb-24 sm:pt-12">
             <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
               <div className="lg:col-span-7">
                 <div className="folio mb-4" style={{ color: "var(--accent)" }}>
