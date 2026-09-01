@@ -1,164 +1,114 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { FABELO_TAGS, tagLabel } from "@/lib/taxonomy";
 
-// fabelo.io footer yapısı — birebir (signup + topics + legal)
+/** fabelo.io footer'iyla birebir baglantilar */
+const MASTHEAD_LINKS = [
+  { label: "About", href: "/about" },
+  { label: "Advertise", href: "/advertise" },
+  { label: "Sponsor", href: "/sponsor" },
+  { label: "Terms & conditions", href: "/terms-and-conditions" },
+  { label: "Data & privacy", href: "/data-and-privacy" },
+];
+
+const SECTIONS = [
+  { label: "Personal Finance", href: "/category/personal-finance" },
+  { label: "Career", href: "/category/career" },
+  { label: "AI & Tech", href: "/category/ai-tech" },
+  { label: "Store", href: "/store" },
+];
+
 export default function MagazineFooter() {
   return (
-    <footer
-      style={{ background: "var(--bg-2)", borderTop: "1px solid var(--line)" }}
-    >
-      <div className="f-wide py-16">
-        {/* Brand + signup */}
-        <div className="grid gap-10 md:grid-cols-2 md:items-start">
-          <div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/fabelo-logo.webp"
-              alt="Fabelo"
-              className="h-11 w-auto"
-            />
-            <p
-              className="mt-5 max-w-md text-[15.5px] leading-[1.7]"
-              style={{ color: "var(--muted)" }}
-            >
-              Personal finance tips, career strategies, and AI tool reviews for
-              ambitious professionals.
-            </p>
-          </div>
-
-          <div id="subscribe" className="f-newsletter p-8">
-            <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/80">
-              Newsletter
-            </p>
-            <h3 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
-              Get smarter about money &amp; AI.
-            </h3>
-            <p className="mt-2 text-[14.5px] text-white/85">
-              One curated dispatch, twice a week. No spam.
-            </p>
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              className="mt-5 flex flex-col sm:flex-row gap-2"
-            >
-              <input
-                type="email"
-                required
-                placeholder="you@example.com"
-                className="flex-1 h-12 px-4 text-sm rounded-full outline-none"
+    <footer style={{ background: "var(--ink)", color: "var(--paper)" }}>
+      {/* --- Ust: kunye + sutunlar --------------------------------------- */}
+      <div className="mag-shell pt-16 pb-12 sm:pt-20">
+        <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
+          {/* Kunye */}
+          <div className="lg:col-span-5">
+            <div className="mb-5 flex items-center gap-3">
+              <Image
+                src="/images/fabelo-logo.webp"
+                alt="Fabelo"
+                width={46}
+                height={46}
+                className="rounded-[3px]"
               />
-              <button
-                className="h-12 px-6 rounded-full text-sm font-bold"
-                style={{ background: "#15171a", color: "#fff" }}
-              >
-                Subscribe
-              </button>
-            </form>
+              <span className="display text-[2rem] leading-none" style={{ letterSpacing: "-0.04em" }}>
+                Fabelo<span style={{ color: "var(--accent)" }}>.</span>
+              </span>
+            </div>
+            <p className="max-w-[42ch] text-[0.98rem] leading-relaxed" style={{ color: "#b7bcc4" }}>
+              An independent desk covering personal finance, career strategy and the AI tools that
+              actually earn their subscription — for professionals who read to the end.
+            </p>
+            <div className="folio mt-6" style={{ color: "#7d848d" }}>
+              ISTANBUL · LONDON · REMOTE
+            </div>
           </div>
+
+          {/* Bolumler */}
+          <nav className="lg:col-span-3">
+            <div className="folio mb-5" style={{ color: "var(--accent)" }}>
+              § SECTIONS
+            </div>
+            <ul className="flex flex-col gap-3">
+              {SECTIONS.map((s) => (
+                <li key={s.href}>
+                  <Link href={s.href} className="text-[0.98rem] transition-colors hover:text-[var(--accent)]">
+                    {s.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Kurumsal */}
+          <nav className="lg:col-span-4">
+            <div className="folio mb-5" style={{ color: "var(--accent)" }}>
+              § MASTHEAD
+            </div>
+            <ul className="grid grid-cols-2 gap-3">
+              {MASTHEAD_LINKS.map((s) => (
+                <li key={s.href}>
+                  <Link href={s.href} className="text-[0.98rem] transition-colors hover:text-[var(--accent)]">
+                    {s.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
+      </div>
 
-        <hr className="f-rule my-12" />
-
-        {/* Menüler — fabelo.io birebir */}
-        <div className="grid gap-10 sm:grid-cols-3">
-          <div>
-            <p
-              className="text-[12px] font-bold uppercase tracking-[0.16em] mb-4"
-              style={{ color: "var(--muted)" }}
-            >
-              Topics
-            </p>
-            <div className="flex flex-col gap-2.5 text-[14.5px]">
-              <Link
-                href="/tag/personal-finance"
-                className="f-link"
-                style={{ color: "var(--fg)" }}
-              >
-                Personal Finance
-              </Link>
-              <Link
-                href="/tag/career"
-                className="f-link"
-                style={{ color: "var(--fg)" }}
-              >
-                Career
-              </Link>
-              <Link
-                href="/tag/ai-tech"
-                className="f-link"
-                style={{ color: "var(--fg)" }}
-              >
-                AI &amp; Tech
-              </Link>
-            </div>
-          </div>
-          <div>
-            <p
-              className="text-[12px] font-bold uppercase tracking-[0.16em] mb-4"
-              style={{ color: "var(--muted)" }}
-            >
-              Company
-            </p>
-            <div className="flex flex-col gap-2.5 text-[14.5px]">
-              <Link
-                href="/about"
-                className="f-link"
-                style={{ color: "var(--fg)" }}
-              >
-                About
-              </Link>
-              <Link
-                href="/advertise"
-                className="f-link"
-                style={{ color: "var(--fg)" }}
-              >
-                Advertise
-              </Link>
-              <Link
-                href="/sponsor"
-                className="f-link"
-                style={{ color: "var(--fg)" }}
-              >
-                Sponsor
-              </Link>
-            </div>
-          </div>
-          <div>
-            <p
-              className="text-[12px] font-bold uppercase tracking-[0.16em] mb-4"
-              style={{ color: "var(--muted)" }}
-            >
-              Legal
-            </p>
-            <div className="flex flex-col gap-2.5 text-[14.5px]">
-              <Link
-                href="/terms-and-conditions"
-                className="f-link"
-                style={{ color: "var(--fg)" }}
-              >
-                Terms &amp; conditions
-              </Link>
-              <Link
-                href="/data-and-privacy"
-                className="f-link"
-                style={{ color: "var(--fg)" }}
-              >
-                Data &amp; privacy
-              </Link>
-            </div>
-          </div>
+      {/* --- Tag dizini ---------------------------------------------------- */}
+      <div className="mag-shell pb-12" style={{ borderTop: "1px solid #2a3038", paddingTop: "2.5rem" }}>
+        <div className="folio mb-5" style={{ color: "#7d848d" }}>
+          § TOPIC INDEX — {FABELO_TAGS.length} SUBJECTS
         </div>
+        <div className="flex flex-wrap gap-x-6 gap-y-3">
+          {FABELO_TAGS.map((t) => (
+            <Link
+              key={t}
+              href={`/tag/${t}`}
+              className="text-[0.88rem] transition-colors"
+              style={{ color: "#8b9098" }}
+            >
+              {tagLabel(t)}
+            </Link>
+          ))}
+        </div>
+      </div>
 
-        <hr className="f-rule my-10" />
-
-        <div
-          className="flex flex-col sm:flex-row items-center justify-between gap-3 text-[13px]"
-          style={{ color: "var(--muted)" }}
-        >
-          <span>© {new Date().getFullYear()} Fabelo. All rights reserved.</span>
-          <span className="f-mono text-[11px] uppercase tracking-[0.18em]">
-            Powered by Panic CMS
+      {/* --- Alt serit ----------------------------------------------------- */}
+      <div style={{ borderTop: "1px solid #2a3038" }}>
+        <div className="mag-shell flex flex-col items-center justify-between gap-3 py-6 sm:flex-row">
+          <span className="byline" style={{ color: "#7d848d" }}>
+            © {new Date().getFullYear()} FABELO — ALL RIGHTS RESERVED
+          </span>
+          <span className="byline" style={{ color: "#7d848d" }}>
+            PUBLISHED WITH PANIC CMS
           </span>
         </div>
       </div>

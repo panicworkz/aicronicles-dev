@@ -72,3 +72,125 @@
     color: var(--foreground);
   }
 }
+
+/* ============================================================================
+   FABELO MAGAZINE — editoryel dergi katmani
+   Bu katman SADECE .mag kapsaminda calisir; /panic yonetim panelinin
+   renk degiskenlerine dokunmaz.
+   ========================================================================== */
+.mag {
+  /* Kagit & murekkep */
+  --paper: #faf8f4;          /* sicak kagit zemin */
+  --paper-2: #f2eee6;        /* ikincil kagit (bloklar) */
+  --paper-3: #e8e2d6;        /* ucuncul (ayrac, cerceve) */
+  --ink: #15171a;            /* fabelo.io'nun gercek murekkep rengi */
+  --ink-2: #4a4f57;          /* ikincil metin */
+  --ink-3: #8b9098;          /* ucuncul / kunye */
+  --rule: #d9d3c6;           /* ince cizgi */
+
+  /* Logodan turetilen vurgu — cerrahi kullanilir */
+  --accent: #0fb5ce;         /* elektrik cyan */
+  --accent-2: #e8368f;       /* magenta */
+  --accent-ink: #0a7d8f;     /* metin uzerinde okunur cyan */
+
+  /* Olculer */
+  --shell: 1920px;           /* header & footer */
+  --measure: 1536px;         /* icerik alani */
+  --gutter: clamp(1rem, 3vw, 3.5rem);
+
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.dark .mag {
+  --paper: #101215;
+  --paper-2: #171a1f;
+  --paper-3: #1f242b;
+  --ink: #f4f1ea;
+  --ink-2: #b4bac2;
+  --ink-3: #7d848d;
+  --rule: #2a3038;
+  --accent-ink: #3fd3e8;
+}
+
+/* --- Olcu kapsayicilari ------------------------------------------------- */
+.mag-shell { width: 100%; max-width: var(--shell); margin-inline: auto; padding-inline: var(--gutter); }
+.mag-wrap  { width: 100%; max-width: var(--measure); margin-inline: auto; padding-inline: var(--gutter); }
+
+/* --- Tipografi ---------------------------------------------------------- */
+.mag .display {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  letter-spacing: -0.028em;
+  line-height: 0.94;
+  text-wrap: balance;
+}
+.mag .display em { font-style: italic; font-weight: 400; }
+
+.mag .kicker {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.mag .byline {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+
+/* Gorsel numaralandirma — basili dergi bolum isareti */
+.mag .folio {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.625rem;
+  letter-spacing: 0.2em;
+  color: var(--accent-ink);
+}
+
+/* --- Ayraclar ----------------------------------------------------------- */
+.mag .rule       { border-top: 1px solid var(--rule); }
+.mag .rule-heavy { border-top: 2px solid var(--ink); }
+.mag .rule-v     { border-left: 1px solid var(--rule); }
+
+/* --- Baglanti alti cizgisi (editoryel) ---------------------------------- */
+.mag .ulink {
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-size: 0% 1px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  transition: background-size 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mag a:hover .ulink, .mag .ulink:hover { background-size: 100% 1px; }
+
+/* --- Baslik hover: satir alti dolusu ------------------------------------ */
+.mag .headline-link { transition: color 0.25s ease; }
+.mag .headline-link:hover { color: var(--accent-ink); }
+
+/* --- Gorsel cercevesi --------------------------------------------------- */
+.mag .plate { background: var(--paper-2); overflow: hidden; }
+.mag .plate img { transition: transform 1.1s cubic-bezier(0.22, 1, 0.36, 1); }
+.mag .plate:hover img { transform: scale(1.035); }
+
+/* --- Drop cap (yazi sayfasi) -------------------------------------------- */
+.mag .dropcap::first-letter {
+  font-family: var(--font-display), Georgia, serif;
+  float: left;
+  font-size: 4.2em;
+  line-height: 0.82;
+  padding: 0.06em 0.09em 0 0;
+  color: var(--ink);
+}
+
+/* --- Tag seridi --------------------------------------------------------- */
+@keyframes mag-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.mag .marquee-track { animation: mag-marquee 46s linear infinite; }
+.mag .marquee:hover .marquee-track { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mag .marquee-track { animation: none; }
+  .mag .plate img { transition: none; }
+}

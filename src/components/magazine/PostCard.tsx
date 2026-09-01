@@ -1,290 +1,258 @@
 import React from "react";
 import Link from "next/link";
-import { Clock, ArrowUpRight, Sparkles } from "lucide-react";
+import { decodeEntities } from "@/lib/taxonomy";
 
 export const fmtDate = (d: Date | string | null | undefined) => {
   if (!d) return "";
-  try {
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }).format(new Date(d));
-  } catch {
-    return "";
-  }
+  const date = typeof d === "string" ? new Date(d) : d;
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
 };
 
 export interface CardPost {
-  id: number;
-  slug: string;
+  id?: number;
   title: string;
+  slug: string;
   excerpt?: string | null;
   featuredImageUrl?: string | null;
   readingTime?: string | null;
   publishedAt?: Date | string | null;
-  authorId?: number | null;
-  categoryId?: number | null;
-  tagsJson?: any;
+  createdAt?: Date | string | null;
+  authorName?: string | null;
+  categoryName?: string | null;
+  categorySlug?: string | null;
 }
 
-// 1. Standard Magazine Grid Card
+
+/** Eski sayfalar author/category'yi ayri prop olarak geciyor; ikisini de destekle. */
+type Extras = { author?: any; category?: any };
+const merge = (post: CardPost, x: Extras = {}): CardPost => ({
+  ...post,
+  authorName: post.authorName ?? x.author?.name ?? null,
+  categoryName: post.categoryName ?? x.category?.name ?? null,
+  categorySlug: post.categorySlug ?? x.category?.slug ?? null,
+});
+
+const Plate = ({
+  src,
+  alt,
+  ratio = "4 / 3",
+}: {
+  src?: string | null;
+  alt: string;
+  ratio?: string;
+}) => (
+  <div className="plate w-full" style={{ aspectRatio: ratio }}>
+    {src ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt={alt} loading="lazy" className="size-full object-cover" />
+    ) : (
+      <div className="size-full" style={{ background: "var(--paper-3)" }} />
+    )}
+  </div>
+);
+
+const Meta = ({ post, sep = "·" }: { post: CardPost; sep?: string }) => (
+  <div className="byline flex flex-wrap items-center gap-x-2 gap-y-1">
+    {post.authorName && <span>{post.authorName.toUpperCase()}</span>}
+    {post.authorName && <span style={{ color: "var(--rule)" }}>{sep}</span>}
+    <span>{fmtDate(post.publishedAt || post.createdAt)}</span>
+    {post.readingTime && (
+      <>
+        <span style={{ color: "var(--rule)" }}>{sep}</span>
+        <span>{post.readingTime.replace(" read", "").toUpperCase()}</span>
+      </>
+    )}
+  </div>
+);
+
+/** Standart dergi karti — dikey, gorsel ustte */
 export function PostCard({
-  post,
-  author,
-  category,
-  showExcerpt = true,
-}: {
-  post: CardPost;
-  author?: { name?: string | null; slug?: string | null; avatarUrl?: string | null } | null;
-  category?: { name?: string | null; slug?: string | null } | null;
-  showExcerpt?: boolean;
-}) {
-  return (
-    <Link href={`/${post.slug}`} className="f-card group flex flex-col justify-between h-full">
-      <div>
-        {post.featuredImageUrl && (
-          <div className="f-card-media aspect-[16/10] rounded-xl overflow-hidden mb-4 relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={post.featuredImageUrl}
-              alt={post.title}
-              loading="lazy"
-              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-            />
-            {category && (
-              <span
-                className="absolute top-3 left-3 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider rounded-md backdrop-blur-md shadow-xs transition-colors"
-                style={{
-                  background: "color-mix(in oklab, var(--bg) 85%, transparent)",
-                  color: "var(--accent)",
-                  border: "1px solid var(--line)",
-                }}
-              >
-                {category.name}
-              </span>
-            )}
-          </div>
-        )}
-        <div className="f-card-body p-0">
-          {!post.featuredImageUrl && category && (
-            <span className="f-tag mb-1.5">{category.name}</span>
-          )}
-          <h3 className="f-card-title text-[18px] sm:text-[20px] font-bold leading-snug tracking-tight transition-colors group-hover:text-[var(--accent)]">
-            {post.title}
-          </h3>
-          {showExcerpt && post.excerpt && (
-            <p className="f-card-excerpt text-[14px] text-[var(--muted)] leading-relaxed mt-2.5 line-clamp-2">
-              {post.excerpt}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="f-card-meta mt-4 pt-3 border-t border-[var(--line)] flex items-center justify-between text-[12.5px] text-[var(--muted)]">
-        <div className="flex items-center gap-2">
-          {author?.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={author.avatarUrl}
-              alt={author.name || "Author"}
-              className="size-5 rounded-full object-cover"
-            />
-          ) : null}
-          <span className="font-semibold text-[var(--fg)]">{author?.name || "Fabelo"}</span>
-        </div>
-        <div className="flex items-center gap-1.5 font-medium">
-          <span>{fmtDate(post.publishedAt)}</span>
-          <span>·</span>
-          <span>{post.readingTime || "5 min read"}</span>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-// 2. Numbered Trending / Top 50 Style Card (Detailed.com/50 Inspired)
-export function NumberedTrendingCard({
-  post,
-  index,
-  category,
-}: {
-  post: CardPost;
-  index: number;
-  category?: { name?: string | null; slug?: string | null } | null;
-}) {
-  const rank = String(index).padStart(2, "0");
-  return (
-    <Link
-      href={`/${post.slug}`}
-      className="group flex items-start gap-4 py-4 border-b border-[var(--line)] transition-colors hover:bg-[var(--accent-weak)]/30 rounded-lg px-2 -mx-2"
-    >
-      <span
-        className="text-[26px] sm:text-[32px] font-extrabold font-mono tracking-tighter leading-none select-none shrink-0"
-        style={{ color: index <= 3 ? "var(--accent)" : "var(--muted)" }}
-      >
-        {rank}
-      </span>
-      <div className="flex-1 min-w-0">
-        {category && (
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent)] mb-1 block">
-            {category.name}
-          </span>
-        )}
-        <h4 className="text-[15px] sm:text-[16px] font-bold text-[var(--heading)] leading-snug tracking-tight group-hover:text-[var(--accent)] transition-colors line-clamp-2">
-          {post.title}
-        </h4>
-        <div className="mt-2 flex items-center gap-2 text-[12px] text-[var(--muted)]">
-          <span>{fmtDate(post.publishedAt)}</span>
-          <span>·</span>
-          <span className="flex items-center gap-1">
-            <Clock className="size-3" />
-            {post.readingTime || "5 min read"}
-          </span>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-// 3. Horizontal Story Card (Side-by-Side Thumbnail)
-export function HorizontalStoryCard({
-  post,
+  post: raw,
+  showImage = true,
+  size = "md",
   author,
   category,
 }: {
   post: CardPost;
-  author?: { name?: string | null } | null;
-  category?: { name?: string | null; slug?: string | null } | null;
-}) {
+  showImage?: boolean;
+  size?: "sm" | "md" | "lg";
+} & Extras) {
+  const post = merge(raw, { author, category });
+  const titleSize =
+    size === "lg" ? "text-[1.8rem] sm:text-[2.15rem]" : size === "sm" ? "text-[1.05rem]" : "text-[1.35rem]";
+
   return (
-    <Link
-      href={`/${post.slug}`}
-      className="group flex flex-col sm:flex-row gap-5 items-start p-4 rounded-2xl border border-[var(--line)] bg-[var(--card)] transition-all hover:border-[var(--accent)] hover:shadow-sm"
-    >
-      {post.featuredImageUrl && (
-        <div className="w-full sm:w-48 aspect-[16/10] sm:aspect-[4/3] rounded-xl overflow-hidden shrink-0 bg-[var(--bg-2)]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={post.featuredImageUrl}
-            alt={post.title}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        </div>
+    <article className="group flex flex-col">
+      {showImage && (
+        <Link href={`/${post.slug}`} className="mb-4 block">
+          <Plate src={post.featuredImageUrl} alt={decodeEntities(post.title)} ratio={size === "lg" ? "16 / 10" : "4 / 3"} />
+        </Link>
       )}
-      <div className="flex-1 min-w-0">
-        {category && (
-          <span className="text-[11.5px] font-bold uppercase tracking-wider text-[var(--accent)] mb-1.5 block">
-            {category.name}
-          </span>
-        )}
-        <h3 className="text-[17px] sm:text-[19px] font-bold text-[var(--heading)] leading-snug tracking-tight group-hover:text-[var(--accent)] transition-colors line-clamp-2">
-          {post.title}
-        </h3>
+      {post.categoryName && (
+        <Link href={`/category/${post.categorySlug}`} className="kicker mb-2 hover:text-[var(--accent-ink)]">
+          {post.categoryName}
+        </Link>
+      )}
+      <Link href={`/${post.slug}`}>
+        <h3 className={`display headline-link ${titleSize} mb-2.5`}>{decodeEntities(post.title)}</h3>
+      </Link>
+      {post.excerpt && size !== "sm" && (
+        <p className="mb-3 text-[0.95rem] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+          {decodeEntities(post.excerpt).length > 155 ? decodeEntities(post.excerpt).slice(0, 155).trimEnd() + "…" : decodeEntities(post.excerpt)}
+        </p>
+      )}
+      <Meta post={post} />
+    </article>
+  );
+}
+
+/** Numaralandirilmis liste karti — "En cok okunan" */
+export function NumberedTrendingCard({
+  post: raw,
+  index,
+  author,
+  category,
+}: { post: CardPost; index: number } & Extras) {
+  const post = merge(raw, { author, category });
+  return (
+    <article className="group flex gap-5 py-5 rule">
+      <span
+        className="display shrink-0 leading-none"
+        style={{ fontSize: "2.6rem", color: "var(--paper-3)", WebkitTextStroke: "0px" }}
+      >
+        {String(index).padStart(2, "0")}
+      </span>
+      <div className="min-w-0 flex-1">
+        {post.categoryName && <div className="kicker mb-1.5">{post.categoryName}</div>}
+        <Link href={`/${post.slug}`}>
+          <h3 className="display headline-link mb-2 text-[1.2rem]">{decodeEntities(post.title)}</h3>
+        </Link>
+        <Meta post={post} />
+      </div>
+    </article>
+  );
+}
+
+/** Yatay hikaye karti — bolum listelerinde */
+export function HorizontalStoryCard({
+  post: raw,
+  author,
+  category,
+}: { post: CardPost } & Extras) {
+  const post = merge(raw, { author, category });
+  return (
+    <article className="group grid grid-cols-[110px_1fr] gap-5 py-5 rule sm:grid-cols-[160px_1fr]">
+      <Link href={`/${post.slug}`}>
+        <Plate src={post.featuredImageUrl} alt={decodeEntities(post.title)} ratio="1 / 1" />
+      </Link>
+      <div className="min-w-0">
+        {post.categoryName && <div className="kicker mb-1.5">{post.categoryName}</div>}
+        <Link href={`/${post.slug}`}>
+          <h3 className="display headline-link mb-2 text-[1.15rem] sm:text-[1.3rem]">{decodeEntities(post.title)}</h3>
+        </Link>
         {post.excerpt && (
-          <p className="text-[13.5px] text-[var(--muted)] leading-relaxed mt-2 line-clamp-2">
-            {post.excerpt}
+          <p className="mb-2 hidden text-[0.9rem] leading-relaxed sm:block" style={{ color: "var(--ink-2)" }}>
+            {decodeEntities(post.excerpt).length > 110 ? decodeEntities(post.excerpt).slice(0, 110).trimEnd() + "…" : decodeEntities(post.excerpt)}
           </p>
         )}
-        <div className="mt-4 flex items-center gap-3 text-[12.5px] text-[var(--muted)] font-medium">
-          <span className="text-[var(--fg)] font-semibold">{author?.name || "Fabelo"}</span>
-          <span>·</span>
-          <span>{fmtDate(post.publishedAt)}</span>
-          <span>·</span>
-          <span>{post.readingTime || "5 min read"}</span>
-        </div>
+        <Meta post={post} />
       </div>
-    </Link>
+    </article>
   );
 }
 
-// 4. Native Sponsored Article Card
-export function NativeSponsoredCard({
-  sponsorName = "Panic Studio Enterprise",
-  title = "How Next-Generation AI Media Infrastructure Cuts Publishing Latency by 90%",
-  excerpt = "Discover how modern media engineering is transforming headless publishing workflows for enterprise newsrooms.",
-  ctaUrl = "/panic",
-  imageUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
-}: {
-  sponsorName?: string;
-  title?: string;
-  excerpt?: string;
-  ctaUrl?: string;
-  imageUrl?: string;
-}) {
+/** Akis ici sponsorlu icerik — reklam ama editoryel dilde, acikca etiketli */
+export function NativeSponsoredCard({ post }: { post?: CardPost }) {
   return (
-    <Link
-      href={ctaUrl}
-      target={ctaUrl.startsWith("http") ? "_blank" : undefined}
-      className="group block rounded-2xl border border-[var(--accent)]/30 bg-gradient-to-br from-[var(--card)] to-[var(--bg-2)] p-5 transition hover:border-[var(--accent)] shadow-xs"
+    <article
+      className="group flex flex-col p-6"
+      style={{ background: "var(--paper-2)", border: "1px solid var(--rule)" }}
     >
-      <div className="flex items-center justify-between mb-3 text-[11px] font-mono uppercase tracking-widest text-[var(--accent)] font-bold">
-        <span className="flex items-center gap-1.5">
-          <Sparkles className="size-3.5" />
-          Sponsored Story
+      <div className="mb-3 flex items-center gap-2">
+        <span
+          className="folio px-1.5 py-0.5"
+          style={{ background: "var(--accent)", color: "#fff", letterSpacing: "0.16em" }}
+        >
+          SPONSORED
         </span>
-        <span className="px-2 py-0.5 rounded-full bg-[var(--accent-weak)] text-[10px]">
-          {sponsorName}
-        </span>
+        <span className="kicker">PARTNER CONTENT</span>
       </div>
-
-      <div className="aspect-[16/9] rounded-xl overflow-hidden mb-3 bg-[var(--bg-2)]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl}
-          alt={title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-      </div>
-
-      <h4 className="text-[17px] font-bold text-[var(--heading)] leading-snug group-hover:text-[var(--accent)] transition-colors">
-        {title}
-      </h4>
-      <p className="text-[13.5px] text-[var(--muted)] leading-relaxed mt-2 line-clamp-2">
-        {excerpt}
+      <h3 className="display mb-2 text-[1.3rem]">
+        {post?.title || "Your brand in front of 42,000 finance & tech professionals"}
+      </h3>
+      <p className="mb-4 text-[0.92rem] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        {post?.excerpt ||
+          "Native placements inside the Fabelo Dispatch reach decision-makers who read every issue end to end."}
       </p>
-
-      <div className="mt-4 flex items-center justify-between pt-3 border-t border-[var(--line)] text-xs font-bold text-[var(--accent)]">
-        <span>Explore Partner Report</span>
-        <ArrowUpRight className="size-4" />
-      </div>
-    </Link>
+      <Link href="/advertise" className="byline mt-auto hover:text-[var(--accent-ink)]">
+        PARTNER WITH US →
+      </Link>
+    </article>
   );
 }
 
-// 5. Ad Slot Component
 export type AdSize = "billboard" | "leaderboard" | "skyscraper" | "inread" | "rectangle";
 
+const AD_SPECS: Record<AdSize, { w: number; h: number; note: string }> = {
+  billboard: { w: 970, h: 250, note: "970 × 250" },
+  leaderboard: { w: 728, h: 90, note: "728 × 90" },
+  skyscraper: { w: 300, h: 600, note: "300 × 600" },
+  rectangle: { w: 300, h: 250, note: "300 × 250" },
+  inread: { w: 640, h: 200, note: "IN-READ" },
+};
+
+/**
+ * Reklam alani. `creative` verilirse (CMS'ten) o basilir; verilmezse
+ * olculeri belli, editoryel dile uygun bir yer tutucu gosterilir.
+ */
 export function AdSlot({
   size = "leaderboard",
   label = "Advertisement",
+  creative,
+  href,
 }: {
   size?: AdSize;
   label?: string;
+  creative?: { imageUrl?: string | null; alt?: string | null } | null;
+  href?: string | null;
 }) {
-  const sizeMap: Record<AdSize, string> = {
-    billboard: "f-ad--billboard",
-    leaderboard: "f-ad--leaderboard",
-    skyscraper: "f-ad--skyscraper",
-    inread: "f-ad--inread",
-    rectangle: "f-ad--rectangle w-[300px] h-[250px]",
-  };
+  const spec = AD_SPECS[size];
+
+  const body = creative?.imageUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={creative.imageUrl} alt={creative.alt || label} className="max-h-full max-w-full object-contain" />
+  ) : (
+    <span className="folio" style={{ color: "var(--ink-3)" }}>
+      {label.toUpperCase()} · {spec.note}
+    </span>
+  );
 
   return (
-    <div className="w-full flex justify-center py-4">
-      <div className={`f-ad ${sizeMap[size] || "f-ad--leaderboard"} flex flex-col items-center justify-center p-4 text-center border-dashed border-[var(--line)] bg-[var(--bg-2)]/60 rounded-xl transition hover:border-[var(--accent)]/40`}>
-        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--muted)] mb-1">
-          {label}
+    <aside className="w-full" aria-label={label}>
+      <div className="mb-1.5 flex items-center gap-2">
+        <span className="folio" style={{ color: "var(--ink-3)" }}>
+          ADVERTISEMENT
         </span>
-        <span className="text-xs font-bold text-[var(--heading)] opacity-80">
-          {size === "billboard" && "970 × 250 Premium Billboard"}
-          {size === "leaderboard" && "728 × 90 Responsive Leaderboard"}
-          {size === "skyscraper" && "300 × 600 Half-Page Skyscraper"}
-          {size === "rectangle" && "300 × 250 Medium Rectangle"}
-          {size === "inread" && "In-Read Native Sponsor Unit"}
-        </span>
+        <span className="flex-1 rule" />
       </div>
-    </div>
+      <div
+        className="grid w-full place-items-center overflow-hidden"
+        style={{
+          background: "var(--paper-2)",
+          border: "1px solid var(--rule)",
+          aspectRatio: `${spec.w} / ${spec.h}`,
+          maxHeight: spec.h,
+        }}
+      >
+        {href && creative?.imageUrl ? (
+          <a href={href} target="_blank" rel="noopener noreferrer sponsored" className="grid size-full place-items-center">
+            {body}
+          </a>
+        ) : (
+          body
+        )}
+      </div>
+    </aside>
   );
 }

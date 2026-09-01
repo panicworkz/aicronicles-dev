@@ -1,174 +1,157 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Search, Menu, X, Sun, Moon } from "lucide-react";
+import Image from "next/image";
+import { Search, Moon, Sun, Menu, X } from "lucide-react";
+import { FABELO_TAGS, tagLabel } from "@/lib/taxonomy";
 
-// fabelo.io nav — birebir
-const NAV = [
-  { label: "Personal Finance", href: "/tag/personal-finance" },
-  { label: "Career", href: "/tag/career" },
-  { label: "AI & Tech", href: "/tag/ai-tech" },
+/** fabelo.io menusuyle birebir: 3 bolum + About */
+const SECTIONS = [
+  { label: "Personal Finance", href: "/category/personal-finance" },
+  { label: "Career", href: "/category/career" },
+  { label: "AI & Tech", href: "/category/ai-tech" },
   { label: "About", href: "/about" },
 ];
 
+
 export default function MagazineHeader() {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
-  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const [stuck, setStuck] = useState(false);
 
   useEffect(() => {
-    const saved =
-      typeof window !== "undefined" && localStorage.getItem("panic_theme");
-    const isDark = saved === "dark";
-    setDark(isDark);
-    document.documentElement.dataset.theme = isDark ? "dark" : "light";
+    setDark(document.documentElement.classList.contains("dark"));
+    const onScroll = () => setStuck(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const toggleTheme = () => {
     const next = !dark;
     setDark(next);
-    document.documentElement.dataset.theme = next ? "dark" : "light";
-    localStorage.setItem("panic_theme", next ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", next);
+    try {
+      localStorage.setItem("theme", next ? "dark" : "light");
+    } catch {}
   };
 
   return (
-    <>
-      {/* ===== Billboard reklam (en üst) ===== */}
-      <div className="pt-6 pb-2" style={{ background: "var(--bg)" }}>
-        <div className="f-wide">
-          <div className="f-ad f-ad--billboard">Advertisement · 970×250</div>
+    <header className="sticky top-0 z-50" style={{ background: "var(--paper)" }}>
+      {/* --- Ust serit: tarih + sayi + abone -------------------------------- */}
+      <div style={{ borderBottom: "1px solid var(--rule)" }}>
+        <div className="mag-shell flex h-9 items-center justify-between">
+          <span className="byline hidden sm:block">
+            {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          </span>
+          <span className="folio">FABELO — INDEPENDENT MONEY, CAREER &amp; AI DESK</span>
+          <Link href="/#dispatch" className="byline hidden sm:block hover:text-[var(--accent-ink)]">
+            THE DISPATCH →
+          </Link>
         </div>
       </div>
 
-      <header
-        className="sticky top-0 z-50 backdrop-blur-xl"
-        style={{
-          background: "color-mix(in oklab, var(--bg) 90%, transparent)",
-          borderBottom: "1px solid var(--line)",
-        }}
+      {/* --- Kunye ---------------------------------------------------------- */}
+      <div
+        className="transition-all duration-300"
+        style={{ borderBottom: "1px solid var(--rule)", paddingBlock: stuck ? "0.55rem" : "1.15rem" }}
       >
-        <div className="f-wide">
-          <div className="flex items-center justify-between h-[76px] gap-6">
-            {/* Logo — fabelo.io görsel logo (değişmez) */}
-            <Link
-              href="/"
-              className="flex items-center shrink-0"
-              aria-label="Fabelo home"
+        <div className="mag-shell flex items-center justify-between gap-6">
+          <Link href="/" className="flex items-center gap-3 shrink-0" aria-label="Fabelo">
+            <Image
+              src="/images/fabelo-logo.webp"
+              alt="Fabelo"
+              width={44}
+              height={44}
+              priority
+              className="rounded-[3px]"
+              style={{ width: stuck ? 30 : 40, height: stuck ? 30 : 40, transition: "all .3s" }}
+            />
+            <span
+              className="display leading-none"
+              style={{ fontSize: stuck ? "1.45rem" : "1.9rem", transition: "font-size .3s", letterSpacing: "-0.04em" }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/images/fabelo-logo.webp"
-                alt="Fabelo"
-                className="h-10 w-auto"
-              />
+              Fabelo<span style={{ color: "var(--accent)" }}>.</span>
+            </span>
+          </Link>
+
+          <nav className="hidden lg:flex items-center gap-9">
+            {SECTIONS.map((s) => (
+              <Link key={s.href} href={s.href} className="group text-[0.9rem] font-medium">
+                <span className="ulink">{s.label}</span>
+              </Link>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/search"
+              aria-label="Search"
+              className="grid size-9 place-items-center rounded-full transition-colors hover:bg-[var(--paper-2)]"
+            >
+              <Search className="size-[18px]" />
             </Link>
-
-            {/* Nav — fabelo.io birebir */}
-            <nav className="hidden lg:flex items-center gap-9">
-              {NAV.map((n) => {
-                const active = pathname.startsWith(n.href);
-                return (
-                  <Link
-                    key={n.label}
-                    href={n.href}
-                    className="f-link text-[14px] font-semibold tracking-tight"
-                    style={{ color: active ? "var(--accent)" : "var(--fg)" }}
-                  >
-                    {n.label}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className="flex items-center gap-2.5">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (q.trim())
-                    window.location.href = `/search?q=${encodeURIComponent(q)}`;
-                }}
-                className="hidden md:flex items-center gap-2 px-3.5 h-10 w-60 rounded-full border transition-colors focus-within:border-[var(--accent)]"
-                style={{
-                  borderColor: "var(--line)",
-                  background: "var(--bg-2)",
-                }}
-              >
-                <Search
-                  className="size-3.5"
-                  style={{ color: "var(--muted)" }}
-                />
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search stories…"
-                  className="bg-transparent outline-none text-sm w-full"
-                  style={{ color: "var(--fg)" }}
-                />
-              </form>
-
-              <button
-                onClick={toggleTheme}
-                className="inline-flex items-center justify-center size-10 rounded-full border transition-colors hover:border-[var(--accent)]"
-                style={{ borderColor: "var(--line)" }}
-                aria-label="Toggle theme"
-              >
-                {dark ? (
-                  <Sun className="size-4" />
-                ) : (
-                  <Moon className="size-4" />
-                )}
-              </button>
-
-              <a
-                href="#subscribe"
-                className="hidden sm:inline-flex items-center justify-center rounded-full px-5 h-10 text-sm font-semibold text-white transition-colors"
-                style={{ background: "var(--accent)" }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "var(--accent-hover)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "var(--accent)")
-                }
-              >
-                Subscribe
-              </a>
-
-              <button
-                onClick={() => setOpen((v) => !v)}
-                className="lg:hidden inline-flex items-center justify-center size-10 rounded-full border"
-                style={{ borderColor: "var(--line)" }}
-                aria-label="Menu"
-              >
-                {open ? <X className="size-4" /> : <Menu className="size-4" />}
-              </button>
-            </div>
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="grid size-9 place-items-center rounded-full transition-colors hover:bg-[var(--paper-2)]"
+            >
+              {dark ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
+            </button>
+            <Link
+              href="/#dispatch"
+              className="hidden sm:inline-flex h-9 items-center rounded-full px-5 text-[0.78rem] font-semibold tracking-wide"
+              style={{ background: "var(--ink)", color: "var(--paper)" }}
+            >
+              Subscribe
+            </Link>
+            <button
+              onClick={() => setOpen(!open)}
+              aria-label="Menu"
+              className="grid size-9 place-items-center rounded-full lg:hidden hover:bg-[var(--paper-2)]"
+            >
+              {open ? <X className="size-[18px]" /> : <Menu className="size-[18px]" />}
+            </button>
           </div>
         </div>
+      </div>
 
-        {open && (
-          <div
-            className="lg:hidden border-t"
-            style={{ borderColor: "var(--line)", background: "var(--bg)" }}
-          >
-            <div className="f-wide py-5 flex flex-col gap-4">
-              {NAV.map((n) => (
-                <Link
-                  key={n.label}
-                  href={n.href}
-                  onClick={() => setOpen(false)}
-                  className="text-xl font-bold tracking-tight"
-                  style={{ color: "var(--fg)" }}
-                >
-                  {n.label}
-                </Link>
-              ))}
-            </div>
+      {/* --- 19 tag seridi --------------------------------------------------- */}
+      <div className="marquee overflow-hidden" style={{ borderBottom: "1px solid var(--rule)" }}>
+        <div className="marquee-track flex w-max items-center gap-0 py-2">
+          {[...FABELO_TAGS, ...FABELO_TAGS].map((t, i) => (
+            <Link
+              key={`${t}-${i}`}
+              href={`/tag/${t}`}
+              className="kicker whitespace-nowrap px-5 transition-colors hover:text-[var(--accent-ink)]"
+            >
+              {tagLabel(t)}
+              <span className="ml-5" style={{ color: "var(--rule)" }}>
+                ·
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* --- Mobil menu ------------------------------------------------------ */}
+      {open && (
+        <div className="lg:hidden" style={{ borderBottom: "1px solid var(--rule)", background: "var(--paper)" }}>
+          <div className="mag-shell flex flex-col py-4">
+            {SECTIONS.map((s) => (
+              <Link
+                key={s.href}
+                href={s.href}
+                onClick={() => setOpen(false)}
+                className="display py-2.5 text-2xl"
+              >
+                {s.label}
+              </Link>
+            ))}
           </div>
-        )}
-      </header>
-    </>
+        </div>
+      )}
+    </header>
   );
 }

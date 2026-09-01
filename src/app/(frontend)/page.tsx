@@ -2,415 +2,322 @@ import React from "react";
 import Link from "next/link";
 import { db, schema } from "@/db";
 import { desc, eq } from "drizzle-orm";
+import type { Metadata } from "next";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
-import ClientForm from "@/components/magazine/ClientForm";
+import { FABELO_TAGS, SECTIONS, tagLabel, decodeEntities } from "@/lib/taxonomy";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
+import ClientForm from "@/components/magazine/ClientForm";
 import {
   PostCard,
   NumberedTrendingCard,
+  HorizontalStoryCard,
   NativeSponsoredCard,
   AdSlot,
   fmtDate,
+  type CardPost,
 } from "@/components/magazine/PostCard";
-import Reveal from "@/components/magazine/Reveal";
-import {
-  Clock,
-  ArrowRight,
-  TrendingUp,
-  Sparkles,
-  Zap,
-  Briefcase,
-  DollarSign,
-  Cpu,
-  Mail,
-  CheckCircle2,
-} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
+export const metadata: Metadata = {
+  title: "Fabelo | Personal Finance, Career & AI Tools for Professionals",
+  description:
+    "An independent desk for money, career and AI. Field-tested frameworks and honest reviews for ambitious professionals.",
+};
+
+/** Bolum basligi — basili dergi bolum isareti */
+function SectionHead({
+  folio,
+  title,
+  blurb,
+  href,
+}: {
+  folio: string;
+  title: string;
+  blurb?: string;
+  href?: string;
+}) {
+  return (
+    <div className="mb-8 flex items-end justify-between gap-6 rule-heavy pt-4">
+      <div>
+        <div className="folio mb-2">§ {folio}</div>
+        <h2 className="display text-[2rem] sm:text-[2.6rem]">{title}</h2>
+        {blurb && (
+          <p className="mt-1.5 text-[0.95rem]" style={{ color: "var(--ink-2)" }}>
+            {blurb}
+          </p>
+        )}
+      </div>
+      {href && (
+        <Link href={href} className="byline shrink-0 pb-2 hover:text-[var(--accent-ink)]">
+          ALL STORIES →
+        </Link>
+      )}
+    </div>
+  );
+}
+
 export default async function HomePage() {
-  const posts = await db.query.posts.findMany({
+  const rows = await db.query.posts.findMany({
     where: eq(schema.posts.status, "published"),
     orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.createdAt)],
-    limit: 50,
+    limit: 60,
   });
 
   const authors = await db.query.authors.findMany();
   const categories = await db.query.categories.findMany();
 
-  const authorMap: Record<number, any> = {};
-  authors.forEach((a: any) => {
-    if (a?.id) authorMap[a.id] = a;
-  });
+  const authorById = new Map(authors.map((a: any) => [a.id, a]));
+  const catById = new Map(categories.map((c: any) => [c.id, c]));
 
-  const categoryMap: Record<number, any> = {};
-  categories.forEach((c: any) => {
-    if (c?.id) categoryMap[c.id] = c;
-  });
+  const posts: CardPost[] = rows.map((p: any) => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    excerpt: p.excerpt,
+    featuredImageUrl: p.featuredImageUrl,
+    readingTime: p.readingTime,
+    publishedAt: p.publishedAt,
+    createdAt: p.createdAt,
+    authorName: authorById.get(p.authorId)?.name ?? null,
+    categoryName: catById.get(p.categoryId)?.name ?? null,
+    categorySlug: catById.get(p.categoryId)?.slug ?? null,
+  }));
 
-  const catBySlug: Record<string, any> = {};
-  categories.forEach((c: any) => {
-    if (c?.slug) catBySlug[c.slug] = c;
-  });
+  const bySection = (slug: string) => posts.filter((p) => p.categorySlug === slug);
 
-  // Split posts for magazine layout
-  const coverStory = posts[0];
-  const secondaryStories = posts.slice(1, 3);
-  const trendingStories = posts.slice(3, 8);
+  const lead = posts[0];
+  const secondary = posts.slice(1, 3);
+  const briefs = posts.slice(3, 7);
+  const mostRead = posts.slice(0, 5);
+  const latest = posts.slice(7, 16);
 
-  // Category specific groups
-  const financePosts = posts
-    .filter((p) => {
-      const catSlug = p.categoryId ? categoryMap[p.categoryId]?.slug : "";
-      return catSlug === "personal-finance" || JSON.stringify(p.tagsJson || "").includes("personal-finance");
-    })
-    .slice(0, 4);
-
-  const careerPosts = posts
-    .filter((p) => {
-      const catSlug = p.categoryId ? categoryMap[p.categoryId]?.slug : "";
-      return catSlug === "career" || JSON.stringify(p.tagsJson || "").includes("career");
-    })
-    .slice(0, 4);
-
-  const aiPosts = posts
-    .filter((p) => {
-      const catSlug = p.categoryId ? categoryMap[p.categoryId]?.slug : "";
-      return catSlug === "ai-tech" || JSON.stringify(p.tagsJson || "").includes("ai-tech");
-    })
-    .slice(0, 4);
-
-  const latestFeed = posts.slice(8, 20);
+  if (!lead) {
+    return (
+      <div className="mag min-h-screen">
+        <MagazineHeader />
+        <div className="mag-wrap py-32 text-center">
+          <h1 className="display text-4xl">No stories published yet.</h1>
+        </div>
+        <MagazineFooter />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] flex flex-col selection:bg-[var(--accent)] selection:text-white">
+    <div className="mag min-h-screen">
       <MagazineHeader />
 
-      <main className="f-content flex-1 w-full space-y-16 sm:space-y-20 py-8">
-        {/* ========================================================
-            1. HERO NEWSLETTER & DISPATCH BANNER
-            ======================================================== */}
-        <section>
-          <Reveal>
-            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#3b4bc8] via-[#2a38a3] to-[#1a237e] text-white p-8 sm:p-12 lg:p-16 shadow-xl border border-white/10">
-              {/* Background ambient lighting */}
-              <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 rounded-full bg-white/10 blur-3xl pointer-events-none" />
-              <div className="absolute bottom-0 left-1/3 -mb-16 w-80 h-80 rounded-full bg-indigo-400/15 blur-2xl pointer-events-none" />
-
-              <div className="relative z-10 max-w-4xl">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/15 backdrop-blur-md text-[11px] font-mono font-bold uppercase tracking-widest text-white/90 border border-white/20">
-                  <Sparkles className="size-3.5 text-amber-300" />
-                  <span>The Fabelo Dispatch · Issue #142</span>
-                </div>
-
-                <h1 className="f-display mt-5 text-[clamp(2.1rem,4.8vw,3.8rem)] leading-[1.05] font-extrabold tracking-tight text-white">
-                  Personal finance, career &amp; AI — for ambitious professionals.
-                </h1>
-
-                <p className="mt-4 text-[16px] sm:text-[18px] text-white/85 max-w-2xl leading-relaxed">
-                  Join 42,000+ ambitious operators, builders, and executives. Field-tested frameworks, actionable money tactics, and curated AI workflows twice a week.
+      <main>
+        {/* ================= MANSET ================= */}
+        <section className="mag-wrap pt-10 sm:pt-14">
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+            {/* Ana hikaye — 7 kolon */}
+            <article className="group lg:col-span-7">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="folio">§ LEAD STORY</span>
+                <span className="h-px flex-1" style={{ background: "var(--rule)" }} />
+              </div>
+              <Link href={`/${lead.slug}`}>
+                <h1 className="display mb-5 text-[clamp(2.6rem,6.2vw,5rem)]">{decodeEntities(lead.title)}</h1>
+              </Link>
+              {lead.excerpt && (
+                <p
+                  className="mb-5 max-w-[58ch] text-[1.08rem] leading-relaxed sm:text-[1.15rem]"
+                  style={{ color: "var(--ink-2)" }}
+                >
+                  {decodeEntities(lead.excerpt)}
                 </p>
-
-                <ClientForm className="mt-8 flex flex-col sm:flex-row gap-3 max-w-lg">
-                  <div className="relative flex-1">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-                    <input
-                      type="email"
-                      required
-                      placeholder="Enter your work email…"
-                      className="w-full h-12 sm:h-13 pl-11 pr-4 rounded-full bg-white text-gray-900 placeholder:text-gray-500 text-sm font-medium outline-none focus:ring-2 focus:ring-white/80 shadow-inner"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="h-12 sm:h-13 px-8 rounded-full bg-gray-950 hover:bg-black text-white font-bold text-sm transition-transform active:scale-98 shrink-0 shadow-lg"
-                  >
-                    Subscribe Free
-                  </button>
-                </ClientForm>
-
-                <div className="mt-5 flex flex-wrap items-center gap-6 text-[12.5px] text-white/75">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="size-3.5 text-emerald-400" />
-                    <span>Free forever</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="size-3.5 text-emerald-400" />
-                    <span>2 dispatches / week</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="size-3.5 text-emerald-400" />
-                    <span>No sponsor spam</span>
-                  </div>
+              )}
+              <div className="byline mb-6 flex flex-wrap items-center gap-x-2.5">
+                {lead.authorName && <span>BY {lead.authorName.toUpperCase()}</span>}
+                <span style={{ color: "var(--rule)" }}>·</span>
+                <span>{fmtDate(lead.publishedAt || lead.createdAt)}</span>
+                {lead.readingTime && (
+                  <>
+                    <span style={{ color: "var(--rule)" }}>·</span>
+                    <span>{lead.readingTime.replace(" read", "").toUpperCase()}</span>
+                  </>
+                )}
+              </div>
+              <Link href={`/${lead.slug}`} className="block">
+                <div className="plate w-full" style={{ aspectRatio: "16 / 9" }}>
+                  {lead.featuredImageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={lead.featuredImageUrl} alt={decodeEntities(lead.title)} className="size-full object-cover" />
+                  ) : (
+                    <div className="size-full" style={{ background: "var(--paper-3)" }} />
+                  )}
                 </div>
+              </Link>
+            </article>
+
+            {/* Yan kolon — 5 kolon: ikincil hikayeler + reklam */}
+            <div className="lg:col-span-5 lg:rule-v lg:pl-14">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="folio">§ ALSO THIS WEEK</span>
+                <span className="h-px flex-1" style={{ background: "var(--rule)" }} />
+              </div>
+              <div className="flex flex-col">
+                {secondary.map((p, i) => (
+                  <div key={p.slug} className={i > 0 ? "rule pt-7 mt-7" : ""}>
+                    <PostCard post={p} showImage={i === 0} />
+                  </div>
+                ))}
+              </div>
+              <div className="mt-9">
+                <AdSlot size="rectangle" label="Sponsor" />
               </div>
             </div>
-          </Reveal>
+          </div>
         </section>
 
-        {/* ========================================================
-            2. EDITORIAL COVER STORY & TRENDING (DETAILED.COM/50 DENSITY)
-            ======================================================== */}
-        <section>
-          <div className="flex items-center justify-between pb-4 mb-8 border-b-2 border-[var(--heading)]">
-            <div className="flex items-center gap-2.5">
-              <Zap className="size-5 text-[var(--accent)]" />
-              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[var(--heading)]">
-                Cover Story &amp; Editorial Highlights
-              </h2>
-            </div>
-            <span className="text-xs font-mono text-[var(--muted)] uppercase tracking-wider hidden sm:inline">
-              Updated Live
-            </span>
+        {/* ================= BILLBOARD ================= */}
+        <section className="mag-wrap py-12 sm:py-16">
+          <AdSlot size="billboard" label="Partner" />
+        </section>
+
+        {/* ================= KISA HABERLER ================= */}
+        <section className="mag-wrap">
+          <SectionHead folio="00" title="The Briefs" blurb="Four things worth your attention today." />
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {briefs.map((p) => (
+              <PostCard key={p.slug} post={p} size="sm" showImage />
+            ))}
           </div>
+        </section>
 
-          <div className="grid lg:grid-cols-12 gap-10 items-start">
-            {/* Massive Main Cover Story (7 Columns) */}
-            {coverStory && (
-              <div className="lg:col-span-7 group">
-                <Link href={`/${coverStory.slug}`} className="block">
-                  <div className="aspect-[16/10] rounded-2xl overflow-hidden bg-[var(--bg-2)] relative mb-5 shadow-sm">
-                    {coverStory.featuredImageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={coverStory.featuredImageUrl}
-                        alt={coverStory.title}
-                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-103"
-                      />
-                    ) : null}
-                    {coverStory.categoryId && categoryMap[coverStory.categoryId] && (
-                      <span
-                        className="absolute top-4 left-4 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg backdrop-blur-md shadow-sm"
-                        style={{
-                          background: "color-mix(in oklab, var(--bg) 90%, transparent)",
-                          color: "var(--accent)",
-                          border: "1px solid var(--line)",
-                        }}
-                      >
-                        {categoryMap[coverStory.categoryId].name}
-                      </span>
-                    )}
-                  </div>
-
-                  <h2 className="f-headline font-extrabold leading-[1.12] text-[var(--heading)] group-hover:text-[var(--accent)] transition-colors">
-                    {coverStory.title}
-                  </h2>
-
-                  {coverStory.excerpt && (
-                    <p className="mt-3.5 text-[15.5px] sm:text-[17px] text-[var(--muted)] leading-relaxed line-clamp-3">
-                      {coverStory.excerpt}
-                    </p>
-                  )}
-
-                  <div className="mt-5 flex items-center gap-3 text-[13px] text-[var(--muted)] font-medium">
-                    <span className="font-bold text-[var(--fg)]">
-                      {coverStory.authorId && authorMap[coverStory.authorId]?.name ? authorMap[coverStory.authorId].name : "Fabelo"}
-                    </span>
-                    <span>·</span>
-                    <span>{fmtDate(coverStory.publishedAt)}</span>
-                    <span>·</span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="size-3.5" />
-                      {coverStory.readingTime || "5 min read"}
-                    </span>
-                  </div>
-                </Link>
-              </div>
-            )}
-
-            {/* Trending Top Ranked + Secondary (5 Columns) */}
-            <div className="lg:col-span-5 space-y-6">
-              <div className="p-6 rounded-2xl bg-[var(--bg-2)] border border-[var(--line)]">
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--line)]">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="size-4 text-[var(--accent)]" />
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--heading)] font-mono">
-                      Trending Stories
-                    </h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-[var(--muted)]">RANKED</span>
+        {/* ================= THE DISPATCH (newsletter) ================= */}
+        <section id="dispatch" className="mt-16 sm:mt-24" style={{ background: "var(--ink)" }}>
+          <div className="mag-wrap py-16 sm:py-24">
+            <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
+              <div className="lg:col-span-7">
+                <div className="folio mb-4" style={{ color: "var(--accent)" }}>
+                  § THE FABELO DISPATCH — ISSUE №&nbsp;142
                 </div>
+                <h2
+                  className="display mb-5 text-[clamp(2.2rem,5vw,3.8rem)]"
+                  style={{ color: "var(--paper)" }}
+                >
+                  Money, career and AI — <em>twice a week</em>, without the noise.
+                </h2>
+                <p className="max-w-[52ch] text-[1.05rem] leading-relaxed" style={{ color: "#b7bcc4" }}>
+                  Join 42,000+ operators, builders and executives. Field-tested frameworks, honest tool
+                  reviews and the numbers behind the headlines.
+                </p>
+              </div>
 
-                <div className="divide-y divide-[var(--line)]">
-                  {trendingStories.map((post, idx) => (
-                    <NumberedTrendingCard
-                      key={post.id}
-                      post={post}
-                      index={idx + 1}
-                      category={post.categoryId ? categoryMap[post.categoryId] : null}
-                    />
+              <div className="lg:col-span-5 lg:pl-10" style={{ borderLeft: "1px solid #2a3038" }}>
+                <ClientForm className="flex flex-col gap-3">
+                  <label className="folio" style={{ color: "#8b9098" }} htmlFor="dispatch-email">
+                    YOUR WORK EMAIL
+                  </label>
+                  <input
+                    id="dispatch-email"
+                    type="email"
+                    required
+                    placeholder="you@company.com"
+                    className="h-12 w-full bg-transparent px-0 text-[1.05rem] outline-none"
+                    style={{ borderBottom: "1px solid #3a4048", color: "var(--paper)" }}
+                  />
+                  <button
+                    type="submit"
+                    className="mt-3 h-12 w-full text-[0.82rem] font-bold tracking-[0.14em] transition-transform active:scale-[0.99]"
+                    style={{ background: "var(--accent)", color: "#08181c" }}
+                  >
+                    SUBSCRIBE FREE
+                  </button>
+                  <small className="byline mt-1 block" style={{ color: "#7d848d" }}>
+                    No spam. Unsubscribe in one click.
+                  </small>
+                </ClientForm>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ================= BOLUMLER ================= */}
+        {SECTIONS.map((section, si) => {
+          const items = bySection(section.slug);
+          if (items.length === 0) return null;
+          const [first, ...rest] = items;
+
+          return (
+            <section key={section.slug} className="mag-wrap pt-16 sm:pt-24">
+              <SectionHead
+                folio={section.folio}
+                title={section.label}
+                blurb={section.blurb}
+                href={`/category/${section.slug}`}
+              />
+              <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+                <div className="lg:col-span-7">
+                  <PostCard post={first} size="lg" showImage />
+                </div>
+                <div className="lg:col-span-5 lg:rule-v lg:pl-14">
+                  {rest.slice(0, 4).map((p) => (
+                    <HorizontalStoryCard key={p.slug} post={p} />
                   ))}
                 </div>
               </div>
 
-              {/* Secondary story cards */}
-              {secondaryStories.map((sec) => (
-                <Link
-                  key={sec.id}
-                  href={`/${sec.slug}`}
-                  className="group flex gap-4 p-4 rounded-xl border border-[var(--line)] bg-[var(--card)] hover:border-[var(--accent)] transition-colors"
-                >
-                  {sec.featuredImageUrl && (
-                    <div className="size-24 rounded-lg overflow-hidden shrink-0 bg-[var(--bg-2)]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={sec.featuredImageUrl}
-                        alt={sec.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent)]">
-                      {sec.categoryId && categoryMap[sec.categoryId]?.name ? categoryMap[sec.categoryId].name : "Feature"}
-                    </span>
-                    <h4 className="text-[14.5px] font-bold text-[var(--heading)] line-clamp-2 leading-snug group-hover:text-[var(--accent)] transition-colors mt-0.5">
-                      {sec.title}
-                    </h4>
-                    <span className="text-[12px] text-[var(--muted)] mt-1.5 block">
-                      {sec.readingTime || "4 min read"}
-                    </span>
+              {/* Bolumler arasi reklam katmani */}
+              {si === 0 && (
+                <div className="mt-14 grid gap-8 lg:grid-cols-3">
+                  <NativeSponsoredCard />
+                  <div className="lg:col-span-2">
+                    <AdSlot size="leaderboard" label="Advertisement" />
                   </div>
-                </Link>
-              ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+
+        {/* ================= EN COK OKUNAN + SON YAZILAR ================= */}
+        <section className="mag-wrap pt-16 sm:pt-24">
+          <div className="grid gap-12 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-8">
+              <SectionHead folio="04" title="Latest" blurb="Everything from the desk, newest first." />
+              <div className="grid gap-9 sm:grid-cols-2 lg:grid-cols-3">
+                {latest.map((p) => (
+                  <PostCard key={p.slug} post={p} size="sm" showImage />
+                ))}
+              </div>
             </div>
+
+            <aside className="lg:col-span-4 lg:rule-v lg:pl-14">
+              <SectionHead folio="05" title="Most Read" />
+              <div>
+                {mostRead.map((p, i) => (
+                  <NumberedTrendingCard key={p.slug} post={p} index={i + 1} />
+                ))}
+              </div>
+              <div className="mt-10 sticky top-44">
+                <AdSlot size="skyscraper" label="Sponsor" />
+              </div>
+            </aside>
           </div>
         </section>
 
-        {/* ========================================================
-            3. MID-PAGE LEADERBOARD AD BANNER
-            ======================================================== */}
-        <section className="py-2">
-          <AdSlot size="leaderboard" label="Featured Partner" />
-        </section>
-
-        {/* ========================================================
-            4. CATEGORY DEEP DIVE: PERSONAL FINANCE
-            ======================================================== */}
-        {financePosts.length > 0 && (
-          <section className="space-y-6">
-            <div className="flex items-center justify-between pb-3 border-b-2 border-emerald-600">
-              <div className="flex items-center gap-2.5">
-                <DollarSign className="size-5 text-emerald-600" />
-                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[var(--heading)]">
-                  Personal Finance &amp; Wealth
-                </h2>
-              </div>
+        {/* ================= TAG DIZINI ================= */}
+        <section className="mag-wrap pt-16 sm:pt-24">
+          <SectionHead folio="06" title="Topics" blurb="Every subject the desk covers." />
+          <div className="flex flex-wrap gap-x-2.5 gap-y-3">
+            {FABELO_TAGS.map((t) => (
               <Link
-                href="/tag/personal-finance"
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-emerald-600 hover:text-emerald-700 transition"
+                key={t}
+                href={`/tag/${t}`}
+                className="kicker px-4 py-2 transition-colors"
+                style={{ border: "1px solid var(--rule)", color: "var(--ink-2)" }}
               >
-                <span>View all 24 guides</span>
-                <ArrowRight className="size-4" />
+                {tagLabel(t)}
               </Link>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {financePosts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  author={post.authorId ? authorMap[post.authorId] : null}
-                  category={{ name: "Personal Finance", slug: "personal-finance" }}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ========================================================
-            5. CATEGORY DEEP DIVE: CAREER ACCELERATION
-            ======================================================== */}
-        {careerPosts.length > 0 && (
-          <section className="space-y-6">
-            <div className="flex items-center justify-between pb-3 border-b-2 border-blue-600">
-              <div className="flex items-center gap-2.5">
-                <Briefcase className="size-5 text-blue-600" />
-                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[var(--heading)]">
-                  Career &amp; Remote Work
-                </h2>
-              </div>
-              <Link
-                href="/tag/career"
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-blue-600 hover:text-blue-700 transition"
-              >
-                <span>View all 13 guides</span>
-                <ArrowRight className="size-4" />
-              </Link>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {careerPosts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  author={post.authorId ? authorMap[post.authorId] : null}
-                  category={{ name: "Career", slug: "career" }}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ========================================================
-            6. CATEGORY DEEP DIVE: AI & TECH TOOLS + NATIVE AD
-            ======================================================== */}
-        {aiPosts.length > 0 && (
-          <section className="space-y-6">
-            <div className="flex items-center justify-between pb-3 border-b-2 border-purple-600">
-              <div className="flex items-center gap-2.5">
-                <Cpu className="size-5 text-purple-600" />
-                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[var(--heading)]">
-                  AI &amp; Productivity Technology
-                </h2>
-              </div>
-              <Link
-                href="/tag/ai-tech"
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-purple-600 hover:text-purple-700 transition"
-              >
-                <span>View all 10 guides</span>
-                <ArrowRight className="size-4" />
-              </Link>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-              {aiPosts.slice(0, 3).map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  author={post.authorId ? authorMap[post.authorId] : null}
-                  category={{ name: "AI & Tech", slug: "ai-tech" }}
-                />
-              ))}
-              <NativeSponsoredCard />
-            </div>
-          </section>
-        )}
-
-        {/* ========================================================
-            7. LATEST STORIES FEED ARCHIVE
-            ======================================================== */}
-        <section className="pt-6">
-          <div className="flex items-center justify-between pb-3 mb-8 border-b-2 border-[var(--heading)]">
-            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[var(--heading)]">
-              Latest Field Notes &amp; Analysis
-            </h2>
-            <span className="text-xs font-mono text-[var(--muted)]">
-              Showing {latestFeed.length} of {posts.length} stories
-            </span>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {latestFeed.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                author={post.authorId ? authorMap[post.authorId] : null}
-                category={post.categoryId ? categoryMap[post.categoryId] : null}
-              />
             ))}
           </div>
         </section>
+
+        <div className="h-20 sm:h-28" />
       </main>
 
       <MagazineFooter />
