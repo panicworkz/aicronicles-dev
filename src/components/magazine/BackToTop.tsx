@@ -2,8 +2,8 @@
 
 import React, { useEffect, useRef } from "react";
 
-const BOYUT = 54; // px
-const CIZGI = 1.5; // ilerleme halkasi kalinligi
+const BOYUT = 42; // px
+const CIZGI = 1; // ilerleme halkasi kalinligi
 const YARICAP = (BOYUT - CIZGI) / 2;
 const CEVRE = 2 * Math.PI * YARICAP;
 
@@ -70,7 +70,7 @@ export default function BackToTop() {
       ref={kokRef}
       onClick={yukari}
       aria-label="Sayfanın başına dön"
-      className="mag group fixed bottom-8 right-8 z-50 grid place-items-center rounded-full"
+      className="mag group fixed bottom-6 right-6 z-50 grid place-items-center rounded-full"
       style={{
         width: BOYUT,
         height: BOYUT,
@@ -79,7 +79,7 @@ export default function BackToTop() {
         borderWidth: 1,
         borderStyle: "solid",
         borderColor: "var(--ink)",
-        boxShadow: "0 0 0 2px var(--paper), 0 10px 30px -12px rgba(0,0,0,.45)",
+        boxShadow: "0 0 0 1.5px var(--paper), 0 8px 24px -12px rgba(0,0,0,.4)",
         opacity: 0,
         transform: "translateY(10px) scale(0.96)",
         pointerEvents: "none",
@@ -110,20 +110,20 @@ export default function BackToTop() {
       </svg>
 
       {/* Ok — hover'da yukari kayar */}
-      <span className="relative block h-4 w-3 overflow-hidden">
+      <span className="relative block h-3.5 w-2.5 overflow-hidden">
         <svg
           viewBox="0 0 12 16"
           fill="none"
-          className="absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover:-translate-y-4"
+          className="absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover:-translate-y-3.5"
         >
-          <path d="M6 15V2M6 2L1.5 6.5M6 2l4.5 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          <path d="M6 15V2M6 2L1.5 6.5M6 2l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
         <svg
           viewBox="0 0 12 16"
           fill="none"
-          className="absolute inset-0 translate-y-4 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover:translate-y-0"
+          className="absolute inset-0 translate-y-3.5 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover:translate-y-0"
         >
-          <path d="M6 15V2M6 2L1.5 6.5M6 2l4.5 4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          <path d="M6 15V2M6 2L1.5 6.5M6 2l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </span>
 

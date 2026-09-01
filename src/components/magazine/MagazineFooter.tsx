@@ -103,7 +103,7 @@ export default function MagazineFooter() {
 
       {/* --- Alt serit ----------------------------------------------------- */}
       <div style={{ borderTop: "1px solid #2a3038" }}>
-        <div className="mag-shell flex flex-col items-center justify-between gap-3 py-6 sm:flex-row">
+        <div className="mag-shell flex flex-col items-center justify-between gap-3 py-6 sm:flex-row sm:pr-20">
           <span className="byline" style={{ color: "#7d848d" }}>
             © {new Date().getFullYear()} FABELO — ALL RIGHTS RESERVED
           </span>
