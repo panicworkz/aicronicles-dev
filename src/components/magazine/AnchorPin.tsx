@@ -67,6 +67,15 @@ export default function AnchorPin() {
       };
 
       requestAnimationFrame(kare);
+
+      // Sekme arka plandaysa kare dongusu calismaz; tiklama sonucsuz kalmasin
+      // diye kisa bir sure sonra hareket baslamadiysa dogrudan hedefe git.
+      window.setTimeout(() => {
+        if (calisiyor && Math.abs(window.scrollY - baslangic) < 2) {
+          iptal = true;
+          window.scrollTo({ top: hedefKonumu(el), behavior: "instant" as ScrollBehavior });
+        }
+      }, 200);
     };
 
     const onClick = (e: MouseEvent) => {
