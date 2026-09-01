@@ -144,12 +144,32 @@ export default function MagazineFooter() {
       {/* --- Alt serit -----------------------------------------------------
           Sagda basa-don butonu duruyor; yaziyi ezmemesi icin pay birakiyoruz. */}
       <div style={{ borderTop: "1px solid #262c33" }}>
-        <div className="mag-shell flex flex-col items-center justify-between gap-3 py-6 sm:flex-row sm:pr-24">
+        <div className="mag-shell flex flex-col items-center justify-between gap-3 py-6 text-center sm:flex-row sm:text-left sm:pr-24">
           <span className="byline" style={{ color: "#6b7178" }}>
             © {new Date().getFullYear()} FABELO — ALL RIGHTS RESERVED
           </span>
+          {/* Kunye satiri — iki marka da baglantili */}
           <span className="byline" style={{ color: "#6b7178" }}>
-            PUBLISHED WITH PANIC CMS
+            BUILT ON{" "}
+            <a
+              href="https://panic.com.tr/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors hover:text-[var(--accent)]"
+              style={{ color: "#9aa1aa" }}
+            >
+              PANIC CMS
+            </a>{" "}
+            · ENGINEERED BY{" "}
+            <a
+              href="https://panicworkz.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors hover:text-[var(--accent)]"
+              style={{ color: "#9aa1aa" }}
+            >
+              PANICWORKZ
+            </a>
           </span>
         </div>
       </div>
