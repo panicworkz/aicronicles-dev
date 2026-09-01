@@ -8,6 +8,7 @@ import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
 import ClientForm from "@/components/magazine/ClientForm";
 import ArticleClientActions from "./ArticleClientActions";
+import AnchorPin from "@/components/magazine/AnchorPin";
 import {
   HorizontalStoryCard,
   NumberedTrendingCard,
@@ -142,6 +143,7 @@ export default async function ArticlePage({ params }: PageProps) {
   return (
     <div className="mag min-h-screen">
       <ArticleClientActions title={post.title} />
+      <AnchorPin />
       <MagazineHeader />
 
       <main>
