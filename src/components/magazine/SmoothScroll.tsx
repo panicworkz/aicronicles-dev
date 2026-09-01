@@ -24,15 +24,39 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     };
     raf = requestAnimationFrame(loop);
 
+    const reducedMotion = () =>
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+
+    /** Yedek: Lenis calismazsa tarayicinin kendi kaydirmasi (CSS scroll-margin devrede) */
+    const nativeTo = (el: Element) => {
+      el.scrollIntoView({ behavior: "auto", block: "start" });
+    };
+
     /** Hedefe kunye payini birakarak yumusakca kaydir */
     const glideTo = (hash: string, animate = true) => {
       const el = document.querySelector(hash);
       if (!el) return false;
+
+      // Sekme arka plandaysa veya kullanici hareketi azaltmayi sectiyse
+      // rAF durur; Lenis animasyon suremez. Dogrudan tarayiciya birak.
+      if (!animate || reducedMotion() || document.visibilityState === "hidden") {
+        nativeTo(el);
+        return true;
+      }
+
+      const oncekiKonum = window.scrollY;
       lenis.scrollTo(el as HTMLElement, {
         offset: -HEADER_OFFSET,
-        duration: animate ? 1.2 : 0,
-        immediate: !animate,
+        duration: 1.2,
       });
+
+      // Guvenlik agi: 150ms icinde hicbir hareket yoksa (rAF bogulmus,
+      // Lenis olmemis vb.) kullanici tiklayip hicbir sey olmadigini
+      // gormesin diye tarayicinin kendi kaydirmasina dus.
+      window.setTimeout(() => {
+        if (Math.abs(window.scrollY - oncekiKonum) < 2) nativeTo(el);
+      }, 150);
+
       return true;
     };
 
