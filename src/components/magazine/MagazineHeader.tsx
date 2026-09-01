@@ -20,6 +20,32 @@ export default function MagazineHeader() {
   const [open, setOpen] = useState(false);
   const [stuck, setStuck] = useState(false);
 
+  const kunyeRef = React.useRef<HTMLElement>(null);
+
+  /**
+   * Cipa hedeflerinin kunyenin TAM altina oturmasi icin kunye yuksekligini
+   * CSS degiskenine yaziyoruz. Sabit bir piksel degeri yazmak yanlisti:
+   * yukseklik ekran genisligine, yazi tipi olculerine ve tarayici
+   * yakinlastirmasina gore degisiyor, aradaki fark bosluk olarak goruluyordu.
+   */
+  useEffect(() => {
+    const el = kunyeRef.current;
+    if (!el) return;
+    const yaz = () =>
+      document.documentElement.style.setProperty(
+        "--mag-header-h",
+        `${Math.round(el.getBoundingClientRect().height)}px`
+      );
+    yaz();
+    const gozlemci = new ResizeObserver(yaz);
+    gozlemci.observe(el);
+    window.addEventListener("resize", yaz);
+    return () => {
+      gozlemci.disconnect();
+      window.removeEventListener("resize", yaz);
+    };
+  }, []);
+
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
     const onScroll = () => setStuck(window.scrollY > 8);
@@ -38,7 +64,7 @@ export default function MagazineHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50" style={{ background: "var(--paper)" }}>
+    <header ref={kunyeRef} className="sticky top-0 z-50" style={{ background: "var(--paper)" }}>
       {/* --- Ust serit: tarih + sayi + abone -------------------------------- */}
       <div style={{ borderBottom: "1px solid var(--rule)" }}>
         <div className="mag-shell flex h-9 items-center justify-between">

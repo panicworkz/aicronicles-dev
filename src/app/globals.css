@@ -308,8 +308,9 @@ html {
   html { scroll-behavior: auto; }
 }
 
-/* Kunye 143px sabit; hedef tam altina otursun */
+/* Hedef, yapiskan kunyenin tam altina otursun. Yukseklik sabit yazilmaz;
+   kunye kendi olcusunu --mag-header-h degiskenine yaziyor. */
 .mag [id] {
-  scroll-margin-top: 143px;
+  scroll-margin-top: var(--mag-header-h, 143px);
 }
 
