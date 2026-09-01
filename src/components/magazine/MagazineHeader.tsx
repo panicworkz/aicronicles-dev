@@ -156,8 +156,11 @@ export default function MagazineHeader() {
       </div>
 
       {/* --- 19 tag seridi --------------------------------------------------- */}
-      <div className="marquee overflow-hidden" style={{ borderBottom: "1px solid var(--rule)" }}>
-        <div className="marquee-track flex w-max items-center gap-0 py-2">
+      <div
+        className="marquee overflow-hidden"
+        style={{ borderBottom: "1px solid var(--rule)", height: 34 }}
+      >
+        <div className="marquee-track flex h-full w-max items-center gap-0">
           {[...FABELO_TAGS, ...FABELO_TAGS].map((t, i) => (
             <Link
               key={`${t}-${i}`}

@@ -311,6 +311,6 @@ html {
 /* Hedef, yapiskan kunyenin tam altina otursun. Yukseklik sabit yazilmaz;
    kunye kendi olcusunu --mag-header-h degiskenine yaziyor. */
 .mag [id] {
-  scroll-margin-top: var(--mag-header-h, 143px);
+  scroll-margin-top: var(--mag-header-h, 145px); /* 36 + 72 + 34 + 3px cizgi */
 }
 
