@@ -28,29 +28,37 @@ import { toast } from 'sonner';
 
 const PLACEMENT_CONFIG: Record<
   string,
-  { label: string; size: string; desc: string; badgeColor: string }
+  { label: string; size: string; w: number; h: number; desc: string; badgeColor: string }
 > = {
   measure: {
     label: 'Measure',
     size: '1440×200',
+    w: 1440,
+    h: 200,
     desc: 'Tam içerik genişliği — ana sayfa ve kategori bölüm araları',
     badgeColor: 'bg-purple-500/15 text-purple-600 border-purple-500/30',
   },
   feature: {
     label: 'Feature',
     size: '940×180',
+    w: 940,
+    h: 180,
     desc: 'Yazı gövdesi ve üç kolonun ikisi',
     badgeColor: 'bg-blue-500/15 text-blue-600 border-blue-500/30',
   },
   panel: {
     label: 'Panel',
     size: '511×300',
+    w: 511,
+    h: 300,
     desc: 'Ana sayfa yan kolonu',
     badgeColor: 'bg-amber-500/15 text-amber-600 border-amber-500/30',
   },
   rail: {
     label: 'Rail',
     size: '387×540',
+    w: 387,
+    h: 540,
     desc: 'Kenar rayı — yazı, etiket ve yazar sayfaları',
     badgeColor: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30',
   },
@@ -60,6 +68,8 @@ export default function PanicAdsPage() {
   const [ads, setAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  /** Buyuk onizlemede acik olan ilan */
+  const [preview, setPreview] = useState<any | null>(null);
   const [filterPlacement, setFilterPlacement] = useState<string>('all');
 
   // Modal / Form state
@@ -233,7 +243,7 @@ export default function PanicAdsPage() {
             Ad Inventory &amp; Campaigns
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage multi-tier advertising placements (Billboard, Leaderboard, Skyscraper, In-Read, Native) across Fabelo Journal.
+            Fabelo'nun ev ölçüleri — Measure, Feature, Panel ve Rail. Ölçüler sitenin 12 kolonluk ızgarasından türetildi; afiş alanını her ekranda tam doldurur.
           </p>
         </div>
 
@@ -333,7 +343,7 @@ export default function PanicAdsPage() {
         <Table>
           <TableHeader className="bg-muted/40">
             <TableRow>
-              <TableHead className="w-16">Creative</TableHead>
+              <TableHead className="w-[152px]">Creative</TableHead>
               <TableHead>Campaign &amp; Destination</TableHead>
               <TableHead>Placement &amp; Size</TableHead>
               <TableHead>Impressions</TableHead>
@@ -360,6 +370,9 @@ export default function PanicAdsPage() {
                 const conf = PLACEMENT_CONFIG[ad.placement] || {
                   label: ad.placement,
                   size: 'Custom',
+                  w: 16,
+                  h: 9,
+                  desc: '',
                   badgeColor: 'bg-gray-500/10 text-gray-600',
                 };
                 const ctr = ad.impressions > 0 ? ((ad.clicks / ad.impressions) * 100).toFixed(2) : '0.00';
@@ -367,17 +380,26 @@ export default function PanicAdsPage() {
                 return (
                   <TableRow key={ad.id} className="hover:bg-muted/30 transition">
                     <TableCell>
-                      <div className="size-12 rounded-lg overflow-hidden border border-border bg-muted/30 shrink-0">
+                      {/* Onizleme ilanin KENDI oraninda; kareye sikistirmak
+                          afisi taninmaz hale getiriyordu. Tiklayinca gercek
+                          olcusunde aciliyor. */}
+                      <button
+                        type="button"
+                        onClick={() => setPreview(ad)}
+                        title="Büyük önizleme"
+                        className="group block overflow-hidden rounded-md border border-border bg-muted/30 transition hover:border-primary"
+                        style={{ width: 132, aspectRatio: `${conf.w} / ${conf.h}` }}
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={ad.imageUrl}
                           alt={ad.alt || ad.name}
-                          className="size-full object-cover"
+                          className="size-full object-cover transition group-hover:opacity-90"
                           onError={(e) => {
-                            (e.target as any).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="%23999"><rect width="48" height="48" fill="%23eee"/><text x="12" y="28" font-size="12" fill="%23666">AD</text></svg>';
+                            (e.target as any).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="%23eee"/><text x="12" y="28" font-size="12" fill="%23666">AD</text></svg>';
                           }}
                         />
-                      </div>
+                      </button>
                     </TableCell>
 
                     <TableCell>
@@ -617,6 +639,57 @@ export default function PanicAdsPage() {
           </div>
         </div>
       )}
+
+      {/* --- Buyuk onizleme -------------------------------------------------
+          Afis gercek olcusunde aciliyor; ekrana sigmazsa oranini koruyarak
+          kuculuyor. Animasyonlu SVG'ler burada da oynuyor, yani yayina
+          almadan once afisin akisini gorebiliyoruz. */}
+      {preview && (() => {
+        const c = PLACEMENT_CONFIG[preview.placement] || { label: preview.placement, size: 'Custom', w: 16, h: 9 };
+        return (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${preview.name} önizleme`}
+            onClick={() => setPreview(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm"
+          >
+            <div className="max-h-full w-full max-w-[1480px] overflow-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-white">
+                <div>
+                  <p className="text-base font-bold">{preview.name}</p>
+                  <p className="font-mono text-xs text-white/70">
+                    {c.label} · {c.size} · gerçek ölçü
+                  </p>
+                </div>
+                <Button size="sm" variant="secondary" onClick={() => setPreview(null)}>
+                  <X className="mr-1.5 size-4" /> Kapat
+                </Button>
+              </div>
+
+              {/* Sitedeki cerceveyle ayni: kagit zemin, ince kural */}
+              <div
+                className="mx-auto overflow-hidden border"
+                style={{
+                  width: c.w,
+                  maxWidth: '100%',
+                  aspectRatio: `${c.w} / ${c.h}`,
+                  background: '#faf8f4',
+                  borderColor: '#d9d3c6',
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={preview.imageUrl} alt={preview.alt || preview.name} className="size-full object-cover" />
+              </div>
+
+              <p className="mt-3 text-center font-mono text-[11px] text-white/50">
+                Kapatmak için dışarı tıklayın
+              </p>
+            </div>
+          </div>
+        );
+      })()}
+
     </div>
   );
 }
