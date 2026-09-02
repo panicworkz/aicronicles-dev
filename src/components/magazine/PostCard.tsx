@@ -179,11 +179,11 @@ export function NativeSponsoredCard({ post }: { post?: CardPost }) {
         <span className="kicker">PARTNER CONTENT</span>
       </div>
       <h3 className="display mb-2 text-[1.3rem]">
-        {post?.title || "Your brand in front of 42,000 finance & tech professionals"}
+        {post?.title || "Your brand in front of finance & tech professionals"}
       </h3>
       <p className="mb-4 text-[0.92rem] leading-relaxed" style={{ color: "var(--ink-2)" }}>
         {post?.excerpt ||
-          "Native placements inside the Fabelo Dispatch reach decision-makers who read every issue end to end."}
+          "Native placements sit inside the reading flow, alongside the guides our readers come for."}
       </p>
       <Link href="/advertise" className="byline mt-auto hover:text-[var(--accent-ink)]">
         PARTNER WITH US →
