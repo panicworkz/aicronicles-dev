@@ -321,36 +321,52 @@ def imlec(x, y, boy=30, renk=None):
 
 
 # Klasik piksel el imleci — dogrudan cizildi, disaridan indirilmedi.
-# Stok gorsel lisansi belirsiz olurdu ve siteye dis bagimlilik girerdi;
-# oysa butun dis gorselleri temizlemistik.
+# Stok gorseller "ticari olmayan kullanim" lisansiyla dagitiliyor ve
+# siteye dis bagimlilik geri gelirdi; oysa butun dis gorselleri
+# temizlemistik.
 #
-# Yalnizca SILUET yaziliyor. Konturu elle cizdigim ilk denemede avucun
-# sol ve alt kenarinda hat kapanmamisti ve el delik goruyordu. Kontur
-# artik siluetten TURETILIYOR: dort komsusundan biri disarida olan her
-# piksel hat, gerisi ic dolgu. Boylece kenar her zaman kapali.
+# Yalnizca SILUET yaziliyor; kontur ondan TURETILIYOR (dort komsusundan
+# biri disarida olan piksel hattir). Ilk denemede konturu elle cizmistim,
+# avucun sol ve alt kenarinda hat kapanmadi ve el delik goruldu.
+#
+# CIZGILER: parmak aralari. Ikinci denemede el tek parca bir kurek gibi
+# goruyordu — klasik imlecin okunmasini saglayan sey kademeli parmaklar
+# ve aralarindaki hat. Bunlar siluetten turemez, ayrica yaziliyor.
 PIKSEL_EL = [
-    "....XX.......",
-    "....XX.......",
-    "....XX.......",
-    "....XX.......",
-    "....XX.......",
-    "....XX.......",
-    "....XXXX.....",
-    "....XXXXXX...",
-    "....XXXXXXXX.",
-    ".XX.XXXXXXXX.",
-    "XXXXXXXXXXXX.",
-    "XXXXXXXXXXXX.",
-    ".XXXXXXXXXXX.",
-    ".XXXXXXXXXXX.",
-    "..XXXXXXXXXX.",
-    "..XXXXXXXXXX.",
-    "...XXXXXXXX..",
+    ".....XXX........",
+    ".....XXX........",
+    ".....XXX........",
+    ".....XXX........",
+    ".....XXX........",
+    ".....XXX........",
+    ".....XXXXXX.....",
+    ".....XXXXXX.....",
+    ".....XXXXXXXXX..",
+    ".XXX.XXXXXXXXX..",
+    ".XXXXXXXXXXXXXX.",
+    ".XXXXXXXXXXXXXX.",
+    ".XXXXXXXXXXXXXX.",
+    "..XXXXXXXXXXXXX.",
+    "..XXXXXXXXXXXXX.",
+    "...XXXXXXXXXXXX.",
+    "...XXXXXXXXXXXX.",
+    "...XXXXXXXXXXXX.",
+    "...XXXXXXXXXXXX.",
+    "....XXXXXXXXXXX.",
+    "....XXXXXXXXXX..",
+]
+
+# (x, ilk_satir, son_satir) — parmak aralarindaki dikey hatlar
+PIKSEL_CIZGI = [
+    (8,  6, 10),   # isaret / orta
+    (11, 8, 10),   # orta / yuzuk
+    (13, 9, 10),   # yuzuk / serce
+    (4,  9, 12),   # basparmak ayrimi
 ]
 
 
 def imlec_piksel(x, y, boy=34, renk=None):
-    """Ayni el, piksel izgarasinda.
+    """Klasik piksel el imleci.
 
     shape-rendering=crispEdges sart: onsuz tarayici kareleri yumusatir
     ve piksel olmanin anlami kalmaz.
@@ -363,14 +379,22 @@ def imlec_piksel(x, y, boy=34, renk=None):
     def dolu(sx, sy):
         return 0 <= sy < yuk and 0 <= sx < en and g[sy][sx] == "X"
 
+    hatlar = set()
+    for cx, y0, y1 in PIKSEL_CIZGI:
+        for sy in range(y0, y1 + 1):
+            hatlar.add((cx, sy))
+
     kareler = []
     for sy in range(yuk):
         for sx in range(en):
             if not dolu(sx, sy):
                 continue
-            hat = not (dolu(sx-1, sy) and dolu(sx+1, sy) and dolu(sx, sy-1) and dolu(sx, sy+1))
+            kenar = not (dolu(sx-1, sy) and dolu(sx+1, sy)
+                         and dolu(sx, sy-1) and dolu(sx, sy+1))
+            murekkep = kenar or (sx, sy) in hatlar
             kareler.append('<rect x="%.2f" y="%.2f" width="%.2f" height="%.2f" fill="%s"/>'
-                           % (sx*bir, sy*bir, bir + .03, bir + .03, c if hat else KAGIT))
+                           % (sx*bir, sy*bir, bir + .03, bir + .03,
+                              c if murekkep else KAGIT))
     return ('<g class="imlec" transform="translate(%.1f,%.1f)" shape-rendering="crispEdges">%s</g>'
             % (x, y, "".join(kareler)))
 
@@ -394,7 +418,7 @@ def cagri_baglantisi(x, y, metin, punto, renk=None):
     # uc tam cizginin sag ucuna dokunsun.
     bir = boy / len(PIKSEL_EL)
     uc_x, uc_y = x + en + 7, y + 7
-    el_x = uc_x - 5 * bir
+    el_x = uc_x - 6 * bir
     el_y = uc_y
     return en, (
         # Halka once: elin ve metnin ARKASINDA kalsin
