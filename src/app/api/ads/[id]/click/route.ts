@@ -46,6 +46,14 @@ export async function POST(
         contextSlug: typeof govde?.contextSlug === "string" ? govde.contextSlug : null,
         arm: (reklam as any)?.arm ?? null,
         destLang: (reklam as any)?.destLang ?? null,
+        creative: (reklam as any)?.creative ?? null,
+        brand: (reklam as any)?.brand ?? null,
+        /* Okuru taniyor muyuz? Cerez istekle beraber geliyor, yani bu
+           deger istemcinin gonderdigi govdeye degil sunucunun kendi
+           gordugune dayaniyor — govde kolayca uydurulabilirdi.
+           Sitede okur girisi henuz yok; 'member' su an bulten abonesi
+           demek (abone olurken birakilan cerez). */
+        viewer: request.cookies.get("fb_okur")?.value === "1" ? "member" : "anon",
       } as any);
     } catch (e) {
       // Olay kaydi tutulamazsa sayac yine de islesin

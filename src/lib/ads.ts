@@ -28,6 +28,10 @@ export type Reklam = {
   targetUrl: string;
   arm: string | null;
   destLang: string | null;
+  /** plain | styled — deneyin ikinci faktoru */
+  creative: string | null;
+  /** Ayni markanin iki varyantini gruplayan anahtar */
+  brand: string | null;
 };
 
 type HamReklam = Reklam & {
@@ -53,6 +57,8 @@ export const yayindakiReklamlar = cache(async (): Promise<HamReklam[]> => {
       targetUrl: r.targetUrl,
       arm: r.arm ?? null,
       destLang: r.destLang ?? null,
+      creative: r.creative ?? null,
+      brand: r.brand ?? null,
       targetCategories: r.targetCategories ?? [],
       targetTags: r.targetTags ?? [],
     }));
@@ -103,5 +109,31 @@ export async function alaniDoldur(
 
   const havuz = hedefli.length ? hedefli : genel;
   if (!havuz.length) return null;
-  return havuz[Math.floor(Math.random() * havuz.length)];
+
+  /* Deneyin HUCRELERI esit gosterim almali.
+     Iki faktor var:
+       kol      contextual | offset   (sayfanin konusuyla ortusuyor mu)
+       kreatif  plain      | styled   (tek tip sade mi, kendi tarzi mi)
+     Bu dort hucre. Duz rastgele secim yapsaydik icinde daha cok marka
+     bulunan hucre orantisiz gosterim alir ve karsilastirma bozulurdu:
+     ortusmeyen kolda on iki, ortusen kolda dort marka var.
+
+     Once hucreyi esit olasilikla, sonra hucre icinden markayi
+     seciyoruz. Deney disi reklamlar (arm bos) kendi hucresinde kaliyor.
+
+     GUNE GORE DAGITMIYORUZ. "Pazartesi sade, sali stilli" demek
+     tasarimi gunle karistirirdi — pazartesi trafigi cumartesininkine
+     benzemez, sonra farkin tasarimdan mi gunden mi geldigi ayrilamaz.
+     Her gosterimde rastgele atiyoruz; gun kirilimi rapor tarafinda
+     created_at uzerinden aliniyor ve boylece karistirici olmuyor. */
+  const hucreler = new Map<string, Reklam[]>();
+  for (const r of havuz) {
+    const anahtar = `${r.arm ?? ""}|${r.creative ?? ""}`;
+    if (!hucreler.has(anahtar)) hucreler.set(anahtar, []);
+    hucreler.get(anahtar)!.push(r);
+  }
+
+  const anahtarlar = [...hucreler.keys()];
+  const hucre = hucreler.get(anahtarlar[Math.floor(Math.random() * anahtarlar.length)])!;
+  return hucre[Math.floor(Math.random() * hucre.length)];
 }

@@ -282,8 +282,12 @@ export const ads = pgTable('ads', {
   targetTags: text('target_tags').array().default([]),
   /** Deneydeki kol: contextual | offset | null (deney disi) */
   arm: text('arm'),
-  /** Hedef sitenin dili — deneyde ikinci degisken */
+  /** Hedef sitenin dili — olay kaydina da yaziliyor */
   destLang: text('dest_lang'),
+  /** Deneydeki ikinci faktor: plain (tek tip sade) | styled (kendi tarzi) */
+  creative: text('creative'),
+  /** Ayni markanin varyantlarini gruplayan anahtar — 'superd', 'turco' … */
+  brand: text('brand'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [
@@ -346,6 +350,13 @@ export const adEvents = pgTable('ad_events', {
   arm: text('arm'),
   /** Olay anindaki hedef dili — kol gibi, sonradan degisse de gecmis bozulmasin */
   destLang: text('dest_lang'),
+  /** Olay anindaki kreatif varyanti: plain | styled */
+  creative: text('creative'),
+  /** Marka anahtari — iki varyanti tek satirda gruplamak icin */
+  brand: text('brand'),
+  /** Okuru taniyor muyuz: anon | member. Site henuz okur girisi
+      tasimiyor; 'member' su an bulten abonesi demek. */
+  viewer: text('viewer'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   index('ad_events_ad_idx').on(table.adId),

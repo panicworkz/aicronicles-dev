@@ -174,5 +174,22 @@ export async function POST(req: NextRequest) {
     }
   });
 
-  return NextResponse.json({ ok: true });
+  /* 3) Okuru taniyalim.
+     Sitede okur girisi yok; elimizdeki tek gercek "bu okuru taniyoruz"
+     sinyali abonelik. Reklam olaylari bu cerezi gorup viewer alanina
+     member/anon yaziyor, boylece abonelerin ve ilk kez gelenlerin
+     reklamlara tepkisi ayri olculebiliyor.
+
+     Icinde e-posta ya da jeton YOK — yalnizca "1". Adres cerezde
+     tasinsaydi her istekte aga cikardi ve tarayicida okunabilir olurdu.
+     httpOnly, cunku istemci tarafinda okunmasina gerek yok. */
+  const yanit = NextResponse.json({ ok: true });
+  yanit.cookies.set("fb_okur", "1", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+  return yanit;
 }
