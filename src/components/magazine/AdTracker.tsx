@@ -17,11 +17,15 @@ export default function AdTracker({
   href,
   children,
   className,
+  baglam,
 }: {
   id: number;
   href: string;
   children: React.ReactNode;
   className?: string;
+  /** Sayfanin konusu — olay kaydina yaziliyor ki hangi baglamdan
+      geldigi sonradan ayirt edilebilsin. */
+  baglam?: { tur: string; slug?: string | null };
 }) {
   const ref = useRef<HTMLAnchorElement>(null);
   const sayildi = useRef(false);
@@ -36,7 +40,16 @@ export default function AdTracker({
           if (!g.isIntersecting || sayildi.current) continue;
           sayildi.current = true;
           gozlemci.disconnect();
-          fetch(`/api/ads/${id}/impression`, { method: "POST", keepalive: true }).catch(() => {});
+          fetch(`/api/ads/${id}/impression`, {
+            method: "POST",
+            keepalive: true,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              path: location.pathname,
+              contextType: baglam?.tur ?? null,
+              contextSlug: baglam?.slug ?? null,
+            }),
+          }).catch(() => {});
         }
       },
       // Yarisi gorununce say — kenardan gecen bir alan gosterim sayilmasin
@@ -45,11 +58,23 @@ export default function AdTracker({
 
     gozlemci.observe(el);
     return () => gozlemci.disconnect();
-  }, [id]);
+  }, [id, baglam?.tur, baglam?.slug]);
 
   const tiklandi = () => {
     try {
-      navigator.sendBeacon?.(`/api/ads/${id}/click`);
+      /* sendBeacon: sayfa reklamverene giderken normal bir istek
+         yarida kesilirdi. Baglam da beraber gidiyor. */
+      navigator.sendBeacon?.(
+        `/api/ads/${id}/click`,
+        new Blob(
+          [JSON.stringify({
+            path: location.pathname,
+            contextType: baglam?.tur ?? null,
+            contextSlug: baglam?.slug ?? null,
+          })],
+          { type: "application/json" }
+        )
+      );
     } catch {
       // Sayac tutulamazsa reklamverene gidis engellenmesin
     }

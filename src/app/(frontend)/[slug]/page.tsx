@@ -252,7 +252,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
               {/* Yazi ici reklam */}
               <div className="mt-12">
-                <AdSlot format="feature" label="Advertisement" />
+                <AdSlot format="feature" label="Advertisement" baglam={{ tur: "article", slug: category?.slug ?? null }} />
               </div>
 
               {/* Yazar kunyesi */}
@@ -290,7 +290,7 @@ export default async function ArticlePage({ params }: PageProps) {
                   ))}
                 </div>
 
-                <AdSlot format="rail" label="Sponsor" />
+                <AdSlot format="rail" label="Sponsor" baglam={{ tur: "article", slug: category?.slug ?? null }} />
               </div>
             </aside>
           </div>

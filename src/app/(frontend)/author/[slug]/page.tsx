@@ -112,7 +112,7 @@ export default async function AuthorPage({ params }: PageProps) {
                         ulasiyor ve sag kolonu sol kolondan 231px asagi
                         tasiyordu. panel (511x300) bu genislikte 300px
                         kaliyor. */}
-                    <AdSlot format="panel" label="Sponsor" />
+                    <AdSlot format="panel" label="Sponsor" baglam={{ tur: "author", slug }} />
                   </div>
                 </div>
               </div>

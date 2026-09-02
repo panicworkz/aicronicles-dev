@@ -29,6 +29,28 @@ export async function POST(
     }
     recordAttempt(rateKey);
 
+
+    /* Olayi KENDI BAGLAMIYLA kaydediyoruz. ads.clicks yalnizca toplam
+       tutuyor; bir reklam bes ayri konu sayfasinda donunce tiklamanin
+       hangi sayfadan geldigi kayboluyordu. Kol ve hedef dili de olay
+       anindaki degeriyle yaziliyor — reklamin kolu sonra degisse bile
+       gecmis olcum bozulmasin. */
+    const govde = await request.json().catch(() => ({} as any));
+    const reklam = await db.query.ads.findFirst({ where: eq(schema.ads.id, adId) });
+    try {
+      await db.insert(schema.adEvents).values({
+        adId,
+        kind: "click",
+        pagePath: typeof govde?.path === "string" ? govde.path.slice(0, 300) : null,
+        contextType: typeof govde?.contextType === "string" ? govde.contextType : null,
+        contextSlug: typeof govde?.contextSlug === "string" ? govde.contextSlug : null,
+        arm: (reklam as any)?.arm ?? null,
+        destLang: (reklam as any)?.destLang ?? null,
+      } as any);
+    } catch (e) {
+      // Olay kaydi tutulamazsa sayac yine de islesin
+      console.error("[ads] olay kaydedilemedi:", e);
+    }
     await db
       .update(schema.ads)
       .set({

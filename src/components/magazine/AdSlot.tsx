@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { alaniDoldur } from "@/lib/ads";
+import { alaniDoldur, type Baglam } from "@/lib/ads";
 import { gomulecekSvg } from "@/lib/inlineSvg";
 import AdTracker from "./AdTracker";
 
@@ -58,6 +58,7 @@ export async function AdSlot({
   creative,
   href,
   placement,
+  baglam,
 }: {
   format?: AdFormat;
   label?: string;
@@ -65,11 +66,14 @@ export async function AdSlot({
   href?: string | null;
   /** CMS yerlesim adi — verilmezse `format` kullanilir */
   placement?: string;
+  /** Sayfanin konusu; hedeflenmis reklamlar buna gore seciliyor ve
+      olay kaydinda saklaniyor. Verilmezse yalnizca hedefsiz reklamlar. */
+  baglam?: Baglam;
 }) {
   const spec = AD_SPECS[format];
 
   // Elle verilmediyse CMS'ten al
-  const cmsReklami = creative?.imageUrl ? null : await alaniDoldur(placement ?? format);
+  const cmsReklami = creative?.imageUrl ? null : await alaniDoldur(placement ?? format, baglam);
 
   const gorsel = creative?.imageUrl
     ? { imageUrl: creative.imageUrl, alt: creative.alt ?? null }
@@ -140,7 +144,12 @@ export async function AdSlot({
       >
         {cmsReklami && hedef ? (
           // CMS reklami: gosterim ve tiklama sayiliyor
-          <AdTracker id={cmsReklami.id} href={hedef} className="grid size-full place-items-center">
+          <AdTracker
+            id={cmsReklami.id}
+            href={hedef}
+            baglam={baglam}
+            className="grid size-full place-items-center"
+          >
             {body}
           </AdTracker>
         ) : hedef && gorsel ? (

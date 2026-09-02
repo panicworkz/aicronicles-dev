@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, boolean, integer, jsonb, numeric, index } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, boolean, integer, jsonb, numeric, index, bigserial } from 'drizzle-orm/pg-core';
 
 // ==========================================
 // CORE CONTENT TABLES (Hubz Standard)
@@ -277,6 +277,13 @@ export const ads = pgTable('ads', {
   endsAt: timestamp('ends_at'),
   impressions: integer('impressions').default(0).notNull(),
   clicks: integer('clicks').default(0).notNull(),
+  /** Bos dizi = her kategoride/etikette cikabilir */
+  targetCategories: text('target_categories').array().default([]),
+  targetTags: text('target_tags').array().default([]),
+  /** Deneydeki kol: contextual | offset | null (deney disi) */
+  arm: text('arm'),
+  /** Hedef sitenin dili — deneyde ikinci degisken */
+  destLang: text('dest_lang'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [
@@ -315,4 +322,34 @@ export const subscribers = pgTable('subscribers', {
 }, (table) => [
   index('subscribers_status_idx').on(table.status),
   index('subscribers_created_at_idx').on(table.createdAt),
+]);
+
+/**
+ * Reklam olaylari — her gosterim ve tiklama KENDI BAGLAMIYLA.
+ *
+ * ads.impressions/clicks yalnizca toplam tutuyor; bir reklam bes ayri
+ * konu sayfasinda donunce hangi sayfanin tiklama getirdigi kayboluyordu.
+ * "Konuyla ortusen marka daha iyi mi calisiyor" sorusu ancak bu tabloyla
+ * cevaplanabiliyor.
+ */
+export const adEvents = pgTable('ad_events', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  adId: integer('ad_id').notNull().references(() => ads.id, { onDelete: 'cascade' }),
+  /** impression | click */
+  kind: text('kind').notNull(),
+  pagePath: text('page_path'),
+  /** home | category | tag | author | article */
+  contextType: text('context_type'),
+  contextSlug: text('context_slug'),
+  /** Olayin yasandigi andaki kol — reklamin kolu sonra degisse de
+      gecmis olcum bozulmasin diye burada saklaniyor. */
+  arm: text('arm'),
+  /** Olay anindaki hedef dili — kol gibi, sonradan degisse de gecmis bozulmasin */
+  destLang: text('dest_lang'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('ad_events_ad_idx').on(table.adId),
+  index('ad_events_kind_idx').on(table.kind),
+  index('ad_events_context_idx').on(table.contextType, table.contextSlug),
+  index('ad_events_created_idx').on(table.createdAt),
 ]);
