@@ -132,10 +132,15 @@ export default function BackToTop() {
           kaydirma sinifi ile rotate carpisip etiketi 13px yana atiyordu.
 
           writing-mode dikeye ceviriyor, 180 derece donus ise okuma yonunu
-          asagidan yukari yapiyor: ilk harf (B) butonun hemen ustunde. */}
+          asagidan yukari yapiyor: ilk harf (B) butonun hemen ustunde.
+
+          Butonla arasindaki bosluk ~18px: etiket 0.58rem punto, kunye
+          tipografisinde ogesinden uzaklik punto boyunun iki kati kadar
+          iyi durur. Daha darinda sikisik, 24px'i gecince buton uydusu
+          olmaktan cikip havada asili kaliyor. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-full left-0 mb-3 flex w-full justify-center"
+        className="pointer-events-none absolute bottom-full left-0 mb-4 flex w-full justify-center"
       >
         <span
           className="translate-y-1 whitespace-nowrap opacity-0 transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] group-hover:translate-y-0 group-hover:opacity-100"
