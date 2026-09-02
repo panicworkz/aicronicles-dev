@@ -245,6 +245,32 @@ def stil_blogu(ek=""):
       10%,92% { opacity:1; transform:scaleX(1) }
       100%    { opacity:0; transform:scaleX(1) }
     }
+    /* Imlec: sagdan gelir, cagrinin ustune konar, dokunur, cekilir.
+       Ayni 9 saniyelik saatin icinde — afisteki her sey gibi. */
+    .imlec { animation: imlec SUREs cubic-bezier(.16,1,.3,1) infinite }
+    @keyframes imlec {
+      0%,30%   { opacity:0; transform:translate(22px,16px) }
+      42%,50%  { opacity:1; transform:translate(0,0) }
+      54%      { opacity:1; transform:translate(0,2.5px) }
+      58%,78%  { opacity:1; transform:translate(0,0) }
+      88%,100% { opacity:0; transform:translate(14px,10px) }
+    }
+    /* Dokunusta cagri 1.5 piksel coküyor — ziplama yok. */
+    .dokunus { animation: dokunus SUREs cubic-bezier(.16,1,.3,1) infinite }
+    @keyframes dokunus {
+      0%      { opacity:0; transform:translateY(10px) }
+      9%,52%  { opacity:1; transform:none }
+      55%     { transform:translateY(1.5px) }
+      60%,92% { transform:none }
+      100%    { opacity:0; transform:translateY(-6px) }
+    }
+    /* Tek halka, tek kez. Surekli yanip sonen hicbir sey yok. */
+    .halka { animation: halka SUREs cubic-bezier(.16,1,.3,1) infinite; transform-origin: center }
+    @keyframes halka {
+      0%,53%  { opacity:0; transform:scale(.35) }
+      57%     { opacity:.5; transform:scale(.6) }
+      68%,100%{ opacity:0; transform:scale(1.15) }
+    }
 EK
     @media (prefers-reduced-motion: reduce) {
       * { animation:none !important; opacity:1 !important; transform:none !important }
@@ -258,6 +284,133 @@ def dugme(x, y, metin, punto, zemin, yazi, yuk=40):
                 '<text class="sans" x="%.0f" y="%.0f" font-size="%d" letter-spacing="0.8" '
                 'font-weight="600" fill="%s" text-anchor="middle">%s</text></g>'
                 % (x, y, en, yuk, yuk/2, zemin, x + en/2, y + yuk/2 + punto*0.36, punto, yazi, metin))
+
+
+
+def imlec(x, y, boy=30, renk=None):
+    """Klasik el imleci — isaret parmagi yukari, basparmak acik.
+
+    NEDEN: sade afislerde koca bir hap dugme vardi ve goz her seferinde
+    asagi cekiliyordu; afisin kendisi degil dugme okunuyordu. Yerine
+    ince alti cizili bir cagri koyduk, imlec de gelip ona dokunuyor.
+    Anlatilan sey su: "baktim, dogru karar, tikliyorum."
+
+    Dokunus dugmeyi ZIPLATMIYOR. Sert bir hareket reklam paniginin
+    dili; burada 1.5 piksellik bir cokme ve sonen tek bir halka var.
+    """
+    c = renk or MUREKKEP
+    o = boy / 34.0
+    return ('<g class="imlec" transform="translate(%.1f,%.1f) scale(%.3f)">'
+            # Cevresine kagit renginde ince bir hat: koyu zeminde de,
+            # acik zeminde de eli metinden ayiriyor.
+            '<g fill="%s" stroke="%s" stroke-width="2.5" stroke-linejoin="round">'
+            '<path d="M13 4a2.5 2.5 0 0 1 5 0v12h-5z"/>'
+            '<path d="M18 10a2.2 2.2 0 0 1 4.4 0v6h-4.4z"/>'
+            '<path d="M22.4 11.5a2.2 2.2 0 0 1 4.4 0v4.5h-4.4z"/>'
+            '<path d="M13 12.5 8.6 17c-1.4 1.4-1.4 2.9 0 4.3l4.4 4.4z"/>'
+            '<path d="M13 14h13.8a3.6 3.6 0 0 1 3.6 3.6v6.6a8 8 0 0 1-8 8h-5.2a8 8 0 0 1-8-8V17z"/>'
+            '</g>'
+            '<g fill="%s">'
+            '<path d="M13 4a2.5 2.5 0 0 1 5 0v12h-5z"/>'
+            '<path d="M18 10a2.2 2.2 0 0 1 4.4 0v6h-4.4z"/>'
+            '<path d="M22.4 11.5a2.2 2.2 0 0 1 4.4 0v4.5h-4.4z"/>'
+            '<path d="M13 12.5 8.6 17c-1.4 1.4-1.4 2.9 0 4.3l4.4 4.4z"/>'
+            '<path d="M13 14h13.8a3.6 3.6 0 0 1 3.6 3.6v6.6a8 8 0 0 1-8 8h-5.2a8 8 0 0 1-8-8V17z"/>'
+            '</g></g>' % (x, y, o, KAGIT, KAGIT, c))
+
+
+
+# Klasik piksel el imleci — dogrudan cizildi, disaridan indirilmedi.
+# Stok gorsel lisansi belirsiz olurdu ve siteye dis bagimlilik girerdi;
+# oysa butun dis gorselleri temizlemistik.
+#
+# Yalnizca SILUET yaziliyor. Konturu elle cizdigim ilk denemede avucun
+# sol ve alt kenarinda hat kapanmamisti ve el delik goruyordu. Kontur
+# artik siluetten TURETILIYOR: dort komsusundan biri disarida olan her
+# piksel hat, gerisi ic dolgu. Boylece kenar her zaman kapali.
+PIKSEL_EL = [
+    "....XX.......",
+    "....XX.......",
+    "....XX.......",
+    "....XX.......",
+    "....XX.......",
+    "....XX.......",
+    "....XXXX.....",
+    "....XXXXXX...",
+    "....XXXXXXXX.",
+    ".XX.XXXXXXXX.",
+    "XXXXXXXXXXXX.",
+    "XXXXXXXXXXXX.",
+    ".XXXXXXXXXXX.",
+    ".XXXXXXXXXXX.",
+    "..XXXXXXXXXX.",
+    "..XXXXXXXXXX.",
+    "...XXXXXXXX..",
+]
+
+
+def imlec_piksel(x, y, boy=34, renk=None):
+    """Ayni el, piksel izgarasinda.
+
+    shape-rendering=crispEdges sart: onsuz tarayici kareleri yumusatir
+    ve piksel olmanin anlami kalmaz.
+    """
+    c = renk or MUREKKEP
+    g = PIKSEL_EL
+    yuk, en = len(g), len(g[0])
+    bir = boy / yuk
+
+    def dolu(sx, sy):
+        return 0 <= sy < yuk and 0 <= sx < en and g[sy][sx] == "X"
+
+    kareler = []
+    for sy in range(yuk):
+        for sx in range(en):
+            if not dolu(sx, sy):
+                continue
+            hat = not (dolu(sx-1, sy) and dolu(sx+1, sy) and dolu(sx, sy-1) and dolu(sx, sy+1))
+            kareler.append('<rect x="%.2f" y="%.2f" width="%.2f" height="%.2f" fill="%s"/>'
+                           % (sx*bir, sy*bir, bir + .03, bir + .03, c if hat else KAGIT))
+    return ('<g class="imlec" transform="translate(%.1f,%.1f)" shape-rendering="crispEdges">%s</g>'
+            % (x, y, "".join(kareler)))
+
+
+def cagri_baglantisi(x, y, metin, punto, renk=None):
+    """Alti cizili cagri + parmak ucuyla ona dokunan klasik el imleci.
+
+    Dugmenin yerini aliyor: hap dugme gozu her seferinde asagi cekiyor,
+    okunan sey afis degil dugme oluyordu.
+
+    YERLESIM: el metnin USTUNE degil, cizginin sag ucunun ALTINA
+    geliyor. Ilk denemede tam metnin ortasindaydi ve kelimeleri
+    kapatiyordu; halka da bir kelimeyi cemberlemis gibi duruyordu.
+    Parmak ucu cizgiye deger, govde asagi sarkar — ekranda gercekte
+    oldugu gibi.
+    """
+    c = renk or MUREKKEP
+    en = sans_en(metin, punto) + 2
+    boy = punto * 2.4
+    # Parmak ucu izgarada (5, 0) hucresi; el oraya gore konumlaniyor ki
+    # uc tam cizginin sag ucuna dokunsun.
+    bir = boy / len(PIKSEL_EL)
+    uc_x, uc_y = x + en + 7, y + 7
+    el_x = uc_x - 5 * bir
+    el_y = uc_y
+    return en, (
+        # Halka once: elin ve metnin ARKASINDA kalsin
+        # Dokunusta parmak ucunda tek bir nabiz. Sonsuz yanip sonen
+        # hicbir sey yok; bir kez cikip soner.
+        '<circle class="halka" cx="%.0f" cy="%.0f" r="9" fill="none" stroke="%s" stroke-width="1.5"/>'
+        '<g class="dokunus">'
+        '<text class="sans" x="%d" y="%d" font-size="%d" letter-spacing="0.6" '
+        'font-weight="700" fill="%s">%s</text>'
+        '<rect x="%d" y="%.0f" width="%.0f" height="1.5" fill="%s"/>'
+        '</g>'
+        '%s'
+        % (uc_x, uc_y + 1, c,
+           x, y, punto, c, metin,
+           x, y + 7, en + 5, c,
+           imlec_piksel(el_x, el_y, boy, c)))
 
 
 def _olcu(bicim):
@@ -302,14 +455,24 @@ def _sag_cagri(m, t, o, w, h, cx, cw, zemin=None, yazi=None):
 # KONTROL: tek tip sade
 # ---------------------------------------------------------------------
 def k_plain(m, w, h, bicim, t, o, serit):
-    """On alti markanin hepsinde AYNI. Marka rengi yok, sus yok — kagit,
-    murekkep ve tek bir ince kural. Deneyin kontrol grubu: tasarimin ne
-    kadar etkiledigini ancak boyle bir taban cizgisiyle olcebiliyoruz."""
+    """On alti markanin hepsinde AYNI. Deneyin kontrol grubu.
+
+    Marka rengi yok, sus yok — kagit, murekkep ve tek bir hairline.
+    Ama SADE, BOS demek degil. Ilk surumde dikey formatin ortasi
+    bombostu ve ucuz duruyordu; bosluk artik susle degil TIPOGRAFIYLE
+    doluyor: baslik alani ne kadar veriyorsa o kadar buyuyor. Guvenli
+    bir punto secip ortayi bos birakmak kolaydi, dogru olan degil.
+
+    Hap dugme de kalkti. Goz her seferinde asagi, dugmeye cekiliyordu;
+    okunan sey afis degil dugme oluyordu. Yerine alti cizili bir cagri
+    ve ona dokunan klasik el imleci var.
+    """
     K, p = o["K"], []
+
     if serit:
-        cw, _ = dugme(0, 0, t["cagri"], o["cag"], MUREKKEP, KAGIT)
-        cx = w - K - cw
-        alan = cx - K - 30
+        cagri_en = sans_en(t["cagri"], o["cag"] + 1) + 2
+        cx = w - K - cagri_en
+        alan = cx - K - 56          # imlece de yer birakiyoruz
         tek = " ".join(t["bas"])
         bb = sigan([tek], alan, o["bas_tavan"], 20)
         blok = 20 + bb + o["alt"] + 22
@@ -324,20 +487,57 @@ def k_plain(m, w, h, bicim, t, o, serit):
             ab -= 1
         p.append('<text class="sans g3" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
                  % (K, ust + blok, ab, IKINCIL, t["alt"]))
-        p += _sag_cagri(m, t, o, w, h, cx, cw, MUREKKEP, KAGIT)
+        _, cg = cagri_baglantisi(cx, h/2 - 4, t["cagri"], o["cag"] + 1)
+        p.append(cg)
+        p.append('<text class="sans g3" x="%.0f" y="%.0f" font-size="11" letter-spacing="1.2" '
+                 'fill="%s" text-anchor="middle">%s</text>'
+                 % (cx + cagri_en/2, h/2 + 34, UCUNCUL, m["alan"]))
     else:
         alan = w - 2*K
-        bb = sigan(t["bas"], alan, o["bas_tavan"], 19)
-        y = K + 16
+        y_ad = K + 16
+        y_cagri = h - K - 16
+        # Baslik ve destek metni icin gercekte kalan yukseklik. Punto bunu
+        # DOLDURACAK sekilde seciliyor; sabit bir tavan verip ortayi bos
+        # birakmak dikey formati ucuz gosteriyordu.
+        bosluk = y_cagri - (y_ad + 34) - 30
+        satirlar = t["bas"]
+        parca_alt = None
+        for tavan in range(46, 18, -1):
+            sat = int(tavan * 1.18)
+            if max(len(x) for x in satirlar) * SERIF_EM * tavan > alan:
+                continue
+            ab = max(12, min(o["alt"] + 3, int(tavan * 0.46)))
+            pa = sar(t["alt"], int(alan / (SANS_EM * ab)))
+            yuk = len(satirlar) * sat + 26 + len(pa) * int(ab * 1.45)
+            if yuk <= bosluk:
+                bb, satir, parca_alt, ab_son = tavan, sat, pa, ab
+                break
+        else:
+            bb, satir, ab_son = 19, 23, o["alt"]
+            parca_alt = sar(t["alt"], int(alan / (SANS_EM * ab_son)))
+
         p.append('<text class="sans g1" x="%d" y="%d" font-size="%d" letter-spacing="1.8" '
-                 'font-weight="700" fill="%s">%s</text>' % (K, y, o["ad"], MUREKKEP, t["ad"].upper()))
-        p.append('<rect class="cizgi" x="%d" y="%d" width="%d" height="1" fill="%s"/>' % (K, y+12, alan, KURAL))
-        y += 30 + bb
-        for i, s in enumerate(t["bas"]):
-            p.append('<text class="disp g2" x="%d" y="%d" font-size="%d" fill="%s">%s</text>'
-                     % (K, y + i*int(bb*1.2), bb, MUREKKEP, s))
-        y += (len(t["bas"])-1)*int(bb*1.2)
-        p += _kuyruk(m, t, o, K, y, w, h, alan, IKINCIL, MUREKKEP, KAGIT)
+                 'font-weight="700" fill="%s">%s</text>' % (K, y_ad, o["ad"], MUREKKEP, t["ad"].upper()))
+        p.append('<rect class="cizgi" x="%d" y="%d" width="%d" height="1" fill="%s"/>' % (K, y_ad + 12, alan, KURAL))
+
+        # Blok dikeyde ortalaniyor — ustte toplanip altta bosluk birakmasin
+        yuk = len(satirlar) * satir + 26 + len(parca_alt) * int(ab_son * 1.45)
+        y = y_ad + 34 + max(0, (bosluk - yuk) / 2) + bb
+        for i, sat_metin in enumerate(satirlar):
+            p.append('<text class="disp g2" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
+                     % (K, y + i*satir, bb, MUREKKEP, sat_metin))
+        y += (len(satirlar)-1)*satir + 26
+        for i, parca in enumerate(parca_alt):
+            p.append('<text class="sans g3" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
+                     % (K, y + ab_son + i*int(ab_son*1.45), ab_son, IKINCIL, parca))
+
+        p.append('<rect class="cizgi" x="%d" y="%d" width="%d" height="1" fill="%s"/>'
+                 % (K, y_cagri - 30, alan, KURAL))
+        _, cg = cagri_baglantisi(K, y_cagri, t["cagri"], o["cag"] + 1)
+        p.append(cg)
+        p.append('<text class="sans g3" x="%d" y="%d" font-size="11" letter-spacing="1.2" '
+                 'fill="%s" text-anchor="end">%s</text>' % (w-K, y_cagri, UCUNCUL, m["alan"]))
+
     # Ust seritte bile marka rengi yok — kontrolun tek tipligi bozulmasin
     return p, KAGIT, "", MUREKKEP
 

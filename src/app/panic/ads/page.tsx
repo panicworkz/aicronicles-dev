@@ -64,6 +64,24 @@ const PLACEMENT_CONFIG: Record<
   },
 };
 
+
+/**
+ * Bir ilanin hangi konu sayfalarinda cikacagi.
+ *
+ * Hedef listesi bossa ilan HER YERDE cikiyor; bunu "—" diye gostermek
+ * yaniltici olurdu, "Everywhere" yaziyoruz. Baglantilar goreli: panel
+ * sitenin kendi alan adinda duruyor.
+ */
+function konular(ad: any): { etiket: string; yol: string; tur: string }[] {
+  const k = (ad?.targetCategories ?? []) as string[];
+  const e = (ad?.targetTags ?? []) as string[];
+  if (!k.length && !e.length) return [{ etiket: "Everywhere", yol: "/", tur: "home" }];
+  return [
+    ...k.map((s) => ({ etiket: s, yol: `/category/${s}`, tur: "category" })),
+    ...e.map((s) => ({ etiket: s, yol: `/tag/${s}`, tur: "tag" })),
+  ];
+}
+
 export default function PanicAdsPage() {
   const [ads, setAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +118,7 @@ export default function PanicAdsPage() {
   const fetchAds = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/ads?active=all');
+      const res = await fetch('/api/ads?active=all&limit=1000');
       const data = await res.json();
       if (data.ads) {
         setAds(data.ads);
@@ -358,6 +376,8 @@ export default function PanicAdsPage() {
               <TableHead className="w-[152px]">Creative</TableHead>
               <TableHead>Campaign &amp; Destination</TableHead>
               <TableHead>Placement &amp; Size</TableHead>
+              <TableHead>Topic</TableHead>
+              <TableHead className="w-[52px] text-center">See&nbsp;live</TableHead>
               <TableHead>Impressions</TableHead>
               <TableHead>Clicks (CTR)</TableHead>
               <TableHead>Status</TableHead>
@@ -367,13 +387,13 @@ export default function PanicAdsPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
                   Loading ad campaigns...
                 </TableCell>
               </TableRow>
             ) : filteredAds.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
                   No ad campaigns found. Click &quot;Create New Campaign&quot; to create your first ad unit.
                 </TableCell>
               </TableRow>
@@ -440,6 +460,43 @@ export default function PanicAdsPage() {
                         </span>
                         <p className="text-[11px] font-mono text-muted-foreground">{conf.size}</p>
                       </div>
+                    </TableCell>
+
+                    {/* Konu: ilan hangi kategori/etiket sayfalarinda cikiyor.
+                        Hedefsiz ilan her yerde cikar — bunu bos birakmak
+                        "hicbir yerde" gibi okunurdu. */}
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1 max-w-[220px]">
+                        {konular(ad).map((k) => (
+                          <span
+                            key={k.yol}
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono border ${
+                              k.tur === "home"
+                                ? "bg-muted text-muted-foreground border-border"
+                                : k.tur === "tag"
+                                  ? "bg-amber-500/10 text-amber-700 border-amber-500/25"
+                                  : "bg-sky-500/10 text-sky-700 border-sky-500/25"
+                            }`}
+                          >
+                            {k.etiket}
+                          </span>
+                        ))}
+                      </div>
+                    </TableCell>
+
+                    {/* Yerinde gor: ilanin gercekten ciktigi sayfayi acar.
+                        Alan rastgele sectigi icin ilk acilista bu ilan
+                        cikmayabilir — sayfayi yenilemek gerekebilir. */}
+                    <TableCell className="text-center">
+                      <a
+                        href={konular(ad)[0].yol}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={`Open ${konular(ad)[0].yol} — the slot rotates, so a refresh may be needed to see this one`}
+                        className="inline-flex size-7 items-center justify-center rounded-md border border-border text-muted-foreground transition hover:border-primary hover:text-primary"
+                      >
+                        <ExternalLink className="size-3.5" />
+                      </a>
                     </TableCell>
 
                     <TableCell>
@@ -640,6 +697,44 @@ export default function PanicAdsPage() {
                   className="mt-1.5"
                 />
               </div>
+
+              {/* Bu ilan nerede cikiyor.
+                  Hedefleme su an CMS'ten degil tohumlama betiginden
+                  geliyor, o yuzden burada salt okunur — ama duzenleyen
+                  kisi ilanin hangi konu sayfalarinda dondugunu gormeden
+                  karar veremez, ve oraya tek tikla gidebilmeli. */}
+              {editingAd && (
+                <div className="rounded-lg border border-border bg-muted/30 p-3">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Appears on
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {konular(editingAd).map((k) => (
+                      <a
+                        key={k.yol}
+                        href={k.yol}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={`Open ${k.yol}`}
+                        className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-mono border transition hover:border-primary hover:text-primary ${
+                          k.tur === "home"
+                            ? "bg-background text-muted-foreground border-border"
+                            : k.tur === "tag"
+                              ? "bg-amber-500/10 text-amber-700 border-amber-500/25"
+                              : "bg-sky-500/10 text-sky-700 border-sky-500/25"
+                        }`}
+                      >
+                        {k.etiket}
+                        <ExternalLink className="size-3 shrink-0" />
+                      </a>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    The slot picks one campaign at random, so the page may need a
+                    refresh before this creative comes up.
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div>
