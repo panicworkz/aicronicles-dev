@@ -96,7 +96,7 @@ export async function PUT(req: NextRequest) {
     status?: string;
   };
   if (!id || !["active", "unsubscribed"].includes(String(status))) {
-    return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
   await db.execute(sql`
@@ -112,7 +112,7 @@ export async function PUT(req: NextRequest) {
 /** Kaydi tamamen sil — silme talebi gelen aboneler icin */
 export async function DELETE(req: NextRequest) {
   const id = Number(req.nextUrl.searchParams.get("id"));
-  if (!id) return NextResponse.json({ error: "id gerekli." }, { status: 400 });
+  if (!id) return NextResponse.json({ error: "id is required." }, { status: 400 });
   await db.execute(sql`DELETE FROM subscribers WHERE id = ${id}`);
   return NextResponse.json({ ok: true });
 }

@@ -35,7 +35,7 @@ const PLACEMENT_CONFIG: Record<
     size: '1440×200',
     w: 1440,
     h: 200,
-    desc: 'Tam içerik genişliği — ana sayfa ve kategori bölüm araları',
+    desc: 'Full content width — home and category section breaks',
     badgeColor: 'bg-purple-500/15 text-purple-600 border-purple-500/30',
   },
   feature: {
@@ -43,7 +43,7 @@ const PLACEMENT_CONFIG: Record<
     size: '940×180',
     w: 940,
     h: 180,
-    desc: 'Yazı gövdesi ve üç kolonun ikisi',
+    desc: 'Article body, and two of three columns',
     badgeColor: 'bg-blue-500/15 text-blue-600 border-blue-500/30',
   },
   panel: {
@@ -51,7 +51,7 @@ const PLACEMENT_CONFIG: Record<
     size: '511×300',
     w: 511,
     h: 300,
-    desc: 'Ana sayfa yan kolonu',
+    desc: 'Home page sidebar',
     badgeColor: 'bg-amber-500/15 text-amber-600 border-amber-500/30',
   },
   rail: {
@@ -59,7 +59,7 @@ const PLACEMENT_CONFIG: Record<
     size: '387×540',
     w: 387,
     h: 540,
-    desc: 'Kenar rayı — yazı, etiket ve yazar sayfaları',
+    desc: 'Side rail — article, tag and author pages',
     badgeColor: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30',
   },
 };
@@ -243,7 +243,7 @@ export default function PanicAdsPage() {
             Ad Inventory &amp; Campaigns
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Fabelo'nun ev ölçüleri — Measure, Feature, Panel ve Rail. Ölçüler sitenin 12 kolonluk ızgarasından türetildi; afiş alanını her ekranda tam doldurur.
+            Fabelo&apos;s house formats — Measure, Feature, Panel and Rail. Sized from the site&apos;s twelve-column grid, so a creative fills its slot exactly at any width.
           </p>
         </div>
 
@@ -386,7 +386,7 @@ export default function PanicAdsPage() {
                       <button
                         type="button"
                         onClick={() => setPreview(ad)}
-                        title="Büyük önizleme"
+                        title="Open full size"
                         className="group block overflow-hidden rounded-md border border-border bg-muted/30 transition hover:border-primary"
                         style={{ width: 132, aspectRatio: `${conf.w} / ${conf.h}` }}
                       >
@@ -522,10 +522,10 @@ export default function PanicAdsPage() {
                     onChange={(e) => setPlacement(e.target.value)}
                     className="mt-1.5 w-full h-10 px-3 rounded-lg bg-background border border-input text-sm font-medium outline-none focus:ring-2 focus:ring-primary"
                   >
-                    <option value="measure">Measure — 1440×200 (tam genişlik)</option>
-                    <option value="feature">Feature — 940×180 (yazı gövdesi)</option>
-                    <option value="panel">Panel — 511×300 (yan kolon)</option>
-                    <option value="rail">Rail — 387×540 (kenar rayı)</option>
+                    <option value="measure">Measure — 1440×200 (full width)</option>
+                    <option value="feature">Feature — 940×180 (article body)</option>
+                    <option value="panel">Panel — 511×300 (sidebar)</option>
+                    <option value="rail">Rail — 387×540 (side rail)</option>
                   </select>
                 </div>
 
@@ -650,7 +650,7 @@ export default function PanicAdsPage() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={`${preview.name} önizleme`}
+            aria-label={`${preview.name} preview`}
             onClick={() => setPreview(null)}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm"
           >
@@ -659,11 +659,11 @@ export default function PanicAdsPage() {
                 <div>
                   <p className="text-base font-bold">{preview.name}</p>
                   <p className="font-mono text-xs text-white/70">
-                    {c.label} · {c.size} · gerçek ölçü
+                    {c.label} · {c.size} · actual size
                   </p>
                 </div>
                 <Button size="sm" variant="secondary" onClick={() => setPreview(null)}>
-                  <X className="mr-1.5 size-4" /> Kapat
+                  <X className="mr-1.5 size-4" /> Close
                 </Button>
               </div>
 
@@ -683,7 +683,7 @@ export default function PanicAdsPage() {
               </div>
 
               <p className="mt-3 text-center font-mono text-[11px] text-white/50">
-                Kapatmak için dışarı tıklayın
+                Click outside to close
               </p>
             </div>
           </div>

@@ -31,22 +31,22 @@ import { toast } from 'sonner';
 const KAYNAKLAR: Record<string, { label: string; hint: string; renk: string }> = {
   footer: {
     label: 'Footer',
-    hint: 'Her sayfadaki alt bilgi formu',
+    hint: 'Footer form, present on every page',
     renk: 'bg-blue-500/15 text-blue-600 border-blue-500/30',
   },
   dispatch: {
     label: 'Dispatch',
-    hint: 'Ana sayfadaki büyük abonelik bloğu',
+    hint: 'The dispatch block on the home page',
     renk: 'bg-cyan-500/15 text-cyan-600 border-cyan-500/30',
   },
   article: {
     label: 'Article',
-    hint: 'Yazı sayfası içindeki form',
+    hint: 'The form inside an article',
     renk: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30',
   },
   unknown: {
-    label: 'Bilinmiyor',
-    hint: 'Kaynağı işaretlenmemiş kayıt',
+    label: 'Unknown',
+    hint: 'Recorded before the source was tracked',
     renk: 'bg-muted text-muted-foreground border-border',
   },
 };
@@ -76,7 +76,7 @@ function yol(adres: string | null): string | null {
   if (!adres) return null;
   try {
     const u = new URL(adres);
-    return u.pathname === "/" ? "Ana sayfa" : decodeURIComponent(u.pathname);
+    return u.pathname === "/" ? "Home page" : decodeURIComponent(u.pathname);
   } catch {
     return adres;
   }
@@ -84,7 +84,7 @@ function yol(adres: string | null): string | null {
 
 const tarih = (d: string | null) =>
   d
-    ? new Date(d).toLocaleString('tr-TR', {
+    ? new Date(d).toLocaleString('en-GB', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
@@ -110,13 +110,13 @@ export default function SubscribersPage() {
       if (kaynak) q.set('source', kaynak);
       if (durum) q.set('status', durum);
       const r = await fetch(`/api/subscribers?${q}`);
-      if (!r.ok) throw new Error('istek başarısız');
+      if (!r.ok) throw new Error('request failed');
       const d = await r.json();
       setAboneler(d.subscribers ?? []);
       setOzet(d.stats ?? null);
       setEslesen(d.matched ?? 0);
     } catch {
-      toast.error('Aboneler yüklenemedi.');
+      toast.error('Could not load subscribers.');
     } finally {
       setYukleniyor(false);
     }
@@ -137,22 +137,22 @@ export default function SubscribersPage() {
     });
     if (r.ok) {
       toast.success(
-        yeni === 'unsubscribed' ? 'Abonelik sonlandırıldı.' : 'Abonelik geri alındı.'
+        yeni === 'unsubscribed' ? 'Subscription ended.' : 'Subscription restored.'
       );
       getir();
     } else {
-      toast.error('İşlem başarısız.');
+      toast.error('That did not work.');
     }
   };
 
   const sil = async (a: Abone) => {
-    if (!confirm(`${a.email} kalıcı olarak silinsin mi? Bu geri alınamaz.`)) return;
+    if (!confirm(`Delete ${a.email} permanently? This cannot be undone.`)) return;
     const r = await fetch(`/api/subscribers?id=${a.id}`, { method: 'DELETE' });
     if (r.ok) {
-      toast.success('Kayıt silindi.');
+      toast.success('Record deleted.');
       getir();
     } else {
-      toast.error('Silinemedi.');
+      toast.error('Could not delete.');
     }
   };
 
@@ -165,12 +165,12 @@ export default function SubscribersPage() {
   };
 
   const kartlar = [
-    { baslik: 'Toplam abone', deger: ozet?.toplam ?? 0, ikon: Users, renk: 'text-foreground' },
-    { baslik: 'Aktif', deger: ozet?.aktif ?? 0, ikon: UserCheck, renk: 'text-emerald-600' },
-    { baslik: 'Son 7 gün', deger: ozet?.bu_hafta ?? 0, ikon: TrendingUp, renk: 'text-cyan-600' },
-    { baslik: 'Çıkanlar', deger: ozet?.cikan ?? 0, ikon: UserMinus, renk: 'text-muted-foreground' },
+    { baslik: 'Total subscribers', deger: ozet?.toplam ?? 0, ikon: Users, renk: 'text-foreground' },
+    { baslik: 'Active', deger: ozet?.aktif ?? 0, ikon: UserCheck, renk: 'text-emerald-600' },
+    { baslik: 'Last 7 days', deger: ozet?.bu_hafta ?? 0, ikon: TrendingUp, renk: 'text-cyan-600' },
+    { baslik: 'Unsubscribed', deger: ozet?.cikan ?? 0, ikon: UserMinus, renk: 'text-muted-foreground' },
     {
-      baslik: 'İletilemeyen',
+      baslik: 'Not delivered',
       deger: ozet?.iletilemeyen ?? 0,
       ikon: AlertTriangle,
       renk: 'text-amber-600',
@@ -189,13 +189,13 @@ export default function SubscribersPage() {
             Newsletter Subscribers
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            The Dispatch abonelikleri. Kayıtlar önce buraya yazılır, sonra bildirim
-            e-postası gateway üzerinden gönderilir.
+            Sign-ups for The Dispatch. Every address is written here first, then
+            forwarded to the mail gateway for notification.
           </p>
         </div>
         <Button variant="outline" onClick={disaAktar} disabled={!aboneler.length}>
           <Download className="mr-2 size-4" />
-          CSV indir{filtreVar ? ' (filtreli)' : ''}
+          Download CSV{filtreVar ? ' (filtered)' : ''}
         </Button>
       </div>
 
@@ -223,7 +223,7 @@ export default function SubscribersPage() {
           <Input
             value={arama}
             onChange={(e) => setArama(e.target.value)}
-            placeholder="E-posta ara…"
+            placeholder="Search email…"
             className="pl-9"
           />
         </div>
@@ -235,18 +235,18 @@ export default function SubscribersPage() {
               size="sm"
               variant={kaynak === k ? 'default' : 'outline'}
               onClick={() => setKaynak(k)}
-              title={k ? KAYNAKLAR[k]?.hint : 'Tüm kaynaklar'}
+              title={k ? KAYNAKLAR[k]?.hint : 'All sources'}
             >
-              {k ? KAYNAKLAR[k].label : 'Tümü'}
+              {k ? KAYNAKLAR[k].label : 'All'}
             </Button>
           ))}
         </div>
 
         <div className="flex items-center gap-1.5">
           {[
-            { d: '', ad: 'Her durum' },
-            { d: 'active', ad: 'Aktif' },
-            { d: 'unsubscribed', ad: 'Çıkanlar' },
+            { d: '', ad: 'Any status' },
+            { d: 'active', ad: 'Active' },
+            { d: 'unsubscribed', ad: 'Unsubscribed' },
           ].map((x) => (
             <Button
               key={x.d || 'hepsi'}
@@ -264,17 +264,17 @@ export default function SubscribersPage() {
       <Card>
         <CardContent className="p-0">
           {yukleniyor ? (
-            <div className="p-12 text-center text-sm text-muted-foreground">Yükleniyor…</div>
+            <div className="p-12 text-center text-sm text-muted-foreground">Loading…</div>
           ) : !aboneler.length ? (
             <div className="p-16 text-center">
               <Inbox className="mx-auto mb-3 size-8 text-muted-foreground" />
               <p className="text-sm font-medium">
-                {filtreVar ? 'Bu filtreye uyan kayıt yok.' : 'Henüz abone yok.'}
+                {filtreVar ? 'No records match this filter.' : 'No subscribers yet.'}
               </p>
               {!filtreVar && (
                 <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                  Siteye gelen ilk abonelik burada görünecek — footer, ana sayfadaki
-                  Dispatch bloğu ve yazı sayfası formlarından.
+                  The first sign-up will appear here — from the footer, the dispatch
+                  block on the home page, or a form inside an article.
                 </p>
               )}
             </div>
@@ -282,13 +282,13 @@ export default function SubscribersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>E-posta</TableHead>
-                  <TableHead>Kaynak</TableHead>
-                  <TableHead>Sayfa</TableHead>
-                  <TableHead>Durum</TableHead>
-                  <TableHead>İletim</TableHead>
-                  <TableHead>Kayıt</TableHead>
-                  <TableHead className="text-right">İşlem</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Page</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Delivery</TableHead>
+                  <TableHead>Signed up</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -320,22 +320,22 @@ export default function SubscribersPage() {
                       </TableCell>
                       <TableCell>
                         {cikti ? (
-                          <span className="text-sm text-muted-foreground">Çıktı</span>
+                          <span className="text-sm text-muted-foreground">Left</span>
                         ) : (
-                          <span className="text-sm text-emerald-600">Aktif</span>
+                          <span className="text-sm text-emerald-600">Active</span>
                         )}
                       </TableCell>
                       <TableCell>
                         {a.gateway_status === 'failed' ? (
                           <span
                             className="text-sm text-amber-600"
-                            title="Kayıt alındı, bildirim e-postası gönderilemedi"
+                            title="Recorded, but the notification email could not be sent"
                           >
-                            İletilemedi
+                            Failed
                           </span>
                         ) : (
                           <span className="text-sm text-muted-foreground">
-                            {a.gateway_status === 'sent' ? 'Gönderildi' : '—'}
+                            {a.gateway_status === 'sent' ? 'Sent' : '—'}
                           </span>
                         )}
                       </TableCell>
@@ -348,7 +348,7 @@ export default function SubscribersPage() {
                             size="sm"
                             variant="ghost"
                             onClick={() => durumDegistir(a)}
-                            title={cikti ? 'Aboneliği geri al' : 'Aboneliği sonlandır'}
+                            title={cikti ? 'Restore subscription' : 'End subscription'}
                           >
                             {cikti ? (
                               <UserCheck className="size-4" />
@@ -360,7 +360,7 @@ export default function SubscribersPage() {
                             size="sm"
                             variant="ghost"
                             onClick={() => sil(a)}
-                            title="Kaydı kalıcı sil"
+                            title="Delete permanently"
                             className="text-destructive hover:text-destructive"
                           >
                             <Trash2 className="size-4" />
@@ -378,7 +378,7 @@ export default function SubscribersPage() {
 
       {aboneler.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          {eslesen} kayıt eşleşti, {aboneler.length} tanesi gösteriliyor.
+          {eslesen} matched, showing {aboneler.length}.
         </p>
       )}
     </div>
