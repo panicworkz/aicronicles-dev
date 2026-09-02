@@ -14,6 +14,14 @@ const MASTHEAD_LINKS = [
   { label: "Data & privacy", href: "/data-and-privacy" },
 ];
 
+/** Adresler ufukyorulmaz.com ve themez.panic.pw kunyelerinden alindi */
+const SOSYAL = [
+  { etiket: "IG", baslik: "Instagram", adres: "https://www.instagram.com/panicworkz/" },
+  { etiket: "LN", baslik: "LinkedIn", adres: "https://www.linkedin.com/company/panicworkz/" },
+  { etiket: "PN", baslik: "Pinterest", adres: "https://pinterest.com/panicworkz/" },
+  { etiket: "X", baslik: "X", adres: "https://x.com/panicworkz/" },
+];
+
 const SECTIONS = [
   { label: "Personal Finance", href: "/category/personal-finance" },
   { label: "Career", href: "/category/career" },
@@ -146,9 +154,21 @@ export default function MagazineFooter() {
       {/* --- Alt serit -----------------------------------------------------
           Sagda basa-don butonu duruyor; yaziyi ezmemesi icin pay birakiyoruz. */}
       <div style={{ borderTop: "1px solid #262c33" }}>
-        <div className="mag-shell flex flex-col items-center justify-between gap-3 py-6 text-center sm:flex-row sm:text-left sm:pr-24">
+        <div className="mag-shell flex flex-col items-center justify-between gap-4 py-6 text-center sm:flex-row sm:text-left sm:pr-24">
+          {/* Kunye — ufukyorulmaz.com ve themez.panic.pw ile ayni dil.
+              Onceki "FABELO — ALL RIGHTS RESERVED" satirinin yerini aldi. */}
           <span className="byline" style={{ color: "#6b7178" }}>
-            © {new Date().getFullYear()} FABELO — ALL RIGHTS RESERVED
+            © {new Date().getFullYear()} Ufuk Yorulmaz — a{" "}
+            <a
+              href="https://panicworkz.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold transition-colors hover:text-[var(--accent)]"
+              style={{ color: "#9aa1aa" }}
+            >
+              PanicWorkz
+            </a>{" "}
+            initiative.
           </span>
           {/* Kunye satiri — iki marka da baglantili */}
           <span className="byline" style={{ color: "#6b7178" }}>
@@ -173,6 +193,23 @@ export default function MagazineFooter() {
               PANICWORKZ
             </a>
           </span>
+
+          {/* Sosyal — agdaki diger sitelerle ayni hesaplar */}
+          <nav className="flex items-center gap-4" aria-label="Social">
+            {SOSYAL.map((h) => (
+              <a
+                key={h.etiket}
+                href={h.adres}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={h.baslik}
+                className="byline transition-colors hover:text-[var(--accent)]"
+                style={{ color: "#6b7178" }}
+              >
+                {h.etiket}
+              </a>
+            ))}
+          </nav>
         </div>
       </div>
     </footer>

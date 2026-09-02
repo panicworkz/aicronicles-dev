@@ -116,9 +116,10 @@ export default function PanicWorkzNetwork() {
           className="flex shrink-0 items-center gap-2.5 px-3.5 py-2"
           style={{ border: "1px solid #2f363e" }}
         >
+          {/* themez.panic.pw'deki durum noktasiyla ayni nabiz */}
           <span
-            className="inline-block size-[7px] rounded-full"
-            style={{ background: "var(--accent)" }}
+            className="mag-pulse inline-block size-[7px] rounded-full"
+            style={{ background: "#37f15b" }}
             aria-hidden="true"
           />
           <span

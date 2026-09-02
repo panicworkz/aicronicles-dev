@@ -151,6 +151,20 @@
   color: var(--accent-ink);
 }
 
+/* --- Ag durum noktasi ----------------------------------------------------
+   themez.panic.pw'deki .tf-status-dot ile birebir: 2 saniyelik dongu,
+   noktanin cevresinde soluklaşarak genisleyen halka. Halka box-shadow
+   ile ciziliyor, yani yer kaplamiyor ve yanindaki yaziyi kaydirmiyor. */
+.mag-pulse {
+  animation: mag-pulse 2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes mag-pulse {
+  0%   { transform: scale(0.95); box-shadow: 0 0 0 0   rgba(55, 241, 91, 0.75); }
+  70%  { transform: scale(1.05); box-shadow: 0 0 0 7px rgba(55, 241, 91, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0   rgba(55, 241, 91, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .mag-pulse { animation: none; } }
+
 /* --- Marka isareti -------------------------------------------------------
    fabelo-logo.webp'in icinde saydam bosluk esit degil: 256px'lik tuvalde
    ust 34 / alt 23, sol 64 / sag 44. Yani isaret kendi dosyasinda 5.5px
