@@ -696,7 +696,14 @@ export default function PanicAdsPage() {
             onClick={() => setPreview(null)}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm"
           >
-            <div className="max-h-full w-full max-w-[1480px] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Sutun genisligi AFISIN genisligi kadar: basliktaki ad ile
+                Close dugmesi kaplamanin kenarlarina yapisiyordu, afis ise
+                ortada duruyordu — hizasizdi. Simdi ucu de ayni kenarlarda. */}
+            <div
+              className="max-h-full overflow-auto"
+              style={{ width: c.w, maxWidth: "100%" }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-white">
                 <div>
                   <p className="text-base font-bold">{preview.name}</p>
@@ -711,10 +718,9 @@ export default function PanicAdsPage() {
 
               {/* Sitedeki cerceveyle ayni: kagit zemin, ince kural */}
               <div
-                className="mx-auto overflow-hidden border"
+                className="overflow-hidden border"
                 style={{
-                  width: c.w,
-                  maxWidth: '100%',
+                  width: "100%",
                   aspectRatio: `${c.w} / ${c.h}`,
                   background: '#faf8f4',
                   borderColor: '#d9d3c6',
