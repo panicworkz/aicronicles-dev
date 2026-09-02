@@ -13,6 +13,11 @@ konusuyor, sonra yerini cevap metni aliyor.
 """
 
 import html
+import pathlib as _pl
+import sys as _sys
+
+_sys.path.insert(0, str(_pl.Path(__file__).parent))
+from ortak import markala
 
 # --- Marka ------------------------------------------------------------------
 LOGO_SYMBOL = '''    <symbol id="marka" viewBox="0 0 64 64">
@@ -233,5 +238,5 @@ def measure() -> str:
 if __name__ == "__main__":
     import pathlib, sys
     hedef = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "aicall-measure.svg")
-    hedef.write_text(measure(), encoding="utf-8")
+    hedef.write_text(markala(measure(), "ac"), encoding="utf-8")
     print(f"yazildi: {hedef}  ({hedef.stat().st_size/1024:.1f} KB)")

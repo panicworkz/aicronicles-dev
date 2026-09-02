@@ -21,6 +21,10 @@ tasarruf orani. Dogrulayamadigimiz rakami afise koymuyoruz.
 
 import html
 import pathlib
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from ortak import markala
 
 # Fabelo belirtecleri
 KAGIT, KAGIT2 = "#fcfaf7", "#f1ede2"
@@ -231,17 +235,18 @@ def turco() -> str:
     # Onceki surumdeki nokta siralayici kaldirildi — amator duruyordu ve
     # yedi ayri sonsuz animasyon daha demekti.
     bloklar = "\n  ".join(f'''<g class="h{i}">
-    <text class="disp" x="{K}" y="192" font-size="40" fill="{A}" letter-spacing="-1">{i+1:02d}</text>
-    <text class="sans" x="{K+62}" y="178" font-size="16" font-weight="700" fill="{MUREKKEP}">{html.escape(ad)}</text>
-    <text class="sans" x="{K+62}" y="197" font-size="12.5" fill="{IKINCIL}">{html.escape(alt)}</text>
+    <text class="disp" x="{K}" y="196" font-size="34" fill="{A}" letter-spacing="-1">{i+1:02d}</text>
+    <text class="sans" x="{K+52}" y="184" font-size="15" font-weight="700" fill="{MUREKKEP}">{html.escape(ad)}</text>
+    <text class="sans" x="{K+52}" y="202" font-size="12" fill="{IKINCIL}">{html.escape(alt)}</text>
   </g>''' for i, (ad, alt) in enumerate(hizmetler))
 
     govde = f'''  <text class="sans" x="{K}" y="42" font-size="9.5" letter-spacing="2.4" fill="{A}">§ TURCOPARTNERS</text>
   <text class="sans" x="{w-K}" y="42" font-size="9.5" letter-spacing="2.4" fill="{UCUNCUL}" text-anchor="end">SEVEN CORE SERVICES</text>
 
-  <text class="disp" x="{K}" y="92" font-size="36" fill="{MUREKKEP}" letter-spacing="-1.1">Istanbul to the US.</text>
-  <rect x="{K}" y="112" width="{IC}" height="1" fill="{KURAL}"/>
-  <text class="sans" x="{K}" y="136" font-size="12.5" fill="{IKINCIL}">One desk for the whole crossing —</text>
+  <text class="disp" x="{K}" y="80" font-size="31" fill="{MUREKKEP}" letter-spacing="-.9">Made in T&#252;rkiye.</text>
+  <text class="disp" x="{K}" y="112" font-size="31" fill="{MUREKKEP}" letter-spacing="-.9">Sold in America.</text>
+  <rect x="{K}" y="128" width="{IC}" height="1" fill="{KURAL}"/>
+  <text class="sans" x="{K}" y="150" font-size="12" fill="{IKINCIL}">One desk for the whole crossing —</text>
 
   {bloklar}
 
@@ -250,7 +255,7 @@ def turco() -> str:
 
     return kabuk(w, h,
         "TurcoPartners — seven services for selling from Turkey into the US: e-export, geopolitical risk, company setup, voice AI, process management, e-commerce growth and B2B liquidity. turcopartners.com",
-        "TurcoPartners — Istanbul to the US", stil, govde)
+        "TurcoPartners — made in T\u00fcrkiye, sold in America", stil, govde)
 
 
 # ---------------------------------------------------------------- WP CARE
@@ -384,17 +389,19 @@ def wpcare() -> str:
         "WP Care — nine things we watch for you", stil, govde)
 
 
+# Onek: sinif ve keyframe adlari markaya ozel olsun; gomulu afisler
+# ayni belgede durdugu icin bu sart.
 AFISLER = {
-    "yerine-feature": yerine,
-    "turco-panel": turco,
-    "wpcare-rail": wpcare,
+    "yerine-feature": (yerine, "yr"),
+    "turco-panel": (turco, "tp"),
+    "wpcare-rail": (wpcare, "wc"),
 }
 
 if __name__ == "__main__":
     import sys
     hedef = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ".")
     hedef.mkdir(parents=True, exist_ok=True)
-    for ad, uret in AFISLER.items():
+    for ad, (uret, onek) in AFISLER.items():
         yol = hedef / f"{ad}.svg"
-        yol.write_text(uret(), encoding="utf-8")
+        yol.write_text(markala(uret(), onek), encoding="utf-8")
         print(f"  {ad}.svg  ({yol.stat().st_size/1024:.1f} KB)")

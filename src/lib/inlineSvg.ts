@@ -39,24 +39,22 @@ function ek(adres: string): string {
 }
 
 /**
- * Afisi kendi kapsamina alir.
+ * Afisin id'lerini benzersiz yapar.
  *
- * Gomulu SVG'ler artik AYNI belgede duruyor ve hepsi ayni sinif
- * adlarini (.o0, .k0, .disp) ve ayni id'leri (kagit, marka) kullaniyor.
- * Kapsamlanmazsa bir afisin stili digerine uyguluyor, url(#kagit) ilk
- * bulduguna baglaniyor ve afisler birbirini bozuyor.
+ * Gomulu afisler ayni belgede duruyor ve hepsi ayni id'leri kullaniyor
+ * (kagit, isik, marka). url(#kagit) ilk buldugu tanima baglanir, yani
+ * bir afisin degradesi digerine uygulanir.
  *
- * Iki islem yapiyoruz:
- *   1. Butun id'lere afise ozel bir ek getiriyoruz ve onlara yapilan
- *      basvurulari (url(#..), href="#..") ayni sekilde guncelliyoruz.
- *   2. Stil kurallarini koke konan data-ad niteligiyle sinirliyoruz,
- *      boylece sinif adlari carpismiyor.
+ * SINIF ve KEYFRAME adlari icin burada bir sey yapmiyoruz: onlar zaten
+ * uretecte markaya ozel yaziliyor (scripts/banners/ortak.py). Daha once
+ * stil kurallarini duzenli ifadeyle kapsamlamayi denemistik; o yol
+ * "@keyframes h0" kuralinin da onune secici koyuyor, kural gecersiz
+ * oluyor ve tarayici animasyonlarin TAMAMINI atiyordu.
  */
-function kapsamla(svg: string, adres: string): string {
+function kimlikleriBenzersizle(svg: string, adres: string): string {
   const e = ek(adres);
-
-  // 1) id'ler ve onlara yapilan basvurular
   const idler = [...svg.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
+
   for (const kimlik of new Set(idler)) {
     const kacir = kimlik.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     svg = svg
@@ -64,27 +62,7 @@ function kapsamla(svg: string, adres: string): string {
       .replace(new RegExp(`url\\(#${kacir}\\)`, "g"), `url(#${kimlik}-${e})`)
       .replace(new RegExp(`((?:xlink:)?href=")#${kacir}(")`, "g"), `$1#${kimlik}-${e}$2`);
   }
-
-  // 2) Stil kurallarini bu afise sinirla
-  svg = svg.replace(/<style>([\s\S]*?)<\/style>/i, (_tam, govde: string) => {
-    const sinirli = govde.replace(
-      // Bir kural blogunun secici kismi — @keyframes ve @media govdeleri disinda
-      /(^|\}|\*\/)\s*([^@{}\/][^{}]*?)\s*\{/g,
-      (esles: string, onek: string, secici: string) => {
-        // Yuzde adimlari (0%, 50%) ve keyframe adlari secici degildir
-        if (/^[\d.%,\s]+$/.test(secici) || /^(from|to)$/i.test(secici.trim())) return esles;
-        const yeniSecici = secici
-          .split(",")
-          .map((x: string) => `[data-ad="${e}"] ${x.trim()}`)
-          .join(", ");
-        return `${onek} ${yeniSecici} {`;
-      }
-    );
-    return `<style>${sinirli}</style>`;
-  });
-
-  // 3) Koke isaret koy
-  return svg.replace(/^(\s*<svg\b)/i, `$1 data-ad="${e}"`);
+  return svg;
 }
 
 /** Sayfaya girmeden once tehlikeli her seyi cikar */
@@ -119,7 +97,7 @@ export const gomulecekSvg = cache(async (adres: string): Promise<string | null> 
   try {
     const ham = await readFile(dosya, "utf8");
     if (!/^\s*<svg[\s>]/i.test(ham)) return null;
-    return kapsamla(temizle(ham), adres);
+    return kimlikleriBenzersizle(temizle(ham), adres);
   } catch {
     return null;
   }
