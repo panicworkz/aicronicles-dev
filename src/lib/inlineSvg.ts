@@ -74,8 +74,16 @@ function temizle(svg: string): string {
       .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, "")
       // on* olay isleyicileri
       .replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-      // javascript: ve data: basvurulari
-      .replace(/(href|xlink:href)\s*=\s*(["'])\s*(?:javascript|data):[^"']*\2/gi, "")
+      /* javascript: ve data: basvurulari.
+         TEK istisna: base64 kodlu RASTER gorseller (png/jpeg/gif/webp).
+         Afisler markalarin logosunu bu bicimde iceride tasiyor; kural
+         once hepsini siliyordu ve logolar sayfada hic gorunmuyordu.
+         Raster bir gorsel betik calistiramaz. data:image/svg+xml
+         BILEREK disarida: SVG betik tasiyabilir. */
+      .replace(
+        /(href|xlink:href)\s*=\s*(["'])\s*(?!data:image\/(?:png|jpeg|jpg|gif|webp);base64,)(?:javascript|data):[^"']*\2/gi,
+        ""
+      )
       // Disariya giden yuklemeler
       .replace(/<(?:image|use)\b[^>]*(?:href|xlink:href)\s*=\s*["']https?:[^"']*["'][^>]*>/gi, "")
       .trim()
