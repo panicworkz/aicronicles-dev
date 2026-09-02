@@ -66,228 +66,290 @@ def kabuk(w: int, h: int, etiket: str, baslik: str, stil: str, govde: str) -> st
 
 # ---------------------------------------------------------------- YERINE
 def yerine() -> str:
-    """940 x 180 — yazi govdesinin icinde, sakin.
+    """940 x 180 — yazi govdesinin icinde.
 
-    Marka fikri: pahali ithal markanin yerine ayni isi goren yerli
-    muadili. Afisin yasayan ogesi bunu birebir canlandiriyor: ustteki
-    kart soluyor, alttaki yerine geciyor."""
+    Duzeltilen uc sey:
+      1. Iki perde arasinda OLU KARE vardi — baslik alani bir an bos
+         kaliyordu (ekran goruntusunde yakalandi). Artik baslik SABIT,
+         donen yalnizca alttaki ozellik seridi. Ana mesaj hic kaybolmuyor.
+      2. Afis platformu yalnizca "karsilastirma" diye anlatiyordu. Site
+         bundan cok daha genis: arama, fiyat gecmisi, sahte yorum
+         filtresi, fiyat alarmi, reklamsiz siralama, sekiz kategori.
+         Sekiz ozellik sirayla geciyor.
+      3. Metinler artik sitenin KENDI ingilizce sayfasindan
+         (yerine.com.tr/en) — cevirmedik, onlarin sozleri.
+
+    Not: site erken erisim surumunde ve gosterdigi veriler temsili;
+    bu yuzden afis hicbir fiyat ya da tasarruf rakami vermiyor."""
     w, h, K = 940, 180, 34
-    A = "#f59e0b"   # markanin kehribar vurgusu
-    sure = 10
+    A = "#f59e0b"
+    sure = 16
 
-    stil = temel_stil(sure, 2) + f'''
-    /* Kart degisimi: "yerine" fikrinin kendisi.
+    # Adlar yerine.com.tr/en sayfasindan, birebir
+    ozellikler = [
+        "Smart alternative search",
+        "Transparent comparison",
+        "Price history across sellers",
+        "Real rating filter",
+        "Domestic maker protection",
+        "Smart price alerts",
+        "Ad-free rankings",
+        "Eight shopping categories",
+    ]
+    n = len(ozellikler)
+    pay = 100 / n
+
+    serit = "\n    ".join(
+        f".o{i}{{animation:o{i} {sure}s cubic-bezier(.16,1,.3,1) infinite}}\n"
+        f"    @keyframes o{i}{{0%,{i*pay:.1f}%{{opacity:0;transform:translateY(7px)}}"
+        f" {i*pay+2.5:.1f}%,{(i+1)*pay-2.5:.1f}%{{opacity:1;transform:none}}"
+        f" {(i+1)*pay:.1f}%,100%{{opacity:0;transform:translateY(-6px)}}}}"
+        for i in range(n))
+
+    stil = f'''    {serit}
+
+    /* Kart degisimi: markanin fikrinin kendisi — ithal olan soluyor,
+       yerli muadili yerine geciyor.
        transform-box: fill-box KULLANMIYORUZ; tarayicilar arasinda
-       tutarsiz. Ogeler kendi gruplarinda, orijinleri merkezlerinde. */
-    .ustKart {{ animation: ustKart {sure}s cubic-bezier(.16,1,.3,1) infinite }}
-    @keyframes ustKart {{ 0%,10%{{opacity:1;transform:none}} 26%,72%{{opacity:.28;transform:translateY(-6px)}} 88%,100%{{opacity:1;transform:none}} }}
-    .altKart {{ animation: altKart {sure}s cubic-bezier(.16,1,.3,1) infinite }}
-    @keyframes altKart {{ 0%,12%{{opacity:0;transform:translateY(16px)}} 28%,72%{{opacity:1;transform:none}} 88%,100%{{opacity:0;transform:translateY(16px)}} }}
-    .ok {{ animation: ok {sure}s cubic-bezier(.16,1,.3,1) infinite }}
-    @keyframes ok {{ 0%,14%{{opacity:0;transform:translateY(-8px)}} 30%,70%{{opacity:1;transform:none}} 86%,100%{{opacity:0;transform:translateY(-8px)}} }}
+       tutarsiz. Ogeler kendi gruplarinda. */
+    .ustKart {{ animation: ustKart 8s cubic-bezier(.16,1,.3,1) infinite }}
+    @keyframes ustKart {{ 0%,12%{{opacity:1}} 30%,74%{{opacity:.26}} 92%,100%{{opacity:1}} }}
+    .altKart {{ animation: altKart 8s cubic-bezier(.16,1,.3,1) infinite }}
+    @keyframes altKart {{ 0%,14%{{opacity:0;transform:translateY(14px)}} 32%,74%{{opacity:1;transform:none}} 92%,100%{{opacity:0;transform:translateY(14px)}} }}
+    .ok {{ animation: ok 8s cubic-bezier(.16,1,.3,1) infinite }}
+    @keyframes ok {{ 0%,16%{{opacity:0}} 34%,72%{{opacity:1}} 90%,100%{{opacity:0}} }}
 
     @media (prefers-reduced-motion: reduce) {{
       * {{ animation: none !important }}
-      .p0 {{ transform: scaleX(0) }} .p1 {{ transform: scaleX(1) }}
-      .y0 {{ opacity: 0 }} .y1 {{ opacity: 1; transform: none }}
-      .ustKart {{ opacity: .28 }} .altKart,.ok {{ opacity: 1; transform: none }}
+      .o0 {{ opacity: 1; transform: none }}
+      {",".join("."+f"o{i}" for i in range(1, n))} {{ opacity: 0 }}
+      .ustKart {{ opacity: .26 }}
+      .altKart,.ok {{ opacity: 1; transform: none }}
     }}'''
 
-    govde = f'''  <clipPath id="m0"><rect class="p0" x="{K}" y="46" width="380" height="92"/></clipPath>
-  <clipPath id="m1"><rect class="p1" x="{K}" y="46" width="380" height="92"/></clipPath>
+    seritler = "\n  ".join(
+        f'<text class="sans o{i}" x="{K+14}" y="152" font-size="12.5" fill="{IKINCIL}">{html.escape(t)}</text>'
+        for i, t in enumerate(ozellikler))
 
-  <text class="disp" x="{K}" y="46" font-size="21" fill="{MUREKKEP}" letter-spacing="-.4">Yerine<tspan fill="{A}">.</tspan></text>
-  <text class="sans" x="{K + 78}" y="44" font-size="9.5" letter-spacing="2.2" fill="{UCUNCUL}">ALTERNATIVE PRODUCT GUIDE</text>
+    govde = f'''  <text class="disp" x="{K}" y="46" font-size="21" fill="{MUREKKEP}" letter-spacing="-.4">Yerine<tspan fill="{A}">.</tspan></text>
+  <text class="sans" x="{K+78}" y="44" font-size="9.5" letter-spacing="2.2" fill="{UCUNCUL}">SMART ALTERNATIVE FINDER</text>
 
-  <g clip-path="url(#m0)">
-    <text class="disp y0" x="{K}" y="94" font-size="34" fill="{MUREKKEP}" letter-spacing="-1">Same job.</text>
-    <text class="disp y0" x="{K}" y="128" font-size="34" fill="{MUREKKEP}" letter-spacing="-1">Less money.</text>
-  </g>
-  <g clip-path="url(#m1)">
-    <text class="disp y1" x="{K}" y="94" font-size="30" fill="{MUREKKEP}" letter-spacing="-.9">Find the local</text>
-    <text class="disp y1" x="{K}" y="126" font-size="30" fill="{MUREKKEP}" letter-spacing="-.9">equivalent.</text>
-  </g>
+  <!-- Baslik sabit: sitenin kendi ingilizce basligi, hic kaybolmuyor -->
+  <text class="disp" x="{K}" y="96" font-size="34" fill="{MUREKKEP}" letter-spacing="-1">What you want,</text>
+  <text class="disp" x="{K}" y="130" font-size="34" fill="{MUREKKEP}" letter-spacing="-1">for less.</text>
 
-  <!-- Yasayan oge: ithal karti soluyor, muadili yerine geciyor -->
+  <!-- Donen serit: platformun genisligi -->
+  <circle cx="{K+4}" cy="148" r="3" fill="{A}"/>
+  {seritler}
+
+  <!-- Yasayan oge: ithal karti soluyor, yerli muadili yerine geciyor -->
   <g class="ustKart">
-    <rect x="470" y="34" width="230" height="52" rx="8" fill="#ffffff" stroke="{KURAL}"/>
-    <rect x="484" y="50" width="20" height="20" rx="4" fill="{KURAL}"/>
-    <text class="sans" x="516" y="58" font-size="11" fill="{IKINCIL}">Imported brand</text>
-    <text class="sans" x="516" y="73" font-size="10" fill="{UCUNCUL}">premium price</text>
+    <rect x="470" y="30" width="238" height="54" rx="8" fill="#ffffff" stroke="{KURAL}"/>
+    <rect x="484" y="46" width="22" height="22" rx="4" fill="{KURAL}"/>
+    <text class="sans" x="518" y="54" font-size="11" fill="{IKINCIL}">Imported original</text>
+    <text class="sans" x="518" y="70" font-size="10" fill="{UCUNCUL}">premium price</text>
   </g>
   <g class="ok" fill="none" stroke="{A}" stroke-width="2" stroke-linecap="round">
-    <path d="M585 92 v14"/><path d="M579 100 l6 6 6 -6"/>
+    <path d="M589 90 v12"/><path d="M583 97 l6 6 l6 -6"/>
   </g>
   <g class="altKart">
-    <rect x="470" y="112" width="230" height="52" rx="8" fill="#ffffff" stroke="{A}" stroke-width="1.5"/>
-    <rect x="484" y="128" width="20" height="20" rx="4" fill="{A}"/>
-    <text class="sans" x="516" y="136" font-size="11" font-weight="700" fill="{MUREKKEP}">Local equivalent</text>
-    <text class="sans" x="516" y="151" font-size="10" fill="{IKINCIL}">same function</text>
+    <rect x="470" y="110" width="238" height="54" rx="8" fill="#ffffff" stroke="{A}" stroke-width="1.5"/>
+    <rect x="484" y="126" width="22" height="22" rx="4" fill="{A}"/>
+    <text class="sans" x="518" y="134" font-size="11" font-weight="700" fill="{MUREKKEP}">Local equivalent</text>
+    <text class="sans" x="518" y="150" font-size="10" fill="{IKINCIL}">same job, ranked honestly</text>
   </g>
 
-  <rect x="{w-K-186}" y="{h//2-23}" width="186" height="46" rx="23" fill="{MUREKKEP}"/>
-  <text class="sans" x="{w-K-93}" y="{h//2+5}" font-size="13.5" font-weight="700" fill="{KAGIT}" text-anchor="middle" letter-spacing=".3">Compare now →</text>'''
+  <rect x="{w-K-196}" y="{h//2-24}" width="196" height="48" rx="24" fill="{MUREKKEP}"/>
+  <text class="sans" x="{w-K-98}" y="{h//2+5}" font-size="13.5" font-weight="700" fill="{KAGIT}" text-anchor="middle" letter-spacing=".3">Find the alternative →</text>'''
 
-    return kabuk(w, h, "Yerine — find the local equivalent that does the same job for less. yerine.com.tr",
-                 "Yerine — same job, less money", stil, govde)
+    return kabuk(w, h,
+        "Yerine — find the local alternative that does the same job for less: smart search, transparent comparison, price history, real rating filter and ad-free rankings. yerine.com.tr",
+        "Yerine — what you want, for less", stil, govde)
 
 
 # --------------------------------------------------------- TURCO PARTNERS
 def turco() -> str:
     """511 x 300 — ana sayfa yan kolonu.
 
-    Onceki surumde tek bir ince rota cizgisi vardi; markanin asil gucunu
-    anlatmiyordu. TurcoPartners bir EKOSISTEM: sirket kurulusu, lojistik,
-    pazar istihbarati. Simdi uc hizmet sirayla isaretleniyor — okuyan
-    kisi neyin dahil oldugunu goruyor.
+    Iki tur once uc hizmet yaziyordu ve buton ucuncu satirin ustune
+    biniyordu. Asil sorun sayilardaydi: site kendini "THE 7 CORE
+    SERVICES" diye tanimliyor, uc madde bunun yarisini bile anlatmiyor.
 
-    Hicbir sayi yok: ne ulke sayisi ne musteri. Kendi sitelerinde gecen
-    rakamlari da almadik; dogrulayamadigimiz seyi afise koymuyoruz."""
+    Simdi yedi hizmetin TAMAMI donuyor. Ustte "01 — 07" sayaci sabit
+    duruyor, yani okuyan kisi bir hizmet gorse bile yedi tane oldugunu
+    biliyor. Kucuk bir alanda hem genislik hem ayrinti veren yol bu.
+
+    Hizmet adlari sitenin kendi basliklarindan cevrildi; hicbir metrik
+    (GMV, cagri sayisi, hibe orani) alinmadi — dogrulayamadigimiz
+    rakami afise koymuyoruz."""
     w, h, K = 511, 300, 32
-    A = "#0f5132"   # ticaret yesili — koyu, kagit uzerinde okunur
-    sure = 9
-
+    A = "#0f5132"
+    IC = w - K * 2
     hizmetler = [
-        ("Company setup", "Delaware / Florida"),
-        ("Logistics", "fulfilment and customs"),
-        ("Intelligence", "market and country risk"),
+        ("Global e-export", "Amazon US market intelligence"),
+        ("Geopolitical risk", "country analysis for investors"),
+        ("US company setup", "law, trademark and incentives"),
+        ("Voice AI", "autonomous call handling"),
+        ("Process management", "CRM, WhatsApp and email"),
+        ("E-commerce growth", "storefront and digital advertising"),
+        ("B2B liquidity", "vertical marketplaces"),
     ]
+    n = len(hizmetler)
+    sure = 16          # 7 hizmet, her biri ~2.3 sn
+    pay = 100 / n
 
-    # Her satir sirayla beliriyor, yanindaki isaret ciziliyor
-    satir_stil = "\n    ".join(
-        f".r{i}{{animation:r{i} {sure}s cubic-bezier(.16,1,.3,1) infinite}}\n"
-        f"    @keyframes r{i}{{0%,{8+i*9}%{{opacity:0;transform:translateX(-10px)}}"
-        f" {16+i*9}%,88%{{opacity:1;transform:none}} 96%,100%{{opacity:0;transform:translateX(-6px)}}}}"
-        for i in range(3))
+    ad_stil = "\n    ".join(
+        f".h{i}{{animation:h{i} {sure}s cubic-bezier(.16,1,.3,1) infinite}}\n"
+        f"    @keyframes h{i}{{0%,{i*pay:.1f}%{{opacity:0;transform:translateY(10px)}}"
+        f" {i*pay+3:.1f}%,{(i+1)*pay-3:.1f}%{{opacity:1;transform:none}}"
+        f" {(i+1)*pay:.1f}%,100%{{opacity:0;transform:translateY(-8px)}}}}"
+        for i in range(n))
+    nokta_stil = "\n    ".join(
+        f".n{i}{{animation:n{i} {sure}s steps(1) infinite}}\n"
+        f"    @keyframes n{i}{{0%,{i*pay:.1f}%{{opacity:.22}} {i*pay+1:.1f}%,{(i+1)*pay-1:.1f}%{{opacity:1}}"
+        f" {(i+1)*pay:.1f}%,100%{{opacity:.22}}}}"
+        for i in range(n))
 
     stil = f'''    .bas {{ transform-origin:0 0; animation: bas {sure}s cubic-bezier(.16,1,.3,1) infinite }}
-    @keyframes bas {{ 0%,2%{{transform:scaleX(0)}} 12%,90%{{transform:scaleX(1)}} 98%,100%{{transform:scaleX(0)}} }}
-    {satir_stil}
+    @keyframes bas {{ 0%,1%{{transform:scaleX(0)}} 8%,96%{{transform:scaleX(1)}} 100%{{transform:scaleX(0)}} }}
+    {ad_stil}
+    {nokta_stil}
 
     @media (prefers-reduced-motion: reduce) {{
       * {{ animation: none !important }}
       .bas {{ transform: scaleX(1) }}
-      .r0,.r1,.r2 {{ opacity: 1; transform: none }}
+      .h0 {{ opacity: 1; transform: none }}
+      .h1,.h2,.h3,.h4,.h5,.h6 {{ opacity: 0 }}
+      .n0 {{ opacity: 1 }}
+      .n1,.n2,.n3,.n4,.n5,.n6 {{ opacity: .22 }}
     }}'''
 
-    satirlar = "\n  ".join(f'''<g class="r{i}">
-    <g transform="translate({K+9} {158+i*44})" fill="none" stroke="{A}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle r="9" stroke-opacity=".3"/><path d="M-4 0 l3 3.4 l6 -7"/>
-    </g>
-    <text class="sans" x="{K+32}" y="{163+i*44}" font-size="14.5" font-weight="700" fill="{MUREKKEP}">{html.escape(ad)}</text>
-    <text class="sans" x="{K+32}" y="{180+i*44}" font-size="11.5" fill="{IKINCIL}">{html.escape(alt)}</text>
+    # Donen hizmet blogu: buyuk numara + iki satir
+    bloklar = "\n  ".join(f'''<g class="h{i}">
+    <text class="disp" x="{K}" y="192" font-size="40" fill="{A}" letter-spacing="-1">{i+1:02d}</text>
+    <text class="sans" x="{K+62}" y="178" font-size="16" font-weight="700" fill="{MUREKKEP}">{html.escape(ad)}</text>
+    <text class="sans" x="{K+62}" y="197" font-size="12.5" fill="{IKINCIL}">{html.escape(alt)}</text>
   </g>''' for i, (ad, alt) in enumerate(hizmetler))
 
-    govde = f'''  <clipPath id="mb"><rect class="bas" x="{K}" y="60" width="{w-K*2}" height="52"/></clipPath>
+    # Ilerleme noktalari — kac hizmet oldugu hep gorunur
+    aralik = (IC - 40) / (n - 1)
+    noktalar = "\n    ".join(
+        f'<circle class="n{i}" cx="{K + 20 + aralik*i:.0f}" cy="218" r="3.2" fill="{A}"/>'
+        for i in range(n))
 
-  <text class="sans" x="{K}" y="46" font-size="9.5" letter-spacing="2.4" fill="{A}">§ TURCOPARTNERS</text>
+    govde = f'''  <clipPath id="mb"><rect class="bas" x="{K}" y="54" width="{IC}" height="48"/></clipPath>
+
+  <text class="sans" x="{K}" y="42" font-size="9.5" letter-spacing="2.4" fill="{A}">§ TURCOPARTNERS</text>
+  <text class="sans" x="{w-K}" y="42" font-size="9.5" letter-spacing="2.4" fill="{UCUNCUL}" text-anchor="end">SEVEN CORE SERVICES</text>
+
   <g clip-path="url(#mb)">
-    <text class="disp" x="{K}" y="100" font-size="38" fill="{MUREKKEP}" letter-spacing="-1.1">Sell into the US.</text>
+    <text class="disp" x="{K}" y="92" font-size="36" fill="{MUREKKEP}" letter-spacing="-1.1">Istanbul to the US.</text>
   </g>
-  <rect x="{K}" y="122" width="{w-K*2}" height="1" fill="{KURAL}"/>
+  <rect x="{K}" y="112" width="{IC}" height="1" fill="{KURAL}"/>
+  <text class="sans" x="{K}" y="136" font-size="12.5" fill="{IKINCIL}">One desk for the whole crossing —</text>
 
-  {satirlar}
+  {bloklar}
 
-  <rect x="{K}" y="{h-K-46}" width="{w-K*2}" height="46" rx="23" fill="{MUREKKEP}"/>
-  <text class="sans" x="{w//2}" y="{h-K-17}" font-size="13.5" font-weight="700" fill="{KAGIT}" text-anchor="middle" letter-spacing=".3">Explore the ecosystem →</text>'''
+  <g>
+    {noktalar}
+  </g>
 
-    return kabuk(w, h, "TurcoPartners — company setup, logistics and market intelligence for selling into the US. turcopartners.com",
-                 "TurcoPartners — sell into the US", stil, govde)
+  <rect x="{K}" y="238" width="{IC}" height="44" rx="22" fill="{MUREKKEP}"/>
+  <text class="sans" x="{w//2}" y="266" font-size="13.5" font-weight="700" fill="{KAGIT}" text-anchor="middle" letter-spacing=".3">Explore all seven →</text>'''
+
+    return kabuk(w, h,
+        "TurcoPartners — seven services for selling from Turkey into the US: e-export, geopolitical risk, company setup, voice AI, process management, e-commerce growth and B2B liquidity. turcopartners.com",
+        "TurcoPartners — Istanbul to the US", stil, govde)
 
 
 # ---------------------------------------------------------------- WP CARE
 def wpcare() -> str:
     """387 x 540 — kenar rayi, dikey.
 
-    Onceki surumde icerik 540 pikselin ortasinda kucuk kaliyordu: 60
-    piksellik bir simge 148 piksellik bos bantta yuzuyordu. Simdi alan
-    dort banda bolundu ve her bant isini yapiyor:
-        0..118   marka kilidi
-      118..300   site durum karti — afisin yasayan ogesi
-      300..452   baslik ve aciklama
-      452..540   cagri
+    Onceki iki surumun kusurlari:
+      1. Sahte tarayici penceresi dergi sayfasinda ucuz duruyordu.
+      2. Ilerleme cubugu kartin disina tasiyordu — .tara sinifinda
+         transform-origin:0 0 vardi; SVG'de bu ogenin kendi sol kenarini
+         DEGIL tuvalin sol kenarini gosterir.
+      3. Bes madde yaziyordum, biri ("A person who answers you") sitede
+         hic gecmiyordu. Sitenin hizmet sayfasi DOKUZ hizmet sayiyor.
 
-    Yasayan oge: bir WordPress sitesinin bakim panosu. Uc perdede uc
-    hizmet calisiyor ve durum satiri "sorun" halinden "temiz" haline
-    geciyor — bakim planinin ne yaptigini birebir gosteriyor."""
+    Simdi dokuzunun tamami, sitenin kendi adlariyla, sirayla
+    isaretleniyor. 540 piksellik ray bunun icin bicilmis kaftan: liste
+    dikey alani gercekten kullaniyor.
+
+    Metrik yok — sitedeki "300+ startup" gibi rakamlar reklamverenin
+    kendi iddiasi, dogrulayamadigimiz icin afise almadik."""
     w, h, K = 387, 540, 28
-    A, YESIL = "#ff6b6b", "#00a86b"
-    sure = 12
+    A, YESIL = "#ff6b6b", "#0f8a5f"
     IC = w - K * 2
+    sure = 14
 
-    perdeler = [
-        ("Maintenance.", "Core, plugins and themes", "kept current, every week."),
-        ("Backups.",     "Restorable copies kept",   "off your own server."),
-        ("Security.",    "Hardening, monitoring",    "and clean-up after."),
+    # Adlar wpcare.pw/en/services sayfasindan, birebir
+    hizmetler = [
+        "Update management",
+        "Automated backups",
+        "Firewall protection",
+        "Uptime monitoring",
+        "Performance optimization",
+        "Technical SEO",
+        "Email deliverability",
+        "Support SLA",
+        "Cookie management",
     ]
-    durumlar = [("Updates pending", A), ("Backup running", A), ("All clear", YESIL)]
+    n = len(hizmetler)
 
-    ek = "\n    ".join(
-        f".d{i}{{animation:d{i} {sure}s steps(1) infinite}}\n"
-        f"    @keyframes d{i}{{0%,{i*33.3:.1f}%{{opacity:0}} {i*33.3+2:.1f}%,{(i+1)*33.3-2:.1f}%{{opacity:1}} {(i+1)*33.3:.1f}%,100%{{opacity:0}}}}"
-        for i in range(3))
+    madde_stil = "\n    ".join(
+        f".k{i}{{animation:k{i} {sure}s cubic-bezier(.16,1,.3,1) infinite}}\n"
+        f"    @keyframes k{i}{{0%,{8+i*4.5:.1f}%{{opacity:0;transform:translateX(-9px)}}"
+        f" {14+i*4.5:.1f}%,93%{{opacity:1;transform:none}} 98%,100%{{opacity:0;transform:translateX(-5px)}}}}"
+        for i in range(n))
 
-    stil = temel_stil(sure, 3) + f'''
-    {ek}
-    /* Tarama cubugu: bakimin surdugunu gosterir */
-    .tara {{ transform-origin: 0 0; animation: tara 2.4s ease-in-out infinite }}
-    @keyframes tara {{ 0%{{transform:scaleX(0)}} 70%,100%{{transform:scaleX(1)}} }}
+    stil = f'''    .bas {{ transform-origin:0 0; animation: bas {sure}s cubic-bezier(.16,1,.3,1) infinite }}
+    @keyframes bas {{ 0%,1%{{transform:scaleX(0)}} 9%,95%{{transform:scaleX(1)}} 100%{{transform:scaleX(0)}} }}
+    {madde_stil}
+
+    /* Sayac: liste doldukça ilerler, dokuzda durur */
+    .sayac {{ animation: sayac {sure}s cubic-bezier(.16,1,.3,1) infinite }}
+    @keyframes sayac {{ 0%,10%{{opacity:0}} 16%,93%{{opacity:1}} 98%,100%{{opacity:0}} }}
 
     @media (prefers-reduced-motion: reduce) {{
       * {{ animation: none !important }}
-      .p0,.p1 {{ transform: scaleX(0) }} .p2 {{ transform: scaleX(1) }}
-      .y0,.y1,.d0,.d1 {{ opacity: 0 }}
-      .y2,.d2 {{ opacity: 1; transform: none }}
-      .tara {{ transform: scaleX(1) }}
+      .bas {{ transform: scaleX(1) }}
+      {",".join("."+f"k{i}" for i in range(n))} {{ opacity: 1; transform: none }}
+      .sayac {{ opacity: 1 }}
     }}'''
 
-    maske = "\n  ".join(
-        f'<clipPath id="m{i}"><rect class="p{i}" x="{K}" y="310" width="{IC}" height="140"/></clipPath>'
-        for i in range(3))
-
-    metin = "\n  ".join(f'''<g clip-path="url(#m{i})">
-    <text class="disp y{i}" x="{K}" y="358" font-size="40" fill="{MUREKKEP}" letter-spacing="-1.2">{html.escape(b)}</text>
-    <text class="sans y{i}" x="{K}" y="394" font-size="13.5" fill="{IKINCIL}">{html.escape(a1)}</text>
-    <text class="sans y{i}" x="{K}" y="414" font-size="13.5" fill="{IKINCIL}">{html.escape(a2)}</text>
-  </g>''' for i, (b, a1, a2) in enumerate(perdeler))
-
-    durum_satiri = "\n    ".join(f'''<g class="d{i}">
-      <circle cx="{K+22}" cy="248" r="5" fill="{renk}"/>
-      <text class="sans" x="{K+38}" y="253" font-size="12.5" font-weight="600" fill="{MUREKKEP}">{html.escape(ad)}</text>
-    </g>''' for i, (ad, renk) in enumerate(durumlar))
-
-    govde = f'''  {maske}
-
-  <text class="disp" x="{K}" y="64" font-size="27" fill="{MUREKKEP}" letter-spacing="-.6">WP Care<tspan fill="{A}">.</tspan></text>
-  <text class="sans" x="{K}" y="86" font-size="9.5" letter-spacing="2.2" fill="{UCUNCUL}">WORDPRESS CARE PLANS</text>
-  <rect x="{K}" y="108" width="{IC}" height="1" fill="{KURAL}"/>
-
-  <!-- Yasayan oge: bakim panosu -->
-  <g>
-    <rect x="{K}" y="134" width="{IC}" height="140" rx="10" fill="#ffffff" stroke="{KURAL}"/>
-    <rect x="{K}" y="134" width="{IC}" height="34" rx="10" fill="{KAGIT2}"/>
-    <rect x="{K}" y="158" width="{IC}" height="10" fill="{KAGIT2}"/>
-    <g fill="{UCUNCUL}">
-      <circle cx="{K+18}" cy="151" r="3.5"/><circle cx="{K+31}" cy="151" r="3.5"/><circle cx="{K+44}" cy="151" r="3.5"/>
+    # Dokuz madde, 29px araliklarla 208'den basliyor -> 208..440
+    liste = "\n  ".join(f'''<g class="k{i}">
+    <g transform="translate({K+8} {204+i*29})" fill="none" stroke="{YESIL}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle r="7.5" stroke-opacity=".28"/><path d="M-3.2 0 l2.4 2.8 l4.8 -5.6"/>
     </g>
-    <text class="sans" x="{K+62}" y="155" font-size="10.5" letter-spacing=".4" fill="{IKINCIL}">yoursite.com</text>
+    <text class="sans" x="{K+28}" y="{208+i*29}" font-size="12.5" fill="{MUREKKEP}">{html.escape(m)}</text>
+  </g>''' for i, m in enumerate(hizmetler))
 
-    <!-- Tarama cubugu -->
-    <rect x="{K+22}" y="196" width="{IC-44}" height="5" rx="2.5" fill="{KAGIT2}"/>
-    <rect class="tara" x="{K+22}" y="196" width="{IC-44}" height="5" rx="2.5" fill="{A}"/>
-    <text class="sans" x="{K+22}" y="186" font-size="10.5" letter-spacing="1.6" fill="{UCUNCUL}">CARE PLAN RUNNING</text>
+    govde = f'''  <clipPath id="mb"><rect class="bas" x="{K}" y="106" width="{IC}" height="80"/></clipPath>
 
-    <rect x="{K+22}" y="222" width="{IC-44}" height="1" fill="{KURAL}"/>
-    {durum_satiri}
+  <text class="disp" x="{K}" y="62" font-size="28" fill="{MUREKKEP}" letter-spacing="-.6">WP Care<tspan fill="{A}">.</tspan></text>
+  <text class="sans" x="{K}" y="84" font-size="9.5" letter-spacing="2.2" fill="{UCUNCUL}">WORDPRESS CARE PLANS</text>
+  <rect x="{K}" y="100" width="{IC}" height="1" fill="{KURAL}"/>
+
+  <g clip-path="url(#mb)">
+    <text class="disp" x="{K}" y="140" font-size="30" fill="{MUREKKEP}" letter-spacing="-.9">Nine things we</text>
+    <text class="disp" x="{K}" y="172" font-size="30" fill="{MUREKKEP}" letter-spacing="-.9">watch for you.</text>
   </g>
 
-  {metin}
+  {liste}
 
-  <rect x="{K}" y="{h-K-50}" width="{IC}" height="50" rx="25" fill="{MUREKKEP}"/>
-  <text class="sans" x="{w//2}" y="{h-K-19}" font-size="14" font-weight="700" fill="{KAGIT}" text-anchor="middle" letter-spacing=".3">See the care plans →</text>'''
+  <!-- Sayac: kac hizmetin dahil oldugu her an gorunur -->
+  <text class="sans sayac" x="{w-K}" y="84" font-size="9.5" letter-spacing="2.2" fill="{YESIL}" text-anchor="end">09 / 09</text>
 
-    return kabuk(w, h, "WP Care — WordPress care plans: maintenance, backups and security. wpcare.pw",
-                 "WP Care — WordPress care plans", stil, govde)
+  <rect x="{K}" y="{h-K-48}" width="{IC}" height="48" rx="24" fill="{MUREKKEP}"/>
+  <text class="sans" x="{w//2}" y="{h-K-18}" font-size="14" font-weight="700" fill="{KAGIT}" text-anchor="middle" letter-spacing=".3">See the care plans →</text>'''
+
+    return kabuk(w, h,
+        "WP Care — nine WordPress care services: update management, automated backups, firewall protection, uptime monitoring, performance optimization, technical SEO, email deliverability, support SLA and cookie management. wpcare.pw",
+        "WP Care — nine things we watch for you", stil, govde)
 
 
 AFISLER = {
