@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { alaniDoldur } from "@/lib/ads";
 import AdTracker from "./AdTracker";
 
@@ -76,13 +77,21 @@ export async function AdSlot({
       : null;
   const hedef = href ?? cmsReklami?.targetUrl ?? null;
 
+  /* Alanda yayinda reklam yoksa — hic tanimlanmamis ya da takvimi dolmus —
+     gri bir yer tutucu yerine kendi davetimiz giriyor. Yer tutucu hicbir
+     sey kazandirmiyordu; bu afis ziyaretciyi /advertise sayfasina
+     gonderiyor, yani bos alan satis yapiyor. */
+  const evReklami = !gorsel;
   const body = gorsel ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={gorsel.imageUrl} alt={gorsel.alt || label} className="size-full object-cover" />
   ) : (
-    <span className="folio" style={{ color: "var(--ink-3)" }}>
-      {label.toUpperCase()} · {spec.note}
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`/media/house-${format}.svg`}
+      alt="This space is available — advertise on Fabelo"
+      className="size-full object-cover"
+    />
   );
 
   return (
@@ -94,7 +103,7 @@ export async function AdSlot({
     <aside className="w-full" aria-label={label}>
       <div className="mb-1.5 flex items-center gap-2">
         <span className="folio" style={{ color: "var(--ink-3)" }}>
-          ADVERTISEMENT
+          {evReklami ? "AVAILABLE SPACE" : "ADVERTISEMENT"}
         </span>
         <span className="flex-1 rule" />
       </div>
@@ -125,6 +134,11 @@ export async function AdSlot({
           <a href={hedef} target="_blank" rel="noopener noreferrer sponsored" className="grid size-full place-items-center">
             {body}
           </a>
+        ) : evReklami ? (
+          /* Kendi sayfamiz: yeni sekme yok, sayac yok */
+          <Link href="/advertise" className="grid size-full place-items-center">
+            {body}
+          </Link>
         ) : (
           body
         )}
