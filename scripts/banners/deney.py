@@ -48,6 +48,7 @@ hicbir kare yok; blur, filter, clip-path animasyonu yok.
 """
 
 import pathlib
+import re
 import sys
 from ortak import markala
 
@@ -215,6 +216,93 @@ MARKALAR = [
 # ---------------------------------------------------------------------
 # Ortak hareket. Karakterler farkli, saat ayni.
 # ---------------------------------------------------------------------
+
+# --- Marka logolari ---------------------------------------------------
+#
+# Her marka kendi sitesinin logosunu tasiyor. Kelime markasi tek basina
+# kimlik vermiyordu; okur "bu kimin reklami" sorusuna bir isarete
+# bakarak cevap veriyor.
+#
+# Logolar base64 ile AFISIN ICINE gomuluyor, disaridan cagrilmiyor.
+# Sitedeki butun dis gorsel bagimliliklarini temizlemistik; afisin
+# kendisi de bagimsiz kalmali. Afisler zaten sayfaya gomuluyor, yani
+# ayri bir istek hic atilmiyor.
+#
+# sosyomarket.com ve superdamping.com'da favicon hic yok (butun standart
+# yollar 404). O ikisi logosuz basiliyor — uydurma bir isaret koymak
+# yanlis olurdu.
+import base64
+import functools
+
+LOGO_KOK = pathlib.Path(__file__).resolve().parents[2] / "public" / "media" / "deney" / "logo"
+
+
+@functools.lru_cache(maxsize=None)
+def logo_veri(kod: str):
+    """(veri-uri, en/boy orani) ya da logosu yoksa None.
+
+    Oran onemli: Panicworkz'un isareti bir KELIME MARKASI (285x57).
+    Kare kutuya sigdirinca yuksekligin besde biri kadar kalip
+    okunmuyordu. Genislik orandan hesaplaniyor.
+    """
+    for uz, tur in ((".svg", "image/svg+xml"), (".png", "image/png")):
+        yol = LOGO_KOK / f"{kod}{uz}"
+        if not yol.exists():
+            continue
+        ham = yol.read_bytes()
+        oran = 1.0
+        if uz == ".svg":
+            m = re.search(rb'viewBox="([\d.\-]+)\s+([\d.\-]+)\s+([\d.]+)\s+([\d.]+)"', ham)
+            if m:
+                gen, yuk = float(m.group(3)), float(m.group(4))
+                if yuk:
+                    oran = gen / yuk
+        else:
+            # PNG basligindaki genislik ve yukseklik (IHDR)
+            if len(ham) > 24 and ham[12:16] == b"IHDR":
+                gen = int.from_bytes(ham[16:20], "big")
+                yuk = int.from_bytes(ham[20:24], "big")
+                if yuk:
+                    oran = gen / yuk
+        b64 = base64.b64encode(ham).decode("ascii")
+        return f"data:{tur};base64,{b64}", oran
+    return None
+
+
+def logo(kod: str, x, y, boy, azami_en=None):
+    v = logo_veri(kod)
+    if not v:
+        return ""
+    uri, oran = v
+    en = boy * oran
+    if azami_en and en > azami_en:
+        en, boy = azami_en, azami_en / oran
+    return ('<image class="g1" x="%.0f" y="%.0f" width="%.1f" height="%.1f" '
+            'href="%s" preserveAspectRatio="xMidYMid meet"/>' % (x, y, en, boy, uri))
+
+
+def logo_eni(kod: str, boy, azami_en=None):
+    """Kunyede metni ne kadar saga kaydiracagiz."""
+    v = logo_veri(kod)
+    if not v:
+        return 0
+    en = boy * v[1]
+    return min(en, azami_en) if azami_en else en
+
+
+
+def kelime_markasi(kod: str) -> bool:
+    """Logo bir KELIME markasi mi (isaret degil)?
+
+    Panicworkz'un logosu markanin adini zaten yaziyor. Yanina bir de
+    "PANICWORKZ" koyunca ad iki kez okunuyor, ustelik 20 piksel boyda
+    logonun altindaki slogan satiri lapaya donuyor. Genis olanlarda
+    logo tek basina, biraz daha buyuk duruyor.
+    """
+    v = logo_veri(kod)
+    return bool(v) and v[1] > 2.2
+
+
 def stil_blogu(ek=""):
     return """
     .disp { font-family: Georgia, "Times New Roman", serif }
@@ -230,6 +318,9 @@ def stil_blogu(ek=""):
       100%    { opacity:0; transform:translateY(-6px) }
     }
 
+    /* Cagri uc adimda kuruluyor: once metin, sonra altindaki cizgi
+       soldan saga cizilir, en son el gelip dokunur. Uçu ayni anda
+       cikinca hicbiri okunmuyordu; sirali olunca cumle kuruluyor. */
     .cag { animation: cagri SUREs cubic-bezier(.16,1,.3,1) infinite }
     @keyframes cagri {
       0%      { opacity:0; transform:translateY(10px) scale(.98) }
@@ -248,21 +339,38 @@ def stil_blogu(ek=""):
     /* Imlec: sagdan gelir, cagrinin ustune konar, dokunur, cekilir.
        Ayni 9 saniyelik saatin icinde — afisteki her sey gibi. */
     .imlec { animation: imlec SUREs cubic-bezier(.16,1,.3,1) infinite }
+    /* 3. adim — el gelir, dokunur, cekilir */
     @keyframes imlec {
-      0%,30%   { opacity:0; transform:translate(22px,16px) }
-      42%,50%  { opacity:1; transform:translate(0,0) }
-      54%      { opacity:1; transform:translate(0,2.5px) }
-      58%,78%  { opacity:1; transform:translate(0,0) }
-      88%,100% { opacity:0; transform:translate(14px,10px) }
+      0%,40%   { opacity:0; transform:translate(22px,16px) }
+      52%,57%  { opacity:1; transform:translate(0,0) }
+      61%      { opacity:1; transform:translate(0,2.5px) }
+      65%,82%  { opacity:1; transform:translate(0,0) }
+      90%,100% { opacity:0; transform:translate(14px,10px) }
     }
     /* Dokunusta cagri 1.5 piksel coküyor — ziplama yok. */
+    /* 1. adim — cagri metni */
     .dokunus { animation: dokunus SUREs cubic-bezier(.16,1,.3,1) infinite }
     @keyframes dokunus {
-      0%      { opacity:0; transform:translateY(10px) }
-      9%,52%  { opacity:1; transform:none }
-      55%     { transform:translateY(1.5px) }
-      60%,92% { transform:none }
+      0%      { opacity:0; transform:translateY(8px) }
+      18%,58% { opacity:1; transform:none }
+      61%     { transform:translateY(1.5px) }
+      66%,92% { transform:none }
       100%    { opacity:0; transform:translateY(-6px) }
+    }
+    /* 2. adim — cizgi soldan cizilir */
+    .cizik { animation: cizik SUREs cubic-bezier(.16,1,.3,1) infinite; transform-origin: left center }
+    @keyframes cizik {
+      0%,24%  { opacity:0; transform:scaleX(0) }
+      34%,92% { opacity:1; transform:scaleX(1) }
+      100%    { opacity:0; transform:scaleX(1) }
+    }
+    /* Bas harf: yavas ve sessiz. Metinlerden once yerlesip arkada
+       duruyor, dikkat cekmiyor — zemin dokusu gibi. */
+    .harf { animation: harf SUREs cubic-bezier(.16,1,.3,1) infinite }
+    @keyframes harf {
+      0%      { opacity:0; transform:translateY(14px) }
+      16%,92% { opacity:1; transform:none }
+      100%    { opacity:0; transform:translateY(-8px) }
     }
 EK
     @media (prefers-reduced-motion: reduce) {
@@ -325,82 +433,38 @@ def imlec(x, y, boy=30, renk=None):
 # CIZGILER: parmak aralari. Ikinci denemede el tek parca bir kurek gibi
 # goruyordu — klasik imlecin okunmasini saglayan sey kademeli parmaklar
 # ve aralarindaki hat. Bunlar siluetten turemez, ayrica yaziliyor.
-PIKSEL_EL = [
-    ".....XXXX.......",
-    ".....XXXX.......",
-    ".....XXXX.......",
-    ".....XXXX.......",
-    ".....XXXX.......",
-    ".....XXXX.......",
-    ".....XXXXXXX....",
-    ".....XXXXXXXXX..",
-    ".....XXXXXXXXXXX",
-    ".XXX.XXXXXXXXXXX",
-    ".XXXXXXXXXXXXXXX",
-    ".XXXXXXXXXXXXXXX",
-    ".XXXXXXXXXXXXXXX",
-    "..XXXXXXXXXXXXXX",
-    "..XXXXXXXXXXXXXX",
-    "..XXXXXXXXXXXXXX",
-    "...XXXXXXXXXXXXX",
-    "...XXXXXXXXXXXXX",
-    "...XXXXXXXXXXXX.",
-    "....XXXXXXXXXX..",
-]
-
-# (x, ilk_satir, son_satir) — parmak aralarindaki dikey hatlar
-PIKSEL_CIZGI = [
-    (9,  6, 11),   # isaret / orta
-    (12, 7, 11),   # orta / yuzuk
-    (14, 8, 11),   # yuzuk / serce
-    (4,  9, 13),   # basparmak ayrimi
-]
+# Klasik piksel el imleci.
+#
+# KENDIM CIZMIYORUM. Uc denemede de tutmadi: once konturu elle cizdim
+# ve avuc delik kaldi, sonra oranlari kacirdim ve el kurek gibi
+# goruldu. Hazir ve dogru cizilmis bir tane kullanmak dogrusu.
+#
+# Kaynak : Wikimedia Commons — Mouse-cursor-hand-pointer.svg
+#          https://commons.wikimedia.org/wiki/File:Mouse-cursor-hand-pointer.svg
+# Lisans : Kamu mali ("simple geometry, ineligible for copyright").
+#          Atif zorunlu degil; yine de kaynagi burada tutuyoruz.
+#
+# Ozgun dosya iki imlec tasiyor (ok + el), 32x24'luk bir tuvalde. Yalnizca
+# el kismini aliyoruz; sola 14 birim kaydirinca 18x23'luk kendi cercevesine
+# oturuyor. Renkler sabit siyah/beyaz degil, sitenin murekkep ve kagit
+# belirteclerine bagli — koyu temada da dogru duruyor.
+EL_HAT = ("M19 1h2v1h1v4h2v1h3v1h2v1h1v1h1v7h-1v3h-1v3H19v-3h-1v-2h-1v-2"
+          "h-1v-2h-1v-1h-1v-3h3v1h1V2h1")
+EL_IC = ("M21 2v9h1V7h2v4h1V8h2v4h1V9h1v1h1v7h-1v3h-1v2h-8v-2h-1v-2h-1v-2"
+         "h-1v-2h-1v-1h-1v-2h2v1h1v1h1V2")
+EL_EN, EL_BOY, EL_KAYDIR = 18, 23, 14
+# Parmak ucu, kaydirilmis cercevede
+EL_UC_X, EL_UC_Y = 6, 1
 
 
 def imlec_piksel(x, y, boy=34, renk=None):
-    """Klasik piksel el imleci.
-
-    shape-rendering=crispEdges sart: onsuz tarayici kareleri yumusatir
-    ve piksel olmanin anlami kalmaz.
-    """
+    """Kamu malı piksel el imleci, verilen boyda."""
     c = renk or MUREKKEP
-    g = PIKSEL_EL
-    yuk, en = len(g), len(g[0])
-    bir = boy / yuk
-
-    def dolu(sx, sy):
-        return 0 <= sy < yuk and 0 <= sx < en and g[sy][sx] == "X"
-
-    hatlar = set()
-    for cx, y0, y1 in PIKSEL_CIZGI:
-        for sy in range(y0, y1 + 1):
-            hatlar.add((cx, sy))
-
-    kareler = []
-    for sy in range(yuk):
-        for sx in range(en):
-            if not dolu(sx, sy):
-                continue
-            # Kose komsulari da sayiliyor. Yalnizca dort komsuya
-            # bakinca kontur ince kaliyor ve el, referansin kalin
-            # hatli klasik imlecine benzemiyordu.
-            kenar = any(not dolu(sx+dx, sy+dy)
-                        for dx in (-1, 0, 1) for dy in (-1, 0, 1)
-                        if (dx, dy) != (0, 0))
-            murekkep = kenar or (sx, sy) in hatlar
-            kareler.append('<rect x="%.2f" y="%.2f" width="%.2f" height="%.2f" fill="%s"/>'
-                           % (sx*bir, sy*bir, bir + .03, bir + .03,
-                              c if murekkep else KAGIT))
-    # Konumlandirma DIS grupta, animasyon IC grupta.
-    #
-    # Ikisi ayni elemanda oldugunda CSS'in transform'u, konumlandiran
-    # transform NITELIGINI eziyor (CSS ozelligi niteligi her zaman
-    # gecersiz kilar). Animasyonun ilk karesi calisir calismaz el
-    # translate(22px,16px)'e duşuyor, yani afisin sol ust kosesine
-    # gidiyor ve orayi tikliyordu.
-    return ('<g transform="translate(%.1f,%.1f)" shape-rendering="crispEdges">'
-            '<g class="imlec">%s</g></g>'
-            % (x, y, "".join(kareler)))
+    o = boy / EL_BOY
+    return ('<g transform="translate(%.1f,%.1f) scale(%.4f) translate(%d,0)" '
+            'shape-rendering="crispEdges">'
+            '<path d="%s" fill="%s"/><path d="%s" fill="%s"/></g>'
+            % (x, y, o, -EL_KAYDIR, EL_HAT, c, EL_IC, KAGIT))
 
 
 def cagri_baglantisi(x, y, metin, punto, renk=None):
@@ -420,10 +484,10 @@ def cagri_baglantisi(x, y, metin, punto, renk=None):
     boy = punto * 2.4
     # Parmak ucu izgarada (5, 0) hucresi; el oraya gore konumlaniyor ki
     # uc tam cizginin sag ucuna dokunsun.
-    bir = boy / len(PIKSEL_EL)
+    o = boy / EL_BOY
     uc_x, uc_y = x + en + 7, y + 7
-    el_x = uc_x - 6 * bir
-    el_y = uc_y
+    el_x = uc_x - EL_UC_X * o
+    el_y = uc_y - EL_UC_Y * o
     return en, (
         # Halka once: elin ve metnin ARKASINDA kalsin
         # Halka yok. Parmak ucunda bir nabiz denendi; cirkindi ve
@@ -432,8 +496,8 @@ def cagri_baglantisi(x, y, metin, punto, renk=None):
         '<g class="dokunus">'
         '<text class="sans" x="%d" y="%d" font-size="%d" letter-spacing="0.6" '
         'font-weight="700" fill="%s">%s</text>'
-        '<rect x="%d" y="%.0f" width="%.0f" height="1.5" fill="%s"/>'
         '</g>'
+        '<rect class="cizik" x="%d" y="%.0f" width="%.0f" height="1.5" fill="%s"/>'
         '%s'
         % (x, y, punto, c, metin,
            x, y + 7, en + 5, c,
@@ -504,8 +568,17 @@ def k_plain(m, w, h, bicim, t, o, serit):
         bb = sigan([tek], alan, o["bas_tavan"], 20)
         blok = 20 + bb + o["alt"] + 22
         ust = (h - blok) / 2
-        p.append('<text class="sans g1" x="%d" y="%.0f" font-size="%d" letter-spacing="1.8" '
-                 'font-weight="700" fill="%s">%s</text>' % (K, ust - 9, o["ad"], MUREKKEP, t["ad"].upper()))
+        # Logo kunyenin solunda; varsa metin saga kayiyor
+        var = bool(logo_veri(m["kod"]))
+        tek_logo = kelime_markasi(m["kod"])
+        lg = (34 if tek_logo else (22 if bicim == "feature" else 26))
+        if var:
+            p.append(logo(m["kod"], K, ust - 9 - lg + 4, lg, azami_en=lg * 4.2))
+        if not tek_logo:
+            mx = K + (int(logo_eni(m["kod"], lg, azami_en=lg * 3.4)) + 12 if var else 0)
+            p.append('<text class="sans g1" x="%d" y="%.0f" font-size="%d" letter-spacing="1.8" '
+                     'font-weight="700" fill="%s">%s</text>'
+                     % (mx, ust - 9, o["ad"], MUREKKEP, t["ad"].upper()))
         p.append('<rect class="cizgi" x="%d" y="%.0f" width="%.0f" height="1" fill="%s"/>' % (K, ust, alan, KURAL))
         p.append('<text class="disp g2" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
                  % (K, ust + 22 + bb, bb, MUREKKEP, tek))
@@ -527,36 +600,83 @@ def k_plain(m, w, h, bicim, t, o, serit):
         # DOLDURACAK sekilde seciliyor; sabit bir tavan verip ortayi bos
         # birakmak dikey formati ucuz gosteriyordu.
         bosluk = y_cagri - (y_ad + 34) - 30
+
+        # Satir bolumleri YAZARIN verdigi gibi kaliyor.
+        #
+        # Metni yeniden sarip alani doldurmayi denedim: punto 34'ten
+        # 46'ya cikti ama cumleler ortasindan bolundu — "Someone /
+        # closed. You / get the / price." Dolu ama okunmuyor; bosluktan
+        # daha kotu.
+        #
+        # Bosluk bunun yerine YERLESIMLE cozuluyor: blok ortada
+        # yuzmuyor, ust kuralin hemen altina capalaniyor ve genis alan
+        # altta, cagrinin ustunde birakiliyor. Dergi ilanlarinin duruşu
+        # bu; ustte yogunluk, altta nefes. Ortalanmis blok kararsiz,
+        # capalanmis blok kararli okunuyor.
         satirlar = t["bas"]
-        parca_alt = None
-        for tavan in range(46, 18, -1):
-            sat = int(tavan * 1.18)
-            if max(len(x) for x in satirlar) * SERIF_EM * tavan > alan:
-                continue
-            ab = max(12, min(o["alt"] + 3, int(tavan * 0.46)))
-            pa = sar(t["alt"], int(alan / (SANS_EM * ab)))
-            yuk = len(satirlar) * sat + 26 + len(pa) * int(ab * 1.45)
-            if yuk <= bosluk:
-                bb, satir, parca_alt, ab_son = tavan, sat, pa, ab
-                break
-        else:
-            bb, satir, ab_son = 19, 23, o["alt"]
+        bb = sigan(satirlar, alan, 46, 22)
+        satir = int(bb * 1.18)
+        ab_son = max(12, min(o["alt"] + 3, int(bb * 0.44)))
+        parca_alt = sar(t["alt"], int(alan / (SANS_EM * ab_son)))
+        # Sigmiyorsa once destek metni, sonra baslik kuculuyor
+        while (len(satirlar)*satir + 26 + len(parca_alt)*int(ab_son*1.45)) > bosluk and bb > 19:
+            bb -= 1
+            satir = int(bb * 1.18)
+            ab_son = max(12, min(o["alt"] + 3, int(bb * 0.44)))
             parca_alt = sar(t["alt"], int(alan / (SANS_EM * ab_son)))
 
-        p.append('<text class="sans g1" x="%d" y="%d" font-size="%d" letter-spacing="1.8" '
-                 'font-weight="700" fill="%s">%s</text>' % (K, y_ad, o["ad"], MUREKKEP, t["ad"].upper()))
+        var = bool(logo_veri(m["kod"]))
+        tek_logo = kelime_markasi(m["kod"])
+        lb = 30 if tek_logo else 20
+        if var:
+            p.append(logo(m["kod"], K, y_ad - lb + 5, lb, azami_en=alan * 0.68))
+        if not tek_logo:
+            p.append('<text class="sans g1" x="%d" y="%d" font-size="%d" letter-spacing="1.8" '
+                     'font-weight="700" fill="%s">%s</text>'
+                     % (K + (int(logo_eni(m["kod"], lb, azami_en=68)) + 12 if var else 0),
+                        y_ad, o["ad"], MUREKKEP, t["ad"].upper()))
         p.append('<rect class="cizgi" x="%d" y="%d" width="%d" height="1" fill="%s"/>' % (K, y_ad + 12, alan, KURAL))
 
         # Blok dikeyde ortalaniyor — ustte toplanip altta bosluk birakmasin
-        yuk = len(satirlar) * satir + 26 + len(parca_alt) * int(ab_son * 1.45)
-        y = y_ad + 34 + max(0, (bosluk - yuk) / 2) + bb
+        y = y_ad + 40 + bb
         for i, sat_metin in enumerate(satirlar):
             p.append('<text class="disp g2" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
                      % (K, y + i*satir, bb, MUREKKEP, sat_metin))
-        y += (len(satirlar)-1)*satir + 26
+        y += (len(satirlar)-1)*satir
+
+        # Destek metni basligin hemen altinda DEGIL, alt kuralin
+        # ustunde duruyor.
+        #
+        # Ikisi ust uste binince kalan bosluk tek bir buyuk cukur
+        # oluyordu ve dikey afis ucuz goruluyordu. Iki ayri capa —
+        # ustte baslik, altta destek ve cagri — ayni bosluğu ikiye
+        # bolup izgaraya cevirıyor. Bosluk ayni, okunuşu baska.
+        alt_yuk = len(parca_alt) * int(ab_son * 1.45)
+        y_altmetin = y_cagri - 30 - 18 - alt_yuk
+
+        # Iki capa arasindaki genis alan.
+        #
+        # Once logoyu buyutmeyi denedim; olmadi. Favicon'lar 16-32 piksel
+        # icin cizilmis, 140 piksele cikinca bulaniklasiyor ve rozet
+        # bicimli olanlar (AICall) kocaman siyah bir bloga donusup afisi
+        # eziyor.
+        #
+        # Onun yerine tipografik bir oge: markanin bas harfi, kagit
+        # tonunda, cok buyuk. Her markada AYNI islem — kontrol grubunun
+        # tekduzeligi bozulmuyor — ama alan doluyor ve afis kime ait
+        # oldugunu uzaktan da soyluyor. Vektorel cizim isi STILLI sete
+        # ait; orada her marka kendi hikayesini anlatacak.
+        orta_bos = y_altmetin - (y + 26)
+        if orta_bos > 96:
+            hb = min(int(orta_bos * 0.92), int(alan * 0.62))
+            p.append('<text class="disp harf" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
+                     % (K - int(hb * 0.06), y + 26 + (orta_bos + hb * 0.72) / 2,
+                        hb, KAGIT2, kacir(m["ad"][0].upper())))
+        # Baslikla cakisacaksa hemen altina duşuyor
+        y_altmetin = max(y_altmetin, y + 26)
         for i, parca in enumerate(parca_alt):
             p.append('<text class="sans g3" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
-                     % (K, y + ab_son + i*int(ab_son*1.45), ab_son, IKINCIL, parca))
+                     % (K, y_altmetin + ab_son + i*int(ab_son*1.45), ab_son, IKINCIL, parca))
 
         p.append('<rect class="cizgi" x="%d" y="%d" width="%d" height="1" fill="%s"/>'
                  % (K, y_cagri - 30, alan, KURAL))
