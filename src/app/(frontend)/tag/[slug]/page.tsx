@@ -144,18 +144,27 @@ export default async function TagPage({ params }: PageProps) {
             <div className="folio mb-2">§ ELSEWHERE</div>
             <h2 className="display text-[1.9rem]">Other topics</h2>
           </div>
-          <div className="flex flex-wrap gap-x-2.5 gap-y-3">
-            {siblings.map((t) => (
-              <Link
-                key={t}
-                href={`/tag/${t}`}
-                className="kicker px-4 py-2 transition-colors hover:text-[var(--accent-ink)]"
-                style={{ border: "1px solid var(--rule)", color: "var(--ink-2)" }}
-              >
-                {tagLabel(t)}
-              </Link>
+          {/* Ana sayfadaki konu dizininin ayni duzeni: cerceveli rozetler
+              serbest sarilinca satirlar farkli yerlerde bitiyor ve dagınık
+              duruyordu. Hizali kolonlar, ustte ince kural, solda folio
+              numarasi — basili dergi dizini gibi. */}
+          <ul className="grid grid-cols-2 gap-x-10 sm:grid-cols-3 lg:grid-cols-5">
+            {siblings.map((t, i) => (
+              <li key={t} style={{ borderTop: "1px solid var(--rule)" }}>
+                <Link
+                  href={`/tag/${t}`}
+                  className="flex items-baseline gap-3 py-3 transition-colors hover:text-[var(--accent-ink)]"
+                >
+                  <span className="folio shrink-0" style={{ color: "var(--ink-3)" }}>
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-[0.95rem]" style={{ color: "var(--ink-2)" }}>
+                    {tagLabel(t)}
+                  </span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
 
         <div className="h-20 sm:h-28" />
