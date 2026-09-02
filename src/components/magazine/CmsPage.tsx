@@ -1,5 +1,9 @@
 import React from "react";
 import { bolumlereAyir, type Bolum } from "./cmsSections";
+import AuthorAvatar from "./AuthorAvatar";
+
+/** About sayfasindaki isimleri veritabanindaki yazarlarla eslestirmek icin */
+export type YazarKaydi = { name: string; avatarUrl: string | null };
 
 /**
  * CMS sayfalarinin dergi duzeni.
@@ -125,24 +129,24 @@ function Serit({ bolum }: { bolum: Bolum }) {
 }
 
 /** Yazar kartlari — About'taki "Who Writes for Fabelo" */
-function Yazarlar({ bolum }: { bolum: Bolum }) {
+function Yazarlar({ bolum, yazarlar }: { bolum: Bolum; yazarlar: YazarKaydi[] }) {
+  /* Basliktaki ad ile veritabanindaki yazar adini esitliyoruz.
+     "Fabelo Editorial Team" gibi uzun adlar veritabaninda "Fabelo" olarak
+     duruyor, o yuzden tam esitlik yerine icerme de kabul ediliyor. */
+  const gorsel = (ad: string) => {
+    const a = ad.toLowerCase();
+    const bul = yazarlar.find(
+      (y) => a === y.name.toLowerCase() || a.startsWith(y.name.toLowerCase())
+    );
+    return bul?.avatarUrl ?? null;
+  };
   return (
     <>
       <BolumBasligi id={bolum.id}>{bolum.baslik}</BolumBasligi>
       <div className="grid gap-px lg:grid-cols-3" style={{ background: "var(--rule)" }}>
         {bolum.altBolumler.map((y) => (
           <article key={y.id} id={y.id} className="flex flex-col gap-3 p-8" style={{ background: "var(--paper)" }}>
-            <div
-              className="display grid size-12 place-items-center rounded-full text-[1.15rem]"
-              style={{ background: "var(--ink)", color: "var(--paper)" }}
-              aria-hidden="true"
-            >
-              {y.baslik
-                .split(/\s+/)
-                .slice(0, 2)
-                .map((k) => k[0])
-                .join("")}
-            </div>
+            <AuthorAvatar name={y.baslik} src={gorsel(y.baslik)} size={56} />
             <h3 className="display mt-1 text-[1.3rem]">{y.baslik}</h3>
             <div className="rule" style={{ maxWidth: 48 }} />
             <p className="text-[0.95rem] leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -194,11 +198,14 @@ export default function CmsPage({
   baslik,
   contentHtml,
   guncellendi,
+  yazarlar = [],
 }: {
   slug: string;
   baslik: string;
   contentHtml: string | null;
   guncellendi?: Date | null;
+  /** About sayfasindaki kunye kartlari icin */
+  yazarlar?: YazarKaydi[];
 }) {
   const { girisHtml, bolumler } = bolumlereAyir(contentHtml);
   const duzen = DUZEN[slug] ?? {};
@@ -303,7 +310,7 @@ export default function CmsPage({
                   ) : bicim === "serit" ? (
                     <Serit bolum={b} />
                   ) : bicim === "yazarlar" ? (
-                    <Yazarlar bolum={b} />
+                    <Yazarlar bolum={b} yazarlar={yazarlar} />
                   ) : bicim === "kapanis" ? (
                     <Kapanis bolum={b} />
                   ) : (

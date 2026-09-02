@@ -18,6 +18,7 @@ import { AdSlot } from "@/components/magazine/AdSlot";
 import { decodeEntities, tagLabel } from "@/lib/taxonomy";
 import { enrichArticleHtml, type MediaBoyut } from "@/components/magazine/enrichArticleHtml";
 import CmsPage from "@/components/magazine/CmsPage";
+import AuthorAvatar from "@/components/magazine/AuthorAvatar";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +82,10 @@ export default async function ArticlePage({ params }: PageProps) {
           baslik={decodeEntities(page.title)}
           contentHtml={enrichArticleHtml(page.contentHtml, await medyaBoyutlari())}
           guncellendi={page.updatedAt}
+          yazarlar={(await db.query.authors.findMany()).map((a: any) => ({
+            name: a.name,
+            avatarUrl: a.avatarUrl ?? null,
+          }))}
         />
         <MagazineFooter />
       </div>
@@ -256,12 +261,7 @@ export default async function ArticlePage({ params }: PageProps) {
                   className="mt-14 flex flex-col gap-5 p-8 sm:flex-row"
                   style={{ background: "var(--paper-2)", border: "1px solid var(--rule)" }}
                 >
-                  <div
-                    className="display grid size-16 shrink-0 place-items-center rounded-full text-2xl"
-                    style={{ background: "var(--ink)", color: "var(--paper)" }}
-                  >
-                    {author.name.charAt(0)}
-                  </div>
+                  <AuthorAvatar name={author.name} src={author.avatarUrl} size={64} />
                   <div>
                     <div className="folio mb-1.5">§ WRITTEN BY</div>
                     <Link href={`/author/${author.slug}`}>

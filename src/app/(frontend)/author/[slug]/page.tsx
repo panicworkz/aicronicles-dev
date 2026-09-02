@@ -7,6 +7,7 @@ import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
 import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magazine/PostCard";
 import { AdSlot } from "@/components/magazine/AdSlot";
+import AuthorAvatar from "@/components/magazine/AuthorAvatar";
 import { decodeEntities } from "@/lib/taxonomy";
 
 export const dynamic = "force-dynamic";
@@ -75,12 +76,7 @@ export default async function AuthorPage({ params }: PageProps) {
               <div className="byline mt-5">{posts.length} STORIES PUBLISHED</div>
             </div>
             <div className="lg:col-span-4 lg:flex lg:justify-end">
-              <div
-                className="display grid size-28 place-items-center rounded-full text-5xl"
-                style={{ background: "var(--ink)", color: "var(--paper)" }}
-              >
-                {author.name.charAt(0)}
-              </div>
+              <AuthorAvatar name={author.name} src={author.avatarUrl} size={112} />
             </div>
           </div>
         </header>
