@@ -1,6 +1,8 @@
 import React from "react";
 import Link from "next/link";
 import { decodeEntities } from "@/lib/taxonomy";
+import { alaniDoldur } from "@/lib/ads";
+import AdTracker from "./AdTracker";
 
 export const fmtDate = (d: Date | string | null | undefined) => {
   if (!d) return "";
@@ -203,25 +205,46 @@ const AD_SPECS: Record<AdSize, { w: number; h: number; note: string }> = {
 };
 
 /**
- * Reklam alani. `creative` verilirse (CMS'ten) o basilir; verilmezse
- * olculeri belli, editoryel dile uygun bir yer tutucu gosterilir.
+ * Reklam alani.
+ *
+ * Yayini kendisi cekiyor: alan adini (`size`) yerlesim adi olarak kabul
+ * edip CMS'te o yerlesime tanimli, tarihi gecerli ve aktif reklamlardan
+ * birini basiyor. Boylece sayfalarda cagri sekli degismiyor —
+ * <AdSlot size="billboard" /> yeterli.
+ *
+ * `creative` elle verilirse o oncelikli; ozel bir yerlesim gerektiginde
+ * kullanilabilir. Hicbir reklam yoksa olculeri belli, editoryel dile
+ * uygun bir yer tutucu gosteriliyor.
  */
-export function AdSlot({
+export async function AdSlot({
   size = "leaderboard",
   label = "Advertisement",
   creative,
   href,
+  placement,
 }: {
   size?: AdSize;
   label?: string;
   creative?: { imageUrl?: string | null; alt?: string | null } | null;
   href?: string | null;
+  /** CMS yerlesim adi — verilmezse `size` kullanilir */
+  placement?: string;
 }) {
   const spec = AD_SPECS[size];
 
-  const body = creative?.imageUrl ? (
+  // Elle verilmediyse CMS'ten al
+  const cmsReklami = creative?.imageUrl ? null : await alaniDoldur(placement ?? size);
+
+  const gorsel = creative?.imageUrl
+    ? { imageUrl: creative.imageUrl, alt: creative.alt ?? null }
+    : cmsReklami
+      ? { imageUrl: cmsReklami.imageUrl, alt: cmsReklami.alt }
+      : null;
+  const hedef = href ?? cmsReklami?.targetUrl ?? null;
+
+  const body = gorsel ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={creative.imageUrl} alt={creative.alt || label} className="max-h-full max-w-full object-contain" />
+    <img src={gorsel.imageUrl} alt={gorsel.alt || label} className="max-h-full max-w-full object-contain" />
   ) : (
     <span className="folio" style={{ color: "var(--ink-3)" }}>
       {label.toUpperCase()} · {spec.note}
@@ -245,8 +268,13 @@ export function AdSlot({
           maxHeight: spec.h,
         }}
       >
-        {href && creative?.imageUrl ? (
-          <a href={href} target="_blank" rel="noopener noreferrer sponsored" className="grid size-full place-items-center">
+        {cmsReklami && hedef ? (
+          // CMS reklami: gosterim ve tiklama sayiliyor
+          <AdTracker id={cmsReklami.id} href={hedef} className="grid size-full place-items-center">
+            {body}
+          </AdTracker>
+        ) : hedef && gorsel ? (
+          <a href={hedef} target="_blank" rel="noopener noreferrer sponsored" className="grid size-full place-items-center">
             {body}
           </a>
         ) : (
