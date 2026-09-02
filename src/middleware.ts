@@ -22,6 +22,13 @@ function isPublicApiRequest(pathname: string, method: string): boolean {
     return true;
   }
 
+  // Newsletter sign-up — the form is on every public page, so this POST
+  // cannot require a session. The route itself carries the honeypot,
+  // e-mail validation and per-IP rate limit.
+  if (method === 'POST' && pathname === '/api/subscribe') {
+    return true;
+  }
+
   // Public Ad impression & click tracking
   if (method === 'POST' && (pathname.includes('/click') || pathname.includes('/impression')) && pathname.startsWith('/api/ads/')) {
     return true;
