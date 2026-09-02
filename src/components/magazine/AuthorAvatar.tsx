@@ -30,9 +30,20 @@ export default function AuthorAvatar({
     .toUpperCase();
 
   return (
+    /* Daire zemini sitenin kagit rengi — sabit siyah degil.
+       Fabelo isareti saydam bir PNG; sabit koyu zemin acik temada
+       sayfadan kopuyordu. --paper-2 acik temada acik, koyu temada koyu
+       (bkz. globals.css icindeki ".dark .mag" blogu), yani daire hangi
+       temadaysa ona uyuyor. Ince kural cizgisi de kagit uzerinde
+       kaybolmamasi icin. */
     <div
       className={`shrink-0 overflow-hidden rounded-full ${className}`}
-      style={{ width: size, height: size, background: "var(--ink)" }}
+      style={{
+        width: size,
+        height: size,
+        background: "var(--paper-2)",
+        border: "1px solid var(--rule)",
+      }}
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -47,7 +58,7 @@ export default function AuthorAvatar({
       ) : (
         <span
           className="display grid size-full place-items-center"
-          style={{ color: "var(--paper)", fontSize: size * 0.36 }}
+          style={{ color: "var(--ink)", fontSize: size * 0.36 }}
           aria-hidden="true"
         >
           {basHarfler}
