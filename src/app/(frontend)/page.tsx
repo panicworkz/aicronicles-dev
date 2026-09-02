@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { db, schema } from "@/db";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
 import { FABELO_TAGS, SECTIONS, tagLabel, decodeEntities } from "@/lib/taxonomy";
@@ -63,6 +63,14 @@ export default async function HomePage() {
     orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.createdAt)],
     limit: 60,
   });
+
+  /* Arsivdeki yazi sayisi. rows 60 ile sinirli oldugu icin onu saymak
+     arsiv buyudugunde yanlis sonuc verirdi; ayri sayiyoruz. */
+  const sayim = (await db.execute(
+    sql`SELECT count(*)::int AS n FROM posts WHERE status = 'published'`
+  )) as unknown as { rows?: { n: number }[] };
+  const arsivSayisi =
+    (Array.isArray(sayim) ? (sayim[0] as any) : sayim.rows?.[0])?.n ?? 0;
 
   const authors = await db.query.authors.findMany();
   const categories = await db.query.categories.findMany();
@@ -195,7 +203,8 @@ export default async function HomePage() {
             <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
               <div className="lg:col-span-7">
                 <div className="folio mb-4" style={{ color: "var(--accent)" }}>
-                  § THE FABELO DISPATCH
+                  § THE FABELO DISPATCH — {arsivSayisi} GUIDE{arsivSayisi === 1 ? "" : "S"} IN
+                  THE ARCHIVE
                 </div>
                 <h2
                   className="display mb-5 text-[clamp(2.2rem,5vw,3.8rem)]"
