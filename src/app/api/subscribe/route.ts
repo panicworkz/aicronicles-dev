@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
 
@@ -49,7 +49,7 @@ function hizliMi(ip: string): boolean {
 /** Gateway'e ilet — gateway ad ve mesaj bekliyor, ikisini de biz uretiyoruz */
 async function gatewayeIlet(eposta: string, kaynak: string, kaynakUrl: string) {
   const kontrol = new AbortController();
-  const zamanAsimi = setTimeout(() => kontrol.abort(), 6000);
+  const zamanAsimi = setTimeout(() => kontrol.abort(), 20000);
   try {
     const cevap = await fetch(GATEWAY, {
       method: "POST",
@@ -135,15 +135,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  /* 2) Gateway'e ilet — basarisiz olsa bile abonelik gecerli */
-  const durum = await gatewayeIlet(eposta, kaynak, kaynakUrl);
-  try {
-    await db.execute(
-      sql`UPDATE subscribers SET gateway_status = ${durum} WHERE email = ${eposta}`
-    );
-  } catch {
-    // Durum notu tutulamadiysa abonelige zarari yok
-  }
+  /* 2) Gateway'e ilet — yanittan SONRA.
+     Gateway e-postayi es zamanli gonderiyor ve SMTP birkac saniye
+     surebiliyor; ziyaretciyi bunun icin bekletmiyoruz. Abonelik zaten
+     yukarida kayda gecti, iletim durumu arkadan isleniyor. */
+  after(async () => {
+    const durum = await gatewayeIlet(eposta, kaynak, kaynakUrl);
+    try {
+      await db.execute(
+        sql`UPDATE subscribers SET gateway_status = ${durum} WHERE email = ${eposta}`
+      );
+    } catch {
+      // Durum notu tutulamadiysa abonelige zarari yok
+    }
+  });
 
   return NextResponse.json({ ok: true });
 }
