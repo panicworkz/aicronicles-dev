@@ -314,3 +314,11 @@ html {
   scroll-margin-top: var(--mag-header-h, 145px); /* 36 + 72 + 34 + 3px cizgi */
 }
 
+/* Footer'daki abonelik sutunu bir istisna: kendi tepesine hizalanirsa kunye
+   blogunun ust payi ve logosu ekranin disinda kalip yarim gorunuyordu.
+   Footer'in ust payi kadar (pt-20) fazladan bosluk birakiyoruz ki blok
+   butun halinde, kesilmeden insin. */
+.mag #subscribe {
+  scroll-margin-top: calc(var(--mag-header-h, 145px) + 5rem);
+}
+

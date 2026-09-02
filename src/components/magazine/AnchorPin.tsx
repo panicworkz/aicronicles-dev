@@ -32,8 +32,20 @@ export default function AnchorPin() {
       return el ? Math.round(el.getBoundingClientRect().height) : 145;
     };
 
+    /**
+     * Ust pay: oncelik hedefin kendi scroll-margin-top degerinde. CSS'te
+     * varsayilan olarak kunye yuksekligi yazili, ama tek tek hedefler bunu
+     * artirabiliyor (footer'daki abonelik sutunu gibi). Burada sabit kunye
+     * yuksekligi kullansaydik, tarayicinin kendi cipa davranisiyla bizimki
+     * ayri yerlere gider, iki farkli sonuc cikardi.
+     */
+    const ustPay = (el: Element) => {
+      const v = parseFloat(getComputedStyle(el).scrollMarginTop || "");
+      return Number.isFinite(v) && v > 0 ? v : kunye();
+    };
+
     const hedefKonumu = (el: Element) =>
-      Math.max(0, Math.round(el.getBoundingClientRect().top + window.scrollY - kunye()));
+      Math.max(0, Math.round(el.getBoundingClientRect().top + window.scrollY - ustPay(el)));
 
     const git = (el: Element) => {
       const baslangic = window.scrollY;

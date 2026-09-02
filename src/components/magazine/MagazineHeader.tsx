@@ -93,6 +93,11 @@ export default function MagazineHeader() {
               // atiyor; bunun yerine tarayicinin yumusak kaydirmasini kullan.
               if (window.location.pathname === "/") {
                 e.preventDefault();
+                // Onceki cipadan kalan "#subscribe" adres cubugunda asili
+                // kaliyordu; tepeye donerken adresi de temizliyoruz.
+                if (window.location.hash) {
+                  history.replaceState(null, "", window.location.pathname + window.location.search);
+                }
                 window.scrollTo({ top: 0 });
               }
             }}

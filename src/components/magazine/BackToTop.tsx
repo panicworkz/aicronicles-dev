@@ -57,6 +57,10 @@ export default function BackToTop() {
   const yukari = () => {
     // Yumusak hareket CSS'teki scroll-behavior ile geliyor; hareket azaltma
     // tercihi de orada isleniyor.
+    // Tepeye donuyoruz; adres cubugunda asili kalan cipayi da birakiyoruz.
+    if (window.location.hash) {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
     window.scrollTo({ top: 0 });
   };
 
