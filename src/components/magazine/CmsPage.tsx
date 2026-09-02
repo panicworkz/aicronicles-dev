@@ -38,8 +38,8 @@ const DUZEN: Record<string, Record<string, Bicim>> = {
 /** Hukuki sayfalar — sadelik ve taranabilirlik yeter, kart/serit yok */
 const HUKUKI = new Set(["terms-and-conditions", "data-and-privacy"]);
 
-const SUTUN = "minmax(0, 760px)";
-const GRID = `240px ${SUTUN} 1fr`;
+/** Okuma olcusu — yazi sayfasindaki govde metniyle ayni (satir basina ~70 karakter) */
+const SUTUN = 760;
 
 /* --- Parcalar ------------------------------------------------------------ */
 
@@ -243,61 +243,76 @@ export default function CmsPage({
         </div>
       )}
 
-      {/* --- Ray + govde -------------------------------------------------- */}
+      {/* --- Ray + govde --------------------------------------------------
+          Iki kolon: ray | govde. Bolumler ayri ayri izgara ogesi DEGIL,
+          govde kolonunun normal akisinda duruyor.
+
+          Onceki halinde her bolum kendi izgara satirindaydi ve ray
+          "grid-row: 1 / -1" ile hepsine yayiliyordu. CSS Grid, satirlara
+          yayilan bir oge satirlarin toplamindan uzun oldugunda kisa
+          satirlari gererek onu sigdirir; ray ~450px oldugu icin ilk kisa
+          bolumun altinda ~350px'lik bir bosluk aciliyordu. Akisa cevirince
+          gerdirecek satir kalmiyor, genislikler ise ayni: duz metin 760,
+          kart/serit kolonun tamami. */}
       <div className="mag-wrap pb-20 pt-14 sm:pb-28">
-        <div className="lg:grid lg:gap-x-12" style={{ gridTemplateColumns: GRID }}>
+        <div className="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-x-12">
           {/* Icindekiler — 3'ten az baslikta gostermeye degmez */}
           {bolumler.length > 2 && (
-            <aside
-              className="mb-12 hidden lg:mb-0 lg:block"
-              style={{ gridColumn: 1, gridRow: "1 / -1", position: "sticky", top: "calc(var(--mag-header-h, 145px) + 2rem)", alignSelf: "start" }}
-            >
-              <div className="folio mb-4" style={{ color: "var(--accent)" }}>
-                § CONTENTS
+            <aside className="hidden lg:block">
+              {/* Yapiskanlik ic sarmalayicida: aside izgara ogesi olarak
+                  kolonun tamamini kaplasin ki ray kaydirma boyunca gezsin. */}
+              <div
+                style={{ position: "sticky", top: "calc(var(--mag-header-h, 145px) + 2rem)" }}
+              >
+                <div className="folio mb-4" style={{ color: "var(--accent)" }}>
+                  § CONTENTS
+                </div>
+                <nav>
+                  <ol className="flex flex-col">
+                    {bolumler.map((b, i) => (
+                      <li key={b.id} style={{ borderTop: "1px solid var(--rule)" }}>
+                        <a
+                          href={`#${b.id}`}
+                          className="flex gap-3 py-2.5 text-[0.88rem] leading-snug transition-colors hover:text-[var(--accent-ink)]"
+                        >
+                          <span className="folio shrink-0" style={{ color: "var(--ink-3)" }}>
+                            {String(i + 1).padStart(2, "0")}
+                          </span>
+                          <span>{b.baslik}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                </nav>
               </div>
-              <nav>
-                <ol className="flex flex-col">
-                  {bolumler.map((b, i) => (
-                    <li key={b.id} style={{ borderTop: "1px solid var(--rule)" }}>
-                      <a
-                        href={`#${b.id}`}
-                        className="flex gap-3 py-2.5 text-[0.88rem] leading-snug transition-colors hover:text-[var(--accent-ink)]"
-                      >
-                        <span className="folio shrink-0" style={{ color: "var(--ink-3)" }}>
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <span>{b.baslik}</span>
-                      </a>
-                    </li>
-                  ))}
-                </ol>
-              </nav>
             </aside>
           )}
 
-          {/* Bolumler — duz olanlar 760'lik sutunda, digerleri sona kadar */}
-          {bolumler.map((b) => {
-            const bicim = duzen[b.id];
-            return (
-              <section
-                key={b.id}
-                className="mb-14 last:mb-0 sm:mb-16"
-                style={{ gridColumnStart: 2, gridColumnEnd: genis(b) ? 4 : 3 }}
-              >
-                {bicim === "kartlar" ? (
-                  <Kartlar bolum={b} />
-                ) : bicim === "serit" ? (
-                  <Serit bolum={b} />
-                ) : bicim === "yazarlar" ? (
-                  <Yazarlar bolum={b} />
-                ) : bicim === "kapanis" ? (
-                  <Kapanis bolum={b} />
-                ) : (
-                  <DuzBolum bolum={b} />
-                )}
-              </section>
-            );
-          })}
+          {/* Govde — duz bolumler 760'ta, kart/serit kolonun tamaminda */}
+          <div>
+            {bolumler.map((b) => {
+              const bicim = duzen[b.id];
+              return (
+                <section
+                  key={b.id}
+                  className="mb-14 last:mb-0 sm:mb-16"
+                  style={{ maxWidth: genis(b) ? undefined : SUTUN }}
+                >
+                  {bicim === "kartlar" ? (
+                    <Kartlar bolum={b} />
+                  ) : bicim === "serit" ? (
+                    <Serit bolum={b} />
+                  ) : bicim === "yazarlar" ? (
+                    <Yazarlar bolum={b} />
+                  ) : bicim === "kapanis" ? (
+                    <Kapanis bolum={b} />
+                  ) : (
+                    <DuzBolum bolum={b} />
+                  )}
+                </section>
+              );
+            })}
+          </div>
         </div>
       </div>
     </main>
