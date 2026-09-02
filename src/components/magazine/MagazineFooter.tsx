@@ -65,7 +65,7 @@ export default function MagazineFooter() {
                 alt="Fabelo"
                 width={42}
                 height={42}
-                className="rounded-[3px]"
+                className="mag-logo rounded-[3px]"
               />
               <span className="display text-[1.9rem] leading-none" style={{ letterSpacing: "-0.04em" }}>
                 Fabelo<span style={{ color: "var(--accent)" }}>.</span>

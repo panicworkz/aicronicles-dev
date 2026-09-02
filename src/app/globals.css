@@ -151,6 +151,15 @@
   color: var(--accent-ink);
 }
 
+/* --- Marka isareti -------------------------------------------------------
+   fabelo-logo.webp'in icinde saydam bosluk esit degil: 256px'lik tuvalde
+   ust 34 / alt 23, sol 64 / sag 44. Yani isaret kendi dosyasinda 5.5px
+   asagida ve 10px sagda duruyor; kutusu ortali olsa bile yanindaki
+   yaziya gore kaymis gorunuyordu.
+   Logoya dokunmuyoruz — olculen kaymayi telafi ediyoruz. Yuzde
+   kullaniyoruz ki her boyutta (header 40px, footer 42px) gecerli olsun. */
+.mag-logo { transform: translate(-3.9%, -2.15%); }
+
 /* --- Ayraclar ----------------------------------------------------------- */
 .mag .rule       { border-top: 1px solid var(--rule); }
 .mag .rule-heavy { border-top: 2px solid var(--ink); }

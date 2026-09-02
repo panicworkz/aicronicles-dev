@@ -108,7 +108,7 @@ export default function MagazineHeader() {
               width={44}
               height={44}
               priority
-              className="rounded-[3px]"
+              className="mag-logo rounded-[3px]"
               style={{ width: stuck ? 30 : 40, height: stuck ? 30 : 40, transition: "all .3s" }}
             />
             <span

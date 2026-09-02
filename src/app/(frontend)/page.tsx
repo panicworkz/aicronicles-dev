@@ -314,18 +314,29 @@ export default async function HomePage() {
         {/* ================= TAG DIZINI ================= */}
         <section className="mag-wrap pt-16 sm:pt-24">
           <SectionHead folio="06" title="Topics" blurb="Every subject the desk covers." />
-          <div className="flex flex-wrap gap-x-2.5 gap-y-3">
-            {FABELO_TAGS.map((t) => (
-              <Link
-                key={t}
-                href={`/tag/${t}`}
-                className="kicker px-4 py-2 transition-colors"
-                style={{ border: "1px solid var(--rule)", color: "var(--ink-2)" }}
-              >
-                {tagLabel(t)}
-              </Link>
+          {/* Konu dizini — hizali kolonlar.
+              Once cerceveli rozetler serbest sariliyordu: satirlar farkli
+              uzunlukta bitiyor, ikinci satir yarim kaliyor ve dagınık
+              duruyordu. Ayni dizin footer'da zaten kolonlarda; burasi da
+              ayni dili konussun. Cerceve yerine ince ust cizgi — dergi
+              dizini gibi, sayfayi kutulara bolmuyor. */}
+          <ul className="grid grid-cols-2 gap-x-10 sm:grid-cols-3 lg:grid-cols-5">
+            {FABELO_TAGS.map((t, i) => (
+              <li key={t} style={{ borderTop: "1px solid var(--rule)" }}>
+                <Link
+                  href={`/tag/${t}`}
+                  className="group flex items-baseline gap-3 py-3 transition-colors hover:text-[var(--accent-ink)]"
+                >
+                  <span className="folio shrink-0" style={{ color: "var(--ink-3)" }}>
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-[0.95rem]" style={{ color: "var(--ink-2)" }}>
+                    {tagLabel(t)}
+                  </span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
 
         <div className="h-20 sm:h-28" />
