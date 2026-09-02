@@ -70,6 +70,18 @@ export default function PanicAdsPage() {
   const [submitting, setSubmitting] = useState(false);
   /** Buyuk onizlemede acik olan ilan */
   const [preview, setPreview] = useState<any | null>(null);
+
+  /* Esc her iki pencereyi de kapatsin — once buyuk onizleme, sonra form.
+     Disari tiklama da ayni isi yapiyor; klavyeyle calisanlar icin bu. */
+  useEffect(() => {
+    const kapat = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (preview) setPreview(null);
+      else setIsModalOpen(false);
+    };
+    window.addEventListener("keydown", kapat);
+    return () => window.removeEventListener("keydown", kapat);
+  }, [preview]);
   const [filterPlacement, setFilterPlacement] = useState<string>('all');
 
   // Modal / Form state
@@ -481,8 +493,16 @@ export default function PanicAdsPage() {
 
       {/* Create / Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="bg-card border border-border rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setIsModalOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-card border border-border rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+          >
             <div className="flex items-center justify-between p-5 border-b border-border">
               <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <Megaphone className="size-5 text-primary" />
