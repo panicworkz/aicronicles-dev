@@ -264,17 +264,6 @@ def stil_blogu(ek=""):
       60%,92% { transform:none }
       100%    { opacity:0; transform:translateY(-6px) }
     }
-    /* Tek halka, tek kez. Surekli yanip sonen hicbir sey yok. */
-    /* Daire 0,0'da duruyor ve disaridan konumlandiriliyor; boylece
-       transform-origin'in varsayilani (0 0) tam dairenin merkezi.
-       "center" yazsaydik SVG'de transform-box view-box oldugu icin
-       AFISIN ortasi kastedilirdi. */
-    .halka { animation: halka SUREs cubic-bezier(.16,1,.3,1) infinite }
-    @keyframes halka {
-      0%,53%  { opacity:0; transform:scale(.35) }
-      57%     { opacity:.5; transform:scale(.6) }
-      68%,100%{ opacity:0; transform:scale(1.15) }
-    }
 EK
     @media (prefers-reduced-motion: reduce) {
       * { animation:none !important; opacity:1 !important; transform:none !important }
@@ -300,7 +289,7 @@ def imlec(x, y, boy=30, renk=None):
     Anlatilan sey su: "baktim, dogru karar, tikliyorum."
 
     Dokunus dugmeyi ZIPLATMIYOR. Sert bir hareket reklam paniginin
-    dili; burada 1.5 piksellik bir cokme ve sonen tek bir halka var.
+    dili; burada yalnizca 1.5 piksellik kisa bir cokme var.
     """
     c = renk or MUREKKEP
     o = boy / 34.0
@@ -337,35 +326,34 @@ def imlec(x, y, boy=30, renk=None):
 # goruyordu — klasik imlecin okunmasini saglayan sey kademeli parmaklar
 # ve aralarindaki hat. Bunlar siluetten turemez, ayrica yaziliyor.
 PIKSEL_EL = [
-    ".....XXX........",
-    ".....XXX........",
-    ".....XXX........",
-    ".....XXX........",
-    ".....XXX........",
-    ".....XXX........",
-    ".....XXXXXX.....",
-    ".....XXXXXX.....",
+    ".....XXXX.......",
+    ".....XXXX.......",
+    ".....XXXX.......",
+    ".....XXXX.......",
+    ".....XXXX.......",
+    ".....XXXX.......",
+    ".....XXXXXXX....",
     ".....XXXXXXXXX..",
-    ".XXX.XXXXXXXXX..",
-    ".XXXXXXXXXXXXXX.",
-    ".XXXXXXXXXXXXXX.",
-    ".XXXXXXXXXXXXXX.",
-    "..XXXXXXXXXXXXX.",
-    "..XXXXXXXXXXXXX.",
+    ".....XXXXXXXXXXX",
+    ".XXX.XXXXXXXXXXX",
+    ".XXXXXXXXXXXXXXX",
+    ".XXXXXXXXXXXXXXX",
+    ".XXXXXXXXXXXXXXX",
+    "..XXXXXXXXXXXXXX",
+    "..XXXXXXXXXXXXXX",
+    "..XXXXXXXXXXXXXX",
+    "...XXXXXXXXXXXXX",
+    "...XXXXXXXXXXXXX",
     "...XXXXXXXXXXXX.",
-    "...XXXXXXXXXXXX.",
-    "...XXXXXXXXXXXX.",
-    "...XXXXXXXXXXXX.",
-    "....XXXXXXXXXXX.",
     "....XXXXXXXXXX..",
 ]
 
 # (x, ilk_satir, son_satir) — parmak aralarindaki dikey hatlar
 PIKSEL_CIZGI = [
-    (8,  6, 10),   # isaret / orta
-    (11, 8, 10),   # orta / yuzuk
-    (13, 9, 10),   # yuzuk / serce
-    (4,  9, 12),   # basparmak ayrimi
+    (9,  6, 11),   # isaret / orta
+    (12, 7, 11),   # orta / yuzuk
+    (14, 8, 11),   # yuzuk / serce
+    (4,  9, 13),   # basparmak ayrimi
 ]
 
 
@@ -393,8 +381,12 @@ def imlec_piksel(x, y, boy=34, renk=None):
         for sx in range(en):
             if not dolu(sx, sy):
                 continue
-            kenar = not (dolu(sx-1, sy) and dolu(sx+1, sy)
-                         and dolu(sx, sy-1) and dolu(sx, sy+1))
+            # Kose komsulari da sayiliyor. Yalnizca dort komsuya
+            # bakinca kontur ince kaliyor ve el, referansin kalin
+            # hatli klasik imlecine benzemiyordu.
+            kenar = any(not dolu(sx+dx, sy+dy)
+                        for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                        if (dx, dy) != (0, 0))
             murekkep = kenar or (sx, sy) in hatlar
             kareler.append('<rect x="%.2f" y="%.2f" width="%.2f" height="%.2f" fill="%s"/>'
                            % (sx*bir, sy*bir, bir + .03, bir + .03,
@@ -419,7 +411,7 @@ def cagri_baglantisi(x, y, metin, punto, renk=None):
 
     YERLESIM: el metnin USTUNE degil, cizginin sag ucunun ALTINA
     geliyor. Ilk denemede tam metnin ortasindaydi ve kelimeleri
-    kapatiyordu; halka da bir kelimeyi cemberlemis gibi duruyordu.
+    kapatiyordu.
     Parmak ucu cizgiye deger, govde asagi sarkar — ekranda gercekte
     oldugu gibi.
     """
@@ -434,18 +426,16 @@ def cagri_baglantisi(x, y, metin, punto, renk=None):
     el_y = uc_y
     return en, (
         # Halka once: elin ve metnin ARKASINDA kalsin
-        # Dokunusta parmak ucunda tek bir nabiz. Sonsuz yanip sonen
-        # hicbir sey yok; bir kez cikip soner.
-        '<g transform="translate(%.0f,%.0f)"><circle class="halka" cx="0" cy="0" r="9" '
-        'fill="none" stroke="%s" stroke-width="1.5"/></g>'
+        # Halka yok. Parmak ucunda bir nabiz denendi; cirkindi ve
+        # afisin sakin dilini bozuyordu. Dokunus hissi zaten metnin
+        # kisa cokusunde var — fazlasi gurultu.
         '<g class="dokunus">'
         '<text class="sans" x="%d" y="%d" font-size="%d" letter-spacing="0.6" '
         'font-weight="700" fill="%s">%s</text>'
         '<rect x="%d" y="%.0f" width="%.0f" height="1.5" fill="%s"/>'
         '</g>'
         '%s'
-        % (uc_x, uc_y + 1, c,
-           x, y, punto, c, metin,
+        % (x, y, punto, c, metin,
            x, y + 7, en + 5, c,
            imlec_piksel(el_x, el_y, boy, c)))
 
