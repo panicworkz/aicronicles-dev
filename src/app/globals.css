@@ -281,6 +281,12 @@
 }
 .mag .article-body--koyu a:hover { color: var(--accent); }
 
+/* Gomulu reklam afisi — kabini tam doldurur.
+   <img> yerine gomuyoruz ki animasyonlar GPU'da yurusun; bkz.
+   src/lib/inlineSvg.ts */
+.ad-svg { display: block; line-height: 0; }
+.ad-svg > svg { display: block; width: 100%; height: 100%; }
+
 .mag .article-body table { width: 100%; border-collapse: collapse; margin-block: 2em; font-size: 0.94rem; }
 .mag .article-body th {
   text-align: left;

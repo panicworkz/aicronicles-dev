@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { alaniDoldur } from "@/lib/ads";
+import { gomulecekSvg } from "@/lib/inlineSvg";
 import AdTracker from "./AdTracker";
 
 /**
@@ -82,16 +83,28 @@ export async function AdSlot({
      sey kazandirmiyordu; bu afis ziyaretciyi /advertise sayfasina
      gonderiyor, yani bos alan satis yapiyor. */
   const evReklami = !gorsel;
-  const body = gorsel ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={gorsel.imageUrl} alt={gorsel.alt || label} className="size-full object-cover" />
+  const adres = gorsel ? gorsel.imageUrl : `/media/house-${format}.svg`;
+  const altMetin = gorsel
+    ? gorsel.alt || label
+    : "This space is available — advertise on Fabelo";
+
+  /* Afisi sayfaya GOMUYORUZ, <img> ile basmiyoruz.
+     Bir <img> icindeki SVG'de bilesik katman yoktur: tarayici her karede
+     goruntunun tamamini islemcide yeniden tarar. Gomulu SVG'de
+     transform/opacity animasyonlari GPU'ya gidiyor. Dosya okunamazsa
+     <img>'e duserek calismaya devam ediyoruz. */
+  const gomulu = await gomulecekSvg(adres);
+
+  const body = gomulu ? (
+    <div
+      role="img"
+      aria-label={altMetin}
+      className="ad-svg size-full"
+      dangerouslySetInnerHTML={{ __html: gomulu }}
+    />
   ) : (
     // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={`/media/house-${format}.svg`}
-      alt="This space is available — advertise on Fabelo"
-      className="size-full object-cover"
-    />
+    <img src={adres} alt={altMetin} className="size-full object-cover" />
   );
 
   return (

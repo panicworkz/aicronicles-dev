@@ -51,7 +51,8 @@ PERDELER = [
     },
 ]
 
-SURE = 15          # ana dongu, saniye
+SURE = 16          # ana dongu — 2 sn'lik ortak vurus izgarasinda
+                   # (bkz. network.py VURUS): butun afisler ayni ritimde
 ADIM = 100 / 3     # bir perdenin yuzde payi
 
 
@@ -65,9 +66,11 @@ def zamanlama() -> str:
     p = []
     for i in range(3):
         # Baslik: maske perdesi + hafif yukselme
+        # Maskeli perde kaldirildi: kirpma her karede yeniden hesaplanir
+        # ve GPU'ya gitmez. Ayni etki opacity + translate ile, bilesik
+        # katmanda ve cok daha ucuza aliniyor.
         a, b, c, d = yuzde(i, 2), yuzde(i, 6), yuzde(i, 29), yuzde(i, 32.6)
-        p.append(f"@keyframes perde{i} {{ 0%,{a}%{{transform:scaleX(0)}} {b}%,{c}%{{transform:scaleX(1)}} {d}%,100%{{transform:scaleX(0)}} }}")
-        p.append(f"@keyframes yuksel{i} {{ 0%,{a}%{{transform:translateY(14px)}} {b}%,{c}%{{transform:none}} {d}%,100%{{transform:translateY(-12px)}} }}")
+        p.append(f"@keyframes yuksel{i} {{ 0%,{a}%{{opacity:0;transform:translateY(14px)}} {b}%,{c}%{{opacity:1;transform:none}} {d}%,100%{{opacity:0;transform:translateY(-12px)}} }}")
 
         # Soru balonu
         sa, sb, sc, sd = yuzde(i, 1), yuzde(i, 5), yuzde(i, 30), yuzde(i, 32.6)
@@ -97,7 +100,6 @@ def measure() -> str:
     siniflar, perdeler, sohbet = [], [], []
     for i, s in enumerate(PERDELER):
         siniflar.append(
-            f".perde{i}{{transform-origin:0 0;animation:perde{i} {SURE}s cubic-bezier(.16,1,.3,1) infinite}}\n"
             f"    .yuksel{i}{{animation:yuksel{i} {SURE}s cubic-bezier(.16,1,.3,1) infinite}}\n"
             f"    .soru{i}{{animation:soru{i} {SURE}s cubic-bezier(.16,1,.3,1) infinite}}\n"
             f"    .balon{i}{{animation:balon{i} {SURE}s cubic-bezier(.16,1,.3,1) infinite}}\n"
@@ -111,7 +113,7 @@ def measure() -> str:
             f'fill="{renk}" letter-spacing="-1.5">{html.escape(metin)}</text>'
             for n, (metin, renk) in enumerate(s["baslik"])
         )
-        perdeler.append(f'<g clip-path="url(#m{i})">\n    {satirlar}\n  </g>')
+        perdeler.append(f'<g>\n    {satirlar}\n  </g>')
 
         # Soru balonu: kuyruk sol altta. Cevap balonu: kuyruk sag altta.
         sohbet.append(f'''<g class="soru{i}">
@@ -130,9 +132,7 @@ def measure() -> str:
   </g>''')
 
     maskeler = "\n    ".join(
-        f'<clipPath id="m{i}"><rect class="perde{i}" x="{BASLIK_X}" y="30" width="{BASLIK_W}" height="140"/></clipPath>'
-        for i in range(3)
-    )
+        f'' for i in range(3))
 
     return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 200" width="1440" height="200" role="img" aria-label="AICall — AI voice agents answer every business call, 24/7, in any language, at any scale. Hear a live demo at aicall.pw">
   <title>AICall — Every call, answered</title>
@@ -154,7 +154,7 @@ def measure() -> str:
     /* Noktalar konusurken zipliyor.
        transform-box: fill-box KULLANMIYORUZ; tarayicilar arasinda
        tutarsiz. Her nokta kendi grubunda, orijini merkezinde. */
-    .zipla {{ transform-origin: 0 0; animation: zipla .9s ease-in-out infinite }}
+    .zipla {{ transform-origin: 0 0; animation: zipla 1s ease-in-out infinite }}
     /* Not: noktalar yalnizca gorunur olduklari ~1 sn boyunca ise yarar;
        gorunmezken de ticklemesin diye .nokta grubu steps(1) ile
        aciliyor-kapaniyor, boylece tarayici cogu zaman hicbir sey
