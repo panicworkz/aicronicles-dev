@@ -155,10 +155,13 @@ export default function MagazineFooter() {
           Sagda basa-don butonu duruyor; yaziyi ezmemesi icin pay birakiyoruz. */}
       <div style={{ borderTop: "1px solid #262c33" }}>
         <div className="mag-shell flex flex-col items-center justify-between gap-4 py-6 text-center sm:flex-row sm:text-left sm:pr-24">
-          {/* Kunye — ufukyorulmaz.com ve themez.panic.pw ile ayni dil.
-              Onceki "FABELO — ALL RIGHTS RESERVED" satirinin yerini aldi. */}
+          {/* Kunye — agdaki diger sitelerle ayni kalip, ama yayinin
+              KENDI adiyla: ufukyorulmaz.com "Ufuk Yorulmaz", themez
+              "Themez" yaziyor; burasi Fabelo.
+              Turkce destegi geldiginde karsiligi:
+              "© 2026 Fabelo — bir PanicWorkz girisimi." */}
           <span className="byline" style={{ color: "#6b7178" }}>
-            © {new Date().getFullYear()} Ufuk Yorulmaz — a{" "}
+            © {new Date().getFullYear()} Fabelo — a{" "}
             <a
               href="https://panicworkz.com/"
               target="_blank"
