@@ -286,3 +286,29 @@ export const ads = pgTable('ads', {
   index('ads_ends_at_idx').on(table.endsAt),
 ]);
 
+
+/**
+ * Bulten aboneleri.
+ *
+ * Abonelik formu daha once hicbir yere gitmiyordu (onSubmit yalnizca
+ * preventDefault yapiyordu). Artik adres once buraya yaziliyor, sonra
+ * merkezi contact-gateway'e iletiliyor: gateway erisilemese bile kayit
+ * kaybolmuyor.
+ */
+export const subscribers = pgTable('subscribers', {
+  id: serial('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  /** Formun sayfadaki yeri — footer | dispatch | article */
+  source: text('source'),
+  status: text('status').notNull().default('active'),
+  ip: text('ip'),
+  userAgent: text('user_agent'),
+  /** Gateway'e iletildi mi — sent | queued | failed */
+  gatewayStatus: text('gateway_status'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  unsubscribedAt: timestamp('unsubscribed_at'),
+}, (table) => [
+  index('subscribers_status_idx').on(table.status),
+  index('subscribers_created_at_idx').on(table.createdAt),
+]);

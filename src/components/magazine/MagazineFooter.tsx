@@ -98,7 +98,7 @@ export default function MagazineFooter() {
             <p className="mb-4 text-[0.92rem] leading-relaxed" style={{ color: "#9aa1aa" }}>
               Twice a week. Money, career and AI — without the noise.
             </p>
-            <ClientForm className="flex flex-col gap-2.5">
+            <ClientForm className="flex flex-col gap-2.5" source="footer">
               <input
                 type="email"
                 required

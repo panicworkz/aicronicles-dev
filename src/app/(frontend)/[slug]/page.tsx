@@ -309,7 +309,7 @@ export default async function ArticlePage({ params }: PageProps) {
                 </h2>
               </div>
               <div className="lg:col-span-5">
-                <ClientForm className="flex flex-col gap-3">
+                <ClientForm className="flex flex-col gap-3" source="article">
                   <input
                     type="email"
                     required
