@@ -400,7 +400,11 @@ export default function PanicAdsPage() {
                         onClick={() => setPreview(ad)}
                         title="Open full size"
                         className="group block overflow-hidden rounded-md border border-border bg-muted/30 transition hover:border-primary"
-                        style={{ width: 132, aspectRatio: `${conf.w} / ${conf.h}` }}
+                        style={{
+                          width: conf.h > conf.w ? "auto" : 132,
+                          height: conf.h > conf.w ? 104 : "auto",
+                          aspectRatio: `${conf.w} / ${conf.h}`,
+                        }}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
