@@ -195,7 +195,7 @@ export default async function HomePage() {
             <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
               <div className="lg:col-span-7">
                 <div className="folio mb-4" style={{ color: "var(--accent)" }}>
-                  § THE FABELO DISPATCH — ISSUE №&nbsp;142
+                  § THE FABELO DISPATCH
                 </div>
                 <h2
                   className="display mb-5 text-[clamp(2.2rem,5vw,3.8rem)]"
@@ -204,7 +204,7 @@ export default async function HomePage() {
                   Money, career and AI — <em>twice a week</em>, without the noise.
                 </h2>
                 <p className="max-w-[52ch] text-[1.05rem] leading-relaxed" style={{ color: "#b7bcc4" }}>
-                  Join 42,000+ operators, builders and executives. Field-tested frameworks, honest tool
+                  Written for operators, builders and executives. Field-tested frameworks, honest tool
                   reviews and the numbers behind the headlines.
                 </p>
               </div>
