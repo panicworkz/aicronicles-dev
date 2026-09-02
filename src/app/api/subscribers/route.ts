@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   const atla = disaAktar ? 0 : (sayfa - 1) * SAYFA;
 
   const satirlar = (await db.execute(sql`
-    SELECT id, email, source, status, gateway_status, ip, created_at, unsubscribed_at
+    SELECT id, email, source, source_url, status, gateway_status, ip, created_at, unsubscribed_at
     FROM subscribers
     WHERE ${nerede}
     ORDER BY created_at DESC
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
   const kayitlar = Array.isArray(satirlar) ? satirlar : (satirlar.rows ?? []);
 
   if (disaAktar) {
-    const alanlar = ["email", "source", "status", "gateway_status", "created_at"];
+    const alanlar = ["email", "source", "source_url", "status", "gateway_status", "created_at"];
     const kacir = (d: unknown) => {
       const s = d == null ? "" : String(d);
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;

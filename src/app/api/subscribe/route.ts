@@ -119,19 +119,31 @@ export async function POST(req: NextRequest) {
   }
 
   const tarayici = (req.headers.get("user-agent") ?? "").slice(0, 300);
-  const kaynakUrl = req.headers.get("referer") ?? "https://fabelo.io/";
+  /* Kaydin yapildigi sayfa. Referer disaridan geldigi icin dogrulanmis
+     veri degil; yalnizca kendi alan adimizdakini saklıyoruz, digerini
+     atiyoruz. Boylece tabloya baskasinin adresi yazilamiyor. */
+  const referer = req.headers.get("referer") ?? "";
+  let sayfaUrl: string | null = null;
+  try {
+    const u = new URL(referer);
+    if (u.host === new URL(SITE).host) sayfaUrl = u.origin + u.pathname;
+  } catch {
+    // referer yok veya bozuk — bos birakiyoruz
+  }
+  const kaynakUrl = sayfaUrl ?? SITE + "/";
 
   /* 1) Asil kayit — ayni adres tekrar abone olursa kaydi tazeliyoruz,
         daha once cikmissa yeniden etkinlestiriyoruz. */
   let jeton = "";
   try {
     const sonuc = (await db.execute(sql`
-      INSERT INTO subscribers (email, source, ip, user_agent, status, unsubscribe_token)
-      VALUES (${eposta}, ${kaynak}, ${ip}, ${tarayici}, 'active',
+      INSERT INTO subscribers (email, source, source_url, ip, user_agent, status, unsubscribe_token)
+      VALUES (${eposta}, ${kaynak}, ${sayfaUrl}, ${ip}, ${tarayici}, 'active',
               encode(gen_random_bytes(24), 'hex'))
       ON CONFLICT (email) DO UPDATE SET
         status = 'active',
         source = COALESCE(subscribers.source, EXCLUDED.source),
+        source_url = COALESCE(subscribers.source_url, EXCLUDED.source_url),
         updated_at = now(),
         unsubscribed_at = NULL
       RETURNING unsubscribe_token

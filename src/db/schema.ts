@@ -300,6 +300,8 @@ export const subscribers = pgTable('subscribers', {
   email: text('email').notNull().unique(),
   /** Formun sayfadaki yeri — footer | dispatch | article */
   source: text('source'),
+  /** Kaydin yapildigi sayfanin adresi — hangi yazi abone getirdi */
+  sourceUrl: text('source_url'),
   status: text('status').notNull().default('active'),
   ip: text('ip'),
   userAgent: text('user_agent'),

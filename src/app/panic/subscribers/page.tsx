@@ -55,6 +55,7 @@ type Abone = {
   id: number;
   email: string;
   source: string | null;
+  source_url: string | null;
   status: string;
   gateway_status: string | null;
   ip: string | null;
@@ -69,6 +70,17 @@ type Ozet = {
   iletilemeyen: number;
   bu_hafta: number;
 };
+
+/** Tam adresten okunur bir yol cikar — "/how-to-budget-money" gibi */
+function yol(adres: string | null): string | null {
+  if (!adres) return null;
+  try {
+    const u = new URL(adres);
+    return u.pathname === "/" ? "Ana sayfa" : decodeURIComponent(u.pathname);
+  } catch {
+    return adres;
+  }
+}
 
 const tarih = (d: string | null) =>
   d
@@ -272,6 +284,7 @@ export default function SubscribersPage() {
                 <TableRow>
                   <TableHead>E-posta</TableHead>
                   <TableHead>Kaynak</TableHead>
+                  <TableHead>Sayfa</TableHead>
                   <TableHead>Durum</TableHead>
                   <TableHead>İletim</TableHead>
                   <TableHead>Kayıt</TableHead>
@@ -289,6 +302,21 @@ export default function SubscribersPage() {
                         <Badge variant="outline" className={k.renk} title={k.hint}>
                           {k.label}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-[280px]">
+                        {a.source_url ? (
+                          <a
+                            href={a.source_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={a.source_url}
+                            className="block truncate text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                          >
+                            {yol(a.source_url)}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {cikti ? (
