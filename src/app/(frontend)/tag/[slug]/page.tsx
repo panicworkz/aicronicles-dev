@@ -111,7 +111,12 @@ export default async function TagPage({ params }: PageProps) {
                     <HorizontalStoryCard key={p.slug} post={p} />
                   ))}
                   <div className="mt-9">
-                    <AdSlot format="rail" label="Sponsor" />
+                    {/* panel, rail degil. Bu kolon 567px genisliginde; rail 387x540
+                        icin cizildigi icin burada 1.32 kat buyuyup 713px'e
+                        ulasiyor ve sag kolonu sol kolondan 231px asagi
+                        tasiyordu. panel (511x300) bu genislikte 300px
+                        kaliyor. */}
+                    <AdSlot format="panel" label="Sponsor" />
                   </div>
                 </div>
               </div>
