@@ -127,6 +127,32 @@ export default function BackToTop() {
       </span>
 
       {/* Dikey kunye — butondan yukari yukselir, hover'da belirir.
+          Ortalama sarmalayicida (buton genisligi kadar, flex ile ortali),
+          dondurme yalnizca yazida. Ikisi ayni ogede olunca Tailwind'in
+          kaydirma sinifi ile rotate carpisip etiketi 13px yana atiyordu.
+
+          writing-mode dikeye ceviriyor, 180 derece donus ise okuma yonunu
+          asagidan yukari yapiyor: ilk harf (B) butonun hemen ustunde. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-full left-0 mb-3 flex w-full justify-center"
+      >
+        <span
+          className="translate-y-1 whitespace-nowrap opacity-0 transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] group-hover:translate-y-0 group-hover:opacity-100"
+          style={{
+            writingMode: "vertical-rl",
+            rotate: "180deg",
+            fontFamily: "var(--font-mono), monospace",
+            fontSize: "0.58rem",
+            letterSpacing: "0.22em",
+            color: "var(--ink-3)",
+          }}
+        >
+          BACK TO TOP
+        </span>
+      </span>
+
+      {/* Dikey kunye — butondan yukari yukselir, hover'da belirir.
           writing-mode dikeye ceviriyor, rotate(180deg) ise okuma yonunu
           asagidan yukari yapiyor: ilk harf (B) butonun hemen ustunde,
           son harf yukarida. Duz bir rotate(-90deg) yerine bunu
