@@ -17,6 +17,7 @@ import {
 } from "@/components/magazine/PostCard";
 import { decodeEntities, tagLabel } from "@/lib/taxonomy";
 import { enrichArticleHtml, type MediaBoyut } from "@/components/magazine/enrichArticleHtml";
+import CmsPage from "@/components/magazine/CmsPage";
 
 export const dynamic = "force-dynamic";
 
@@ -75,19 +76,12 @@ export default async function ArticlePage({ params }: PageProps) {
     return (
       <div className="mag min-h-screen">
         <MagazineHeader />
-        <main className="mag-wrap py-16 sm:py-24">
-          <div className="mx-auto max-w-[760px]">
-            <div className="folio mb-4">§ FABELO</div>
-            <h1 className="display mb-8 text-[clamp(2.4rem,5vw,4rem)]">{decodeEntities(page.title)}</h1>
-            <div className="rule mb-10" />
-            <div
-              className="article-body text-[1.06rem] leading-[1.78]"
-              dangerouslySetInnerHTML={{
-                __html: enrichArticleHtml(page.contentHtml, await medyaBoyutlari()),
-              }}
-            />
-          </div>
-        </main>
+        <CmsPage
+          slug={page.slug}
+          baslik={decodeEntities(page.title)}
+          contentHtml={enrichArticleHtml(page.contentHtml, await medyaBoyutlari())}
+          guncellendi={page.updatedAt}
+        />
         <MagazineFooter />
       </div>
     );

@@ -265,6 +265,22 @@
   color: var(--ink-3);
   margin-top: 0.6em;
 }
+/* --- CMS sayfalari (About, Advertise, Sponsor, Terms, Privacy) -----------
+   Kapak gorseli baslik bandinin altinda tam alan genisliginde duruyor;
+   ust payini bandin kendi payi zaten veriyor. */
+.mag .article-body--kapak img { margin-block: 0; }
+.mag .article-body--kapak figure { margin: 0; }
+
+/* Kapanis bandi koyu zeminde; metin ve baglantilar orada okunur olmali */
+.mag .article-body--koyu { color: #d6dae0; }
+.mag .article-body--koyu p { margin-top: 0.9em; }
+.mag .article-body--koyu p:first-child { margin-top: 0; }
+.mag .article-body--koyu a {
+  color: var(--paper);
+  text-decoration-color: var(--accent);
+}
+.mag .article-body--koyu a:hover { color: var(--accent); }
+
 .mag .article-body table { width: 100%; border-collapse: collapse; margin-block: 2em; font-size: 0.94rem; }
 .mag .article-body th {
   text-align: left;
