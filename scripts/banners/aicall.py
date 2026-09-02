@@ -61,6 +61,18 @@ def yuzde(perde: int, ofset: float) -> float:
     return round(perde * ADIM + ofset, 1)
 
 
+# Donen ogelerin TABAN durumu gizli. Gizlemeyi yalnizca animasyona
+# birakmak kirilgan: animasyon herhangi bir sebeple calismazsa (gizli
+# sekme, azaltilmis hareket, stil carpismasi) hepsi varsayilan opaklikta
+# kalir ve ust uste biner. Sitede tam olarak bu oldu.
+TABAN_KURAL = (
+    ".yuksel0,.yuksel1,.yuksel2,.soru0,.soru1,.soru2,"
+    ".balon0,.balon1,.balon2,.nokta0,.nokta1,.nokta2,"
+    ".cevap0,.cevap1,.cevap2 { opacity: 0 }\n"
+    "    .yuksel0,.soru0 { opacity: 1 }"
+)
+
+
 def zamanlama() -> str:
     """Uc perdenin butun keyframe'lerini uretir."""
     p = []
@@ -149,6 +161,7 @@ def measure() -> str:
        IAB'nin "en fazla 3 tur" olcutu borsadan gelen ucuncu taraf
        reklamlari icin; burasi kendi agimizin reklami, sinirsiz donuyor.
        Yumusatma expo.out — hizli baslar, uzun ve yumusak biter. */
+    {TABAN_KURAL}
     {chr(10).join("    " + s for s in siniflar).strip()}
 
     /* Noktalar konusurken zipliyor.

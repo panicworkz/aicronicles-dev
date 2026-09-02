@@ -27,6 +27,66 @@ import path from "node:path";
 
 const MEDYA = process.env.MEDIA_DIR || "/opt/panic/media";
 
+
+/** Dosya adindan kisa, kararli bir ek uret */
+function ek(adres: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < adres.length; i++) {
+    h ^= adres.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return "a" + (h >>> 0).toString(36);
+}
+
+/**
+ * Afisi kendi kapsamina alir.
+ *
+ * Gomulu SVG'ler artik AYNI belgede duruyor ve hepsi ayni sinif
+ * adlarini (.o0, .k0, .disp) ve ayni id'leri (kagit, marka) kullaniyor.
+ * Kapsamlanmazsa bir afisin stili digerine uyguluyor, url(#kagit) ilk
+ * bulduguna baglaniyor ve afisler birbirini bozuyor.
+ *
+ * Iki islem yapiyoruz:
+ *   1. Butun id'lere afise ozel bir ek getiriyoruz ve onlara yapilan
+ *      basvurulari (url(#..), href="#..") ayni sekilde guncelliyoruz.
+ *   2. Stil kurallarini koke konan data-ad niteligiyle sinirliyoruz,
+ *      boylece sinif adlari carpismiyor.
+ */
+function kapsamla(svg: string, adres: string): string {
+  const e = ek(adres);
+
+  // 1) id'ler ve onlara yapilan basvurular
+  const idler = [...svg.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
+  for (const kimlik of new Set(idler)) {
+    const kacir = kimlik.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    svg = svg
+      .replace(new RegExp(`(\\sid=")${kacir}(")`, "g"), `$1${kimlik}-${e}$2`)
+      .replace(new RegExp(`url\\(#${kacir}\\)`, "g"), `url(#${kimlik}-${e})`)
+      .replace(new RegExp(`((?:xlink:)?href=")#${kacir}(")`, "g"), `$1#${kimlik}-${e}$2`);
+  }
+
+  // 2) Stil kurallarini bu afise sinirla
+  svg = svg.replace(/<style>([\s\S]*?)<\/style>/i, (_tam, govde: string) => {
+    const sinirli = govde.replace(
+      // Bir kural blogunun secici kismi — @keyframes ve @media govdeleri disinda
+      /(^|\}|\*\/)\s*([^@{}\/][^{}]*?)\s*\{/g,
+      (esles: string, onek: string, secici: string) => {
+        // Yuzde adimlari (0%, 50%) ve keyframe adlari secici degildir
+        if (/^[\d.%,\s]+$/.test(secici) || /^(from|to)$/i.test(secici.trim())) return esles;
+        const yeniSecici = secici
+          .split(",")
+          .map((x: string) => `[data-ad="${e}"] ${x.trim()}`)
+          .join(", ");
+        return `${onek} ${yeniSecici} {`;
+      }
+    );
+    return `<style>${sinirli}</style>`;
+  });
+
+  // 3) Koke isaret koy
+  return svg.replace(/^(\s*<svg\b)/i, `$1 data-ad="${e}"`);
+}
+
 /** Sayfaya girmeden once tehlikeli her seyi cikar */
 function temizle(svg: string): string {
   return (
@@ -59,7 +119,7 @@ export const gomulecekSvg = cache(async (adres: string): Promise<string | null> 
   try {
     const ham = await readFile(dosya, "utf8");
     if (!/^\s*<svg[\s>]/i.test(ham)) return null;
-    return temizle(ham);
+    return kapsamla(temizle(ham), adres);
   } catch {
     return null;
   }
