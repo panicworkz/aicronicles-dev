@@ -308,9 +308,20 @@ def wpcare() -> str:
         f" {D_SON+2:.2f}%,100%{{opacity:0;transform:translateY(-5px)}}}}"
         for i in range(3))
 
+    # Sayac: kacinci hizmette oldugumuz her an gorunur
+    sayac_stil = "\n    ".join(
+        f".s{i}{{animation:s{i} {sure}s steps(1) infinite}}\n"
+        f"    @keyframes s{i}{{0%,{L_BAS+i*adim+2:.2f}%{{opacity:0}}"
+        f" {L_BAS+i*adim+3:.2f}%,"
+        f"{(L_SON if i == n-1 else L_BAS+(i+1)*adim+2):.2f}%{{opacity:1}}"
+        f" {(L_SON+2 if i == n-1 else L_BAS+(i+1)*adim+3):.2f}%,100%{{opacity:0}}}}"
+        for i in range(n))
+
     stil = f'''    {taban('k', n, 0)}
     {taban('g', 3, -1)}
+    {taban('s', n, 0)}
     {madde_stil}
+    {sayac_stil}
     {islem_stil}
 
     /* Maket ve baslik, kendi perdelerinde girip cikiyor */
@@ -325,9 +336,15 @@ def wpcare() -> str:
 
     @media (prefers-reduced-motion: reduce) {{
       * {{ animation: none !important }}
-      .liste,{",".join("."+f"k{i}" for i in range(n))} {{ opacity: 1; transform: none }}
+      .liste,{",".join("."+f"k{i}" for i in range(n))},.s0 {{ opacity: 1; transform: none }}
+      {",".join("."+f"s{i}" for i in range(1, n))} {{ opacity: 0 }}
       .maket,{",".join("."+f"g{i}" for i in range(3))} {{ opacity: 0 }}
     }}'''
+
+    sayaclar = "\n  ".join(
+        f'<text class="sans s{i}" x="{w-K}" y="84" font-size="9.5" letter-spacing="2.2" '
+        f'fill="{YESIL}" text-anchor="end">{i+1:02d} / {n:02d}</text>'
+        for i in range(n))
 
     liste = "\n  ".join(f'''<g class="k{i}">
     <g transform="translate({K+8} {204+i*29})" fill="none" stroke="{YESIL}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -371,6 +388,8 @@ def wpcare() -> str:
     govde = f'''  <text class="disp" x="{K}" y="62" font-size="28" fill="{MUREKKEP}" letter-spacing="-.6">WP Care<tspan fill="{A}">.</tspan></text>
   <text class="sans" x="{K}" y="84" font-size="9.5" letter-spacing="2.2" fill="{UCUNCUL}">WORDPRESS CARE PLANS</text>
   <rect x="{K}" y="100" width="{IC}" height="1" fill="{KURAL}"/>
+
+  {sayaclar}
 
   <text class="disp" x="{K}" y="140" font-size="30" fill="{MUREKKEP}" letter-spacing="-.9">Nine things we</text>
   <text class="disp" x="{K}" y="172" font-size="30" fill="{MUREKKEP}" letter-spacing="-.9">watch for you.</text>
