@@ -247,7 +247,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
               {/* Yazi ici reklam */}
               <div className="mt-12">
-                <AdSlot size="leaderboard" label="Advertisement" />
+                <AdSlot format="feature" label="Advertisement" />
               </div>
 
               {/* Yazar kunyesi */}
@@ -290,7 +290,7 @@ export default async function ArticlePage({ params }: PageProps) {
                   ))}
                 </div>
 
-                <AdSlot size="skyscraper" label="Sponsor" />
+                <AdSlot format="rail" label="Sponsor" />
               </div>
             </aside>
           </div>

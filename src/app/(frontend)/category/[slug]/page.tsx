@@ -97,7 +97,7 @@ export default async function CategoryPage({ params }: PageProps) {
             </section>
 
             <section className="mag-wrap py-12 sm:py-16">
-              <AdSlot size="billboard" label="Partner" />
+              <AdSlot format="measure" label="Partner" />
             </section>
 
             {/* --- Arsiv izgarasi --- */}

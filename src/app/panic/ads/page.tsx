@@ -30,41 +30,29 @@ const PLACEMENT_CONFIG: Record<
   string,
   { label: string; size: string; desc: string; badgeColor: string }
 > = {
-  billboard: {
-    label: 'Billboard',
-    size: '970×250',
-    desc: 'Top of page wide leaderboard',
+  measure: {
+    label: 'Measure',
+    size: '1440×200',
+    desc: 'Tam içerik genişliği — ana sayfa ve kategori bölüm araları',
     badgeColor: 'bg-purple-500/15 text-purple-600 border-purple-500/30',
   },
-  leaderboard: {
-    label: 'Leaderboard',
-    size: '728×90',
-    desc: 'Mid-feed & section ad break',
+  feature: {
+    label: 'Feature',
+    size: '940×180',
+    desc: 'Yazı gövdesi ve üç kolonun ikisi',
     badgeColor: 'bg-blue-500/15 text-blue-600 border-blue-500/30',
   },
-  skyscraper: {
-    label: 'Skyscraper',
-    size: '300×600',
-    desc: 'Sticky article sidebar unit',
-    badgeColor: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30',
-  },
-  rectangle: {
-    label: 'Rectangle',
-    size: '300×250',
-    desc: 'Medium sidebar placement',
+  panel: {
+    label: 'Panel',
+    size: '511×300',
+    desc: 'Ana sayfa yan kolonu',
     badgeColor: 'bg-amber-500/15 text-amber-600 border-amber-500/30',
   },
-  inread: {
-    label: 'In-Read',
-    size: 'Responsive',
-    desc: 'Inside article paragraph flow',
-    badgeColor: 'bg-indigo-500/15 text-indigo-600 border-indigo-500/30',
-  },
-  native: {
-    label: 'Native Story',
-    size: 'Card Grid',
-    desc: 'Editorial sponsored card',
-    badgeColor: 'bg-rose-500/15 text-rose-600 border-rose-500/30',
+  rail: {
+    label: 'Rail',
+    size: '387×540',
+    desc: 'Kenar rayı — yazı, etiket ve yazar sayfaları',
+    badgeColor: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30',
   },
 };
 
@@ -79,7 +67,7 @@ export default function PanicAdsPage() {
   const [editingAd, setEditingAd] = useState<any>(null);
 
   const [name, setName] = useState('');
-  const [placement, setPlacement] = useState('billboard');
+  const [placement, setPlacement] = useState('measure');
   const [imageUrl, setImageUrl] = useState('');
   const [alt, setAlt] = useState('');
   const [targetUrl, setTargetUrl] = useState('');
@@ -109,7 +97,7 @@ export default function PanicAdsPage() {
   const openCreateModal = () => {
     setEditingAd(null);
     setName('');
-    setPlacement('billboard');
+    setPlacement('measure');
     setImageUrl('');
     setAlt('');
     setTargetUrl('');
@@ -122,7 +110,7 @@ export default function PanicAdsPage() {
   const openEditModal = (ad: any) => {
     setEditingAd(ad);
     setName(ad.name || '');
-    setPlacement(ad.placement || 'billboard');
+    setPlacement(ad.placement || 'measure');
     setImageUrl(ad.imageUrl || '');
     setAlt(ad.alt || '');
     setTargetUrl(ad.targetUrl || '');
@@ -512,12 +500,10 @@ export default function PanicAdsPage() {
                     onChange={(e) => setPlacement(e.target.value)}
                     className="mt-1.5 w-full h-10 px-3 rounded-lg bg-background border border-input text-sm font-medium outline-none focus:ring-2 focus:ring-primary"
                   >
-                    <option value="billboard">Billboard (970×250)</option>
-                    <option value="leaderboard">Leaderboard (728×90)</option>
-                    <option value="skyscraper">Skyscraper (300×600)</option>
-                    <option value="rectangle">Rectangle (300×250)</option>
-                    <option value="inread">In-Read (Responsive)</option>
-                    <option value="native">Native Sponsored Story</option>
+                    <option value="measure">Measure — 1440×200 (tam genişlik)</option>
+                    <option value="feature">Feature — 940×180 (yazı gövdesi)</option>
+                    <option value="panel">Panel — 511×300 (yan kolon)</option>
+                    <option value="rail">Rail — 387×540 (kenar rayı)</option>
                   </select>
                 </div>
 

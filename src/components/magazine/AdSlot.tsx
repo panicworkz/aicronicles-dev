@@ -11,14 +11,31 @@ import AdTracker from "./AdTracker";
  * kiriyordu. Ayri modulde durunca bu bag kopuyor.
  */
 
-export type AdSize = "billboard" | "leaderboard" | "skyscraper" | "inread" | "rectangle";
+/**
+ * Ev olculeri.
+ *
+ * IAB'nin evrensel olculerini (970x250, 728x90...) kullanmiyoruz: onlar
+ * programatik borsalar icin, bizse dogrudan yer veriyoruz. Sayfanin 12
+ * kolonluk izgarasina oturmayan bir afis her zaman yamanmis duruyordu —
+ * 970'lik billboard 1440'lik alanin ortasinda 235'er piksel bosluk
+ * birakiyordu.
+ *
+ * Olculer artik SABIT PIKSEL DEGIL, ORAN. Afisler SVG oldugu icin kayipsiz
+ * olcekleniyor; alan kabini her zaman tam dolduruyor, her ekran
+ * genisliginde bosluksuz. Referans olculer afisi tasarlarken kullanilan
+ * tuval; oran onlardan cikiyor.
+ */
+export type AdFormat = "measure" | "feature" | "panel" | "rail";
 
-const AD_SPECS: Record<AdSize, { w: number; h: number; note: string }> = {
-  billboard: { w: 970, h: 250, note: "970 × 250" },
-  leaderboard: { w: 728, h: 90, note: "728 × 90" },
-  skyscraper: { w: 300, h: 600, note: "300 × 600" },
-  rectangle: { w: 300, h: 250, note: "300 × 250" },
-  inread: { w: 640, h: 200, note: "IN-READ" },
+const AD_SPECS: Record<AdFormat, { w: number; h: number; note: string }> = {
+  /* Tam icerik genisligi — ana sayfa ve kategori bolum aralari */
+  measure: { w: 1440, h: 200, note: "MEASURE 1440 × 200" },
+  /* Uc kolonun ikisi ve yazi govdesi — kap ~940 */
+  feature: { w: 940, h: 180, note: "FEATURE 940 × 180" },
+  /* Ana sayfa yan kolonu — kap ~511 */
+  panel: { w: 511, h: 300, note: "PANEL 511 × 300" },
+  /* Kenar rayi — kap ~387 */
+  rail: { w: 387, h: 540, note: "RAIL 387 × 540" },
 };
 
 /**
@@ -34,23 +51,23 @@ const AD_SPECS: Record<AdSize, { w: number; h: number; note: string }> = {
  * uygun bir yer tutucu gosteriliyor.
  */
 export async function AdSlot({
-  size = "leaderboard",
+  format = "feature",
   label = "Advertisement",
   creative,
   href,
   placement,
 }: {
-  size?: AdSize;
+  format?: AdFormat;
   label?: string;
   creative?: { imageUrl?: string | null; alt?: string | null } | null;
   href?: string | null;
-  /** CMS yerlesim adi — verilmezse `size` kullanilir */
+  /** CMS yerlesim adi — verilmezse `format` kullanilir */
   placement?: string;
 }) {
-  const spec = AD_SPECS[size];
+  const spec = AD_SPECS[format];
 
   // Elle verilmediyse CMS'ten al
-  const cmsReklami = creative?.imageUrl ? null : await alaniDoldur(placement ?? size);
+  const cmsReklami = creative?.imageUrl ? null : await alaniDoldur(placement ?? format);
 
   const gorsel = creative?.imageUrl
     ? { imageUrl: creative.imageUrl, alt: creative.alt ?? null }
@@ -74,7 +91,7 @@ export async function AdSlot({
        bos krem kaliyordu — ucuz bir kutu gibi gorunuyordu. Artik cerceve
        ilanin kendi genisligini asmiyor, dar ekranda oranini koruyarak
        kuculuyor. */
-    <aside className="mx-auto w-full" style={{ maxWidth: spec.w }} aria-label={label}>
+    <aside className="w-full" aria-label={label}>
       <div className="mb-1.5 flex items-center gap-2">
         <span className="folio" style={{ color: "var(--ink-3)" }}>
           ADVERTISEMENT

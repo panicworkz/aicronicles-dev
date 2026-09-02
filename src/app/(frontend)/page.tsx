@@ -174,7 +174,7 @@ export default async function HomePage() {
                 ))}
               </div>
               <div className="mt-9">
-                <AdSlot size="rectangle" label="Sponsor" />
+                <AdSlot format="panel" label="Sponsor" />
               </div>
             </div>
           </div>
@@ -182,7 +182,7 @@ export default async function HomePage() {
 
         {/* ================= BILLBOARD ================= */}
         <section className="mag-wrap py-12 sm:py-16">
-          <AdSlot size="billboard" label="Partner" />
+          <AdSlot format="measure" label="Partner" />
         </section>
 
         {/* ================= KISA HABERLER ================= */}
@@ -277,7 +277,7 @@ export default async function HomePage() {
                 <div className="mt-14 grid gap-8 lg:grid-cols-3">
                   <NativeSponsoredCard />
                   <div className="lg:col-span-2">
-                    <AdSlot size="leaderboard" label="Advertisement" />
+                    <AdSlot format="feature" label="Advertisement" />
                   </div>
                 </div>
               )}
@@ -305,7 +305,7 @@ export default async function HomePage() {
                 ))}
               </div>
               <div className="mt-10 sticky top-44">
-                <AdSlot size="skyscraper" label="Sponsor" />
+                <AdSlot format="rail" label="Sponsor" />
               </div>
             </aside>
           </div>

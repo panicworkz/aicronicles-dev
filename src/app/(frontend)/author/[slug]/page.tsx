@@ -101,7 +101,7 @@ export default async function AuthorPage({ params }: PageProps) {
                     <HorizontalStoryCard key={p.slug} post={p} />
                   ))}
                   <div className="mt-9">
-                    <AdSlot size="rectangle" label="Sponsor" />
+                    <AdSlot format="rail" label="Sponsor" />
                   </div>
                 </div>
               </div>
