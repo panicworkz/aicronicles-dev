@@ -92,12 +92,22 @@ export default async function AuthorPage({ params }: PageProps) {
         ) : (
           <>
             <section className="mag-wrap pt-12">
-              <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+              <div className="grid items-start gap-10 lg:grid-cols-12 lg:gap-14">
                 <div className="lg:col-span-7">
                   <PostCard post={lead} size="lg" showImage />
+                  {/* Manset altinda iki hikaye daha: sag kolonda dort kart
+                      ve 540px'lik rail reklami var; sol kolon tek kartla
+                      kalinca satirin yarisindan fazlasi bos kaliyordu. */}
+                  {rest.slice(0, 2).length > 0 && (
+                    <div className="rule mt-9 pt-8">
+                      {rest.slice(0, 2).map((p) => (
+                        <HorizontalStoryCard key={p.slug} post={p} />
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="lg:col-span-5 lg:rule-v lg:pl-14">
-                  {rest.slice(0, 4).map((p) => (
+                  {rest.slice(2, 5).map((p) => (
                     <HorizontalStoryCard key={p.slug} post={p} />
                   ))}
                   <div className="mt-9">
@@ -107,14 +117,14 @@ export default async function AuthorPage({ params }: PageProps) {
               </div>
             </section>
 
-            {rest.length > 4 && (
+            {rest.length > 5 && (
               <section className="mag-wrap pt-16">
                 <div className="mb-8 rule-heavy pt-4">
                   <div className="folio mb-2">§ ARCHIVE</div>
                   <h2 className="display text-[2rem] sm:text-[2.6rem]">More by {author.name}</h2>
                 </div>
                 <div className="grid gap-9 sm:grid-cols-2 lg:grid-cols-3">
-                  {rest.slice(4).map((p) => (
+                  {rest.slice(5).map((p) => (
                     <PostCard key={p.slug} post={p} size="sm" showImage />
                   ))}
                 </div>
