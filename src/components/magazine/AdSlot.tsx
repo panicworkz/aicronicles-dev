@@ -61,7 +61,7 @@ export async function AdSlot({
 
   const body = gorsel ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={gorsel.imageUrl} alt={gorsel.alt || label} className="max-h-full max-w-full object-contain" />
+    <img src={gorsel.imageUrl} alt={gorsel.alt || label} className="size-full object-cover" />
   ) : (
     <span className="folio" style={{ color: "var(--ink-3)" }}>
       {label.toUpperCase()} · {spec.note}
@@ -69,7 +69,12 @@ export async function AdSlot({
   );
 
   return (
-    <aside className="w-full" aria-label={label}>
+    /* Alan, ilanin GERCEK olcusunde. Once w-full idi: 1440px'lik bir
+       cerceve icinde 970px'lik afis duruyordu ve iki yanda 235'er piksel
+       bos krem kaliyordu — ucuz bir kutu gibi gorunuyordu. Artik cerceve
+       ilanin kendi genisligini asmiyor, dar ekranda oranini koruyarak
+       kuculuyor. */
+    <aside className="mx-auto w-full" style={{ maxWidth: spec.w }} aria-label={label}>
       <div className="mb-1.5 flex items-center gap-2">
         <span className="folio" style={{ color: "var(--ink-3)" }}>
           ADVERTISEMENT
@@ -82,7 +87,6 @@ export async function AdSlot({
           background: "var(--paper-2)",
           border: "1px solid var(--rule)",
           aspectRatio: `${spec.w} / ${spec.h}`,
-          maxHeight: spec.h,
         }}
       >
         {cmsReklami && hedef ? (
