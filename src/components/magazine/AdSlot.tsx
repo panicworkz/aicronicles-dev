@@ -104,6 +104,16 @@ export async function AdSlot({
           background: "var(--paper-2)",
           border: "1px solid var(--rule)",
           aspectRatio: `${spec.w} / ${spec.h}`,
+          /* Ekran disindaki reklam hic islenmesin.
+             Afisler animasyonlu SVG; bir <img> icindeki SVG her karede
+             yeniden taranir ve bu sayfa disina ciktiginda da surer.
+             content-visibility sayesinde tarayici gorunmeyen alani
+             tamamen atliyor: dort reklam alani olsa da yalnizca ekranda
+             olan islemci harciyor.
+             contain-intrinsic-size tam olcuyu veriyor, boylece kaydirma
+             sirasinda sayfa ziplamiyor. */
+          contentVisibility: "auto",
+          containIntrinsicSize: `${spec.w}px ${spec.h}px`,
         }}
       >
         {cmsReklami && hedef ? (
