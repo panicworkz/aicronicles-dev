@@ -557,15 +557,37 @@ export default function PanicAdsPage() {
                   required
                   className="mt-1.5"
                 />
-                {imageUrl && (
-                  <div className="mt-2 p-2 rounded-lg border border-border bg-muted/20 flex items-center gap-3">
-                    <div className="size-10 rounded overflow-hidden bg-muted border border-border shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={imageUrl} alt="preview" className="size-full object-cover" />
+                {imageUrl && (() => {
+                  /* Onizleme secili yerlesimin KENDI oraninda. Kareye
+                     sikistirmak afisi taninmaz hale getiriyordu; burasi
+                     tam da dogru olcuyu verdigini kontrol edecegin yer. */
+                  const pc = PLACEMENT_CONFIG[placement];
+                  return (
+                    <div className="mt-2 rounded-lg border border-border bg-muted/20 p-2">
+                      <div
+                        className="mx-auto overflow-hidden rounded border"
+                        style={{
+                          width: '100%',
+                          maxWidth: 420,
+                          aspectRatio: pc ? `${pc.w} / ${pc.h}` : '16 / 9',
+                          background: '#faf8f4',
+                          borderColor: '#d9d3c6',
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={imageUrl} alt="preview" className="size-full object-cover" />
+                      </div>
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <span className="truncate font-mono text-xs text-muted-foreground">{imageUrl}</span>
+                        {pc && (
+                          <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+                            {pc.label} · {pc.size}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-xs font-mono text-muted-foreground truncate">{imageUrl}</span>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
 
               <div>
