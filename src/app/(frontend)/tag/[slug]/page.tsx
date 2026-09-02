@@ -5,7 +5,8 @@ import { desc, eq, and, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
-import { PostCard, HorizontalStoryCard, AdSlot, type CardPost } from "@/components/magazine/PostCard";
+import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magazine/PostCard";
+import { AdSlot } from "@/components/magazine/AdSlot";
 import { FABELO_TAGS, tagLabel } from "@/lib/taxonomy";
 
 export const dynamic = "force-dynamic";

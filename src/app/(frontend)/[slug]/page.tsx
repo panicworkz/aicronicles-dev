@@ -11,10 +11,10 @@ import ArticleClientActions from "./ArticleClientActions";
 import {
   HorizontalStoryCard,
   NumberedTrendingCard,
-  AdSlot,
   fmtDate,
   type CardPost,
 } from "@/components/magazine/PostCard";
+import { AdSlot } from "@/components/magazine/AdSlot";
 import { decodeEntities, tagLabel } from "@/lib/taxonomy";
 import { enrichArticleHtml, type MediaBoyut } from "@/components/magazine/enrichArticleHtml";
 import CmsPage from "@/components/magazine/CmsPage";

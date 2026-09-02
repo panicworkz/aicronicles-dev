@@ -5,7 +5,8 @@ import { eq, desc, and } from "drizzle-orm";
 import type { Metadata } from "next";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
-import { PostCard, HorizontalStoryCard, AdSlot, type CardPost } from "@/components/magazine/PostCard";
+import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magazine/PostCard";
+import { AdSlot } from "@/components/magazine/AdSlot";
 import { decodeEntities } from "@/lib/taxonomy";
 
 export const dynamic = "force-dynamic";

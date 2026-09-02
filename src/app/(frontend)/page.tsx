@@ -12,10 +12,10 @@ import {
   NumberedTrendingCard,
   HorizontalStoryCard,
   NativeSponsoredCard,
-  AdSlot,
   fmtDate,
   type CardPost,
 } from "@/components/magazine/PostCard";
+import { AdSlot } from "@/components/magazine/AdSlot";
 
 export const dynamic = "force-dynamic";
 
