@@ -16,6 +16,7 @@ import {
   FolderTree,
   Settings,
   Megaphone,
+  Mail,
   ExternalLink,
   LogOut,
   Search,
@@ -62,6 +63,7 @@ export default function PanicAdminLayout({
         { href: "/panic/media", label: "Media Library", icon: ImageIcon },
         { href: "/panic/categories", label: "Taxonomies", icon: Tags },
         { href: "/panic/ads", label: "Ad Campaigns", icon: Megaphone },
+        { href: "/panic/subscribers", label: "Subscribers", icon: Mail },
       ],
     },
     {

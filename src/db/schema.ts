@@ -305,6 +305,8 @@ export const subscribers = pgTable('subscribers', {
   userAgent: text('user_agent'),
   /** Gateway'e iletildi mi — sent | queued | failed */
   gatewayStatus: text('gateway_status'),
+  /** E-postadaki tek tik cikis baglantisinin tasidigi jeton */
+  unsubscribeToken: text('unsubscribe_token').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   unsubscribedAt: timestamp('unsubscribed_at'),

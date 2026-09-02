@@ -25,6 +25,9 @@ const TUZAK_ALANLAR = ["website_url", "company_website", "_hp", "honeypot"];
 const GATEWAY =
   process.env.GATEWAY_URL || "http://host.docker.internal:8787/ingest/fabelo";
 
+/** Cikis baglantisinin tam adresi icin — alan adi degisince buradan gecilir */
+const SITE = process.env.SITE_URL || "https://fabelo.testworkz.com";
+
 /* --- Hiz siniri: IP basina saatte 5 abonelik ---------------------------- */
 const PENCERE = 60 * 60 * 1000;
 const SINIR = 5;
@@ -47,7 +50,7 @@ function hizliMi(ip: string): boolean {
 }
 
 /** Gateway'e ilet — gateway ad ve mesaj bekliyor, ikisini de biz uretiyoruz */
-async function gatewayeIlet(eposta: string, kaynak: string, kaynakUrl: string) {
+async function gatewayeIlet(eposta: string, kaynak: string, kaynakUrl: string, jeton: string) {
   const kontrol = new AbortController();
   const zamanAsimi = setTimeout(() => kontrol.abort(), 20000);
   try {
@@ -58,7 +61,10 @@ async function gatewayeIlet(eposta: string, kaynak: string, kaynakUrl: string) {
         name: "Fabelo Dispatch",
         email: eposta,
         subject: "Newsletter subscription",
-        message: `New subscriber for The Dispatch.\n\nEmail: ${eposta}\nForm: ${kaynak}`,
+        message:
+          `New subscriber for The Dispatch.\n\n` +
+          `Email: ${eposta}\nForm: ${kaynak}\n\n` +
+          `Unsubscribe link for this address:\n${SITE}/unsubscribe?t=${jeton}`,
         form_name: `Fabelo — The Dispatch (${kaynak})`,
         source_url: kaynakUrl,
         lang: "en",
@@ -117,16 +123,22 @@ export async function POST(req: NextRequest) {
 
   /* 1) Asil kayit — ayni adres tekrar abone olursa kaydi tazeliyoruz,
         daha once cikmissa yeniden etkinlestiriyoruz. */
+  let jeton = "";
   try {
-    await db.execute(sql`
-      INSERT INTO subscribers (email, source, ip, user_agent, status)
-      VALUES (${eposta}, ${kaynak}, ${ip}, ${tarayici}, 'active')
+    const sonuc = (await db.execute(sql`
+      INSERT INTO subscribers (email, source, ip, user_agent, status, unsubscribe_token)
+      VALUES (${eposta}, ${kaynak}, ${ip}, ${tarayici}, 'active',
+              encode(gen_random_bytes(24), 'hex'))
       ON CONFLICT (email) DO UPDATE SET
         status = 'active',
         source = COALESCE(subscribers.source, EXCLUDED.source),
         updated_at = now(),
         unsubscribed_at = NULL
-    `);
+      RETURNING unsubscribe_token
+    `)) as unknown as { rows?: { unsubscribe_token: string }[] };
+
+    jeton =
+      (Array.isArray(sonuc) ? (sonuc[0] as any) : sonuc.rows?.[0])?.unsubscribe_token ?? "";
   } catch (hata) {
     console.error("[subscribe] veritabanina yazilamadi:", hata);
     return NextResponse.json(
@@ -140,7 +152,7 @@ export async function POST(req: NextRequest) {
      surebiliyor; ziyaretciyi bunun icin bekletmiyoruz. Abonelik zaten
      yukarida kayda gecti, iletim durumu arkadan isleniyor. */
   after(async () => {
-    const durum = await gatewayeIlet(eposta, kaynak, kaynakUrl);
+    const durum = await gatewayeIlet(eposta, kaynak, kaynakUrl, jeton);
     try {
       await db.execute(
         sql`UPDATE subscribers SET gateway_status = ${durum} WHERE email = ${eposta}`
