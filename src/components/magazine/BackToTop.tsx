@@ -9,7 +9,7 @@ const CEVRE = 2 * Math.PI * YARICAP;
 
 /**
  * Basa don. Editoryel dil: ince daire, okuma ilerlemesini gosteren halka,
- * mono "TOP" etiketi.
+ * yukari dogru okunan dikey "BACK TO TOP" kunyesi.
  *
  * Iki onemli davranis:
  *  - Koyu footer uzerine gelince renk ters cevriliyor; aksi halde buton da
@@ -68,7 +68,7 @@ export default function BackToTop() {
     <button
       ref={kokRef}
       onClick={yukari}
-      aria-label="Sayfanın başına dön"
+      aria-label="Back to top"
       className="mag group fixed bottom-6 right-6 z-50 grid place-items-center rounded-full"
       style={{
         width: BOYUT,
@@ -126,17 +126,27 @@ export default function BackToTop() {
         </svg>
       </span>
 
-      {/* Mono etiket — hover'da belirir */}
+      {/* Dikey kunye — butondan yukari yukselir, hover'da belirir.
+          writing-mode dikeye ceviriyor, rotate(180deg) ise okuma yonunu
+          asagidan yukari yapiyor: ilk harf (B) butonun hemen ustunde,
+          son harf yukarida. Duz bir rotate(-90deg) yerine bunu
+          kullaniyoruz cunku harf araligi ve hizalama dogru kaliyor. */}
       <span
-        className="pointer-events-none absolute right-full mr-3 whitespace-nowrap opacity-0 transition-all duration-300 group-hover:opacity-100"
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-full left-1/2 mb-3 -translate-x-1/2 translate-y-1 whitespace-nowrap opacity-0 transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)] group-hover:translate-y-0 group-hover:opacity-100"
         style={{
+          writingMode: "vertical-rl",
+          /* Satir ici "transform" Tailwind'in ortalama/kaydirma
+             siniflarini ezerdi; bagimsiz "rotate" ozelligi ikisini
+             birlikte calistiriyor. */
+          rotate: "180deg",
           fontFamily: "var(--font-mono), monospace",
-          fontSize: "0.6rem",
-          letterSpacing: "0.2em",
+          fontSize: "0.58rem",
+          letterSpacing: "0.22em",
           color: "var(--ink-3)",
         }}
       >
-        BAŞA DÖN
+        BACK TO TOP
       </span>
     </button>
   );
