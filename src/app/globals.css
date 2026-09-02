@@ -151,6 +151,37 @@
   color: var(--accent-ink);
 }
 
+/* --- Kaydirma cubugu ----------------------------------------------------
+   Tamamen gizlemek yerine dergiye uyduruyoruz.
+   Gizlemenin maliyeti: yazilar 14-22 dakika; cubuk "ne kadar kaldi"
+   sorusunun tek gorsel cevabi ve fare kullananlarin en hizli gezinme
+   araci. macOS'ta zaten kendiliginden gizleniyor, yani kazanc yok;
+   Windows ve Linux'ta ise kayip gercek.
+   Ince, kagit renginde bir cubuk ikisini de veriyor. */
+/* Cubuk belge kokunde ciziliyor, .mag onun icinde kaldigi icin
+   kurallari koke veriyoruz; renkler yine .mag belirteclerinden. */
+html:has(.mag) {
+  scrollbar-width: thin;                        /* Firefox */
+  scrollbar-color: #d9d3c6 transparent;
+}
+html:has(.mag)::-webkit-scrollbar { width: 10px; height: 10px; }
+html:has(.mag)::-webkit-scrollbar-track { background: transparent; }
+html:has(.mag)::-webkit-scrollbar-thumb {
+  background: #d9d3c6;
+  border: 3px solid #faf8f4;                    /* kagittan pay — ince gorunur */
+  border-radius: 999px;
+}
+html:has(.mag)::-webkit-scrollbar-thumb:hover { background: #8b9098; }
+
+.dark html:has(.mag), html.dark:has(.mag) {
+  scrollbar-color: #2a3038 transparent;
+}
+html.dark:has(.mag)::-webkit-scrollbar-thumb {
+  background: #2a3038;
+  border-color: #101215;
+}
+html.dark:has(.mag)::-webkit-scrollbar-thumb:hover { background: #7d848d; }
+
 /* --- Ag durum noktasi ----------------------------------------------------
    themez.panic.pw'deki .tf-status-dot'un ritmi, sitenin kendi rengiyle:
    halka yesil degil --accent (#0fb5ce). 2 saniyelik dongu,
