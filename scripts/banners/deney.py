@@ -462,9 +462,14 @@ def yazi_logosu(m, x, y, boy):
     yl = m["yazi_logo"]
     yazi, isaret, r1, r2 = yl[0], yl[1], yl[2], yl[3]
     italik = len(yl) > 4 and yl[4]
+    # y = harfin GORSEL UST hizasi, resim logonun y'siyle ayni anlamda.
+    # Once 0.78 ile taban cizgisine geciyordum; Georgia'nin buyuk harf
+    # yuksekligi 0.69 em oldugu icin yazi logolu markalarda kunye 1-2
+    # piksel yukarida duruyor, kenar payi resim logolu markalardan
+    # ayrisiyordu.
     return ('<text class="disp" x="%.0f" y="%.0f" font-size="%.0f" font-weight="%s" '
             '%sletter-spacing="-0.02em" fill="%s">%s<tspan fill="%s">%s</tspan></text>'
-            % (x, y + boy * 0.78, boy, "400" if italik else "700",
+            % (x, y + boy * 0.69, boy, "400" if italik else "700",
                'font-style="italic" ' if italik else "",
                r1, kacir(yazi), r2, kacir(isaret)))
 
@@ -1048,7 +1053,7 @@ def k_plain(m, w, h, bicim, t, o, serit):
         ust = V + lg + 5
 
         if m.get("yazi_logo"):
-            p.append(yazi_logosu(m, K, ust - 9 - lg + 1, lg))
+            p.append(yazi_logosu(m, K, ust - 9 - lg + 4, lg))
         elif var:
             p.append(logo(m["kod"], K, ust - 9 - lg + 4, lg, azami_en=lg * 4.2))
         if not tek_logo and not m.get("yazi_logo"):
@@ -1093,7 +1098,7 @@ def k_plain(m, w, h, bicim, t, o, serit):
         y_cagri = h - K - 8            # cagri cizgisinin alti tam K'da
 
         if m.get("yazi_logo"):
-            p.append(yazi_logosu(m, K, y_ad - lb + 2, lb))
+            p.append(yazi_logosu(m, K, y_ad - lb + 5, lb))
         elif var:
             p.append(logo(m["kod"], K, y_ad - lb + 5, lb, azami_en=alan * 0.68))
         if not tek_logo and not m.get("yazi_logo"):

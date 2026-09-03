@@ -24,6 +24,7 @@ import {
   Sun,
   Moon,
   ChevronLeft,
+  Ruler,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +64,7 @@ export default function PanicAdminLayout({
         { href: "/panic/media", label: "Media Library", icon: ImageIcon },
         { href: "/panic/categories", label: "Taxonomies", icon: Tags },
         { href: "/panic/ads", label: "Ad Campaigns", icon: Megaphone },
+        { href: "/panic/ad-rules", label: "Ad Rules", icon: Ruler },
         { href: "/panic/subscribers", label: "Subscribers", icon: Mail },
       ],
     },
