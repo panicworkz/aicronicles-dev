@@ -394,14 +394,56 @@ MARKALAR = [
          "Erişilebilirliği gör", "/#accessibility"),
       ]),
 
-    M("panictr", "PANIC", "panic.com.tr", "offset", "swiss", "#4A4F57", "#0C0D12",
-      en=(["Software and", "infrastructure."],
-          "One technical owner for product, data and operations.", "See the studio"),
-      tr=(["Yazılım ve altyapı", "mühendisliği."],
-          "Ürün, veri ve operasyon için tek teknik sorumluluk.", "Stüdyoyu gör")),
+    # PANIC afisi markanin kendisini degil PANIC CMS'i anlatiyor —
+    # kullanicinin istegi. Sitede CMS'ten hic bahsedilmiyor (2026-09-03),
+    # o yuzden metin siteden degil SISTEMIN KENDISINDEN cikarildi:
+    # Fabelo Panic CMS uzerinde calisiyor, ozellikler dogrudan kod
+    # tabaninda dogrulandi — 18 tablo, 15 yonetim modulu, Next.js 15.1.7,
+    # Drizzle + PostgreSQL, reklam olay kaydi, icerik revizyonu,
+    # sitemap.xml ve sitemap-news.xml. Uydurma yok, alinti da degil.
+    M("panictr", "PANIC", "panic.com.tr", "offset", "swiss", "#bd3425", "#161817",
+      yazi_logo=("PANIC", ".", "#161817", "#bd3425"),
+      en=[
+        (["One system.", "Content and commerce."],
+         "Articles, pages, media and taxonomy beside products, orders, customers "
+         "and coupons.",
+         "See the studio"),
+        (["Ad campaigns,", "measured."],
+         "Placements and topic targeting, with every impression and click recorded "
+         "in context.",
+         "See the studio"),
+        # SEO ve AEO birlikte — ikisi de editorde duruyor.
+        #
+        # Once "AEO iddiasinin dayanagi yok" demistim; yaniliyordum.
+        # Panic CMS'te AEO editorde duruyor: yazi duzenleyicide "AI & AEO"
+        # sekmesi ve AeoScoreMeter (baslik uzunlugu, kelime sayisi, H2/H3
+        # yapisi, SSS, liste, sayi ve meta aciklamasi uzerinden 100 uzerinden
+        # puan), gorsel studyosunda yanit motoru icin anlamsal baglam
+        # (media.aeo_context), urunlerde JSON-LD sema. Yalnizca YAYIN
+        # tarafinda makale sayfalari henuz JSON-LD basmiyor; o yuzden
+        # cumle editorun yaptigini soyluyor, sayfanin yapmadigini degil.
+        # SEO tarafi: SerpSocialPreview (SERP ve sosyal kart benzetimi),
+        # meta baslik/aciklama alanlari; ayrica RevisionHistoryDrawer.
+        (["Found by search,", "cited by AI."],
+         "SERP preview, AEO readiness scoring and revision history, on Next.js "
+         "and Postgres.",
+         "See the studio"),
+      ],
+      tr=[
+        (["Tek sistem.", "İçerik ve ticaret."],
+         "Yazı, sayfa, medya, taksonomi, ürün, sipariş, müşteri ve kupon tek bir "
+         "şemada.",
+         "Stüdyoyu gör"),
+        (["Reklam kampanyaları,", "ölçülür."],
+         "Reklam alanı ve konu hedefleme; her gösterim ve tıklama bağlamıyla "
+         "kaydedilir.",
+         "Stüdyoyu gör"),
+        (["Aramada bulunur,", "yapay zekada anılır."],
+         "SERP önizlemesi, AEO hazırlık puanı ve revizyon; Next.js ve Postgres "
+         "üzerinde.",
+         "Stüdyoyu gör"),
+      ]),
 
-    # Dort mesaj, dordu de sitenin kendi sayfalarindan — h1'i baslik,
-    # meta aciklamasi destek metni, ve her biri kendi sayfasina gidiyor.
     M("panicworkz", "Panicworkz", "panicworkz.com", "offset", "poster", "#D83F3F", "#0C0C3F",
       en=[
         (["We thrive", "under pressure."],

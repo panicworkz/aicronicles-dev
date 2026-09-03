@@ -26,6 +26,10 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+/* Kanonik adres tek yerden. sitemap.xml de ayni degeri kullaniyor;
+   ikisi ayrisirsa arama motoruna celisen iki adres verilir. */
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://fabelo.testworkz.com";
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await db.query.posts.findFirst({ where: eq(schema.posts.slug, slug) });
@@ -42,12 +46,67 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${post.metaTitle || post.title} | Fabelo`,
     description: post.metaDescription || post.excerpt || undefined,
+    /* canonical: ayni yaziya farkli adreslerden gelinebiliyor (izleme
+       parametreleri, eski yollar). Kanonik adres olmadan arama motoru
+       hangisinin asil oldugunu kendi tahmin ediyor. */
+    alternates: { canonical: `${SITE}/${post.slug}` },
     openGraph: {
+      type: "article",
+      url: `${SITE}/${post.slug}`,
       title: post.title,
       description: post.metaDescription || post.excerpt || undefined,
+      publishedTime: post.publishedAt?.toISOString(),
+      modifiedTime: post.updatedAt?.toISOString(),
       images: post.featuredImageUrl ? [{ url: post.featuredImageUrl }] : [],
     },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.metaDescription || post.excerpt || undefined,
+      images: post.featuredImageUrl ? [post.featuredImageUrl] : [],
+    },
   };
+}
+
+
+/**
+ * Yazinin yapilandirilmis verisi (schema.org / JSON-LD).
+ *
+ * Arama motorlari ve yanit motorlari bir sayfayi alintilarken basligi,
+ * yazari ve tarihi metinden tahmin etmek zorunda kalmasin diye. Panic
+ * CMS'in editorunde AEO hazirlik puani ve SERP onizlemesi zaten vardi;
+ * eksik olan YAYIN tarafiydi — sayfa hicbir yapilandirilmis veri
+ * basmiyordu.
+ *
+ * Yalnizca elimizde GERCEKTEN olan alanlar yaziliyor: uydurma yazar,
+ * uydurma tarih ya da bos alan konmuyor.
+ */
+function yaziSemasi(post: any, yazar: any, kategori: any) {
+  const veri: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.metaTitle || post.title,
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE}/${post.slug}` },
+    publisher: {
+      "@type": "Organization",
+      name: "Fabelo",
+      url: SITE,
+    },
+  };
+  const aciklama = post.metaDescription || post.excerpt;
+  if (aciklama) veri.description = aciklama;
+  // schema.org MUTLAK adres ister; medya yollari sitede goreli tutuluyor.
+  if (post.featuredImageUrl)
+    veri.image = [
+      post.featuredImageUrl.startsWith("http")
+        ? post.featuredImageUrl
+        : `${SITE}${post.featuredImageUrl}`,
+    ];
+  if (post.publishedAt) veri.datePublished = post.publishedAt.toISOString();
+  if (post.updatedAt) veri.dateModified = post.updatedAt.toISOString();
+  if (yazar?.name) veri.author = { "@type": "Person", name: yazar.name };
+  if (kategori?.name) veri.articleSection = kategori.name;
+  return veri;
 }
 
 
@@ -141,6 +200,15 @@ export default async function ArticlePage({ params }: PageProps) {
 
   return (
     <div className="mag min-h-screen">
+      {/* Yapilandirilmis veri. dangerouslySetInnerHTML burada dogru arac:
+          icerik JSON.stringify ile bizim urettigimiz nesneden geliyor,
+          disaridan gelen bir dize degil. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(yaziSemasi(post, author, category)),
+        }}
+      />
       <ArticleClientActions title={post.title} />
       <MagazineHeader />
 
