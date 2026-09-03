@@ -126,7 +126,9 @@ export function NumberedTrendingCard({
       <div className="min-w-0 flex-1">
         {post.categoryName && <div className="kicker mb-1.5">{post.categoryName}</div>}
         <Link href={`/${post.slug}`}>
-          <h3 className="display headline-link mb-2 text-[1.2rem]">{decodeEntities(post.title)}</h3>
+          <h3 className="display headline-link mb-2 text-[1.2rem]">
+            {decodeEntities(post.title)}
+          </h3>
         </Link>
         <Meta post={post} />
       </div>

@@ -123,7 +123,10 @@
   font-family: var(--font-display), Georgia, "Times New Roman", serif;
   font-weight: 500;
   letter-spacing: -0.028em;
-  line-height: 0.94;
+  /* 0.94 idi. Iki satirlik basliklarda satirlar birbirine giriyordu:
+     Georgia'nin cikanlari ve inenleri uzun, o kadar sikida cakisiyor.
+     1.06 tek satirlik iri basligi bozmadan iki satira nefes veriyor. */
+  line-height: 1.06;
   text-wrap: balance;
 }
 .mag .display em { font-style: italic; font-weight: 400; }
@@ -222,6 +225,13 @@ html.dark:has(.mag)::-webkit-scrollbar-thumb:hover { background: #7d848d; }
 .mag a:hover .ulink, .mag .ulink:hover { background-size: 100% 1px; }
 
 /* --- Baslik hover: satir alti dolusu ------------------------------------ */
+/* Kart baslikları: iki satirda nefes alsin.
+   .display'in 1.06'lik satir araligi iri manset icin dogru, 1.2rem'lik
+   kart basliginda iki satir birbirine giriyor. Bileseneki Tailwind
+   sinifi ise ise yaramiyordu: ".mag .display" iki sinifli bir secici,
+   tek sinifli "leading-[…]" ondan daha az ozgul oldugu icin eziliyordu.
+   Kural burada, ayni ozgullukte. */
+.mag .display.headline-link { line-height: 1.24; }
 .mag .headline-link { transition: color 0.25s ease; }
 .mag .headline-link:hover { color: var(--accent-ink); }
 

@@ -147,7 +147,7 @@ def sar(metin, en, azami=99):
 # ---------------------------------------------------------------------
 # Markalar
 # ---------------------------------------------------------------------
-def M(kod, ad, alan, kol, stil, renk, koyu, en, tr, hedef=()):
+def M(kod, ad, alan, kol, stil, renk, koyu, en, tr, hedef=(), yazi_logo=None):
     """Bir marka.
 
     en / tr: tek bir (baslik, destek, cagri) uclusu ya da BOYLE UCLULERIN
@@ -167,24 +167,90 @@ def M(kod, ad, alan, kol, stil, renk, koyu, en, tr, hedef=()):
     return dict(kod=kod, ad=ad, alan=alan, kol=kol, stil=stil,
                 renk=renk, koyu=koyu,
                 metin={"en": liste(en), "tr": liste(tr)},
-                hedef=list(hedef))
+                hedef=list(hedef),
+                # (yazi, son_isaret, yazi_rengi, isaret_rengi)
+                # Bazi markalarin logosu resim degil YAZI. AICall'inki
+                # Playfair Display 700 lacivert "AICall" ve kirmizi bir
+                # nokta. Favicon rozetini basmak yanlisti: sitede oyle
+                # bir isaret yok.
+                yazi_logo=yazi_logo)
 
 
 MARKALAR = [
     # ---- ORTUSEN KOL -------------------------------------------------
+    # Uc mesaj, ucu de sitenin kendi sayfalarindan (79 sayfalik bir
+    # site; ana sayfadaki baglantilar capa oldugu icin once tek sayfa
+    # sanmistim, sitemap.xml gercegi gosterdi). Vaat, fiyat, ekosistem.
+    # Uc mesaj, ucu de sitenin kendi sayfalarindan (79 sayfalik bir
+    # site; ana sayfadaki baglantilar capa oldugu icin once tek sayfa
+    # sanmistim, sitemap.xml gercegi gosterdi).
+    #
+    # Fiyat ve "5000 entegrasyon" mesajlari cikarildi. Kalanlar: vaat,
+    # teknik derinlik, sektor genisligi.
     M("aicall", "AICall", "aicall.pw", "context", "editorial", "#0FA36B", "#0A0908",
-      en=(["Every call answered.", "Any language."],
-          "AI voice agents that pick up 24/7, at any scale.", "Hear a live demo"),
-      tr=(["Her arama yanıtlanır.", "Her dilde."],
-          "7/24 açan yapay zeka sesli ajanlar, her ölçekte.", "Canlı demoyu dinle"),
+      yazi_logo=("AICall", ".", "#0c0c3f", "#d83f3f"),
+      en=[
+        (["Every call.", "Answered."],
+         "Human-like AI voice agents answer, qualify and act on every business call, "
+         "any language.",
+         "Book a free demo"),
+        (["Voice AI", "engine."],
+         "A neural speech engine with accurate recognition, low latency and 27 "
+         "supported languages.",
+         "See the engine", "/voice-engine"),
+        (["Your sector.", "Your AI."],
+         "AI voice agents for 28 industries — banking, healthcare, hospitality, "
+         "logistics and real estate.",
+         "Find your fit", "/industries"),
+      ],
+      tr=[
+        (["Her arama.", "Yanıtlanır."],
+         "İnsandan ayırt edilemeyen sesli asistan, her işletme aramasını yanıtlar, "
+         "niteler ve aksiyona dönüştürür — 7/24, 50+ dilde.",
+         "Ücretsiz demo alın"),
+        (["Yapay zeka", "ses motoru."],
+         "Üretim aramaları için ayarlanmış nöral konuşma motoru. %98,7 ASR. "
+         "200ms altı ilk söz. Markaya uyumlu ses klonlama.",
+         "Motoru gör", "/tr/voice-engine"),
+        (["Sektörünüz.", "Yapay zekanız."],
+         "28 sektör için hazır senaryolar, uyuma hazır asistanlar ve kanıtlanmış çağrı "
+         "betikleri. İşinize uyan kapıyı kendiniz seçin.",
+         "Sektörünüzü seçin", "/tr/industries"),
+      ],
       hedef=["ai-tech"]),
 
-    M("yerine", "Yerine", "yerine.com.tr", "context", "tag", "#E4572E", "#1B1B1B",
-      en=(["Compare first.", "Then buy."],
-          "Price comparison and purchase, in one place.", "See prices"),
-      tr=(["Önce karşılaştır.", "Sonra al."],
-          "Fiyat karşılaştırma ve satın alma, tek yerde.", "Fiyatlara bak"),
-      hedef=["personal-finance"]),
+    M("yerine", "Yerine", "yerine.com.tr", "context", "tag", "#ce3d19", "#0a2018",
+      # Sitede italik ama afiste duz: kucuk puntoda italik serif okunurlugu
+      # duşuruyor ve kunye zayifliyor. Font ve renkler korunuyor.
+      yazi_logo=("Yerine", ".", "#0a2018", "#ce3d19"),
+      en=[
+        (["What you want,", "for less."],
+         "Transparent consumer guide to alternatives. Quality domestic equivalents "
+         "instead of costly imports.",
+         "Compare prices"),
+        (["Type a product,", "see alternatives."],
+         "An alternative exists for everything you buy. Domestic production, price "
+         "advantage, transparency.",
+         "See how it works", "/en/guide/how-it-works"),
+        (["A better answer", "to what to buy."],
+         "Honest, transparent alternatives to expensive brands. Compare price, features "
+         "and user experience.",
+         "About Yerine", "/en/about-us"),
+      ],
+      tr=[
+        (["Aynı işi görür,", "daha uygununa."],
+         "Şeffaf tüketici rehberi. Pahalı ithal markaların yerine kaliteli ve yerli "
+         "muadilleri bulun.",
+         "Fiyatları karşılaştır"),
+        (["Ürün yaz,", "alternatifi gör."],
+         "Aradığınız her şeyin bir alternatifi var. Yerli üretim, fiyat avantajı, "
+         "şeffaf karşılaştırma.",
+         "Nasıl çalışır", "/rehber/nasil-calisir"),
+        (["Daha iyi bir cevap", "ne almalı."],
+         "Pahalı markalara dürüst ve şeffaf alternatifler. Fiyat, özellik ve deneyimi "
+         "karşılaştırın.",
+         "Yerine hakkında", "/hakkimizda"),
+      ]),
 
     M("turco", "TurcoPartners", "turcopartners.com", "offset", "split", "#B08D57", "#14263A",
       en=(["Made in Türkiye.", "Sold in America."],
@@ -193,10 +259,34 @@ MARKALAR = [
           "Tedarik, uygunluk, sevkiyat ve gümrük, uçtan uca.", "Tedariğe başla")),
 
     M("wpcare", "WP Care", "wpcare.pw", "context", "swiss", "#2563EB", "#0F172A",
-      en=(["Your WordPress,", "looked after."],
-          "Updates, backups, security and uptime, handled.", "See the plans"),
-      tr=(["WordPress'iniz,", "emin ellerde."],
-          "Güncelleme, yedek, güvenlik ve çalışma süresi, hepsi bizde.", "Paketleri gör"),
+      en=[
+        (["Keeping WordPress sites", "updated and safe."],
+         "Core, plugin and theme updates with safe versioning, plus backups and "
+         "security monitoring.",
+         "See the plans", "/en/about/"),
+        (["Reliable WordPress", "uptime monitoring."],
+         "Monitored continuously with instant alerts, so downtime is caught early "
+         "and fixed fast.",
+         "See monitoring", "/en/uptime-monitoring/"),
+        (["Advanced WordPress", "firewall protection."],
+         "Proactive rules stop hackers and bots; harmful code is detected, isolated "
+         "and blocked.",
+         "See protection", "/en/firewall-protection/"),
+      ],
+      tr=[
+        (["WordPress sitelerini", "güncel ve güvenli tut."],
+         "Çekirdek, eklenti ve tema güncellemeleri; yedekleme ve sürekli güvenlik "
+         "izlemesi.",
+         "Paketleri gör", "/tr/about/"),
+        (["Güvenilir WordPress", "çalışma süresi izleme."],
+         "Anlık uyarılarla kesintisiz izleme; kesintiler erken yakalanır ve hızla "
+         "giderilir.",
+         "İzlemeyi gör", "/tr/uptime-monitoring/"),
+        (["Gelişmiş WordPress", "güvenlik duvarı koruması."],
+         "Proaktif kurallar korsanı ve botu durdurur; zararlı kod tespit edilip "
+         "engellenir.",
+         "Korumayı gör", "/tr/firewall-protection/"),
+      ],
       hedef=["ai-tech"]),
 
     # ---- ORTUSMEYEN KOL ----------------------------------------------
@@ -259,33 +349,33 @@ MARKALAR = [
     M("panicworkz", "Panicworkz", "panicworkz.com", "offset", "poster", "#D83F3F", "#0C0C3F",
       en=[
         (["We thrive", "under pressure."],
-         "Full-service digital agency and outsourcing partner. E-commerce, AI "
-         "integration, performance engineering and custom software.",
+         "Full-service digital agency and outsourcing partner for e-commerce, AI and "
+         "custom software.",
          "Start a project"),
         (["AI integration", "and LLM agents."],
-         "Production-grade AI integration and LLM agent development. OpenAI, "
-         "Anthropic Claude, Gemini, LangChain. Real systems, not demos.",
+         "AI integration and LLM agent development with OpenAI, Anthropic Claude and "
+         "Google Gemini.",
          "See the work", "/services/ai-integration"),
         # Tek cumle kalinca "yangin" mecazi havada kaliyor ve itfaiye
         # gibi okunuyordu. Ikinci cumle sitenin kendi iletisim sayfasi
         # aciklamasindan: ne is yaptigimizi soyluyor.
         (["Got a fire?", "We'll pick up."],
-         "Tell us about your fire and we will respond within 24 hours. "
-         "Digital agency and outsourcing partner for e-commerce, AI, web and mobile.",
+         "Describe your fire and we respond within twenty-four hours. Agency and "
+         "outsourcing partner.",
          "Tell us", "/contact"),
       ],
       tr=[
         (["Baskı altında", "büyürüz."],
-         "Tam kapsamlı dijital ajans ve dış kaynak ortağı. E-ticaret, yapay zeka "
-         "entegrasyonu, performans mühendisliği ve özel yazılım.",
+         "Dijital ajans ve dış kaynak ortağı. E-ticaret, yapay zeka entegrasyonu ve "
+         "özel yazılım.",
          "Projeye başla"),
         (["Yapay zeka entegrasyonu", "ve LLM ajanları."],
-         "Üretim seviyesinde yapay zeka entegrasyonu ve LLM ajan geliştirme. "
-         "OpenAI, Anthropic Claude, Gemini, LangChain. Demo değil, gerçek sistem.",
+         "Üretim seviyesinde yapay zeka ve LLM ajan geliştirme. OpenAI, Anthropic "
+         "Claude, Gemini.",
          "Çalışmaları gör", "/services/ai-integration"),
         (["Yangın mı var?", "Biz açarız."],
-         "Yangınınızı anlatın, 24 saat içinde dönüyoruz. E-ticaret, yapay zeka, "
-         "web ve mobil için dijital ajans ve dış kaynak ortağı.",
+         "Yangınınızı anlatın, yirmi dört saat içinde dönüyoruz. Dijital ajans ve dış "
+         "kaynak ortağı.",
          "Anlatın", "/contact"),
       ]),
 
@@ -357,6 +447,31 @@ def logo_veri(kod: str):
         b64 = base64.b64encode(ham).decode("ascii")
         return f"data:{tur};base64,{b64}", oran
     return None
+
+
+def yazi_logosu(m, x, y, boy):
+    """Yazi olarak cizilen marka isareti.
+
+    Sitenin kendi yazi tipi (orn. Playfair Display) elimizde yok ve
+    disaridan font cekmiyoruz; afisin kendi display serifi en yakin
+    karsilik. Onemli olan yapisi: kalin serif ad, sonunda marka
+    renginde bir isaret.
+    """
+    # Bes ogeli de olabilir: son oge italik olup olmadigini soyluyor.
+    # Yerine'nin logosu italik Playfair, AICall'inki duz.
+    yl = m["yazi_logo"]
+    yazi, isaret, r1, r2 = yl[0], yl[1], yl[2], yl[3]
+    italik = len(yl) > 4 and yl[4]
+    return ('<text class="disp" x="%.0f" y="%.0f" font-size="%.0f" font-weight="%s" '
+            '%sletter-spacing="-0.02em" fill="%s">%s<tspan fill="%s">%s</tspan></text>'
+            % (x, y + boy * 0.78, boy, "400" if italik else "700",
+               'font-style="italic" ' if italik else "",
+               r1, kacir(yazi), r2, kacir(isaret)))
+
+
+def yazi_logosu_eni(m, boy):
+    yl = m["yazi_logo"]
+    return serif_olc(yl[0] + yl[1], boy) * 1.02
 
 
 def logo(kod: str, x, y, boy, azami_en=None, sinif=""):
@@ -755,12 +870,20 @@ def _olcu(bicim):
     # Onceki tavanlar (42 / 32) ayni markanin genis afisini dar
     # afisinden bambaska gosteriyordu.
     if bicim == "measure":
-        return dict(K=48, ad=14, bas_tavan=34, alt=15, cag=13)
+        # Aciklama dort formatta da 14. Measure'da 15'ti; ekranda
+        # olceklenince 12.5 piksele denk geliyor, otekiler 11.1-11.8
+        # arasinda kaliyordu. Ayni markanin dort afisinde govde metni
+        # ayni boyda okunmali.
+        return dict(K=48, ad=14, bas_tavan=34, alt=14, cag=13)
     if bicim == "feature":
         return dict(K=40, ad=13, bas_tavan=28, alt=14, cag=12)
     if bicim == "panel":
         return dict(K=34, ad=12, bas_tavan=30, alt=14, cag=12)
-    return dict(K=32, ad=13, bas_tavan=28, alt=14, cag=12)
+    # rail: dar ama uzun. Tavan 30 — measure 34, feature 28, panel 30
+    # ile ayni ailede kalsin diye. Once yigin duzen bu degeri hic
+    # kullanmiyor, 46'ya kadar cikiyordu: ayni markanin rail afisi
+    # panelinkinin iki kati puntoyla basiliyordu.
+    return dict(K=32, ad=13, bas_tavan=30, alt=14, cag=12)
 
 
 def _kuyruk(m, t, o, K, y, w, h, alan, ikincil, zemin_d=None, yazi_d=None):
@@ -870,14 +993,26 @@ def k_plain(m, w, h, bicim, t, o, serit):
             cx = w - K - cagri_en
             alan = cx - K - 56
             olculer = []
+            # Serit formatta da satir sayisi butun perdelerde ayni olmali;
+            # yigin duzendeki ile ayni gerekce.
+            _ab0 = o["alt"]
+            _hedef = max(len(sar(x["alt"], int(alan / (SANS_EM * _ab0)))) for x in mesajlar)
+            _hedef = min(_hedef, 2)
+            ortak_bb = min(sigan([" ".join(x["bas"])], alan, o["bas_tavan"], 20)
+                           for x in mesajlar)
             for mes in mesajlar:
                 tek = " ".join(mes["bas"])
-                bb = sigan([tek], alan, o["bas_tavan"], 20)
+                bb = ortak_bb
                 ab = o["alt"]
                 parca = sar(mes["alt"], int(alan / (SANS_EM * ab)))
                 while len(parca) > 2 and ab > 12:
                     ab -= 1
                     parca = sar(mes["alt"], int(alan / (SANS_EM * ab)))
+                tam_en = int(alan / (SANS_EM * ab))
+                dar = tam_en
+                while len(parca) < _hedef and dar > tam_en * 0.6:
+                    dar -= 1
+                    parca = sar(mes["alt"], dar)
                 lh = int(ab * 1.45)
                 toplam = (lg + 5) + 26 + bb + NEFES + ab + (len(parca) - 1) * lh + ab * 0.22
                 olculer.append((tek, bb, ab, parca, lh, toplam))
@@ -896,9 +1031,11 @@ def k_plain(m, w, h, bicim, t, o, serit):
         cagri_en, cx, alan, olculer, blok, V = duzen(K)
         ust = V + lg + 5
 
-        if var:
+        if m.get("yazi_logo"):
+            p.append(yazi_logosu(m, K, ust - 9 - lg + 1, lg))
+        elif var:
             p.append(logo(m["kod"], K, ust - 9 - lg + 4, lg, azami_en=lg * 4.2))
-        if not tek_logo:
+        if not tek_logo and not m.get("yazi_logo"):
             mx = K + (int(logo_eni(m["kod"], lg, azami_en=lg * 3.4)) + 12 if var else 0)
             p.append('<text class="sans" x="%d" y="%.0f" font-size="%d" letter-spacing="1.8" '
                      'font-weight="700" fill="%s">%s</text>'
@@ -939,9 +1076,11 @@ def k_plain(m, w, h, bicim, t, o, serit):
         y_ad = K + lb - 5              # logo ustu tam K'da
         y_cagri = h - K - 8            # cagri cizgisinin alti tam K'da
 
-        if var:
+        if m.get("yazi_logo"):
+            p.append(yazi_logosu(m, K, y_ad - lb + 2, lb))
+        elif var:
             p.append(logo(m["kod"], K, y_ad - lb + 5, lb, azami_en=alan * 0.68))
-        if not tek_logo:
+        if not tek_logo and not m.get("yazi_logo"):
             p.append('<text class="sans" x="%d" y="%d" font-size="%d" letter-spacing="1.8" '
                      'font-weight="700" fill="%s">%s</text>'
                      % (K + (int(logo_eni(m["kod"], lb, azami_en=68)) + 12 if var else 0),
@@ -955,6 +1094,52 @@ def k_plain(m, w, h, bicim, t, o, serit):
 
         bosluk = y_cagri - (y_ad + 34) - 30
         en_dip = y_ad + 40      # butun perdelerin en alcak baslik dibi
+
+        # FORMATIN HEDEF SATIR SAYISI.
+        #
+        # Ayni metin panelde 2, rail'de 4 satir olsun isteniyor. Bu tek
+        # basina mumkun degil: panelde 443 piksellik olcude 2 satir icin
+        # metin en fazla ~119 karakter, rail'in 323 pikselinde 4 satir
+        # icinse en az ~130 karakter olmali.
+        #
+        # Cozum sutunu daraltmak. Rail uzun ve dar; aciklamayi alanin
+        # tamamina degil bir bolumune sariyoruz. Dizgide dar olcu zaten
+        # daha okunur, ve satir sayisi boylece metnin uzunluguna degil
+        # tasarima bagli oluyor.
+        HEDEF = {"panel": 2, "rail": 4}.get(bicim)
+
+        # ORTAK SATIR SAYISI.
+        #
+        # Aciklamalarin kelime sayisi ve genisligi esitlense bile satir
+        # kirilimi ayni yere duşmuyor: Yerine'nin rail afisinde perdeler
+        # 4, 4 ve 3 satir cikiyordu. Ayni kutuda bir perde uc bir perde
+        # dort satir olunca afis her mesajda baska bir tasarim gibi
+        # goruluyor.
+        #
+        # Cozum puntoyu degil SARMA GENISLIGINI oynatmak: yazi boyu
+        # butun perdelerde ayni kaliyor, yalnizca kisa metin biraz daha
+        # erken kiriliyor. Once en cok satiri bulup hedef aliyoruz.
+        # ORTAK PUNTO.
+        #
+        # Punto perde basina hesaplaniyordu: basligi uzun olan perdede
+        # kuculuyor, aciklama da ona bagli oldugu icin o perdede daha
+        # ufak basiliyordu. Ayni afiste bir mesaj iri, otekisi ufak
+        # goruluyordu.
+        #
+        # Butun perdeleri hesaplayip EN KUCUK puntoyu hepsine
+        # veriyoruz: en sikisik mesaj neye siginiyorsa olcu o.
+        ortak_bb = min(sigan(x["bas"], alan, o["bas_tavan"], 22) for x in mesajlar)
+        # Aciklama puntosu FORMATIN kendi olcusu.
+        #
+        # Once baslikta turetiliyordu (bb * 0.44) ve rail'de 12 piksele
+        # duşuyordu; ayni metin measure'da 15, feature'da 14 punto
+        # basiliyordu. Ayni markanin dort afisi ayni aileden gorunmuyordu.
+        # Sigmazsa once baslik kuculuyor, aciklama en son.
+        _ab0 = o["alt"]
+        hedef_satir = max(len(sar(x["alt"], int(alan / (SANS_EM * _ab0)))) for x in mesajlar)
+        if HEDEF:
+            hedef_satir = max(hedef_satir, HEDEF)
+
         for i, mes in enumerate(mesajlar):
             g = 'style="animation-delay:%.2fs"' % gec(i)
             ic = []
@@ -964,23 +1149,44 @@ def k_plain(m, w, h, bicim, t, o, serit):
             # uzun mesajlarda aciklama asagi itilip kurala yapisiyordu.
             # Simdi aciklama HEP kuraldan 26 piksel yukarida duruyor ve
             # sigmiyorsa kuculen sey baslik oluyor.
-            NEFES_KURAL, NEFES_BASLIK = 26, 26
+            # Panel 511x300: iki kez 26 piksel nefes, ucuncu aciklama
+            # satiriyla birlikte tuvali asiyor ve aciklamayi 12 puntoya
+            # duşuruyordu. Alcak tuvalde pay da kucuk olmali.
+            NEFES_KURAL = NEFES_BASLIK = 13 if bicim == "panel" else 26
             satirlar = mes["bas"]
-            bb = sigan(satirlar, alan, 46, 22)
+            bb = ortak_bb
 
-            def olc(bb):
+            def olc(bb, ab=None):
                 satir = int(bb * 1.18)
-                ab = max(12, min(o["alt"] + 3, int(bb * 0.44)))
-                parca = sar(mes["alt"], int(alan / (SANS_EM * ab)))
+                ab = ab or o["alt"]
+                tam_en = int(alan / (SANS_EM * ab))
+                parca = sar(mes["alt"], tam_en)
+                # Eksik satir varsa sarma genisligini daralt
+                dar = tam_en
+                while len(parca) < hedef_satir and dar > tam_en * 0.6:
+                    dar -= 1
+                    parca = sar(mes["alt"], dar)
                 alt_yuk = len(parca) * int(ab * 1.45)
                 y_son = y_ad + 40 + bb + (len(satirlar) - 1) * satir
                 y_alt = y_cagri - 30 - NEFES_KURAL - alt_yuk
                 return satir, ab, parca, alt_yuk, y_son, y_alt
 
             satir, ab, parca, alt_yuk, y_son, y_alt = olc(bb)
-            while y_son + NEFES_BASLIK > y_alt and bb > 19:
+            # Baslik 20'ye kadar iniyor. Once 22'de duruyordu ve kalan
+            # acigi aciklama kapatiyordu: panelde 12 punto, oteki
+            # formatlarda 14. Aciklama govde metni, formatlar arasinda
+            # sabit kalmali; esneyecek olan basliktir.
+            # Panelde baslik 17'ye kadar inebiliyor. Aciklama govde
+            # metni: dort formatta da 14 kalmali, esneyecek olan baslik.
+            _bb_taban = 17 if bicim == "panel" else 20
+            while y_son + NEFES_BASLIK > y_alt and bb > _bb_taban:
                 bb -= 1
                 satir, ab, parca, alt_yuk, y_son, y_alt = olc(bb)
+            # Baslik tabana vurduysa son care aciklamayi kucultmek
+            _ab = o["alt"]
+            while y_son + NEFES_BASLIK > y_alt and _ab > 12:
+                _ab -= 1
+                satir, ab, parca, alt_yuk, y_son, y_alt = olc(bb, _ab)
 
             y = y_ad + 40 + bb
             for j, sat in enumerate(satirlar):
@@ -1462,7 +1668,42 @@ def afis(m, bicim, dil, varyant, mesaj_no=0):
     return markala(svg, "d%s%s%d" % (m["kod"][:6], varyant[0], mesaj_no))
 
 
+def _mesajlari_denetle():
+    """Uc mesajin aciklamalari ayni uzunlukta gorunmeli.
+
+    Afiste uc perde ayni kutuyu dolduruyor. Aciklamalar birbirinden
+    uzun olunca satir sayisi ve punto degisiyor, afis her mesajda baska
+    bir tasarima donusuyor.
+
+    OLCU KELIME DEGIL, BASILAN GENISLIK. Once kelime sayisini
+    esitlemistim; ucu de 16 kelimeydi ama genislikleri 591, 891 ve 702
+    piksel cikti — arada yuzde elli bir fark. "native-quality",
+    "high-accuracy", "sub-200ms" gibi bilesikler tek kelime sayilirken
+    satiri iki katina cikariyor.
+    """
+    for m in MARKALAR:
+        for dil in ("en", "tr"):
+            v = m["metin"][dil]
+            if len(v) < 2:
+                continue
+            gen = [sans_olc(x[1], 14) for x in v]
+            sapma = (max(gen) - min(gen)) / min(gen)
+            if sapma > 0.08:
+                raise ValueError(
+                    "%s/%s aciklama genislikleri %s — sapma %%%.0f, en fazla %%8"
+                    % (m["kod"], dil, [round(x) for x in gen], sapma * 100))
+            # Genislik tek basina yetmiyor: ayni genislikte ama biri 11
+            # otekisi 20 kelime olan iki metin sayfada farkli okunuyor.
+            # Ikisi birden tutmali.
+            kel = [len(x[1].split()) for x in v]
+            if max(kel) - min(kel) > 1:
+                raise ValueError(
+                    "%s/%s aciklama kelime sayilari %s — fark en fazla 1 olmali"
+                    % (m["kod"], dil, kel))
+
+
 def main():
+    _mesajlari_denetle()
     dil = sys.argv[1] if len(sys.argv) > 1 else "en"
     assert dil in ("en", "tr"), "dil: en | tr"
     kok = pathlib.Path(__file__).resolve().parents[2] / "public" / "media" / "deney"
