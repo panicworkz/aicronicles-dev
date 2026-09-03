@@ -76,50 +76,63 @@ piksel boşluk bırakıyordu.
 
 17. **Metin markanın kendi h1 ve meta açıklamasından** alınır. Uydurma yok,
     rakam iddiası yok, **fiyat verilmez**.
-18. **Önce `sitemap.xml`'e bakılır.** AICall'ın menü bağlantıları çapa
-    olduğu için tek sayfa sanılmıştı; site haritasında 79 sayfa çıktı.
-19. **Üç mesaj**, her biri kendi sayfasına gider: vaat, teknik derinlik,
+18. **Site haritasına değil, sitenin İÇERİĞİNE bakılır.** Site haritası
+    neyin *yayınlandığını* söyler, neyin *anlatıldığını* değil; üstelik
+    çoğu markada yok. TurcoPartners ve Testworkz tek sayfalık SPA — her
+    yola `index.html` dönüyor, site haritası da robots da HTML. Sayfa
+    tarayıcıda açılır, başlıklar ve paragraflar oradan okunur, sayfa içi
+    çapalar DOM'dan alınır.
+19. **Sitede İngilizce sürüm varsa metin oradan alınır.** Yoksa sitenin
+    kendi metninin sadık çevirisi yazılır ve bu, marka kaydında not
+    edilir — uydurma değil ama birebir alıntı da değil.
+20. **Üç mesaj**, her biri kendi sayfasına gider: vaat, teknik derinlik,
     kapsam gibi farklı okurları tutan açılar.
-20. **Üç açıklamanın kelime sayısı farkı en fazla 1** *ve* **basılan
+21. **Üç açıklamanın kelime sayısı farkı en fazla 1** *ve* **basılan
     genişlik sapması en fazla %8**. Yalnızca kelimeyi eşitlemek yetmez:
     "native-quality", "sub-200ms" gibi bileşikler tek kelime sayılırken
     satırı iki katına çıkarır.
-21. **Ortadaki liste o an oynamayan söylemleri gösterir**, numarasız. Numara
+22. **Ortadaki liste o an oynamayan söylemleri gösterir**, numarasız. Numara
     ancak okur bütün diziyi görebiliyorsa anlam taşır; oynayan söylem
     listeden çıkınca sıra kopuk görünür.
 
 ## Logo
 
-22. **Markanın sitedeki gerçek işareti** kullanılır. Resimse dosyası, yazıysa
-    yazı olarak çizilir (AICall: serif "AICall" + kırmızı nokta;
-    Yerine: "Yerine" + vurgu renginde nokta).
-23. **Yazı logosu düz basılır**, sitede italik olsa bile. Küçük puntoda
-    italik serifin okunurluğu düşer.
-24. **Yazı logosu büyük harf yüksekliğine göre hizalanır** (Georgia'da
+23. **Sitede özel tasarlanmış bir resim logo varsa o kullanılır** (Panicworkz,
+    WP Care). Yoksa künye **her zaman AraçKirala.pw'deki gibi** çizilir:
+    markanın adı, sonunda vurgu renginde bir nokta.
+24. **Yazı künyesi düz basılır**, sitede italik olsa bile (Yerine). Küçük
+    puntoda italik serifin okunurluğu düşer.
+25. **Yazı logosu büyük harf yüksekliğine göre hizalanır** (Georgia'da
     ≈0.69 em). Taban çizgisi katsayısıyla hizalayınca künye resim logolu
     markalardan 1–2 piksel ayrışıyordu.
-25. **Logo base64 ile afişin içine gömülür.** Siteden bütün dış görsel
+26. **Logo base64 ile afişin içine gömülür.** Siteden bütün dış görsel
     bağımlılıkları temizlendi; afiş de bağımsız kalmalı.
-26. Logosu olmayan marka **kelime markasıyla** basılır. Uydurma işaret yok.
+27. Logosu olmayan marka **kelime markasıyla** basılır. Uydurma işaret yok.
+28. **Bütün yazı künyeleri afişin display serifiyle basılır**, markanın
+    sitedeki yazı tipi ne olursa olsun; korunan şey **renkler ve yapı**.
+    Testworkz'ünki sitede kalın sans (Manrope 800), afişte serif — çünkü
+    her künyeyi kendi yazı tipiyle basmak on altı afişi tek bir yayının
+    reklam alanı olmaktan çıkarıp derlemeye çevirirdi. Seçenek koddan
+    kaldırıldı; kural orada zorunlu.
 
 ## Hareket
 
-27. **Künye sabittir** — logo, alan adı, kural. Mesaj değişirken markanın
+29. **Künye sabittir** — logo, alan adı, kural. Mesaj değişirken markanın
     yanıp sönmesi afişi huzursuz gösterir.
-28. **Perde 7 saniye.** Üç mesaj 21 saniyede döner.
-29. **Sıra**: başlık → çağrı yazısı → altına çizgi → el yakında belirir,
+30. **Perde 7 saniye.** Üç mesaj 21 saniyede döner.
+31. **Sıra**: başlık → çağrı yazısı → altına çizgi → el yakında belirir,
     arar, bulur, basar → çağrı vurgu rengine döner ve öyle kalır.
-30. **`animation-fill-mode: backwards` şarttır.** Yoksa gecikmeyi bekleyen
+32. **`animation-fill-mode: backwards` şarttır.** Yoksa gecikmeyi bekleyen
     perdeler kendi normal hallerini gösterir; üçü üst üste basılır.
-31. **Her `@keyframes` karesinde `opacity` açıkça yazılır.** Yazılmazsa CSS
+33. **Her `@keyframes` karesinde `opacity` açıkça yazılır.** Yazılmazsa CSS
     aradaki değeri doldurur ve öge sinsice solar.
-32. **Konumlandırma dış grupta, animasyon iç grupta.** CSS `transform`ı
+34. **Konumlandırma dış grupta, animasyon iç grupta.** CSS `transform`ı
     nitelik `transform`ını ezer; el afişin sol üst köşesine gidiyordu.
-33. **`transform-origin` kullanılmaz.** SVG'de varsayılan `transform-box`
+35. **`transform-origin` kullanılmaz.** SVG'de varsayılan `transform-box`
     `view-box` olduğu için "sol" afişin kenarını gösterir. Öge kaydırılmış
     bir grubun içinde `0`'a konur, varsayılan orijin kendi ucudur.
-34. **Hareket kapalıyken** (`prefers-reduced-motion`) afiş tek mesaja düşer.
-35. **Yalnızca `opacity` ve `transform`.** Yeniden yerleşim ya da boyama
+36. **Hareket kapalıyken** (`prefers-reduced-motion`) afiş tek mesaja düşer.
+37. **Yalnızca `opacity` ve `transform`.** Yeniden yerleşim ya da boyama
     tetikleyen kare yok; blur, filter, clip-path animasyonu yok.
-36. **SVG içindeki `<style>`'da `<` veya `>` olamaz** — XML'i keser ve o
+38. **SVG içindeki `<style>`'da `<` veya `>` olamaz** — XML'i keser ve o
     noktadan sonraki bütün kurallar düşer. Üretici buna bakıp hata verir.

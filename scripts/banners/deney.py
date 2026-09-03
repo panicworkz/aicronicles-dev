@@ -220,8 +220,7 @@ MARKALAR = [
       hedef=["ai-tech"]),
 
     M("yerine", "Yerine", "yerine.com.tr", "context", "tag", "#ce3d19", "#0a2018",
-      # Sitede italik ama afiste duz: kucuk puntoda italik serif okunurlugu
-      # duşuruyor ve kunye zayifliyor. Font ve renkler korunuyor.
+      # Sitede italik; afiste butun kunyeler gibi duz serif. Renkler siteden.
       yazi_logo=("Yerine", ".", "#0a2018", "#ce3d19"),
       en=[
         (["What you want,", "for less."],
@@ -252,11 +251,39 @@ MARKALAR = [
          "Yerine hakkında", "/hakkimizda"),
       ]),
 
-    M("turco", "TurcoPartners", "turcopartners.com", "offset", "split", "#B08D57", "#14263A",
-      en=(["Made in Türkiye.", "Sold in America."],
-          "Sourcing, compliance, fulfilment and customs, end to end.", "Start sourcing"),
-      tr=(["Türkiye'de üretilir.", "Amerika'da satılır."],
-          "Tedarik, uygunluk, sevkiyat ve gümrük, uçtan uca.", "Tedariğe başla")),
+    # Site tek sayfa ve SPA — site haritasi yok, her yola index.html
+    # donuyor. Icerik tarayicida okundu; EN dugmesiyle sitenin kendi
+    # ingilizce metnine gecildi. Baglantilar sayfa ici capalara gidiyor.
+    M("turco", "TurcoPartners", "turcopartners.com", "offset", "split", "#c5a059", "#14263A",
+      yazi_logo=("TurcoPartners", ".", "#14263A", "#c5a059"),
+      en=[
+        (["Expand from Turkey", "into global markets."],
+         "Real-time Amazon trend intelligence, turnkey US entity and trademark setup, "
+         "and growth marketing.",
+         "See the services"),
+        (["Seven core", "execution services."],
+         "Turnkey operational services scaling Turkish manufacturers and tech "
+         "enterprises into global markets.",
+         "See the seven", "/#sectors"),
+        (["US formation,", "legal and grants."],
+         "LLC and C-Corp formation, Operating Agreements, IRS EIN processing and "
+         "commercial banking.",
+         "See the flywheel", "/#approach"),
+      ],
+      tr=[
+        (["Türkiye'den küresel", "pazarlara açılın."],
+         "Amazon ABD canlı pazar istihbaratı, ABD şirket kuruluşu, marka tescili ve "
+         "reklam yönetimi.",
+         "Hizmetleri gör"),
+        (["Yedi temel", "hizmet."],
+         "Üretim ve teknoloji gücünü ABD ve küresel pazarlara taşıyan entegre "
+         "operasyon hatları.",
+         "Yediyi gör", "/#sectors"),
+        (["ABD şirket kurulumu,", "hukuk ve teşvik."],
+         "LLC ve C-Corp kuruluşu, Operating Agreement, IRS EIN onayı ve ticari "
+         "bankacılık hattı.",
+         "Modeli gör", "/#approach"),
+      ]),
 
     M("wpcare", "WP Care", "wpcare.pw", "context", "swiss", "#2563EB", "#0F172A",
       en=[
@@ -332,11 +359,40 @@ MARKALAR = [
       tr=(["Saf uyum,", "bitkilerden."],
           "Sürdürülebilir sabunlar ve doğal cilt bakımı, zarif ve nazik.", "Ürünlere bak")),
 
-    M("testworkz", "Testworkz", "testworkz.com", "offset", "ledger", "#EF4F2F", "#133E31",
-      en=(["Ship with", "confidence."],
-          "User flows, WCAG 2.2 accessibility, performance and load testing.", "Start testing"),
-      tr=(["Yazılım testiyle", "yayına güvenle çıkın."],
-          "Kullanıcı akışı, WCAG 2.2 erişilebilirlik, performans ve yük testi.", "Testi başlat")),
+    # Site tek sayfa, dort bolumlu ve YALNIZCA TURKCE. /en gibi yollar
+    # ayni Turkce sayfayi donduruyor (catch-all). Ingilizce metin
+    # sitenin kendi Turkce metninin sadik cevirisi; uydurma degil ama
+    # birebir alinti da degil — bunu boyle biliyoruz.
+    M("testworkz", "Testworkz", "testworkz.com", "offset", "ledger", "#EF4F2F", "#121212",
+      yazi_logo=("Testworkz", ".", "#121212", "#ef4f2f"),
+      en=[
+        (["Ship with", "confidence."],
+         "Registration, checkout and quote flows checked against real usage "
+         "scenarios before release.",
+         "See software testing", "/#software"),
+        (["What happens", "under load?"],
+         "Load testing surfaces bottlenecks, delays and the problems that hurt "
+         "experience under traffic.",
+         "See performance", "/#performance"),
+        (["Accessible", "to everyone."],
+         "Keyboard use, screen reader experience, focus order and contrast verified "
+         "against WCAG 2.2.",
+         "See accessibility", "/#accessibility"),
+      ],
+      tr=[
+        (["Yazılım testiyle", "yayına güvenle çıkın."],
+         "Kayıt, ödeme ve teklif akışları gerçek kullanım senaryolarıyla yayın "
+         "öncesi doğrulanır.",
+         "Yazılım testini gör", "/#software"),
+        (["Yük altında", "ne oluyor?"],
+         "Performans ve yük testiyle darboğazlar, gecikmeler ve kaynak sınırları "
+         "önceden bulunur.",
+         "Performansı gör", "/#performance"),
+        (["Herkes için", "erişilebilir."],
+         "Klavye, ekran okuyucu, odak sırası ve kontrast WCAG 2.2 ölçütlerine göre "
+         "doğrulanır.",
+         "Erişilebilirliği gör", "/#accessibility"),
+      ]),
 
     M("panictr", "PANIC", "panic.com.tr", "offset", "swiss", "#4A4F57", "#0C0D12",
       en=(["Software and", "infrastructure."],
@@ -459,19 +515,28 @@ def yazi_logosu(m, x, y, boy):
     """
     # Bes ogeli de olabilir: son oge italik olup olmadigini soyluyor.
     # Yerine'nin logosu italik Playfair, AICall'inki duz.
+    # (yazi, isaret, yazi_rengi, isaret_rengi)
+    #
+    # KUNYE HER ZAMAN AFISIN DISPLAY SERIFIYLE basilir — markanin
+    # sitedeki yazi tipi ne olursa olsun. Korunan sey renkler ve yapi:
+    # ad, sonunda vurgu renginde bir nokta. AraçKirala, AICall, Yerine,
+    # TurcoPartners ve Testworkz boyle; ozel tasarlanmis resim logosu
+    # olanlar (Panicworkz, WP Care) kendi dosyasiyla basilir.
+    #
+    # Kunyeleri kendi yazi tipleriyle basmak on alti afisi tek bir
+    # yayinin reklam alani olmaktan cikarip derlemeye cevirirdi. Sans
+    # secenegi bu yuzden koddan kaldirildi: kural burada zorunlu.
     yl = m["yazi_logo"]
     yazi, isaret, r1, r2 = yl[0], yl[1], yl[2], yl[3]
-    italik = len(yl) > 4 and yl[4]
     # y = harfin GORSEL UST hizasi, resim logonun y'siyle ayni anlamda.
     # Once 0.78 ile taban cizgisine geciyordum; Georgia'nin buyuk harf
     # yuksekligi 0.69 em oldugu icin yazi logolu markalarda kunye 1-2
     # piksel yukarida duruyor, kenar payi resim logolu markalardan
     # ayrisiyordu.
-    return ('<text class="disp" x="%.0f" y="%.0f" font-size="%.0f" font-weight="%s" '
-            '%sletter-spacing="-0.02em" fill="%s">%s<tspan fill="%s">%s</tspan></text>'
-            % (x, y + boy * 0.69, boy, "400" if italik else "700",
-               'font-style="italic" ' if italik else "",
-               r1, kacir(yazi), r2, kacir(isaret)))
+    return ('<text class="disp" x="%.0f" y="%.0f" font-size="%.0f" font-weight="700" '
+            'letter-spacing="-0.02em" fill="%s">%s'
+            '<tspan fill="%s">%s</tspan></text>'
+            % (x, y + boy * 0.69, boy, r1, kacir(yazi), r2, kacir(isaret)))
 
 
 def yazi_logosu_eni(m, boy):

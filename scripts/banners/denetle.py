@@ -25,7 +25,7 @@ NS = "{http://www.w3.org/2000/svg}"
 KOK = pathlib.Path(__file__).resolve().parents[2] / "public" / "media" / "deney"
 
 # Sade seti tamamlanmis markalar. Yeni marka bitince buraya eklenir.
-BITEN = ("panicworkz", "aicall", "yerine", "wpcare")
+BITEN = ("panicworkz", "aicall", "yerine", "wpcare", "turco", "testworkz")
 
 HEDEF_SATIR = {"measure": 1, "feature": 1, "panel": 2, "rail": 4}
 ACIKLAMA_PUNTO = 14
