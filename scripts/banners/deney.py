@@ -1025,10 +1025,26 @@ def k_plain(m, w, h, bicim, t, o, serit):
         # paya bagli — ikisi birbirini kovaliyor. Iki gecis yetiyor:
         # once mevcut payla dikeyi buluyoruz, sonra yatayi ona esitleyip
         # olculeri yeniliyoruz.
-        for _ in range(2):
-            cagri_en, cx, alan, olculer, blok, V = duzen(K)
-            K = int(round(V))
+        # Kenar payi ile dikey pay birbirini kovaliyor: dar kenar payi
+        # metne daha cok yer verir, metin daha az satira siger, blok
+        # kisalir, dikey pay buyur. Iki gecisli yaklasim salindiginda
+        # ust 18 sol 30 gibi sonuclar veriyordu.
+        #
+        # Onun yerine tariyoruz: dikey payin kenar payina yetistigi ilk
+        # degeri aliyoruz. Boylece dort kenar tanimi geregi esit.
+        # BUYUKTEN kucuge. Kucukten baslayinca ilk uyan deger daima 8
+        # oluyordu ve kenarlar 8 piksele cokuyordu; oysa aranan sey
+        # dikey payin yetistigi EN BUYUK kenar payi.
+        K_ilk = K
+        for aday in range(K_ilk, 7, -1):
+            cagri_en, cx, alan, olculer, blok, V = duzen(aday)
+            if V >= aday:
+                K = aday
+                break
+        else:
+            K = K_ilk
         cagri_en, cx, alan, olculer, blok, V = duzen(K)
+        V = K
         ust = V + lg + 5
 
         if m.get("yazi_logo"):
@@ -1149,10 +1165,11 @@ def k_plain(m, w, h, bicim, t, o, serit):
             # uzun mesajlarda aciklama asagi itilip kurala yapisiyordu.
             # Simdi aciklama HEP kuraldan 26 piksel yukarida duruyor ve
             # sigmiyorsa kuculen sey baslik oluyor.
-            # Panel 511x300: iki kez 26 piksel nefes, ucuncu aciklama
-            # satiriyla birlikte tuvali asiyor ve aciklamayi 12 puntoya
-            # duşuruyordu. Alcak tuvalde pay da kucuk olmali.
-            NEFES_KURAL = NEFES_BASLIK = 13 if bicim == "panel" else 26
+            # Nefes paylari BUTUN formatlarda ayni. Panelde sigsin diye
+            # 13'e indirmistim; sigdirmak icin kurali formata gore
+            # esnetmek, kuralin kendisini bozuyor. Sigmiyorsa kuculecek
+            # olan puntodur, pay degil.
+            NEFES_KURAL = NEFES_BASLIK = 26
             satirlar = mes["bas"]
             bb = ortak_bb
 
@@ -1166,9 +1183,15 @@ def k_plain(m, w, h, bicim, t, o, serit):
                 while len(parca) < hedef_satir and dar > tam_en * 0.6:
                     dar -= 1
                     parca = sar(mes["alt"], dar)
-                alt_yuk = len(parca) * int(ab * 1.45)
+                lh = int(ab * 1.45)
+                alt_yuk = len(parca) * lh
                 y_son = y_ad + 40 + bb + (len(satirlar) - 1) * satir
-                y_alt = y_cagri - 30 - NEFES_KURAL - alt_yuk
+                # SON SATIRIN TABANI kuraldan tam NEFES_KURAL kadar
+                # yukarida. Once blogun altindan hesapliyordum; aradaki
+                # fark satir araligina bagli oldugu icin panelde 31,
+                # rail'de 40 piksel cikiyordu. Ayni kural her formatta
+                # ayni sonucu vermeli.
+                y_alt = y_cagri - 30 - NEFES_KURAL - (len(parca) - 1) * lh
                 return satir, ab, parca, alt_yuk, y_son, y_alt
 
             satir, ab, parca, alt_yuk, y_son, y_alt = olc(bb)
@@ -1176,10 +1199,8 @@ def k_plain(m, w, h, bicim, t, o, serit):
             # acigi aciklama kapatiyordu: panelde 12 punto, oteki
             # formatlarda 14. Aciklama govde metni, formatlar arasinda
             # sabit kalmali; esneyecek olan basliktir.
-            # Panelde baslik 17'ye kadar inebiliyor. Aciklama govde
-            # metni: dort formatta da 14 kalmali, esneyecek olan baslik.
-            _bb_taban = 17 if bicim == "panel" else 20
-            while y_son + NEFES_BASLIK > y_alt and bb > _bb_taban:
+            # Baslik tabani da butun formatlarda ayni.
+            while y_son + NEFES_BASLIK > y_alt and bb > 20:
                 bb -= 1
                 satir, ab, parca, alt_yuk, y_son, y_alt = olc(bb)
             # Baslik tabana vurduysa son care aciklamayi kucultmek
@@ -1195,10 +1216,15 @@ def k_plain(m, w, h, bicim, t, o, serit):
             y += (len(satirlar) - 1) * satir
             en_dip = max(en_dip, y)
 
+            # y_alt olc() icinde hesaplandi; burada YENIDEN hesaplamiyoruz.
+            #
+            # Burada eski bir kopya kalmisti: NEFES_KURAL yerine sabit 34
+            # kullaniyor ve kaldirdigimi sandigim max(..., y+26) kelepcesini
+            # uyguluyordu. Panelde kelepceye takilip 13, rail'de 34'e gore
+            # 40 piksel bosluk cikiyordu — ayni kural iki formatta iki
+            # sonuc veriyordu.
             alt_yuk = len(parca) * int(ab * 1.45)
-            en_ust_alt = min(locals().get("en_ust_alt", 10**9),
-                             max(y_cagri - 30 - 34 - alt_yuk, y + 26))
-            y_alt = max(y_cagri - 30 - 34 - alt_yuk, y + 26)
+            en_ust_alt = min(locals().get("en_ust_alt", 10**9), y_alt)
             for j, par in enumerate(parca):
                 ic.append('<text class="sans" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
                           % (K, y_alt + ab + j * int(ab * 1.45), ab, IKINCIL, par))
