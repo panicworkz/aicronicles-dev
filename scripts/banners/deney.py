@@ -147,7 +147,8 @@ def sar(metin, en, azami=99):
 # ---------------------------------------------------------------------
 # Markalar
 # ---------------------------------------------------------------------
-def M(kod, ad, alan, kol, stil, renk, koyu, en, tr, hedef=(), yazi_logo=None):
+def M(kod, ad, alan, kol, stil, renk, koyu, en, tr, hedef=(), yazi_logo=None,
+      plaka_logo=None, gorseller=(), ikonlar=()):
     """Bir marka.
 
     en / tr: tek bir (baslik, destek, cagri) uclusu ya da BOYLE UCLULERIN
@@ -173,7 +174,16 @@ def M(kod, ad, alan, kol, stil, renk, koyu, en, tr, hedef=(), yazi_logo=None):
                 # Playfair Display 700 lacivert "AICall" ve kirmizi bir
                 # nokta. Favicon rozetini basmak yanlisti: sitede oyle
                 # bir isaret yok.
-                yazi_logo=yazi_logo)
+                yazi_logo=yazi_logo,
+                # Kendi zemini olan kunye: ([(yazi, renk), ...], zemin)
+                plaka_logo=plaka_logo,
+                # Uzun (rail) formatin ortasindaki serit icin markanin
+                # KENDI sitesinden gelen kareler. Bos birakinca afisin
+                # ortasinda 150 piksellik olu bir alan kaliyordu.
+                gorseller=list(gorseller),
+                # Hizmet markalari icin fotograf yerine yetenek
+                # isaretleri (lucide). Fotografla ayni olcu, ayni sayi.
+                ikonlar=list(ikonlar))
 
 
 MARKALAR = [
@@ -189,6 +199,12 @@ MARKALAR = [
     # teknik derinlik, sektor genisligi.
     M("aicall", "AICall", "aicall.pw", "context", "editorial", "#0FA36B", "#0A0908",
       yazi_logo=("AICall", ".", "#0c0c3f", "#d83f3f"),
+      # Ikonlar: her cagriyi karsilamak · ses motoru (taniyici, dil,
+      # gecikme) · ucuncu perde aciklamadaki BES SEKTOR: bankacilik,
+      # saglik, konaklama, lojistik, gayrimenkul.
+      ikonlar=(("phone-call", "headphones", "mic", "user-check", "clock"),
+               ("audio-lines", "speech", "languages", "gauge", "brain"),
+               ("landmark", "stethoscope", "hotel", "truck", "home")),
       en=[
         (["Every call.", "Answered."],
          "Human-like AI voice agents answer, qualify and act on every business call, "
@@ -222,18 +238,28 @@ MARKALAR = [
     M("yerine", "Yerine", "yerine.com.tr", "context", "tag", "#ce3d19", "#0a2018",
       # Sitede italik; afiste butun kunyeler gibi duz serif. Renkler siteden.
       yazi_logo=("Yerine", ".", "#0a2018", "#ce3d19"),
+      # Kareler sitenin kendi urun ve kategori fotograflari. Birinci
+      # perde mesajin kendisi: ITHAL ile YERLI ayni urunun iki karesi
+      # yan yana (sekillendirici, akilli saat, kahve).
+      #
+      # Sitede on dort farkli gorsel var, on bes kare gerekiyor; kahve
+      # karesi birinci ve ucuncu perdede tekrar ediyor (aralarinda 32
+      # saniye), ayni perde icinde tekrar yok.
+      gorseller=(("kars-1", "kars-2", "kars-3", "kars-4", "kars-5"),
+                 ("kat-1", "kat-2", "kat-3", "kat-4", "kat-5"),
+                 ("cevap-1", "cevap-2", "cevap-3", "cevap-4", "cevap-5")),
       en=[
         (["What you want,", "for less."],
-         "Transparent consumer guide to alternatives. Quality domestic equivalents "
-         "instead of costly imports.",
+         "Consumer guide to alternatives. Quality domestic equivalents instead "
+         "of costly imports.",
          "Compare prices"),
         (["Type a product,", "see alternatives."],
-         "An alternative exists for everything you buy. Domestic production, price "
-         "advantage, transparency.",
+         "An alternative exists for everything you buy. Domestic production "
+         "and price advantage.",
          "See how it works", "/en/guide/how-it-works"),
         (["A better answer", "to what to buy."],
-         "Honest, transparent alternatives to expensive brands. Compare price, features "
-         "and user experience.",
+         "Honest alternatives to expensive brands. Compare price, features and "
+         "user experience.",
          "About Yerine", "/en/about-us"),
       ],
       tr=[
@@ -256,17 +282,32 @@ MARKALAR = [
     # ingilizce metnine gecildi. Baglantilar sayfa ici capalara gidiyor.
     M("turco", "TurcoPartners", "turcopartners.com", "offset", "split", "#c5a059", "#14263A",
       yazi_logo=("TurcoPartners", ".", "#14263A", "#c5a059"),
+      # Kareler sitenin kendi gorselleri (VPS'te
+      # /opt/turcopartners-com-dev/public). Perdeler: kuresel acilim
+      # (Istanbul, Londra, Dubai, toplanti, liman) · yedi hizmetin
+      # sektorleri (e-ticaret, uretim, teknoloji, saglik, fintek) ·
+      # ABD tarafi (sirket, hukuk, patent, Miami, tesvik).
+      #
+      # "city-frankfurt" adli dosya aslinda tropik bir ada fotografi —
+      # sitenin kendi eslestirme hatasi, alinmadi.
+      #
+      # Istanbul karesi once camiydi; turistik okunuyordu. Mesaj
+      # ticari bir acilim anlatiyor, o yuzden Bogaz'a bakan modern bir
+      # ofis (hero-istanbul-gateway) kondu.
+      gorseller=(("acilim-1", "acilim-2", "acilim-3", "acilim-4", "acilim-5"),
+                 ("hizmet-1", "hizmet-2", "hizmet-3", "hizmet-4", "hizmet-5"),
+                 ("abd-1", "abd-2", "abd-3", "abd-4", "abd-5")),
       en=[
         (["Expand from Turkey", "into global markets."],
-         "Real-time Amazon trend intelligence, turnkey US entity and trademark setup, "
-         "and growth marketing.",
+         "Amazon trend intelligence, turnkey US entity and trademark setup, and "
+         "growth marketing.",
          "See the services"),
         (["Seven core", "execution services."],
-         "Turnkey operational services scaling Turkish manufacturers and tech "
-         "enterprises into global markets.",
+         "Turnkey services scaling Turkish manufacturers and tech enterprises "
+         "into global markets.",
          "See the seven", "/#sectors"),
         (["US formation,", "legal and grants."],
-         "LLC and C-Corp formation, Operating Agreements, IRS EIN processing and "
+         "LLC and C-Corp formation, Operating Agreements, EIN processing and "
          "commercial banking.",
          "See the flywheel", "/#approach"),
       ],
@@ -286,6 +327,11 @@ MARKALAR = [
       ]),
 
     M("wpcare", "WP Care", "wpcare.pw", "context", "swiss", "#2563EB", "#0F172A",
+      # Ikonlar: cekirdek/eklenti/tema guncellemesi, yedek, guvenli
+      # surumleme · surekli izleme ve anlik uyari · guvenlik duvari.
+      ikonlar=(("refresh-cw", "puzzle", "hard-drive-download", "shield-check", "package"),
+               ("monitor-check", "bell", "clock", "wifi", "heart-pulse"),
+               ("shield", "lock", "bug-off", "ban", "scan-eye")),
       en=[
         (["Keeping WordPress sites", "updated and safe."],
          "Core, plugin and theme updates with safe versioning, plus backups and "
@@ -317,47 +363,415 @@ MARKALAR = [
       hedef=["ai-tech"]),
 
     # ---- ORTUSMEYEN KOL ----------------------------------------------
-    M("sepetim", "Sepetimbenim", "sepetimbenim.com", "offset", "soft", "#FFB000", "#2A2418",
-      en=(["Chosen with care", "for small paws."],
-          "Food, toys and grooming for dogs, cats and little companions.", "Visit the shop"),
-      tr=(["Patili dostlar için", "özenle seçildi."],
-          "Köpek, kedi ve küçük dostlar için mama, oyuncak ve bakım.", "Mağazaya git")),
+    # Site KOYU zeminde: bg #120b08, yazi #f0ece5, vurgu #d27c5c
+    # (hepsi oklch yaziliyor; tarayicida tuvale basip okudum). Afis
+    # kagit uzerinde oldugu icin acik olan kunye murekkebe donuyor.
+    # Kayitta #FFB000 / #2A2418 yaziyordu, ikisi de yanlisti.
+    #
+    # /en var; ingilizce metin sitenin kendi cumleleri.
+    #
+    # Uc mesaj uc ayri sayfaya: dukkanin kendisi, kapsam (kategoriler)
+    # ve seffaflik.
+    #
+    # Ilk mesaj once sitenin "her urunu kendi dostlarimizla deniyoruz"
+    # cumlesindendi. Sempatik ama tehlikeli: bir pet shop'un urunu
+    # hayvan uzerinde DENEDIGINI soylemesi hayvan deneyi gibi okunuyor.
+    # Yerine dukkanin bagimsizligi anlatiliyor.
+    M("sepetim", "Sepetimbenim", "sepetimbenim.com", "offset", "soft", "#D27C5C", "#120B08",
+      # Kareler dukkanin KENDI urun ve sahne fotograflari (VPS'te
+      # /opt/sepetimbenim/storefront/public/img). Perde sirasiyla:
+      # dukkanin sicakligi, kapsam (kopek/kedi/kus/tavsan/kemirgen),
+      # siparis edilen seyler.
+      #
+      # Veteriner fotografi bilerek KULLANILMADI: Sepetimbenim bir
+      # dukkan, klinik degil; beyaz onluklu bir kare markayi yanlis
+      # tanitiyordu.
+      gorseller=(("dukkan-1", "dukkan-2", "dukkan-3", "dukkan-4", "dukkan-5"),
+                 ("kapsam-1", "kapsam-2", "kapsam-3", "kapsam-4", "kapsam-5"),
+                 ("urun-1", "urun-2", "urun-3", "urun-4", "urun-5")),
+      yazi_logo=("Sepetimbenim", ".", "#120b08", "#d27c5c"),
+      en=[
+        # Baslik once "An independent shop / for your companions." idi;
+        # panelde satirlar 317 piksele ulasip uc kareye yer
+        # birakmiyordu (sinir 295). Kisaltilinca hem sigdi hem de
+        # dukkanin NE dukkani oldugunu soyler oldu.
+        (["An independent", "pet shop."],
+         "Founded to give your companions exactly the care that they "
+         "deserve, nothing less.",
+         "Meet the shop", "/hakkinda"),
+        (["Dogs, cats, birds", "and small friends."],
+         "Food, toys, supplements, hygiene, grooming and accessories, all "
+         "in a single place.",
+         "See the categories", "/kategoriler"),
+        (["Shipping and taxes,", "visible upfront."],
+         "Shipping and taxes appear on screen before you order, with "
+         "nothing added later.",
+         "Shipping and returns", "/kargo-iade"),
+      ],
+      tr=[
+        (["Bağımsız bir", "pet dükkânı."],
+         "Dostlarınıza tam hak ettikleri özeni sunmak için kurulmuş küçük "
+         "bir dükkân.",
+         "Dükkânı tanı", "/hakkinda"),
+        (["Köpek, kedi, kuş", "ve küçük dostlar."],
+         "Mama, oyuncak, sağlık takviyesi, hijyen ve aksesuarlar; hepsi tek "
+         "çatı altında.",
+         "Kategorileri gör", "/kategoriler"),
+        (["Kargo ve vergiler", "en baştan görünür."],
+         "Ödeyeceğiniz tutar sipariş öncesinde ekranda; kasada eklenen hiçbir "
+         "kalem yok.",
+         "Kargo ve iade", "/kargo-iade"),
+      ]),
 
-    M("cebinden", "Cebinden", "cebinden.com", "offset", "poster", "#FF929A", "#6F020A",
-      en=(["Buy and sell.", "Pocket intact."],
-          "Transparent commission and secure escrow payments.", "Join early access"),
-      tr=(["Cebini yakmadan", "al-sat."],
-          "Şeffaf komisyon ve güvenli emanet ödemeli ikinci el pazar yeri.", "Erken erişime katıl")),
+    # Renkler kayitta yanlisti (#FF929A / #6F020A); siteden olculdu:
+    # murekkep rgb(27,22,17), vurgu rgb(224,123,26).
+    #
+    # Site tek sayfa ve /en ile kendi ingilizcesi var — metin ceviri
+    # degil, sitenin kendi cumleleri. Hedefler sayfa ici capalar:
+    # #about, #trust, #early-access (DOM'dan alindi).
+    #
+    # YAZILMAYANLAR: "%3 komisyon", "2 dakikada listeleme", "240
+    # kontenjan", "ucretsiz listele". Kural 17 fiyat ve rakam iddiasi
+    # istemiyor; ustelik urun kapali erken erisimde, magazalarda degil.
+    # Ucuncu mesaj saticinin isini anlatiyor: fotograf cek, iki satir
+    # yaz, ilan yayinda. Once "yakinda magazalarda" yaziyordu — okura
+    # bir sey vaat etmiyordu; sonra ozellik listesiydi — o da bir
+    # avantaj degil envanterdi.
+    M("cebinden", "Cebinden", "cebinden.com", "offset", "poster", "#E07B1A", "#1B1611",
+      # Kareler sitenin kendi gorselleri (VPS'te
+      # /opt/cebinden/storefront/public/images). Perdeler mesajlariyla
+      # birebir: dolapta duran seyler (pazar yeri), emanet ve odeme,
+      # ilan verme.
+      gorseller=(("pazar-1", "pazar-2", "pazar-3", "pazar-4", "pazar-5"),
+                 ("emanet-1", "emanet-2", "emanet-3", "emanet-4", "emanet-5"),
+                 ("ilan-1", "ilan-2", "ilan-3", "ilan-4", "ilan-5")),
+      yazi_logo=("Cebinden", ".", "#1b1611", "#e07b1a"),
+      en=[
+        (["A marketplace,", "not a store."],
+         "You sell the item; Cebinden builds the infrastructure and the trust "
+         "between users.",
+         "Meet Cebinden", "/#about"),
+        (["Money stays safe", "until you approve."],
+         "Payment goes to escrow, never straight to the seller, until the "
+         "buyer approves.",
+         "How escrow works", "/#trust"),
+        (["A photograph,", "a couple of lines."],
+         "Take a photograph, write a couple of lines, and your listing "
+         "publishes immediately.",
+         "See how it works", "/#how"),
+      ],
+      tr=[
+        (["Bir pazar yeri,", "mağaza değil."],
+         "Ürünü sen satarsın, altyapıyı ve kullanıcılar arasındaki güveni "
+         "Cebinden kurar.",
+         "Cebinden'i tanı", "/#about"),
+        (["Para güvende,", "sen onaylayana kadar."],
+         "Ödeme doğrudan satıcıya değil, alıcı onaylayana kadar emanet "
+         "hesabında bekler.",
+         "Emanet nasıl işler", "/#trust"),
+        (["Bir fotoğraf,", "birkaç satır."],
+         "Fotoğrafını çek, birkaç satır yaz; ilanın uygulamada saniyeler "
+         "içinde yayında.",
+         "Nasıl işliyor", "/#how"),
+      ]),
 
-    M("sosyo", "SosyoMarket", "sosyomarket.com", "offset", "tag", "#7C3AED", "#111111",
-      en=(["Shopping is not", "a solo sport."],
-          "Real reviews, community picks and group deals.", "See the community"),
-      tr=(["Alışveriş artık", "tek başına değil."],
-          "Gerçek yorumlar, topluluk önerileri ve grup fırsatları.", "Topluluğu gör")),
+    # sosyomarket.com'da FAVICON YOK — butun standart yollar 404. Bir
+    # sure "logosuz basilacak" diye durdu; kural 23 sorunu cozdu:
+    # sitenin basliginda zaten yazi kunyesi var, "SosyoMarket" +
+    # vurgu renginde nokta. Renkler siteden olculdu: murekkep
+    # rgb(28,26,22), vurgu rgb(232,72,58). Kayitta #7C3AED / #111111
+    # yaziyordu, ikisi de yanlisti.
+    #
+    # Site YALNIZCA turkce (/en 404, dil dugmesi yok) — ingilizce metin
+    # sitenin cumlelerinin sadik cevirisi (kural 19).
+    #
+    # Uc mesaj sitenin kendi uc adimindan: Kesfet / Guven / Birlikte Al.
+    # Urun henuz lansman oncesi (bekleme listesi), bu yuzden hicbir
+    # cagri "simdi satin al" demiyor.
+    M("sosyo", "SosyoMarket", "sosyomarket.com", "offset", "tag", "#E8483A", "#1C1A16",
+      # Kareler sitenin kendi gorselleri. Ikinci perde YORUMCU
+      # PORTRELERI: mesaj dogrulanmis alici yorumlarindan bahsediyor,
+      # portreler tam da o alicilar.
+      #
+      # Sitenin kutuphanesi ince: portreler haric dokuz kullanilabilir
+      # gorsel var, on kare gerekiyor. Ustelik site AYNI portreyi iki
+      # isimle kullaniyor (Ayse T. = Elif K., Burak Y. = Mert D.,
+      # Selin M. = Zeynep A.), yani bes farkli yuz var. Bu yuzden
+      # "Moda" karesi birinci ve ucuncu perdede tekrar ediyor —
+      # aralarinda otuz saniye var. Alakasiz bir stok gorsel koymak ya
+      # da ayni yuzu iki perdede gostermek daha kotu olurdu.
+      gorseller=(("kesif-1", "kesif-2", "kesif-3", "kesif-4", "kesif-5"),
+                 ("yorum-1", "yorum-2", "yorum-3", "yorum-4", "yorum-5"),
+                 ("grup-1", "grup-2", "grup-3", "grup-4", "grup-5")),
+      yazi_logo=("SosyoMarket", ".", "#1c1a16", "#e8483a"),
+      en=[
+        (["What the community", "is discovering."],
+         "Popular products, trend lists and picks made by real people, not by "
+         "advertising.",
+         "See the picks", "/urunler"),
+        (["Know everything", "before you buy."],
+         "Verified buyer reviews, ratings and questions answered by the people "
+         "who bought it.",
+         "See the reviews", "/ozellikler"),
+        (["Buy together,", "win together."],
+         "The more people join a group purchase, the further the price falls "
+         "for everyone.",
+         "How it works", "/nasil-calisir"),
+      ],
+      tr=[
+        (["Topluluğun", "keşfettikleri."],
+         "Popüler ürünler, trend listeler ve reklamın değil insanların gerçek "
+         "seçimleri.",
+         "Seçimleri gör", "/urunler"),
+        (["Almadan önce", "her şeyi bil."],
+         "Doğrulanmış alıcı yorumları, puanlar ve ürünü satın alanların "
+         "yanıtladığı sorular.",
+         "Yorumları gör", "/ozellikler"),
+        (["Birlikte al,", "birlikte kazan."],
+         "Grup alımına katılan sayısı arttıkça fiyat herkes için birlikte "
+         "düşmeye başlar.",
+         "Nasıl çalışır", "/nasil-calisir"),
+      ]),
 
-    M("superd", "Superdamping", "superdamping.com", "offset", "ledger", "#C2410C", "#111111",
-      en=(["Someone closed.", "You get the price."],
-          "Bankruptcy lots and end-of-line stock, every lot numbered.", "Open the ledger"),
-      tr=(["Birinin kapanışı,", "senin fiyatın."],
-          "İflas partileri ve seri sonu stok, her lot numaralı.", "Kaydı aç")),
+    # superdamping.com'da da FAVICON YOK — sosyomarket gibi. Kural 23
+    # burada da yetiyor: baslikta "Superdamping" + vurgu renginde
+    # nokta duruyor. Site KOYU zeminde (bg #111110, yazi #f4f2ed);
+    # afis kagit uzerinde oldugu icin acik olan yazi murekkebe doner
+    # — uyorulmaz'da yaptigimizin aynisi. Vurgu rgb(255,75,62).
+    #
+    # Sitede /en var, metin sitenin kendi ingilizcesi.
+    #
+    # ZOR TARAF: bu sitenin her yeri fiyat ve yuzde. Kural 17 ikisini
+    # de yasakliyor, yani "-%65", "ortalama dampıng %59", "30 lot"
+    # yazilamaz. Geriye markanin asil karakteri kaliyor ve zaten guclu
+    # olan da o: menşe (mal nereden geldi), ilkeler (kusur gizlenmez)
+    # ve tek seferlik olmasi (kapanan lot geri acilmaz).
+    M("superd", "Superdamping", "superdamping.com", "offset", "ledger", "#FF4B3E", "#111110",
+      # Kareler sitenin kendi lot gorselleri (Pexels'ten servis
+      # ediliyor; ticari kullanima acik). Perde sirasiyla: mensein
+      # cesitliligi, durumu onemli olan mallar, kapanmak uzere olan
+      # partiler.
+      #
+      # Sitenin kendi eslestirmelerinde birkac tutarsizlik var
+      # (SSD'nin gorseli ahsap kepenk, "108 parca el aleti"nin gorseli
+      # catal-bicak); onlar bilerek alinmadi.
+      gorseller=(("mense-1", "mense-2", "mense-3", "mense-4", "mense-5"),
+                 ("ilke-1", "ilke-2", "ilke-3", "ilke-4", "ilke-5"),
+                 ("son-1", "son-2", "son-3", "son-4", "son-5")),
+      yazi_logo=("Superdamping", ".", "#111110", "#ff4b3e"),
+      en=[
+        (["Every lot", "has an origin."],
+         "Goods from closures, end-of-line runs, shop windows and orders that "
+         "were later cancelled.",
+         "Read the stamp", "/#mense"),
+        (["Nothing hidden,", "nothing invented."],
+         "Display marks, packaging damage and missing sizes all appear in the "
+         "lot description itself.",
+         "Read the rules", "/#ilkeler"),
+        (["A closed lot", "does not reopen."],
+         "Every lot is numbered, every unit counted, and at zero the record "
+         "closes permanently.",
+         "See what is closing", "/#kritik"),
+      ],
+      tr=[
+        (["Her lotun", "bir menşei var."],
+         "İflas partileri, seri sonu stoklar, teşhir ürünleri ve iptal edilen "
+         "siparişler.",
+         "Damgayı oku", "/#mense"),
+        (["Hiçbir şey gizlenmez,", "hiçbir şey uydurulmaz."],
+         "Teşhir izi, ambalaj hasarı ve eksik beden lot açıklamasında açıkça "
+         "yazılır.",
+         "İlkeleri oku", "/#ilkeler"),
+        (["Kapanan lot", "geri açılmaz."],
+         "Her lot numaralı, her adet sayılı; sayı sıfırlanınca kayıt tamamen "
+         "kapanır.",
+         "Kapananları gör", "/#kritik"),
+      ]),
 
-    M("uyorulmaz", "Ufuk Yorulmaz", "ufukyorulmaz.com", "offset", "mark", "#FFB000", "#222533",
-      en=(["Systems architect.", "AI builder."],
-          "Founder of PanicWorkz, WpCare, Yerine, AICall and Fabelo.", "See the work"),
-      tr=(["Kurumsal mimar.", "Yapay zeka sistemleri."],
-          "PanicWorkz, WpCare, Yerine, AICall ve Fabelo'nun kurucusu.", "Çalışmaları gör")),
+    # Site tek sayfa, capalari var (#whois, #services, #projects) ve
+    # INGILIZCE yayinliyor; metin oradan. Turkcesi sadik ceviri.
+    #
+    # Kunye sitede "~/ufukyorulmaz" — DM Mono, yesil tilde, neredeyse
+    # siyah zemin. Kagit zeminde o yesil (#3f3) okunmuyor; kural 23
+    # geregi ad + vurgu renginde nokta olarak basiliyor ve vurgu icin
+    # sitenin kendi kehribar belirteci (#ffb000) kullaniliyor. Ad rengi
+    # sitenin zemin rengi (#0a0a0b): zemin ve figur yer degistiriyor.
+    # Site tek sayfa, capalari var (#whois, #services) ve INGILIZCE
+    # yayinliyor; metin oradan, bolumler tek tek gezilerek. Turkcesi
+    # sadik ceviri.
+    #
+    # Logo: favicon.svg ozel tasarlanmis bir isaret — obsidyen kare,
+    # kehribar cerceve, "❯" istem simgesi. Kural 23: ozel tasarim varsa
+    # yazi kunyesi degil, o kullanilir. Once yazi kunyesi basmistim;
+    # sitede logo yok sanmistim, vardi.
+    # Uc mesaj da NE IS YAPILDIGINI soyluyor; "kurucu" unvani afiste
+    # bir sey anlatmiyordu. Metin sitenin #services bolumunden.
+    #
+    # Kunye sitedeki terminal satiri: "❯ ~ /ufukyorulmaz", DM Mono.
+    # Sunucudaki kaynaktan dogrulandi (page.css: .t1-prompt::before
+    # content "❯ " kehribar, .t1-green yesil, marka rengi ink-bright).
+    # Sitede koyu zemin uzerinde acik yazi; afis kagit zeminde oldugu
+    # icin plaka yok ve acik olan yazi murekkebe donuyor.
+    M("uyorulmaz", "Ufuk Yorulmaz", "ufukyorulmaz.com", "offset", "mark", "#ffb000", "#0a0a0b",
+      plaka_logo=([("\u276f", "#ffb000"), ("~", "#33ff33"),
+                   ("/ufukyorulmaz", "#0a0a0b")], None),
+      # IKONLA ANLATIM. ufukyorulmaz.com'da hic fotograf yok; site
+      # tamamen ikon ve tipografi. Once CC0 havuzundan stok fotograf
+      # denedim (sunucu rafi, depo, kod ekrani) — altyapi ve e-ticaret
+      # idare eder cikti ama yapay zeka perdesi olmadi: o havuzda
+      # "yapay zeka" aramasi yapay zekayla URETILMIS tablolar ve ders
+      # diyagramlari donduruyor.
+      #
+      # Hizmet markasinin anlatacagi sey zaten bir nesne degil bir
+      # YETENEK. Ekran goruntusu de 60 piksellik karede okunmuyor.
+      # Bu yuzden kareler lucide ikonlariyla (ISC; ticari kullanim
+      # serbest, atif gerekmez) yetenekleri gosteriyor.
+      # SOMUT ISARET SECILIR, soyut sema degil. Ilk denemede
+      # container, git-branch, workflow, brain-circuit gibi ikonlar
+      # vardi; 62 piksellik karede hicbiri okunmuyordu. Sunucu,
+      # veritabani, bulut, sepet, kamyon gibi NESNELER herkesin
+      # tanidigi seyler.
+      ikonlar=(("server", "database", "cloud", "cpu", "globe"),
+               ("bot", "brain", "message-square", "sparkles", "mic"),
+               ("shopping-cart", "store", "package", "credit-card", "truck")),
+      en=[
+        (["Infrastructure", "and DevOps."],
+         "CI/CD pipelines, Docker containerization, GCP architecture and "
+         "zero-downtime deploys.",
+         "See the services", "/#services"),
+        (["AI and LLM", "integration."],
+         "Custom RAG architectures, autonomous AI agents and intelligent workflow "
+         "automation.",
+         "See the services", "/#services"),
+        # "marketplace automation." panelde 332 piksel tutuyordu ve
+        # iki kareye yer birakmiyordu (sinir 320). Kisaltinca baslik
+        # otekilerle ayni kaliba da girdi: iki alan adi, sonra
+        # aciklamada ne yapildigi.
+        (["E-commerce and", "marketplaces."],
+         "Price intelligence, multi-vendor marketplace syncing and inventory "
+         "automation at scale.",
+         "See the services", "/#services"),
+      ],
+      tr=[
+        (["Altyapı", "ve DevOps."],
+         "Kurumsal CI/CD hatları, Docker paketleme, GCP mimarisi ve kesintisiz "
+         "dağıtım.",
+         "Hizmetleri gör", "/#services"),
+        (["Yapay zeka ve", "LLM entegrasyonu."],
+         "Özel RAG mimarileri, otonom ajanlar ve akıllı iş akışı otomasyonu "
+         "kurulumu.",
+         "Hizmetleri gör", "/#services"),
+        (["E-ticaret ve", "pazaryeri otomasyonu."],
+         "Yüksek hacimli veri toplama, fiyat zekası ve çok satıcılı pazaryeri "
+         "senkronu.",
+         "Hizmetleri gör", "/#services"),
+      ]),
 
-    M("glowi", "Glowi", "glowi.today", "offset", "editorial", "#C9756C", "#2B1F1D",
-      en=(["Real beauty advice.", "Honest reviews."],
-          "Ingredients that work, and the ones that do not.", "Read the reviews"),
-      tr=(["Gerçek güzellik tavsiyesi.", "Dürüst incelemeler."],
-          "İşe yarayan içerikler ve yaramayanlar.", "İncelemeleri oku")),
+    # Glowi bir Ghost yayini ve INGILIZCE cikiyor; metin sitenin
+    # kendi cumleleri, turkcesi sadik ceviri (kural 19).
+    #
+    # LOGO: sitenin gercek bir tasarlanmis kunyesi var
+    # (content/images/2026/05/glowi-logo7.png, 244x64) — serif
+    # "Glowi" + vurgu renginde ".today". Kural 23 boyle bir durumda
+    # resim logoyu istiyor. Logo dizininde onceden favicon'daki tek
+    # harflik "G" duruyordu; asil kunye onun yerine kondu.
+    # Vurgu rengi Ghost'un --ghost-accent-color'i: #C9756C.
+    #
+    # Uc mesaj uc ayri etikete: dogal kati sabun, cilt bakimi, erkek
+    # bakimi. Uc ayri okur.
+    #
+    # Once birinci mesaj "ucretli yerlesim almiyoruz" diyordu; yayinin
+    # kendisi hakkindaydi, okurun ilgilendigi konu hakkinda degil.
+    # Sabun metni /best-natural-soap-brands... yazisindan geliyor
+    # (bitkisel yaglar, botanik ozler, sentetik deterjan yok). Yazidaki
+    # dolar fiyatlari alinmadi — kural 17.
+    #
+    # GLOWI BIR DUKKAN DEGIL, YAYIN. "Dogal kati sabun" yazan bir afis
+    # sabun SATTIGIMIZ izlenimi veriyordu. Bu yuzden her aciklama
+    # yayinin bicimini adiyla soyluyor — inceleme, anlatim, rehber — ve
+    # cagrilar da "oku" diyor, "al" demiyor.
+    M("glowi", "Glowi", "glowi.today", "offset", "editorial", "#C9756C", "#15171A",
+      # Kareler yayinin KENDI yazi gorselleri (VPS'te
+      # /opt/glowi/content/images). Hepsi Pexels; ticari kullanima
+      # acik, atif zorunlu degil. Her perde kendi etiketinin
+      # yazilarindan besini gosteriyor.
+      gorseller=(("sabun-1", "sabun-2", "sabun-3", "sabun-4", "sabun-5"),
+                 ("cilt-1", "cilt-2", "cilt-3", "cilt-4", "cilt-5"),
+                 ("erkek-1", "erkek-2", "erkek-3", "erkek-4", "erkek-5")),
+      en=[
+        (["Natural bar soap,", "for every skin type."],
+         "Reviews of bars made with plant oils and botanical extracts, no "
+         "synthetic detergents.",
+         "Read the reviews", "/tag/natural-soap/"),
+        (["What works,", "what is overhyped."],
+         "Explainers on barrier repair, ingredient science and routines for "
+         "every single skin type.",
+         "Read the explainers", "/tag/skincare/"),
+        (["Men's grooming,", "without the fuss."],
+         "Guides to shaving, beard care and deodorant, written for results "
+         "rather than ritual.",
+         "Read the guides", "/tag/mens-grooming/"),
+      ],
+      tr=[
+        (["Doğal katı sabun,", "her cilt tipine."],
+         "Bitkisel yağ ve botanik özlerle yapılan, sentetik deterjansız "
+         "sabun incelemeleri.",
+         "İncelemeleri oku", "/tag/natural-soap/"),
+        (["Ne işe yarar,", "ne abartılmış."],
+         "Bariyer onarımı, içerik bilimi ve bütün cilt tiplerine göre "
+         "hazırlanmış rutinler.",
+         "Yazıları oku", "/tag/skincare/"),
+        (["Erkek bakımı,", "süslemesiz."],
+         "Tıraş, sakal bakımı ve deodorant rehberleri; süsleme değil, sonuç "
+         "için yazıldı.",
+         "Rehberleri oku", "/tag/mens-grooming/"),
+      ]),
 
-    M("oryvane", "Oryvane", "oryvane.com", "offset", "soft", "#00D084", "#101410",
-      en=(["Pure harmony,", "made of botanicals."],
-          "Sustainable soaps and natural skincare, gentle and elegant.", "Shop the range"),
-      tr=(["Saf uyum,", "bitkilerden."],
-          "Sürdürülebilir sabunlar ve doğal cilt bakımı, zarif ve nazik.", "Ürünlere bak")),
+    # Oryvane bir WooCommerce dukkani (VPS'te /opt/wp-sites/oryvane.com),
+    # botanik sabun satiyor. Ingilizce yayinda, turkcesi sadik ceviri.
+    #
+    # LOGO VPS'ten alindi: wp-content/uploads/2025/10/ORYVANE-1.png —
+    # yesil OV monogrami ve altinda koyu "ORYVANE". Kare dosyanin
+    # cevresindeki bos alan kirpildi (1024x1024 -> 662x469), yoksa
+    # kunye kendi bosluguna gomuluyor. Renkler dogrudan bu dosyadan
+    # okundu: yesil #7bae7f, koyu #183028. Kayitta #00D084 / #101410
+    # yaziyordu, ikisi de yanlisti.
+    #
+    # Urun sayfalarindaki dolar fiyatlari alinmadi (kural 17).
+    # Glowi ayni konuda YAZI yaziyor, Oryvane SABUN satiyor; ikisinin
+    # afisi bu yuzden farkli konusuyor.
+    M("oryvane", "Oryvane", "oryvane.com", "offset", "soft", "#7BAE7F", "#183028",
+      gorseller=(("lavanta", "kastilya", "komur", "zeytin", "narenciye"),
+                 ("dogal-krem", "keci-sutu", "hindistan-cevizi", "saf-keci", "hamam"),
+                 ("cay-agaci", "kolajen", "esek-sutu", "nar", "limon")),
+      en=[
+        (["Soap made from", "botanical oils."],
+         "Lavender, castile, charcoal, goat milk and olive bars, made from "
+         "botanical oils.",
+         "See the bars", "/shop/"),
+        (["Chosen for what", "it leaves out."],
+         "No synthetic fragrance, no fillers, no harsh preservatives and no "
+         "misleading claims.",
+         "Our story", "/our-story/"),
+        (["Cleans without", "stripping."],
+         "Cleans without stripping; pH balanced, it respects the skin's own "
+         "moisture barrier.",
+         "Meet Oryvane", "/brand/oryvane/"),
+      ],
+      tr=[
+        (["Bitkisel yağlardan", "yapılmış sabun."],
+         "Lavanta, kastilya, kömür, keçi sütü ve zeytinyağı; bitkisel "
+         "yağlardan sabunlar.",
+         "Sabunları gör", "/shop/"),
+        (["Neyi içermediğiyle", "seçildi."],
+         "Sentetik koku, dolgu maddesi, sert koruyucu ya da yanıltıcı iddia "
+         "bulunmaz.",
+         "Hikâyemiz", "/our-story/"),
+        (["Cildi soymadan", "temizler."],
+         "Cildi soymadan temizler; pH dengeli yapısı nem bariyerine dokunmadan "
+         "çalışır.",
+         "Oryvane'ı tanı", "/brand/oryvane/"),
+      ]),
 
     # Site tek sayfa, dort bolumlu ve YALNIZCA TURKCE. /en gibi yollar
     # ayni Turkce sayfayi donduruyor (catch-all). Ingilizce metin
@@ -365,17 +779,23 @@ MARKALAR = [
     # birebir alinti da degil — bunu boyle biliyoruz.
     M("testworkz", "Testworkz", "testworkz.com", "offset", "ledger", "#EF4F2F", "#121212",
       yazi_logo=("Testworkz", ".", "#121212", "#ef4f2f"),
+      # Ikonlar aciklamalardaki maddelerin karsiligi:
+      # kayit/odeme/teklif akislari ve hata · yuk altinda olcum ·
+      # WCAG 2.2 (klavye, ekran okuyucu, odak, kontrast).
+      ikonlar=(("clipboard-check", "credit-card", "file-check", "bug", "check-circle"),
+               ("gauge", "activity", "timer", "trending-up", "zap"),
+               ("keyboard", "ear", "eye", "contrast", "accessibility")),
       en=[
         (["Ship with", "confidence."],
          "Registration, checkout and quote flows checked against real usage "
-         "scenarios before release.",
+         "before release.",
          "See software testing", "/#software"),
         (["What happens", "under load?"],
          "Load testing surfaces bottlenecks, delays and the problems that hurt "
-         "experience under traffic.",
+         "experience.",
          "See performance", "/#performance"),
         (["Accessible", "to everyone."],
-         "Keyboard use, screen reader experience, focus order and contrast verified "
+         "Keyboard use, screen readers, focus order and contrast checked "
          "against WCAG 2.2.",
          "See accessibility", "/#accessibility"),
       ],
@@ -403,6 +823,17 @@ MARKALAR = [
     # sitemap.xml ve sitemap-news.xml. Uydurma yok, alinti da degil.
     M("panictr", "PANIC", "panic.com.tr", "offset", "swiss", "#bd3425", "#161817",
       yazi_logo=("PANIC", ".", "#161817", "#bd3425"),
+      # Kareler Panic CMS'in OZELLIKLERI. Site henuz CMS'i anlatmiyor,
+      # dolayisiyla oradan alinacak fotograf yok; yonetim ekraninin
+      # goruntusu ise 60 piksellik karede okunmaz. Her ikon
+      # aciklamadaki bir maddenin karsiligi:
+      #
+      #   yazi/sayfa · medya · taksonomi · urun-siparis · musteri
+      #   kampanya  · hedefleme · tiklama · olcum · gosterim
+      #   SERP      · yapay zeka · surum gecmisi · puan · Postgres
+      ikonlar=(("file-text", "image", "tags", "shopping-bag", "users"),
+               ("megaphone", "target", "mouse-pointer-click", "bar-chart-3", "eye"),
+               ("search", "bot", "history", "gauge", "database")),
       en=[
         (["One system.", "Content and commerce."],
          "Articles, pages, media and taxonomy beside products, orders, customers "
@@ -445,6 +876,12 @@ MARKALAR = [
       ]),
 
     M("panicworkz", "Panicworkz", "panicworkz.com", "offset", "poster", "#D83F3F", "#0C0C3F",
+      # Ikonlar: ajansin kapsami (e-ticaret, yazilim, ekip) · yapay
+      # zeka ve LLM ajanlari · "yangin" mesaji (yirmi dort saatte
+      # donus).
+      ikonlar=(("shopping-cart", "code", "users", "briefcase", "layers"),
+               ("bot", "brain", "message-square", "sparkles", "plug"),
+               ("flame", "siren", "phone-call", "clock", "handshake")),
       en=[
         (["We thrive", "under pressure."],
          "Full-service digital agency and outsourcing partner for e-commerce, AI and "
@@ -477,17 +914,112 @@ MARKALAR = [
          "Anlatın", "/contact"),
       ]),
 
+    # Kardes site arackirala.pw ile ayni iskelet, ters konum: orada
+    # premium, burada ekonomik gunluk kiralama. Ucuncu mesaji bilerek
+    # ayirdim — kardes afiste "nerede" (lokasyon) vardi; ayni aciyi iki
+    # komsu markada tekrarlamak seti kopya gosterirdi. Burada acilar
+    # filo / aylik kiralama / seffaflik.
+    #
+    # Sitede INGILIZCE SURUM VAR: /en 404 ama basliktaki EN dugmesi
+    # istemci tarafinda ceviriyor. Ingilizce metin sitenin kendi
+    # cumleleri, ceviri degil (kural 19).
+    #
+    # Kunye: baslikta ozel bir resim logo yok, marka adi Playfair ile
+    # ve arkasindan vurgu renginde bir nokta geliyor — rgb(194,65,12),
+    # kayitli vurgu renginin ta kendisi. Kural 23'un tam ornegi.
     M("arackiralama", "AracKiralama", "arackiralama.pw", "offset", "mark", "#C2410C", "#14263A",
-      en=(["The open road,", "within budget."],
-          "Economy, mid-size, SUV, commercial and hybrid, by the day.", "Pick a car"),
-      tr=(["Yola çıkmak", "artık hesaplı."],
-          "Ekonomi, orta sınıf, SUV, ticari ve hibrit, günlük kiralama.", "Araç seç")),
+      # Kareler sitenin kendi filo gorselleri. Birinci perde
+      # aciklamadaki bes kategoriyi birebir gosteriyor: ekonomi, orta
+      # sinif, SUV, ticari, hibrit.
+      #
+      # Sitede "Ford Transit" gorseli aslinda bir sehir manzarasi,
+      # arac kosede kaliyor; ticari kategoriye net van karesi konuldu.
+      gorseller=(("filo-1", "filo-2", "filo-3", "filo-4", "filo-5"),
+                 ("aylik-1", "aylik-2", "aylik-3", "aylik-4", "aylik-5"),
+                 ("seffaf-1", "seffaf-2", "seffaf-3", "seffaf-4", "seffaf-5")),
+      yazi_logo=("AraçKiralama", ".", "#14263A", "#c2410c"),
+      en=[
+        (["A car for", "every budget."],
+         "Economy, mid-size, SUV, commercial and hybrid cars, all ready to "
+         "collect today.",
+         "See the fleet", "/fleet"),
+        (["Rent by the month,", "at one price."],
+         "Full cover, servicing and roadside assistance included, one price "
+         "with no surprises.",
+         "Rent long term", "/uzun-donem"),
+        (["Everything clear", "before you book."],
+         "Deposit, mileage and insurance terms all defined clearly before you "
+         "book anything.",
+         "Read the terms", "/faq"),
+      ],
+      tr=[
+        (["Her bütçeye", "göre bir araç."],
+         "Ekonomi, orta sınıf, SUV, ticari ve hibrit araçlar, hepsi bugün "
+         "teslime hazır.",
+         "Filoyu gör", "/fleet"),
+        (["Aylık kiralayın,", "tek fiyat ödeyin."],
+         "Tam kasko, periyodik bakım ve yol yardımı dahildir; tek fiyat, "
+         "sürpriz yok.",
+         "Uzun döneme bak", "/uzun-donem"),
+        (["Rezervasyondan önce", "her şey net."],
+         "Depozito, kilometre ve sigorta şartları rezervasyondan önce net ve "
+         "açık olur.",
+         "Şartları oku", "/faq"),
+      ]),
 
+    # Kunye kuralinin (23) kaynagi burasi: sitenin h1'i iki span,
+    # "AraçKirala" acik mürekkep + vurgu renginde bir nokta. Nokta
+    # rgb(200,164,92) yani kayitli vurgu renginin ta kendisi.
+    #
+    # Site YALNIZCA turkce; /en 404. Kural 19 geregi ingilizce metin
+    # sitenin kendi cumlelerinin sadik cevirisi, birebir alinti degil.
+    #
+    # Uc mesaj, uc ayri sayfa: filo (ne var), rezervasyon (nasil alinir),
+    # lokasyon (nerede). Sehir sayisi ("7 sehirde") yazilmadi — kural 17
+    # rakam iddiasi istemiyor; sehirler tek tek sayiliyor, hepsinin
+    # /lokasyon/<sehir> sayfasi var.
     M("arackirala", "AracKirala", "arackirala.pw", "offset", "split", "#C8A45C", "#12100C",
-      en=(["Premium cars,", "booked online."],
-          "A wide luxury fleet and effortless online reservation.", "See the fleet"),
-      tr=(["Premium araç,", "online rezervasyon."],
-          "Geniş lüks filo ve kolay online rezervasyon.", "Filoyu gör")),
+      # Kareler sitenin kendi filo ve lokasyon gorselleri. Birinci
+      # perde aciklamadaki bes kategoriyi birebir gosteriyor: luks
+      # sedan, executive, spor SUV, elektrikli, GT.
+      #
+      # Sitede kategori ve arac gorselleri ayni dosyayi paylasiyor
+      # (Luks SUV = Range Rover, Elektrikli = Tesla...), yani on uc
+      # farkli gorsel var, on bes kare gerekiyor. Iki kare BASKA
+      # perdelerde tekrar ediyor (aralarinda 32 saniye); ayni perde
+      # icinde tekrar yok.
+      gorseller=(("filo-1", "filo-2", "filo-3", "filo-4", "filo-5"),
+                 ("adim-1", "adim-2", "adim-3", "adim-4", "adim-5"),
+                 ("yer-1", "yer-2", "yer-3", "yer-4", "yer-5")),
+      yazi_logo=("AraçKirala", ".", "#12100C", "#c8a45c"),
+      en=[
+        (["Premium cars,", "for every road."],
+         "Luxury sedans, executive saloons, sport SUVs, electric cars and open "
+         "grand tourers.",
+         "See the fleet", "/fleet"),
+        (["On the road", "in three steps."],
+         "Choose your dates, reserve whichever car you want, collect the keys "
+         "and drive.",
+         "Book a car", "/rezervasyon"),
+        (["Airports and", "city centres."],
+         "Istanbul, Ankara, Izmir, Antalya, Bursa, Mugla and Aydin, at airports "
+         "and in town.",
+         "Find a location", "/lokasyon"),
+      ],
+      tr=[
+        (["Premium araçlar,", "her yol için."],
+         "Lüks sedan, executive sedan, spor SUV, elektrikli araç ve GT cabrio "
+         "seçenekleri.",
+         "Filoyu gör", "/fleet"),
+        (["Üç adımda", "yola çıkın."],
+         "Tarihinizi seçin, istediğiniz aracı seçin, anahtarı teslim alın ve "
+         "keyifle yola çıkın.",
+         "Rezervasyon yap", "/rezervasyon"),
+        (["Havalimanları ve", "şehir merkezleri."],
+         "İstanbul, Ankara, İzmir, Antalya, Bursa, Muğla ve Aydın'da "
+         "havalimanı ve merkez.",
+         "Lokasyonlar", "/lokasyon"),
+      ]),
 ]
 
 
@@ -513,6 +1045,99 @@ import base64
 import functools
 
 LOGO_KOK = pathlib.Path(__file__).resolve().parents[2] / "public" / "media" / "deney" / "logo"
+
+
+GORSEL_KOK = pathlib.Path(__file__).resolve().parents[2] / "public" / "media" / "deney" / "gorsel"
+IKON_KOK = (pathlib.Path(__file__).resolve().parents[2] / "node_modules"
+            / "lucide-react" / "dist" / "esm" / "icons")
+
+
+@functools.lru_cache(maxsize=None)
+def ikon_veri(ad: str):
+    """Lucide ikonunun cizim ogeleri: [(etiket, {nitelik: deger}), ...].
+
+    NEDEN IKON: hizmet markalarinin (Panicworkz, Testworkz, PANIC,
+    AICall...) sitesinde fotograf yok; stok fotograf da ya alakasiz
+    ya da markayi yanlis anlatiyor. Ekran goruntusu ise 60 piksellik
+    karede okunmuyor. Geriye YETENEGI anlatan bir isaret kaliyor.
+
+    Lucide 1761 ikon, ISC lisansi: ticari kullanim serbest, ciktida
+    atif zorunlu degil. Proje zaten lucide-react kullaniyor
+    (src/app/panic), yani yeni bir bagimlilik da girmiyor.
+    """
+    yol = IKON_KOK / (ad + ".js")
+    if not yol.exists():
+        raise ValueError("Lucide ikonu yok: %s" % ad)
+    ham = yol.read_text(encoding="utf-8")
+    # Bazi adlar takma ad: dosya baska bir ikonu yeniden disa aciyor
+    # (line-chart -> chart-line). Zincir bir adim izleniyor.
+    t = re.search(r"export \{ default \} from '\./([\w-]+)\.js';", ham)
+    if t:
+        return ikon_veri(t.group(1))
+    m = re.search(r"__iconNode = \[(.*?)\n\];", ham, re.S)
+    if not m:
+        raise ValueError("Lucide ikonu ayristirilamadi: %s" % ad)
+    ogeler = []
+    # Uzun ogeler dosyada COK SATIRA yayiliyor:
+    #   [\n  "path",\n  {\n    d: "...",\n    key: "..."\n  }\n]
+    # Ilk surumde desen \["(\w+)" idi ve koseli ayractan sonraki satir
+    # sonunu goremiyordu: shopping-cart'in govdesi (path) duşuyor,
+    # geriye iki teker (circle) kaliyordu — afiste "yan yana iki nokta"
+    # olarak goruluyordu. Boslugu acikca gecmek sart.
+    for et, nit in re.findall(r'\[\s*"(\w+)"\s*,\s*\{(.*?)\}\s*\]',
+                              m.group(1), re.S):
+        d = dict(re.findall(r'"?([\w-]+)"?:\s*"([^"]*)"', nit))
+        d.pop("key", None)
+        ogeler.append((et, d))
+    # Her ogenin bir key'i var; sayilar tutmuyorsa ayristirma bozuktur.
+    beklenen = len(re.findall(r"\bkey:", m.group(1)))
+    if len(ogeler) != beklenen:
+        raise ValueError("Lucide ikonu eksik ayristirildi: %s (%d/%d)"
+                         % (ad, len(ogeler), beklenen))
+    return ogeler
+
+
+def ikon_karesi(x, y, kenar, ad, sinif, gecikme):
+    """Ikonun kendi karesi: yumusak zemin, ortada cizgi ikon.
+
+    Fotograf karesiyle AYNI olcu ve konumda duruyor; sayilar da ayni
+    (kural: sayi formatin sabiti). Degisen sey icerik: urun markasinda
+    fotograf, hizmet markasinda yetenek isareti.
+    """
+    ic = kenar * 0.46                     # ikon kutusu
+    o = ic / 24.0                          # lucide 24x24 cizer
+    ix = x + (kenar - ic) / 2
+    iy = y + (kenar - ic) / 2
+    p = ['<rect x="%.1f" y="%.1f" width="%.0f" height="%.0f" rx="%.1f" '
+         'fill="%s" fill-opacity="0.055"/>' % (x, y, kenar, kenar, kenar * 0.08, MUREKKEP)]
+    # Ikonun kendi ogeleri IC ICE bir grupta: denetleyici
+    # "translate(...) + dogrudan rect" desenini kunye cizgisi sanip
+    # kenar paylarini yanlis olcuyordu (server, cpu gibi ikonlarin
+    # icinde rect var).
+    p.append('<g transform="translate(%.2f,%.2f) scale(%.4f)"><g fill="none" stroke="%s" '
+             'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+             % (ix, iy, o, MUREKKEP))
+    for et, nit in ikon_veri(ad):
+        p.append("<%s %s/>" % (et, " ".join('%s="%s"' % kv for kv in nit.items())))
+    p.append("</g></g>")
+    return ('<g class="%s" style="animation-delay:%.2fs">%s</g>'
+            % (sinif, gecikme, "".join(p)))
+
+
+
+@functools.lru_cache(maxsize=None)
+def gorsel_veri(kod: str, ad: str):
+    """Serit karesi: (veri-uri, en/boy) ya da yoksa None.
+
+    Logolar gibi base64 ile afisin ICINE gomuluyor (kural 26).
+    Kareler 240x240 JPEG; uctu birlikte 16 KB, gomulunce ~22 KB.
+    """
+    yol = GORSEL_KOK / kod / f"{ad}.jpg"
+    if not yol.exists():
+        return None
+    ham = yol.read_bytes()
+    b64 = base64.b64encode(ham).decode("ascii")
+    return f"data:image/jpeg;base64,{b64}", 1.0
 
 
 @functools.lru_cache(maxsize=None)
@@ -547,7 +1172,101 @@ def logo_veri(kod: str):
     return None
 
 
-def yazi_logosu(m, x, y, boy):
+
+def plaka_logosu(m, x, ust_y, boy, azami_en=None):
+    """Kendi zemini olan kunye — terminal satiri gibi.
+
+    Ufuk Yorulmaz'in isareti "❯ ~ /ufukyorulmaz": koyu bir plaka
+    uzerinde monospace, kehribar istem, yesil tilde. Zemin markanin
+    parcasi; kagit uzerine yalnizca yaziyi koymak isareti taninmaz
+    yapiyordu, cunku yesil (#33ff33) kagitta okunmuyor.
+
+    Rasterlestirmeyi denedim; onizleme araci kareye sigdirip orani
+    bozdu. Vektor olarak cizmek hem keskin hem hafif.
+    """
+    # Zemin None ise plaka cizilmiyor — kunye dogrudan kagit uzerinde.
+    parcalar, zemin = m["plaka_logo"]
+    # GENISLIK SINIRI. Terminal satiri uzun bir dize; yalnizca yukseklige
+    # gore olceklendiginde rail'de sutunun %66'sini kapliyordu, oysa oteki
+    # markalarin kunyeleri %17-40 arasinda. Kunye afisin sahibi degil,
+    # imzasi.
+    if azami_en:
+        while plaka_logosu_eni(m, boy) > azami_en and boy > 8:
+            boy -= 0.5
+    # Plaka varsa yazi plakanin icinde kuculur; plakasizken kunye
+    # DOGAL boyunda durur ve ust hizasi buyuk harf yuksekligine gore
+    # kurulur — yoksa kunye ayrilan kutunun icinde asagi kayiyor ve
+    # ust pay 27 yerine 36 cikiyordu.
+    pn = boy * 0.44 if zemin else boy * 0.82
+    ic_x = boy * 0.30 if zemin else 0
+    imx = ic_x
+    metin = []
+    for yazi, renk in parcalar:
+        # 0.69 — yazi kunyesiyle ayni buyuk harf katsayisi (kural 25).
+        # plaka_tabani() ile AYNI formul; ikisi ayrisirsa alan adi
+        # kunyeden yarim piksel kayiyor.
+        # Tam sayiya yuvarlaniyor: alan adi da oyle basiliyor, aksi
+        # halde iki taban arasinda yarim piksel kaliyor.
+        taban = round(ust_y + (boy * 0.66 if zemin else pn * 0.69))
+        metin.append('<text class="mono" x="%.1f" y="%.1f" font-size="%.1f" '
+                     'font-weight="500" fill="%s">%s</text>'
+                     % (x + imx, taban, pn, renk, kacir(yazi)))
+        imx += len(yazi) * pn * 0.60 + pn * 0.22
+    en = imx + ic_x - pn * 0.22
+    if not zemin:
+        return "".join(metin)
+    return ('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="%.1f" fill="%s"/>%s'
+            % (x, ust_y, en, boy, boy * 0.16, zemin, "".join(metin)))
+
+
+def plaka_puntosu(m, boy, azami_en=None):
+    """Plaka kunyesinin GERCEK yazi puntosu (genislik sinirindan sonra)."""
+    _p, zemin = m["plaka_logo"]
+    if azami_en:
+        while plaka_logosu_eni(m, boy) > azami_en and boy > 8:
+            boy -= 0.5
+    return boy * 0.44 if zemin else boy * 0.82
+
+
+def plaka_tabani(m, ust_y, boy, azami_en=None):
+    """Plaka kunyesinin taban cizgisi.
+
+    Kunye genislik sinirina takilip kuculdugunde tabani yukarida
+    kaliyor ve sagdaki alan adiyla hizasi kaciyordu. Alan adi bu
+    tabana oturtuluyor; oteki markalarda ikisi zaten ayni cizgide
+    cunku kunye kutunun tam boyunda.
+    """
+    parcalar, zemin = m["plaka_logo"]
+    if azami_en:
+        while plaka_logosu_eni(m, boy) > azami_en and boy > 8:
+            boy -= 0.5
+    pn = boy * 0.44 if zemin else boy * 0.82
+    return round(ust_y + (boy * 0.66 if zemin else pn * 0.69))
+
+
+def plaka_logosu_eni(m, boy):
+    parcalar, zemin = m["plaka_logo"]
+    pn = boy * 0.44 if zemin else boy * 0.82
+    imx = boy * 0.30 if zemin else 0
+    for yazi, _r in parcalar:
+        imx += len(yazi) * pn * 0.60 + pn * 0.22
+    return imx + (boy * 0.30 if zemin else 0) - pn * 0.22
+
+
+def yazi_puntosu(m, boy, azami_en=None):
+    """Yazi kunyesinin GERCEK puntosu (genislik sinirindan sonra).
+
+    Kural 28 yalnizca plaka kunyesine uygulanmisti; uzun bir yazi
+    kunyesi de sinira takiliyor. "AraçKiralama." rail'de sutunun
+    %43'unu kapliyordu.
+    """
+    if azami_en:
+        while yazi_logosu_eni(m, boy) > azami_en and boy > 8:
+            boy -= 0.5
+    return boy
+
+
+def yazi_logosu(m, x, y, boy, azami_en=None):
     """Yazi olarak cizilen marka isareti.
 
     Sitenin kendi yazi tipi (orn. Playfair Display) elimizde yok ve
@@ -570,6 +1289,7 @@ def yazi_logosu(m, x, y, boy):
     # secenegi bu yuzden koddan kaldirildi: kural burada zorunlu.
     yl = m["yazi_logo"]
     yazi, isaret, r1, r2 = yl[0], yl[1], yl[2], yl[3]
+    boy = yazi_puntosu(m, boy, azami_en)
     # y = harfin GORSEL UST hizasi, resim logonun y'siyle ayni anlamda.
     # Once 0.78 ile taban cizgisine geciyordum; Georgia'nin buyuk harf
     # yuksekligi 0.69 em oldugu icin yazi logolu markalarda kunye 1-2
@@ -617,6 +1337,15 @@ def logo_eni(kod: str, boy, azami_en=None):
 
 
 
+def m_plaka_kontrol(kod):
+    """Plaka kunyeli marka mi? Plaka zaten adi tasiyor, yanina ayrica
+    marka adi yazilmaz."""
+    for m in MARKALAR:
+        if m["kod"] == kod:
+            return bool(m.get("plaka_logo"))
+    return False
+
+
 def kelime_markasi(kod: str) -> bool:
     """Logo bir KELIME markasi mi (isaret degil)?
 
@@ -626,6 +1355,8 @@ def kelime_markasi(kod: str) -> bool:
     logo tek basina, biraz daha buyuk duruyor.
     """
     v = logo_veri(kod)
+    if m_plaka_kontrol(kod):
+        return True
     return bool(v) and v[1] > 2.2
 
 
@@ -707,8 +1438,75 @@ def stil_blogu(ek="", perde=1):
     .perde { animation: perde __TOPLAM__s cubic-bezier(.16,1,.3,1) infinite backwards }
     @keyframes perde {
       0%       { opacity:0; transform:translateY(10px) }
-      Q8,Q86   { opacity:1; transform:none }
+      Q8,Q88   { opacity:1; transform:none }
       Q96,100% { opacity:0; transform:translateY(-6px) }
+    }
+    /* ACIKLAMA basliktan SONRA geliyor.
+       Once baslik, liste ve aciklama tek grup halinde birlikte
+       beliriyordu; okur nereye bakacagini secmek zorunda kaliyordu.
+       Sira sayfadaki okuma sirasiyla ayni: once baslik, sonra
+       aciklama, sonra kareler, en son cagri. Kareler bir ara
+       aciklamadan ONCE geliyordu; okur once resme bakip sonra metne
+       donuyordu, oysa resimler METNI ornekliyor — once ne anlatildigi,
+       sonra neye benzedigi. */
+    .malt { animation: malt __TOPLAM__s cubic-bezier(.16,1,.3,1) infinite backwards }
+    @keyframes malt {
+      0%,Q6    { opacity:0; transform:translateY(6px) }
+      Q12,Q88  { opacity:1; transform:none }
+      Q96,100% { opacity:0; transform:none }
+    }
+    /* AYNI KURAL, BASKA YERLESIM.
+       Serit formatlarda aciklama basligin hemen ALTINDA, kareler
+       SAGINDA: sira baslik, aciklama, kareler. rail'de ise kareler
+       aciklamanin USTUNDE duruyor; aciklamayi once acinca goz asagi
+       inip sonra yukari geri donuyordu. Kural "oge ekranda nerede
+       duruyorsa o sirayla belirir" — sayilar bu yuzden formata gore
+       degisiyor, kural degil. */
+    .maltg { animation: maltg __TOPLAM__s cubic-bezier(.16,1,.3,1) infinite backwards }
+    @keyframes maltg {
+      0%,Q26   { opacity:0; transform:translateY(6px) }
+      Q34,Q88  { opacity:1; transform:none }
+      Q96,100% { opacity:0; transform:none }
+    }
+    /* Kareler BIRER BIRER ve BASLIKTAN SONRA. Ucu birden acilinca
+       serit bir blok gibi carpiyordu; soldan saga acilinca goz zaten
+       okudugu yonde ilerliyor.
+
+       UC AYRI KISAYOL yaziliyor, "animation-name" ile DEGIL: sinif ve
+       keyframe adlarina markaya ozel bir onek ekleniyor ve onek
+       kisayoldaki adi duzeltiyor ama animation-name'deki adi
+       duzeltmiyordu. Ikinci ve ucuncu kare "kare2/kare3" adli olmayan
+       bir animasyon ariyor, hic animasyona girmiyor ve baslikla
+       birlikte apar topar beliriyordu. */
+    .kare1 { animation: kare1 __TOPLAM__s cubic-bezier(.16,1,.3,1) infinite backwards }
+    @keyframes kare1 {
+      0%,Q12   { opacity:0; transform:translateY(8px) }
+      Q18,Q88  { opacity:1; transform:none }
+      Q96,100% { opacity:0; transform:none }
+    }
+    .kare2 { animation: kare2 __TOPLAM__s cubic-bezier(.16,1,.3,1) infinite backwards }
+    @keyframes kare2 {
+      0%,Q14   { opacity:0; transform:translateY(8px) }
+      Q20,Q88  { opacity:1; transform:none }
+      Q96,100% { opacity:0; transform:none }
+    }
+    .kare3 { animation: kare3 __TOPLAM__s cubic-bezier(.16,1,.3,1) infinite backwards }
+    @keyframes kare3 {
+      0%,Q16   { opacity:0; transform:translateY(8px) }
+      Q22,Q88  { opacity:1; transform:none }
+      Q96,100% { opacity:0; transform:none }
+    }
+    .kare4 { animation: kare4 __TOPLAM__s cubic-bezier(.16,1,.3,1) infinite backwards }
+    @keyframes kare4 {
+      0%,Q18   { opacity:0; transform:translateY(8px) }
+      Q24,Q88  { opacity:1; transform:none }
+      Q96,100% { opacity:0; transform:none }
+    }
+    .kare5 { animation: kare5 __TOPLAM__s cubic-bezier(.16,1,.3,1) infinite backwards }
+    @keyframes kare5 {
+      0%,Q20   { opacity:0; transform:translateY(8px) }
+      Q26,Q88  { opacity:1; transform:none }
+      Q96,100% { opacity:0; transform:none }
     }
     .mcag { animation: mcag __TOPLAM__s cubic-bezier(.16,1,.3,1) infinite backwards }
     @keyframes mcag {
@@ -716,32 +1514,43 @@ def stil_blogu(ek="", perde=1):
          "100% { opacity:1 }" idi — tiklamadan sonra kaybolmasin diye.
          Tek mesajli afiste dogruydu; uc perdelide her cagri kendi
          perdesinden sonra da ekranda kalip otekilerin ustune biniyordu. */
-      0%,Q18   { opacity:0; transform:none; fill:__MUREKKEP__ }
-      Q26,Q75  { opacity:1; transform:none; fill:__MUREKKEP__ }
-      Q79      { opacity:1; transform:translateY(1.5px); fill:__VURGU__ }
-      Q84,Q88  { opacity:1; transform:none; fill:__VURGU__ }
+      0%,Q36   { opacity:0; transform:none; fill:__MUREKKEP__ }
+      Q44,Q80  { opacity:1; transform:none; fill:__MUREKKEP__ }
+      Q83      { opacity:1; transform:translateY(1.5px); fill:__VURGU__ }
+      Q86,Q88  { opacity:1; transform:none; fill:__VURGU__ }
       Q96,100% { opacity:0; transform:none; fill:__VURGU__ }
     }
     .mciz { animation: mciz __TOPLAM__s cubic-bezier(.16,1,.3,1) infinite backwards }
     @keyframes mciz {
-      0%,Q28   { opacity:0; transform:scaleX(0); fill:__MUREKKEP__ }
-      Q38,Q75  { opacity:1; transform:scaleX(1); fill:__MUREKKEP__ }
-      Q79,Q88  { opacity:1; transform:scaleX(1); fill:__VURGU__ }
+      0%,Q44   { opacity:0; transform:scaleX(0); fill:__MUREKKEP__ }
+      Q50,Q80  { opacity:1; transform:scaleX(1); fill:__MUREKKEP__ }
+      Q83,Q88  { opacity:1; transform:scaleX(1); fill:__VURGU__ }
       Q96,100% { opacity:0; transform:scaleX(1); fill:__VURGU__ }
     }
     /* El yakinda belirir, ARAR, bulur, basar ve yerinde kalir. */
-    .mel { animation: mel __TOPLAM__s ease-in-out infinite backwards }
+    /* Egri ease-in-out'tan yumusagina cevrildi: ease-in-out her
+       bacagin IKI ucunda da duruyor, el her yoklamada tam duruyup
+       yeniden kalkiyordu. */
+    .mel { animation: mel __TOPLAM__s cubic-bezier(.45,.05,.25,1) infinite backwards }
     @keyframes mel {
-      /* El, perdenin %40'indan %88'ine kadar sahnede: beliriyor, uc
+      /* El, perdenin %54'unden %88'ine kadar sahnede — 9 saniyelik
+         perdede 3.06 saniye, her bacak 0.45 saniye. Once bacaklar
+         0.27-0.36 saniyeye dusmustu ve el iki nokta arasinda
+         ziplyordu; Q74 ile Q75 arasinda 0.09 saniyelik bir sicrama
+         bile vardi, el son adimda yerine "atliyordu". Zincirin onu
+         (baslik, aciklama, kareler) sikistirilip yer buradan acildi.
+         Yoklama da uc degil DORT nokta: uc nokta "arama" degil
+         "gidip gelme" gibi okunuyordu. Beliriyor, dort
          kez yokluyor, buluyor, basiyor. Once bu is perdenin yalnizca
          %22'sine sikismisti ve el sinek gibi gidip geliyordu. */
-      0%,Q40   { opacity:0; transform:translate(14px,12px) }
-      Q50      { opacity:1; transform:translate(11px,9px) }
-      Q60      { opacity:1; transform:translate(-13px,4px) }
-      Q68      { opacity:1; transform:translate(5px,-7px) }
-      Q75      { opacity:1; transform:translate(0,0) }
-      Q79      { opacity:1; transform:translate(0,2.5px) }
-      Q84,Q88  { opacity:1; transform:translate(0,0) }
+      0%,Q54   { opacity:0; transform:translate(14px,12px) }
+      Q59      { opacity:1; transform:translate(11px,9px) }
+      Q64      { opacity:1; transform:translate(-13px,4px) }
+      Q69      { opacity:1; transform:translate(8px,6px) }
+      Q73      { opacity:1; transform:translate(5px,-7px) }
+      Q78      { opacity:1; transform:translate(0,0) }
+      Q81      { opacity:1; transform:translate(0,2.5px) }
+      Q85,Q88  { opacity:1; transform:translate(0,0) }
       Q96,100% { opacity:0; transform:translate(0,0) }
     }
 
@@ -818,7 +1627,32 @@ __EK__
     return css
 
 
-PERDE_SURE = 7  # saniye — bir mesajin ekranda kaldigi sure
+# Perde once 7, sonra 8 saniyeydi. Mesaj artik tek parca belirmiyor, ASAMALI
+# kuruluyor: baslik, kareler (rail'de birer birer), aciklama, cagri,
+# alti cizili, el. Bu zincir 7 saniyeye sigiyordu ama elin ARAMA
+# hareketini 1.4 saniyeye dusuruyordu — el sinek gibi gidip geliyordu,
+# oysa aramayi gorunur kilmak istemistik. 8 saniyede el sahnede 3.2
+# saniye kaliyor ve zincirin tamami rahat duruyor.
+#
+# 9 saniye de yetmedi. El artik yerinde aramiyor, urun karelerini
+# geziyor: bes kareli measure'da alti durak, bes bacak ve ustune
+# butona gidis var. 9 saniyede bacaklar 345-537 px/s'ye cikiyordu —
+# insan eli o hizda gezinmez. Zincirin onu zaten sikisikti (kareler
+# ancak %34'te yerlesiyor), yani sikistirarak degil UZATARAK
+# cozuluyor. 10 saniyede gezinti bacaklari ~200 px/s.
+#
+# 12'ye cikti, cunku EL ARTIK ZINCIRIN SONUNDA: cagri yazisi ve alti
+# cizgisi tamamlanmadan el sahneye girmiyor. Once el, cagri daha
+# olusurken kareleri geziyordu — tiklayacagi sey ekranda yokken
+# dolasan bir imlec. Sira artik bastan sona: baslik, aciklama,
+# kareler, cagri, cizgi, el. Bu zincir 10 saniyede elin payini
+# %27'ye dusuruyor ve bacaklar yine 300 px/s'yi asiyordu.
+#
+# Zincire kareler eklenince 8 saniye de yetmedi: el sahnede 2.4
+# saniyeye dustu ve ARAMA hareketi sertlesti — el iki nokta arasinda
+# 0.3 saniyede zipliyordu. 9 saniyede el yine 2.7 saniye sahnede,
+# yani kareler eklenmeden onceki ritim. Uc mesaj 27 saniyede donuyor.
+PERDE_SURE = 16  # saniye — bir mesajin ekranda kaldigi sure
 
 
 def _perde_yuzdeleri(css: str, perde: int) -> str:
@@ -1029,7 +1863,7 @@ def _sag_cagri(m, t, o, w, h, cx, cw, zemin=None, yazi=None):
 # ---------------------------------------------------------------------
 # KONTROL: tek tip sade
 # ---------------------------------------------------------------------
-def _plain_cagri(x, y, metin, punto, gecikme, ek=""):
+def _plain_cagri(x, y, metin, punto, gecikme, ek="", yol_no=None):
     """Alti cizili cagri + uzerine basan el — bir perdeye ait.
 
     Tek mesajli surumdeki cagri_baglantisi ile ayni fikir; farki, bu
@@ -1048,16 +1882,192 @@ def _plain_cagri(x, y, metin, punto, gecikme, ek=""):
     uc_x, uc_y = x + en * 0.58, y - punto * 0.30
     el_x = uc_x - EL_UC_X * o
     el_y = uc_y - EL_UC_Y * o
-    el = ('<g class="mel%s" %s><g transform="translate(%.1f,%.1f) scale(%.4f) translate(%d,0)" '
+    # Afiste urun kareleri varsa elin YOLU o afise ozel yaziliyor
+    # (melyol<i>); kareler her formatta baska yerde durdugu icin
+    # ortak bir keyframe seti yetmiyor. Kareler yoksa sinif tanimsiz
+    # kalir ve el yerinde arayan .mel kuralini kullanir.
+    yol = "" if yol_no is None else " melyol%d" % yol_no
+    el = ('<g class="mel%s%s" %s><g transform="translate(%.1f,%.1f) scale(%.4f) translate(%d,0)" '
           'shape-rendering="crispEdges"><path d="%s" fill="%s"/><path d="%s" fill="%s"/></g></g>'
-          % (ek, g, el_x, el_y, o, -EL_KAYDIR, EL_HAT, MUREKKEP, EL_IC, KAGIT))
-    return en, (
+          % (ek, yol, g, el_x, el_y, o, -EL_KAYDIR, EL_HAT, MUREKKEP, EL_IC, KAGIT))
+    return (uc_x, uc_y), (
         '<text class="sans mcag%s" %s x="%d" y="%d" font-size="%d" textLength="%.1f" '
         'lengthAdjust="spacing" font-weight="700" fill="%s">%s</text>'
         '<g transform="translate(%d,%.0f)"><rect class="mciz%s" %s x="0" y="0" '
         'width="%.0f" height="1.5" fill="%s"/></g>'
         '%s' % (ek, g, x, y, punto, en, MUREKKEP, metin,
                 x, y + 7, ek, g, en, MUREKKEP, el))
+
+
+# Elin gezinme karakteri. Duz bir cizgi uzerinde, esit araliklarla,
+# hep ayni hizda ilerleyen bir isaretci INSAN eli gibi durmuyor —
+# tarayici gibi duruyor. Insanin eli:
+#   - duz gitmez, hafifce yalpalar (SAPMA)
+#   - her durakta ayni sureyi harcamaz (AGIRLIK)
+#   - siraya sadik kalmaz, birine geri doner (SIRA)
+#   - vardigi yerde tam durmaz, bir tik kayar (KIPIRTI)
+# Dordu de asagida sabit; rastgelelik yok, cunku afis her dongude
+# ayni oynamali.
+# SIRA: soldan saga, sonunda bir onceki kareye kisa bir geri bakis.
+# Once atlamali bir sira denedim (1, 2, 4, 3, 5); iki komsu olmayan
+# kare arasindaki bacak 0.09 saniyeye dusuyor ve el isinlaniyor gibi
+# goruluyordu. Insan gozu de bir siradaki urunlere boyle atlamiyor:
+# soldan saga geciyor, sonuncuda durup bir oncekine donuyor.
+EL_SIRA = {1: [0], 2: [0, 1], 3: [0, 1, 2, 1],
+           4: [0, 1, 2, 3, 2], 5: [0, 1, 2, 3, 4, 3]}
+EL_SAPMA = [(-3, -7), (5, 6), (-4, -5), (6, 8), (-5, -6), (4, 7)]
+# Agirliklar once 0.75 ile 1.45 arasindaydi; kisa bacaklar 345 px/s'ye
+# firliyordu. Fark korunuyor ama bandi daraltildi.
+EL_AGIRLIK = [1.0, 1.2, 0.9, 1.15, 0.95, 1.05]
+EL_KIPIRTI = [(1.5, -1.0), (-1.5, 1.5), (1.0, 1.5), (-1.0, -1.5),
+              (1.5, 1.0), (-1.5, -1.0)]
+
+
+# KARE SAYISI FORMATIN SABITI, markanin degil.
+#
+# Once her afiste "ne sigarsa o kadar" diyordum: ayni set icinde bir
+# marka besli, otekisi ikili cikiyordu. Reklamlar degisince duzen
+# degisemez — sayi da bir kural. Olcu, sayiyi degil KARE KENARINI
+# belirliyor.
+# Sayfadaki sira: 1. panel, 2. measure, 3. feature, 4. rail.
+# Sayilar onaylanan ilk sette (Oryvane) neyse o.
+KARE_SAYISI = {"panel": 2, "measure": 5, "feature": 2, "rail": 3}
+
+
+def _kare_ciz(m, i, grup, gx, gy, kenar, bosluk, gec_i, sinif_eki):
+    """Bir perdenin karelerini basar: fotograf ya da ikon."""
+    ic = []
+    for k, ad in enumerate(grup):
+        x = gx + k * (kenar + bosluk)
+        sinif = "kare%d" % min(k + 1, 5)
+        if m.get("ikonlar"):
+            ic.append(ikon_karesi(x, gy, kenar, ad, sinif, gec_i))
+        else:
+            v = gorsel_veri(m["kod"], ad)
+            if not v:
+                continue
+            ic.append('<image class="%s" style="animation-delay:%.2fs" '
+                      'x="%.0f" y="%.0f" width="%d" height="%d" '
+                      'href="%s" preserveAspectRatio="xMidYMid slice"/>'
+                      % (sinif, gec_i, x, gy, int(kenar), int(kenar), v[0]))
+    if not ic:
+        return None
+    return ('<g class="perde%s" style="animation-delay:%.2fs">%s</g>'
+            % (sinif_eki, gec_i, "".join(ic)))
+
+
+def _kare_dizilimi(en, kenar, bicim, bosluk=11, en_kucuk=48):
+    """(sayi, kenar). Sayi formatin sabiti; kenar yere gore kisalir.
+
+    Kenar tavani yanindaki metin blogunun yuksekligi — kareler onun
+    hizasinda duruyor. Tabani 48: altinda fotograf, fotograf gibi
+    degil renk lekesi gibi okunuyor. Kenar 48'in altina inecekse
+    yer GERCEKTEN yok demektir; o zaman sifir donuyor ve neyin
+    sigmadigi denetimde goruluyor.
+    """
+    n = KARE_SAYISI.get(bicim, 3)
+    genis = (en - (n - 1) * bosluk) / n
+    if genis < en_kucuk:
+        return 0, 0.0
+    return n, min(genis, float(kenar))
+
+
+def _el_yolu_css(ucular, kutu, alan_nokta=None):
+    """Elin urun karelerini gezip, alan adina ugrayip cagriya gitmesi.
+
+    Kareler her formatta baska yerde, cagri da her perdede baska
+    genislikte oldugu icin ortak bir keyframe seti yetmiyor: her perde
+    icin ayri bir yol yaziliyor. Konumlar elin PARMAK UCUNA gore
+    veriliyor; sifir noktasi cagrinin uzeri. Onek de formata gore
+    ayrilmali (bkz. afis).
+
+    SURE MESAFEYE BAGLI. Once her bacaga sabit bir agirlik
+    veriyordum; kisa bacaklar 120, uzun bacaklar 994 px/s cikiyordu —
+    ayni el bir yerde suzuluyor, bir yerde firliyordu. Insan kolu
+    kabaca sabit hizda hareket eder, uzun mesafede biraz hizlanir
+    (Fitts). Bu yuzden bacak suresi mesafenin 0.75 kuvvetiyle
+    olculuyor; ustune kucuk bir dalgalanma biniyor ki olculu ama
+    mekanik olmasin.
+    """
+    gx, gy, kenar, n = kutu
+    merkez = [(gx + k * (kenar + 11) + kenar / 2, gy + kenar / 2)
+              for k in range(n)]
+    sira = EL_SIRA.get(n, list(range(n)))
+    css = []
+    # El, alti cizgisi tamamlandiktan (%50) sonra sahneye giriyor.
+    #
+    # rail'de aciklama ile cagri AYNI ANDA beliriyordu (ikisi de
+    # Q30-Q38): cagriyi elin arkasina cekerken rail'in aciklamasiyla
+    # ayni araliga oturttugumu gormemistim. Zincir artik dort ayri
+    # adim: kareler %26'da biter, aciklama %34, cagri %44, cizgi %50,
+    # el %50.
+    BAS, SON = 52, 79
+    for i, (ux, uy) in enumerate(ucular):
+        # Yol: kareler, sonra alan adi, sonra cagri (0,0)
+        nokta = []
+        for k, idx in enumerate(sira):
+            sx, sy = EL_SAPMA[k % len(EL_SAPMA)]
+            nokta.append((merkez[idx][0] + sx - ux, merkez[idx][1] + sy - uy))
+        if alan_nokta:
+            nokta.append((alan_nokta[0] - ux, alan_nokta[1] - uy))
+        nokta.append((0.0, 0.0))
+
+        # Bacak sureleri mesafeye gore
+        agir = []
+        for k in range(1, len(nokta)):
+            dx = nokta[k][0] - nokta[k - 1][0]
+            dy = nokta[k][1] - nokta[k - 1][1]
+            uz = (dx * dx + dy * dy) ** 0.5
+            # URUNLERIN ARASINDA YAVAS, aradan sonra kararli.
+            #
+            # Kareler arasi bacaklar 400 px/s'ye kadar cikiyordu: el
+            # sabunlara bakmiyor, uzerlerinden geciyordu. Urun
+            # bakislari 3 kat agirlik aliyor; alan adina ve butona
+            # gidis ise bir KARAR hareketi, o daha hizli olabilir.
+            #
+            # Carpan once 1.9'du; rail'de yetmedi. Oradaki gecis
+            # mesafeleri (adrese 252, butona 516 piksel) gezinti
+            # mesafesinin iki katindan fazla, dolayisiyla mesafeye
+            # orantili paylasimda pencerenin cogunu geciseler aliyor
+            # ve uc sabun 229 px/s ile geciliyordu.
+            urun = k <= len(sira) - 1
+            agir.append(max(uz, 8.0) ** 0.9
+                        * EL_AGIRLIK[k % len(EL_AGIRLIK)]
+                        * (3.0 if urun else 1.0))
+        toplam = sum(agir) or 1.0
+        zaman, t = [BAS], float(BAS)
+        for a in agir:
+            t += (SON - BAS) * a / toplam
+            zaman.append(t)
+
+        satir, onceki = [], -1
+        for k, (px, py) in enumerate(nokta):
+            # Hicbir bacak bir "cirpi" olmasin: en az iki puan, yani
+            # ceyrek saniye. Alan adi ile buton arasi 71 pikseldi ve
+            # mesafeye orantili sure ona 0.13 saniye biraktigi icin el
+            # oraya sicriyordu (551 px/s).
+            q = max(int(round(zaman[k])), onceki + 2)
+            satir.append("      Q%-7d{ opacity:1; transform:translate(%.1fpx,%.1fpx) }"
+                         % (q, px, py))
+            onceki = q
+            # Ilk karede ve alan adinda el bir an duruyor: kipirti.
+            if k == 0 or (alan_nokta and k == len(nokta) - 2):
+                jx, jy = EL_KIPIRTI[k % len(EL_KIPIRTI)]
+                q2 = q + 2
+                satir.append("      Q%-7d{ opacity:1; transform:translate(%.1fpx,%.1fpx) }"
+                             % (q2, px + jx * 0.6, py + jy * 0.6))
+                onceki = q2
+        css.append("""
+    .melyol%d { animation: melyol%d __TOPLAM__s cubic-bezier(.4,.18,.32,1) infinite backwards }
+    @keyframes melyol%d {
+      0%%,Q50   { opacity:0; transform:translate(%.1fpx,%.1fpx) }
+%s
+      Q81      { opacity:1; transform:translate(0,0) }
+      Q83      { opacity:1; transform:translate(0,2.5px) }
+      Q86,Q88  { opacity:1; transform:translate(0,0) }
+      Q96,100%% { opacity:0; transform:translate(0,0) }
+    }""" % (i, i, i, nokta[0][0] + 16, nokta[0][1] + 14, "\n".join(satir)))
+    return "".join(css)
 
 
 def k_plain(m, w, h, bicim, t, o, serit):
@@ -1077,7 +2087,7 @@ def k_plain(m, w, h, bicim, t, o, serit):
     sirayla oynuyor; kunye sabit kaliyor ki marka her degisimde yanip
     sonmesin.
     """
-    K, p = o["K"], []
+    K, p, ucular, kare_kutu = o["K"], [], [], None
     mesajlar = t["mesajlar"]
     n = len(mesajlar)
 
@@ -1157,22 +2167,94 @@ def k_plain(m, w, h, bicim, t, o, serit):
             K = K_ilk
         cagri_en, cx, alan, olculer, blok, V = duzen(K)
         V = K
-        ust = V + lg + 5
+        # Kunye kurali, kunyenin GORSEL altindan 9 piksel asagida.
+        #
+        # Sabit "V + lg + 5" ile bosluk resim logoda 5, yazi kunyede
+        # 7.3, kisalmis terminal satirinda 13.9 cikiyordu. Kunyenin
+        # gorsel yuksekligi turune gore degisiyor: resim kutunun tamami,
+        # yazi buyuk harf artı inis, plaka ise kendi kuculmus puntosu.
+        if m.get("plaka_logo"):
+            h_kunye = plaka_puntosu(m, lg, azami_en=alan * 0.40) * 0.91
+        elif m.get("yazi_logo"):
+            h_kunye = yazi_puntosu(m, lg, azami_en=alan * 0.40) * 0.91
+        else:
+            h_kunye = lg
+        # Ikon + AD duzeninde en asagidaki oge resim degil, adin
+        # inisi. Ad taban cizgisi resmin altina denk geliyor, harfin
+        # inisi 3 piksel daha sarkiyordu; serit formatlarda bosluk bu
+        # yuzden 9 yerine 5.9 cikiyordu (Oryvane).
+        ad_var = (not tek_logo and not m.get("yazi_logo")
+                  and not m.get("plaka_logo"))
+        # AD, AMBLEMIN DIKEY ORTASINA oturuyor.
+        #
+        # Once taban cizgisi resmin ALT kenarina konuyordu; kelime
+        # amblemin ortasindan 8.1 (measure) ve 6.5 (feature) piksel
+        # asagida asili kaliyordu — yigin formatlarda 0.5 piksel olan
+        # fark seritlerde on kata cikiyordu. Kunye tek bir kilit, iki
+        # ayri oge degil: buyuk harf yuksekliginin ortasi amblemin
+        # ortasiyla ayni cizgide olmali.
+        if ad_var:
+            ad_tabani = V + lg / 2 + o["ad"] * 0.35
+        else:
+            ad_tabani = V + h_kunye
+        ust = V + h_kunye + 9
 
+        kunye_taban = round(K + lg * 0.69)
         if m.get("yazi_logo"):
-            p.append(yazi_logosu(m, K, ust - 9 - lg + 4, lg))
+            kunye_taban = round(K + lg * 0.69)
+        if m.get("plaka_logo"):
+            p.append(plaka_logosu(m, K, K, lg, azami_en=alan * 0.40))
+            kunye_taban = plaka_tabani(m, K, lg, azami_en=alan * 0.40)
+        elif m.get("yazi_logo"):
+            p.append(yazi_logosu(m, K, K, lg, azami_en=alan * 0.40))
         elif var:
-            p.append(logo(m["kod"], K, ust - 9 - lg + 4, lg, azami_en=lg * 4.2))
-        if not tek_logo and not m.get("yazi_logo"):
-            mx = K + (int(logo_eni(m["kod"], lg, azami_en=lg * 3.4)) + 12 if var else 0)
+            p.append(logo(m["kod"], K, K, lg, azami_en=lg * 4.2))
+        if not tek_logo and not m.get("yazi_logo") and not m.get("plaka_logo"):
+            # ISARET ILE AD ARASI.
+            #
+            # Sabit 12 pikseldi. Isaret genis bir kelime markasiyken
+            # sorun yok, ama Oryvane'inki kucuk bir monogram: 29 piksel
+            # genisliginde bir isaretin yaninda 12 piksel bosluk, isaretin
+            # %41'i kadar — ikisi ayri iki oge gibi duruyordu. Bosluk
+            # artik ADIN puntosuna bagli (yaklasik yarim harf genisligi).
+            #
+            # OLCU CAPI da duzeltildi: logo lg*4.2 sinirla CIZILIYOR ama
+            # yeri lg*3.4 ile hesaplaniyordu; genis bir logoda ad logonun
+            # uzerine binerdi.
+            # ARA, AMBLEMIN BOYUNA ORANLI (%34).
+            #
+            # Once adin puntosuna baglıydı; amblem formata gore
+            # kuculurken ad puntosu ayni kalinca oran %31, %35, %34,
+            # %39 gibi dort ayri deger cikiyordu. Ayni kilit dort
+            # afiste dort ayri sikilikta goruluyordu.
+            mx = K + (logo_eni(m["kod"], lg, azami_en=lg * 4.2)
+                      + lg * 0.34 if var else 0)
             p.append('<text class="sans" x="%d" y="%.0f" font-size="%d" letter-spacing="1.8" '
                      'font-weight="700" fill="%s">%s</text>'
-                     % (mx, ust - 9, o["ad"], MUREKKEP, t["ad"].upper()))
+                     % (round(mx), ad_tabani, o["ad"], MUREKKEP, t["ad"].upper()))
         p.append('<text class="sans" x="%d" y="%.0f" font-size="11" letter-spacing="1.2" '
-                 'fill="%s" text-anchor="end">%s</text>' % (w - K, ust - 9, UCUNCUL, m["alan"]))
+                 'fill="%s" text-anchor="end">%s</text>'
+                 % (w - K, kunye_taban, UCUNCUL, m["alan"]))
+        # Elin ugrak yeri: alan adi. Once yolun ortasina yapay bir yay
+        # noktasi koyuyordum ve el BOS ALANDAN geciyordu; okur imlecin
+        # neden oraya gittigini anlamiyordu. Alan adi gercek bir oge:
+        # el once adresi okuyor, sonra butona iniyor.
+        #
+        # Parmak ucu yazinin ORTASINA degil ALTINA konuyor. El govdesi
+        # ucundan asagi ve saga sarkiyor (yaklasik 18x32 piksel);
+        # ortaya konunca adresin sag yarisini kapatiyordu. Taban
+        # cizgisinin 5 piksel altinda duran bir ucun govdesi yazinin
+        # tamamen disinda kaliyor — el adresi kapatmiyor, gosteriyor.
+        alan_nokta = (w - K - sans_olc(m["alan"], 11) * 0.60,
+                      kunye_taban + 9)
         p.append('<g transform="translate(%d,%.0f)"><rect x="0" y="0" width="%d" height="1" '
                  'fill="%s"/></g>' % (K, ust, w - 2 * K, KURAL))
 
+        # Kareler METINDEN ONCE cizilecek; yerini simdiden ayiriyoruz.
+        # Sonra eklenince kareler EL'IN USTUNE biniyor ve el urunlerin
+        # uzerinden gecerken gorunmez oluyordu — okur eli yalnizca
+        # cagriya varinca goruyor, arada "alakasiz yerde" saniyordu.
+        kare_yeri = len(p)
         for i, (tek, bb, ab, parca, lh, _yuk) in enumerate(olculer):
             g = 'style="animation-delay:%.2fs"' % gec(i)
             nefes = (h - V - ab * 0.22) - (ust + 26 + bb) - ab - (len(parca) - 1) * lh
@@ -1180,8 +2262,16 @@ def k_plain(m, w, h, bicim, t, o, serit):
             ic = ['<text class="disp" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
                   % (K, ust + 26 + bb, bb, MUREKKEP, tek)]
             for j, satir in enumerate(parca):
-                ic.append('<text class="sans" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
-                          % (K, ust + 26 + bb + nefes + ab + j * lh, ab, IKINCIL, satir))
+                ic.append('<text class="sans malt" %s x="%d" y="%.0f" font-size="%d" '
+                          'fill="%s">%s</text>'
+                          % (g, K, ust + 26 + bb + nefes + ab + j * lh, ab, IKINCIL, satir))
+            # Metin blogunun dikey siniri: kareler buna gore
+            # ortalanacak.
+            metin_ust = min(locals().get("metin_ust", 10 ** 9),
+                            (ust + 26 + bb) - bb * 0.70)
+            metin_alt = max(locals().get("metin_alt", 0.0),
+                            ust + 26 + bb + nefes + ab
+                            + (len(parca) - 1) * lh + ab * 0.22)
             p.append('<g class="perde%s" %s>%s</g>' % (sonraki(i), g, "".join(ic)))
             cy = (ust + 26 - bb * 0.72 + h - V) / 2 + (o["cag"] + 1) * 0.36
             # Cagri SAGA hizali. Hepsini ayni x'ten baslatinca metin
@@ -1189,9 +2279,74 @@ def k_plain(m, w, h, bicim, t, o, serit):
             # piksel cikiyordu; esit kenar sozu o perdede bozuluyordu.
             # Metin alani yine EN UZUN cagriya gore ayrildi, cakisma yok.
             kendi_en = sans_olc(mesajlar[i]["cagri"], o["cag"] + 1)
-            _, cg = _plain_cagri(w - K - kendi_en, cy, mesajlar[i]["cagri"],
-                                 o["cag"] + 1, gec(i), sonraki(i))
+            uc, cg = _plain_cagri(w - K - kendi_en, cy, mesajlar[i]["cagri"],
+                                  o["cag"] + 1, gec(i), sonraki(i), yol_no=i)
+            ucular.append(uc)
             p.append(cg)
+
+        # SERIT FORMATIN SAG ORTASI.
+        #
+        # measure 1440x200: metin solda bitiyor, cagri sagda; arada
+        # 591 piksellik bos bir seride kaliyordu. Ayni bosluk rail'in
+        # ortasindaki bosluk gibi afisi yarim gosteriyor.
+        #
+        # KURAL HER FORMATTA AYNI: bos alana markanin kendi kareleri
+        # konur, kare kenari yanindaki metin blogunun yuksekligi
+        # kadardir, en cok bes tane. Sayiyi formata gore elle secmek
+        # kurali formata baglardi; olcu karar veriyor.
+        #
+        # TEK KARE DE OLUR. Once "en az iki" diyordum ve gerekcem
+        # "yalniz kalir" idi — olcum degil, tahmindi. Sepetimbenim'in
+        # panelinde tek kare sigiyor ve bakinca bosluğu tam dolduruyor,
+        # yalniz durmuyor. Alt sinir kare KENARI: 48 pikselin altinda
+        # fotograf, fotograf gibi degil renk lekesi gibi okunuyor.
+        if m.get("gorseller") or m.get("ikonlar"):
+            gruplar = m["ikonlar"] or m["gorseller"]
+            if gruplar and isinstance(gruplar[0], str):
+                gruplar = [gruplar]
+            # Butun perdelerin EN GENIS metni ve EN SOLDAKI cagrisi
+            sol = 0.0
+            for i, (tek, bb, ab, parca, lh, _yuk) in enumerate(olculer):
+                sol = max(sol, K + serif_olc(tek, bb))
+                for satir in parca:
+                    sol = max(sol, K + sans_olc(satir, ab))
+            cagri_sol = min(w - K - sans_olc(x["cagri"], o["cag"] + 1)
+                            for x in mesajlar)
+            bosluk = 11
+            # KARELER METINLE ORTALI.
+            #
+            # Once serit yuksekliginin tamami kullaniliyordu: kareler
+            # kunye kuralinin 9 piksel altindan basliyor, basligin
+            # buyuk harf tepesinden 23 piksel yukarida kaliyordu. Yani
+            # afisin ustune yapismis gibi duruyor, yanindaki metinle
+            # ayni cizgide durmuyordu. Simdi kare seridi basligin
+            # tepesi ile aciklamanin dibi arasina oturuyor; ustten ve
+            # alttan metinle ayni hizada.
+            g_ust = locals().get("metin_ust", ust + 10)
+            g_alt = locals().get("metin_alt", h - K)
+            kenar = int(min(g_alt - g_ust, 96))
+            # Metinle serit arasindaki NEFES, afisin kendi nefes payi
+            # (26). Once uydurma bir 40 yazmistim: feature'da iki kare
+            # 167 piksel tutuyor, kalan yer 160 cikiyor ve YEDI piksel
+            # yuzunden serit hic basilmiyordu. Tasarimda zaten bir nefes
+            # sabiti varken ikinci bir sayi uydurmak, olcuyu keyfi
+            # kiliyor.
+            # Metinle serit arasi 26'ydi (afisin nefes payi). Serit
+            # YATAY bir bosluga giriyor, satir arasina degil; 16
+            # piksel gozle yeterli ve bir kare daha sigdiriyor.
+            NEFES = 16
+            en = cagri_sol - NEFES - (sol + NEFES)
+            n, kenar = _kare_dizilimi(en, kenar, bicim, bosluk,
+                                      40 if m.get("ikonlar") else 48)
+            if n >= 1:
+                gx = sol + NEFES + (en - (n * kenar + (n - 1) * bosluk)) / 2
+                gy = g_ust + (g_alt - g_ust - kenar) / 2
+                kare_kutu = (gx, gy, int(kenar), n)
+                for i in range(len(mesajlar)):
+                    g_ = _kare_ciz(m, i, list(gruplar[i % len(gruplar)])[:n],
+                                   gx, gy, kenar, bosluk, gec(i), sonraki(i))
+                    if g_:
+                        p.insert(kare_yeri, g_)
     else:
         alan = w - 2 * K
         # Dort kenar da esit: logonun ustu, cagrinin alti, sol ve sag
@@ -1204,24 +2359,60 @@ def k_plain(m, w, h, bicim, t, o, serit):
         y_ad = K + lb - 5              # logo ustu tam K'da
         y_cagri = h - K - 8            # cagri cizgisinin alti tam K'da
 
+        # Alan adi KUNYENIN taban cizgisine oturuyor. Sabit y_ad
+        # kullanildiginda yazi kunyeleriyle arasinda 1-4 piksellik kayma
+        # kaliyordu; kunye boyu markadan markaya degistigi icin.
+        # KUNYE KURALI kunyenin GERCEK altina gore konumlanir.
+        #
+        # Sabit bir kutuya (y_ad + 12) gore konumlandigi surumde
+        # bosluk resim logoda 7, yazi kunyede 8.6, kisalmis terminal
+        # satirinda 25 piksel cikiyordu — ayni afis ailesinde uc ayri
+        # kunye yuksekligi.
+        kunye_taban = y_ad
+        kunye_alt = y_ad + lb * 0.22
         if m.get("yazi_logo"):
-            p.append(yazi_logosu(m, K, y_ad - lb + 5, lb))
+            yp = yazi_puntosu(m, lb, azami_en=alan * 0.40)
+            kunye_taban = (y_ad - lb + 5) + yp * 0.69
+            kunye_alt = kunye_taban + yp * 0.22
+        if m.get("plaka_logo"):
+            p.append(plaka_logosu(m, K, y_ad - lb + 5, lb, azami_en=alan * 0.40))
+            kunye_taban = plaka_tabani(m, y_ad - lb + 5, lb, azami_en=alan * 0.40)
+            kunye_alt = kunye_taban + plaka_puntosu(m, lb, azami_en=alan * 0.40) * 0.22
+        elif m.get("yazi_logo"):
+            p.append(yazi_logosu(m, K, y_ad - lb + 5, lb, azami_en=alan * 0.40))
         elif var:
             p.append(logo(m["kod"], K, y_ad - lb + 5, lb, azami_en=alan * 0.68))
-        if not tek_logo and not m.get("yazi_logo"):
+            kunye_alt = (y_ad - lb + 5) + lb
+        if not tek_logo and not m.get("yazi_logo") and not m.get("plaka_logo"):
             p.append('<text class="sans" x="%d" y="%d" font-size="%d" letter-spacing="1.8" '
                      'font-weight="700" fill="%s">%s</text>'
-                     % (K + (int(logo_eni(m["kod"], lb, azami_en=68)) + 12 if var else 0),
-                        y_ad, o["ad"], MUREKKEP, t["ad"].upper()))
-        p.append('<text class="sans" x="%d" y="%d" font-size="11" letter-spacing="1.2" '
-                 'fill="%s" text-anchor="end">%s</text>' % (w - K, y_ad, UCUNCUL, m["alan"]))
+                     % (round(K + (logo_eni(m["kod"], lb, azami_en=alan * 0.68)
+                                   + lb * 0.34 if var else 0)),
+                        (y_ad - lb + 5) + lb / 2 + o["ad"] * 0.35,
+                        o["ad"], MUREKKEP, t["ad"].upper()))
+        p.append('<text class="sans" x="%d" y="%.0f" font-size="11" letter-spacing="1.2" '
+                 'fill="%s" text-anchor="end">%s</text>'
+                 % (w - K, kunye_taban, UCUNCUL, m["alan"]))
+        # Elin ugrak yeri: alan adi. Once yolun ortasina yapay bir yay
+        # noktasi koyuyordum ve el BOS ALANDAN geciyordu; okur imlecin
+        # neden oraya gittigini anlamiyordu. Alan adi gercek bir oge:
+        # el once adresi okuyor, sonra butona iniyor.
+        #
+        # Parmak ucu yazinin ORTASINA degil ALTINA konuyor. El govdesi
+        # ucundan asagi ve saga sarkiyor (yaklasik 18x32 piksel);
+        # ortaya konunca adresin sag yarisini kapatiyordu. Taban
+        # cizgisinin 5 piksel altinda duran bir ucun govdesi yazinin
+        # tamamen disinda kaliyor — el adresi kapatmiyor, gosteriyor.
+        alan_nokta = (w - K - sans_olc(m["alan"], 11) * 0.60,
+                      kunye_taban + 9)
+        y_kunye_kural = round(kunye_alt + 9)
         p.append('<g transform="translate(%d,%d)"><rect x="0" y="0" width="%d" height="1" '
-                 'fill="%s"/></g>' % (K, y_ad + 12, alan, KURAL))
+                 'fill="%s"/></g>' % (K, y_kunye_kural, alan, KURAL))
         p.append('<g transform="translate(%d,%d)"><rect x="0" y="0" width="%d" height="1" '
                  'fill="%s"/></g>' % (K, y_cagri - 30, alan, KURAL))
 
-        bosluk = y_cagri - (y_ad + 34) - 30
-        en_dip = y_ad + 40      # butun perdelerin en alcak baslik dibi
+        bosluk = y_cagri - (y_kunye_kural + 22) - 30
+        en_dip = y_kunye_kural + 28   # butun perdelerin en alcak baslik dibi
 
         # FORMATIN HEDEF SATIR SAYISI.
         #
@@ -1268,6 +2459,7 @@ def k_plain(m, w, h, bicim, t, o, serit):
         if HEDEF:
             hedef_satir = max(hedef_satir, HEDEF)
 
+        kare_yeri = len(p)
         for i, mes in enumerate(mesajlar):
             g = 'style="animation-delay:%.2fs"' % gec(i)
             ic = []
@@ -1297,7 +2489,7 @@ def k_plain(m, w, h, bicim, t, o, serit):
                     parca = sar(mes["alt"], dar)
                 lh = int(ab * 1.45)
                 alt_yuk = len(parca) * lh
-                y_son = y_ad + 40 + bb + (len(satirlar) - 1) * satir
+                y_son = y_kunye_kural + 28 + bb + (len(satirlar) - 1) * satir
                 # SON SATIRIN TABANI kuraldan tam NEFES_KURAL kadar
                 # yukarida. Once blogun altindan hesapliyordum; aradaki
                 # fark satir araligina bagli oldugu icin panelde 31,
@@ -1321,10 +2513,16 @@ def k_plain(m, w, h, bicim, t, o, serit):
                 _ab -= 1
                 satir, ab, parca, alt_yuk, y_son, y_alt = olc(bb, _ab)
 
-            y = y_ad + 40 + bb
+            y = y_kunye_kural + 28 + bb
             for j, sat in enumerate(satirlar):
                 ic.append('<text class="disp" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
                           % (K, y + j * satir, bb, MUREKKEP, sat))
+                # Baslik blogunun en sagi ve dikey siniri: yanindaki
+                # bosluga kare koyabilmek icin butun perdelerin en
+                # genisi lazim.
+                bas_sag = max(locals().get("bas_sag", 0.0), K + serif_olc(sat, bb))
+            bas_ust = y - bb * 0.70
+            bas_alt = y + (len(satirlar) - 1) * satir + bb * 0.22
             y += (len(satirlar) - 1) * satir
             en_dip = max(en_dip, y)
 
@@ -1337,11 +2535,18 @@ def k_plain(m, w, h, bicim, t, o, serit):
             # sonuc veriyordu.
             alt_yuk = len(parca) * int(ab * 1.45)
             en_ust_alt = min(locals().get("en_ust_alt", 10**9), y_alt)
+            # Kareler aciklamanin USTUNDE duruyorsa aciklama onlardan
+            # sonra beliriyor (maltg), yoksa hemen basligin ardindan.
+            alt_sinif = "maltg" if (bicim == "rail" and m.get("gorseller")) else "malt"
             for j, par in enumerate(parca):
-                ic.append('<text class="sans" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
-                          % (K, y_alt + ab + j * int(ab * 1.45), ab, IKINCIL, par))
+                ic.append('<text class="sans %s" %s x="%d" y="%.0f" font-size="%d" '
+                          'fill="%s">%s</text>'
+                          % (alt_sinif, g, K, y_alt + ab + j * int(ab * 1.45), ab,
+                             IKINCIL, par))
             p.append('<g class="perde%s" %s>%s</g>' % (sonraki(i), g, "".join(ic)))
-            _, cg = _plain_cagri(K, y_cagri, mes["cagri"], o["cag"] + 1, gec(i), sonraki(i))
+            uc, cg = _plain_cagri(K, y_cagri, mes["cagri"], o["cag"] + 1,
+                                  gec(i), sonraki(i), yol_no=i)
+            ucular.append(uc)
             p.append(cg)
 
         # Ortadaki bant: o an OYNAMAYAN soylemler.
@@ -1378,8 +2583,91 @@ def k_plain(m, w, h, bicim, t, o, serit):
                     ic.append('<text class="sans" x="%d" y="%.0f" font-size="%d" fill="%s">%s</text>'
                               % (K + 22, ly, pn, UCUNCUL, metin))
                 p.append('<g class="perde%s" %s>%s</g>' % (sonraki(i), g, "".join(ic)))
+            # Listede OYNAYAN soylem yok, yani n-1 satir basiliyor.
+            liste_alt = bant_ust + lsatir * (len(mesajlar) - 2) + lb_punto
+        else:
+            liste_alt = bant_ust
 
-    return p, KAGIT, "", MUREKKEP
+        # UZUN FORMATIN ORTASI.
+        #
+        # rail 387x540; baslik yukarida, aciklama ve cagri asagida
+        # duruyor. Arada 150 pikselden fazla bos alan kaliyordu — afis
+        # dolu degil, YARIM gorunuyordu.
+        #
+        # Dolduran sey markanin KENDI sitesinden gelen kareler; cizim
+        # ya da stok gorsel degil.
+        #
+        # Kareler HER PERDEDE DEGISIYOR. Once sabit birakmistim,
+        # kunyeyi sabit tuttugumuz gerekceyle; ama kunye markanin
+        # imzasi, gorsel ise mesajin kendisi. Ortadaki liste de zaten
+        # her perdede degisiyordu, sabit gorsel onunla celisiyordu.
+        # Simdi her mesajin kendi ucusu var: Oryvane'de once filonun
+        # cesidi, sonra sade formuller, sonra gunluk kullanim.
+        #
+        # Yalnizca rail'de. Oteki uc formatta bosluk zaten yok; oraya
+        # gorsel koymak kurali degil, afisi degistirirdi.
+        # BASLIGIN YANI.
+        #
+        # panel 511x300'de aciklama ile liste arasinda bant yok
+        # (eksi 44 piksel) ama BASLIGIN SAGINDA bos bir alan kaliyor:
+        # baslik iki satir ve en genis perdede bile 252 pikselde
+        # bitiyor, oysa icerik 477'ye kadar gidiyor. Serit formatlarda
+        # yaptigimizin aynisi — metnin bitisi ile cagri arasindaki
+        # bosluk — sadece burada bosluk cagrinin degil basligin
+        # yaninda.
+        #
+        # Kare kenari BASLIK BLOGUNUN yuksekligi kadar: kareler
+        # basligin yanina, tam onun hizasina oturuyor.
+        if (bicim != "rail" and (m.get("gorseller") or m.get("ikonlar"))
+                and locals().get("bas_sag")):
+            gruplar = m["ikonlar"] or m["gorseller"]
+            if gruplar and isinstance(gruplar[0], str):
+                gruplar = [gruplar]
+            NEFES = 16
+            bosluk = 11
+            kenar = int(bas_alt - bas_ust)
+            en = (w - K) - (bas_sag + NEFES)
+            n, kenar = _kare_dizilimi(en, kenar, bicim, bosluk,
+                                      40 if m.get("ikonlar") else 48)
+            # Kare kenari icin alt sinir: bunun altinda fotograf
+            # fotograf gibi degil, renk lekesi gibi okunuyor. 56'yken
+            # Glowi'nin panelinde 52 piksel cikip serit hic
+            # basilmiyordu; oysa uc kare rahat siğiyordu.
+            if n >= 1 and kenar >= (40 if m.get("ikonlar") else 48):
+                gx = bas_sag + NEFES + (en - (n * kenar + (n - 1) * bosluk))
+                kare_kutu = (gx, bas_ust, int(kenar), n)
+                for i in range(len(mesajlar)):
+                    g_ = _kare_ciz(m, i, list(gruplar[i % len(gruplar)])[:n],
+                                   gx, bas_ust, kenar, bosluk, gec(i), sonraki(i))
+                    if g_:
+                        p.insert(kare_yeri, g_)
+
+        if bicim == "rail" and (m.get("gorseller") or m.get("ikonlar")):
+            # gorseller: her mesaj icin bir uclu. Tek uclu verilirse
+            # ucu de ayni kalir.
+            gruplar = m["ikonlar"] or m["gorseller"]
+            if gruplar and isinstance(gruplar[0], str):
+                gruplar = [gruplar]
+            bosluk = 11
+            # Rail'de kare kenari serit yuksekligine degil SUTUN
+            # genisligine bagli: kac tane sigacagini genislik soyluyor.
+            n, kenar = _kare_dizilimi(alan, 100, bicim, bosluk,
+                                      40 if m.get("ikonlar") else 48)
+            kenar = int(kenar)
+            serit_ust = liste_alt + 24
+            serit_alt = locals().get("en_ust_alt", y_cagri - 30) - 24
+            if serit_alt - serit_ust >= kenar:
+                gy = serit_ust + (serit_alt - serit_ust - kenar) / 2
+                kare_kutu = (K, gy, kenar, n)
+                for i in range(len(mesajlar)):
+                    g_ = _kare_ciz(m, i, list(gruplar[i % len(gruplar)])[:n],
+                                   K, gy, kenar, bosluk, gec(i), sonraki(i))
+                    if g_:
+                        p.insert(kare_yeri, g_)
+
+    ek = (_el_yolu_css(ucular, kare_kutu, locals().get("alan_nokta"))
+          if (kare_kutu and ucular) else "")
+    return p, KAGIT, ek, MUREKKEP
 
 
 # ---------------------------------------------------------------------
@@ -1803,7 +3091,17 @@ def afis(m, bicim, dil, varyant, mesaj_no=0):
     # Afisler sayfaya GOMULUYOR; sinif ve keyframe adlari benzersiz
     # olmazsa birinin stili otekine uygulaniyor. Varyant da oneke
     # giriyor, yoksa ayni markanin iki afisi carpisir.
-    return markala(svg, "d%s%s%d" % (m["kod"][:6], varyant[0], mesaj_no))
+    #
+    # FORMAT DA ONEKE GIRIYOR. Dordu de "doryvanp0" onekini
+    # paylasiyordu ve bu uzun sure zararsizdi: butun keyframe'ler
+    # geometriden bagimsizdi, yani dordunde de ayniydi. Elin urun
+    # karelerini gezen yolu geometriye bagli — kareler her formatta
+    # baska yerde. Ayni ada sahip dort ayri @keyframes yazilinca
+    # sayfada SONUNCUSU hepsine uygulaniyor, yani measure ve panel
+    # rail'in yolunu oynuyordu: el urunlerin oldugu yere degil,
+    # baska bir formattaki karelerin yerine gidiyordu.
+    return markala(svg, "d%s%s%s%d"
+                   % (m["kod"][:6], bicim[0], varyant[0], mesaj_no))
 
 
 def _mesajlari_denetle():

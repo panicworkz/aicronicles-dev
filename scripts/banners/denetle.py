@@ -25,7 +25,8 @@ NS = "{http://www.w3.org/2000/svg}"
 KOK = pathlib.Path(__file__).resolve().parents[2] / "public" / "media" / "deney"
 
 # Sade seti tamamlanmis markalar. Yeni marka bitince buraya eklenir.
-BITEN = ("panicworkz", "aicall", "yerine", "wpcare", "turco", "testworkz", "panictr")
+BITEN = ("panicworkz", "aicall", "yerine", "wpcare", "turco", "testworkz", "panictr", "uyorulmaz",
+         "arackirala", "arackiralama", "cebinden", "sosyo", "superd", "sepetim", "glowi", "oryvane")
 
 HEDEF_SATIR = {"measure": 1, "feature": 1, "panel": 2, "rail": 4}
 ACIKLAMA_PUNTO = 14
@@ -83,6 +84,17 @@ def afisi_denetle(yol, hedef_satir_uygula=True):
         if y + s * 0.3 > H + 1 or y - s * 0.95 < -1 or x0 < -1 or x0 + en > W + 1:
             ihlal.append((ad, "tasma", (t.text or "")[:20]))
 
+    # Ikon kareleri: konumu kendi rect'inde, transform yok.
+    for g in r.iter(f"{NS}g"):
+        if "kare" not in (g.get("class") or ""):
+            continue
+        rc = g.find(f"{NS}rect")
+        if rc is None:
+            continue
+        gx, gy = float(rc.get("x")), float(rc.get("y"))
+        ust.append(gy); alt.append(gy + float(rc.get("height")))
+        sol.append(gx); sag.append(gx + float(rc.get("width")))
+
     for g in r.iter(f"{NS}g"):
         m = re.match(r"translate\(([\d.]+),([\d.]+)\)", g.get("transform") or "")
         rc = g.find(f"{NS}rect")
@@ -95,6 +107,26 @@ def afisi_denetle(yol, hedef_satir_uygula=True):
             kurallar.append(gy)
         if "mciz" in (rc.get("class") or ""):
             cizgiler[_gecikme(rc)] = (gx, gy, float(rc.get("width")))
+
+    # 28 — kunye metin sutununun en fazla %40'i
+    if kurallar:
+        ust_kural = min(kurallar)
+        kunye_sag = 0.0
+        for e in r.iter(f"{NS}image"):
+            if float(e.get("y")) + float(e.get("height")) <= ust_kural + 2:
+                kunye_sag = max(kunye_sag, float(e.get("x")) + float(e.get("width")))
+        for t in r.iter(f"{NS}text"):
+            c = t.get("class") or ""
+            y = float(t.get("y") or 0)
+            if y > ust_kural or t.get("text-anchor"):
+                continue                       # alan adi saga hizali, sayilmaz
+            fs = float(t.get("font-size") or 0)
+            en = (sans_olc if ("mono" in c or "sans" in c) else serif_olc)(t.text or "", fs)
+            kunye_sag = max(kunye_sag, float(t.get("x") or 0) + en)
+        Kx = min(sol)
+        pay = (kunye_sag - Kx) / (W - 2 * Kx)
+        if pay > 0.42:
+            ihlal.append((ad, "kunye cok genis", "%%%.0f" % (pay * 100)))
 
     # 1 — dort kenar esit
     kenar = [min(ust), H - max(alt), min(sol), W - max(sag)]

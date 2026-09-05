@@ -43,3 +43,7 @@ pnpm-debug.log*
 .next.old-*/
 *.bak.*
 tsconfig.tsbuildinfo
+
+# python
+__pycache__/
+*.pyc

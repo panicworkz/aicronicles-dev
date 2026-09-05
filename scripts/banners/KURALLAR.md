@@ -108,7 +108,12 @@ piksel boşluk bırakıyordu.
 26. **Logo base64 ile afişin içine gömülür.** Siteden bütün dış görsel
     bağımlılıkları temizlendi; afiş de bağımsız kalmalı.
 27. Logosu olmayan marka **kelime markasıyla** basılır. Uydurma işaret yok.
-28. **Bütün yazı künyeleri afişin display serifiyle basılır**, markanın
+28. **Künye metin sütununun en fazla %40'ını kaplar.** Ufuk Yorulmaz'ın
+    terminal satırı (`❯ ~ /ufukyorulmaz`) yalnızca yüksekliğe göre
+    ölçeklendiğinde rail'de sütunun %66'sını kaplıyordu; öteki markalar
+    %17–40 arasındaydı. Künye afişin sahibi değil, imzası. Uzun künyeler
+    yüksekliğe değil **genişliğe** göre küçülür.
+29. **Bütün yazı künyeleri afişin display serifiyle basılır**, markanın
     sitedeki yazı tipi ne olursa olsun; korunan şey **renkler ve yapı**.
     Testworkz'ünki sitede kalın sans (Manrope 800), afişte serif — çünkü
     her künyeyi kendi yazı tipiyle basmak on altı afişi tek bir yayının
@@ -117,22 +122,111 @@ piksel boşluk bırakıyordu.
 
 ## Hareket
 
-29. **Künye sabittir** — logo, alan adı, kural. Mesaj değişirken markanın
+30. **Künye sabittir** — logo, alan adı, kural. Mesaj değişirken markanın
     yanıp sönmesi afişi huzursuz gösterir.
-30. **Perde 7 saniye.** Üç mesaj 21 saniyede döner.
-31. **Sıra**: başlık → çağrı yazısı → altına çizgi → el yakında belirir,
-    arar, bulur, basar → çağrı vurgu rengine döner ve öyle kalır.
-32. **`animation-fill-mode: backwards` şarttır.** Yoksa gecikmeyi bekleyen
+31. **Perde 16 saniye.** Üç mesaj 48 saniyede döner. Süre altı kez uzadı
+    (7 → 8 → 9 → 10 → 12 → 14 → 16) ve her seferinde ölçüyle: zincire
+    kareler, alan adı durağı ve elin gezintisi eklendikçe elin payı
+    daralıyor, bacaklar 300–990 px/s'ye fırlıyordu. Sıkıştırarak değil
+    uzatarak çözülür.
+32. **Sıra, ekrandaki yerleşimin sırasıdır.** Şerit formatlarda açıklama
+    başlığın altında, kareler sağında: başlık → açıklama → kareler →
+    çağrı → çizgi → el. rail'de kareler açıklamanın üstünde olduğu için
+    kareler açıklamadan önce gelir. Sayılar formata göre değişir, kural
+    değişmez.
+33. **`animation-fill-mode: backwards` şarttır.** Yoksa gecikmeyi bekleyen
     perdeler kendi normal hallerini gösterir; üçü üst üste basılır.
-33. **Her `@keyframes` karesinde `opacity` açıkça yazılır.** Yazılmazsa CSS
+34. **Her `@keyframes` karesinde `opacity` açıkça yazılır.** Yazılmazsa CSS
     aradaki değeri doldurur ve öge sinsice solar.
-34. **Konumlandırma dış grupta, animasyon iç grupta.** CSS `transform`ı
+35. **Konumlandırma dış grupta, animasyon iç grupta.** CSS `transform`ı
     nitelik `transform`ını ezer; el afişin sol üst köşesine gidiyordu.
-35. **`transform-origin` kullanılmaz.** SVG'de varsayılan `transform-box`
+36. **`transform-origin` kullanılmaz.** SVG'de varsayılan `transform-box`
     `view-box` olduğu için "sol" afişin kenarını gösterir. Öge kaydırılmış
     bir grubun içinde `0`'a konur, varsayılan orijin kendi ucudur.
-36. **Hareket kapalıyken** (`prefers-reduced-motion`) afiş tek mesaja düşer.
-37. **Yalnızca `opacity` ve `transform`.** Yeniden yerleşim ya da boyama
+37. **Hareket kapalıyken** (`prefers-reduced-motion`) afiş tek mesaja düşer.
+38. **Yalnızca `opacity` ve `transform`.** Yeniden yerleşim ya da boyama
     tetikleyen kare yok; blur, filter, clip-path animasyonu yok.
-38. **SVG içindeki `<style>`'da `<` veya `>` olamaz** — XML'i keser ve o
+39. **SVG içindeki `<style>`'da `<` veya `>` olamaz** — XML'i keser ve o
     noktadan sonraki bütün kurallar düşer. Üretici buna bakıp hata verir.
+
+## Kareler
+
+Afişin boş kalan alanına markanın kendi karelerini koyuyoruz. Boşluk
+afişi yarım gösteriyordu; rail'de 150, measure'da 590 pikselden fazla ölü
+alan vardı.
+
+40. **Kare sayısı formatın sabiti, markanın değil**: panel 2, measure 5,
+    feature 2, rail 3. Marka değişince düzen değişemez. Ölçü sayıyı
+    değil, kare kenarını belirler.
+41. **Kare kenarı, yanındaki metin bloğunun yüksekliği** (rail'de şeridin
+    yüksekliği, en çok 100). Alt sınır **türe göre**: fotoğraf 48 —
+    altında fotoğraf değil renk lekesi okunur; çizgi ikon 40 — o boyda
+    hâlâ rahat okunur.
+42. **Kareler metinle ortalı.** Şerit yüksekliğinin tamamını kullanınca
+    kareler künye kuralının hemen altından başlıyor, başlığın tepesinden
+    23 piksel yukarıda kalıyor ve afişin üstüne yapışmış görünüyordu.
+43. **Ürün markasında fotoğraf, hizmet markasında ikon.** Hizmet
+    markasının anlatacağı şey bir nesne değil bir yetenek; ekran
+    görüntüsü de 60 piksellik karede okunmaz. İkonlar lucide'den
+    (ISC: ticari kullanım serbest, çıktıda atıf gerekmez).
+44. **Somut işaret seçilir, soyut şema değil.** `container`,
+    `git-branch`, `workflow`, `brain-circuit` küçük karede kimseye bir
+    şey anlatmıyordu; sunucu, sepet, kamyon, kilit herkesin tanıdığı
+    nesneler.
+45. **Görseller markanın kendi sitesinden alınır.** Yoksa yalnızca
+    CC0 / kamu malı kaynak (Openverse). Pexels tarama isteklerini
+    engelliyor; bot koruması aşılmaz.
+46. **Görseller seçilmeden önce GÖZLE görülür.** Dosya adına ve yazı
+    başlığına güvenilmez: "Deri El Çantası" etiketli fotoğrafta kolye,
+    "city-frankfurt" dosyasında tropik ada, "Ford Transit" karesinde
+    şehir manzarası çıktı. Kontak sayfası basılıp bakılır.
+47. **Aynı perdede aynı kare iki kez olmaz.** Site aynı fotoğrafı iki
+    isimle kullanabiliyor (SosyoMarket'te üç portre çifti). Perdeler
+    arası tekrar, arada otuz saniye olduğu için kabul edilebilir; perde
+    içi tekrar edilemez.
+48. **Kareler her perdede değişir** ve soldan sağa birer birer açılır.
+    Künye markanın imzası, kare ise mesajın kendisi; ortadaki söylem
+    listesi zaten perdeyle değişiyordu.
+49. **Kareler metinden ve elden ÖNCE çizilir.** Sonra çizilince elin
+    üstüne biniyor ve el ürünlerin üzerinden geçerken görünmez oluyordu.
+
+## El
+
+50. **El, çağrı ve altı çizgisi tamamlandıktan sonra sahneye girer.**
+    Tıklayacağı şey ekranda yokken dolaşan bir imleç anlamsız.
+51. **El ürün karelerini gezer, alan adına uğrar, sonra butona iner.**
+    Önce yolun ortasına yapay bir yay noktası koymuştum; el boş alandan
+    geçiyor ve okur neden oraya gittiğini anlamıyordu. Uğrak gerçek bir
+    öge olmalı.
+52. **Parmak ucu alan adının ORTASINA değil ALTINA konur.** El gövdesi
+    ucundan aşağı ve sağa sarkıyor; ortaya konunca adresin sağ yarısını
+    kapatıyordu.
+53. **Bacak süresi mesafeye bağlıdır** (mesafenin 0.9 kuvveti), ürün
+    bakışları 3 kat ağırlık alır, hiçbir bacak çeyrek saniyeden kısa
+    olamaz. Sabit ağırlıkla kısa bacaklar 120, uzun bacaklar 994 px/s
+    çıkıyordu — aynı el bir yerde süzülüp bir yerde fırlıyordu.
+54. **Her durakta değil, yalnızca ilk ve son durakta kıpırdar.** Her
+    durakta kıpırdayınca gezintinin yarısını kıpırtı yiyordu.
+55. **Elin yolu her afişe ve her perdeye ayrı yazılır.** Kareler her
+    formatta başka yerde, çağrı her perdede başka genişlikte.
+
+## Künye (ek)
+
+56. **Amblem ile ad arası, amblemin boyunun %34'ü.** Adın puntosuna
+    bağlıyken oran dört formatta %31, %35, %34, %39 çıkıyordu — aynı
+    kilit dört afişte dört ayrı sıkılıkta görünüyordu.
+57. **Adın büyük harf ortası, amblemin dikey ortasıyla aynı çizgide.**
+    Taban çizgisi amblemin altına konunca kelime şeritlerde 6–8 piksel
+    aşağıda asılı kalıyordu.
+
+## Üretim
+
+58. **Sınıf ve keyframe önekine FORMAT da girer.** Dördü aynı öneki
+    paylaşırken zararsızdı, çünkü keyframe'ler geometriden bağımsızdı.
+    Elin yolu geometriye bağlı olunca sayfadaki son tanım hepsine
+    uygulanıyor, measure ve panel rail'in yolunu oynuyordu.
+59. **Lucide ikonu eksik ayrıştırılırsa üretim durur.** Uzun ögeler
+    dosyada çok satıra yayılıyor; ilk desen `path`leri düşürüyor,
+    sepetten geriye iki tekerlek kalıyordu. Her ögenin bir `key`'i var,
+    sayılar tutmazsa hata verilir.
+
