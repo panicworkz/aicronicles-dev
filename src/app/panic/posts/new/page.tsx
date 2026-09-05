@@ -28,6 +28,7 @@ import { AeoScoreMeter } from "@/components/studio/AeoScoreMeter";
 import { SerpSocialPreview } from "@/components/studio/SerpSocialPreview";
 import { ImageUploadDropzone } from "@/components/ui/image-upload-dropzone";
 import { toast } from "sonner";
+import { SITE_DOMAIN } from '@/lib/seo';
 
 export default function PanicNewPostPage() {
   const router = useRouter();
@@ -246,7 +247,7 @@ export default function PanicNewPostPage() {
                   <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
                     <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                     <span className="text-muted-foreground truncate">
-                      fabelo.testworkz.com/
+                      {SITE_DOMAIN}/
                     </span>
                     <input
                       type="text"

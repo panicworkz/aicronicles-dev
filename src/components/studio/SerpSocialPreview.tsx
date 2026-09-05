@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Globe, Share2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { SITE, SITE_DOMAIN } from '@/lib/seo';
 
 interface SerpSocialPreviewProps {
   title: string;
@@ -26,7 +27,7 @@ export function SerpSocialPreview({
 
   const displayTitle = metaTitle || title || 'Article Title';
   const displayDesc = metaDescription || excerpt || 'Article description teaser for search engines and social feeds...';
-  const url = `https://fabelo.testworkz.com/${slug || 'guide-slug'}`;
+  const url = `${SITE}/${slug || 'guide-slug'}`;
 
   return (
     <Card>
@@ -67,7 +68,7 @@ export function SerpSocialPreview({
           <div className="p-4 rounded-xl border bg-background space-y-1.5 font-sans">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <div className="size-4 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary">F</div>
-              <span className="truncate">fabelo.testworkz.com › {slug}</span>
+              <span className="truncate">{SITE_DOMAIN} › {slug}</span>
             </div>
             <h4 className="text-base text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer line-clamp-1">
               {displayTitle}
@@ -90,7 +91,7 @@ export function SerpSocialPreview({
               </div>
             )}
             <div className="p-3 space-y-1">
-              <p className="text-[10px] text-muted-foreground uppercase font-mono">fabelo.testworkz.com</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-mono">{SITE_DOMAIN}</p>
               <h4 className="text-xs font-bold text-foreground line-clamp-1">{displayTitle}</h4>
               <p className="text-[11px] text-muted-foreground line-clamp-2">{displayDesc}</p>
             </div>
@@ -106,7 +107,7 @@ export function SerpSocialPreview({
             )}
             <div className="p-3 bg-muted/20 border-t space-y-0.5">
               <h4 className="text-xs font-bold text-foreground line-clamp-1">{displayTitle}</h4>
-              <p className="text-[10px] text-muted-foreground font-mono">fabelo.testworkz.com</p>
+              <p className="text-[10px] text-muted-foreground font-mono">{SITE_DOMAIN}</p>
             </div>
           </div>
         )}

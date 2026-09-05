@@ -26,6 +26,7 @@ import { ProductSeoAeoSuite } from '@/components/studio/ProductSeoAeoSuite';
 import { ProductSpecificationsBuilder } from '@/components/studio/ProductSpecificationsBuilder';
 import { formatPrice } from '@/lib/currency';
 import { toast } from 'sonner';
+import { SITE_DOMAIN } from '@/lib/seo';
 
 export default function PanicEditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -254,7 +255,7 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
               <div className="space-y-1.5">
                 <Label>URL Slug</Label>
                 <div className="flex items-center rounded-lg border bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground">
-                  <span>fabelo.testworkz.com/store/</span>
+                  <span>{SITE_DOMAIN}/store/</span>
                   <input
                     type="text"
                     value={slug}

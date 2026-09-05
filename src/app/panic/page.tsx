@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { LivePreviewDrawer } from '@/components/preview/LivePreviewDrawer';
+import { SITE_DOMAIN } from '@/lib/seo';
 
 export default function PanicDashboardPage() {
   const [stats, setStats] = useState({
@@ -77,7 +78,7 @@ export default function PanicDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Overview &amp; Content Analytics</h1>
-          <p className="text-sm text-muted-foreground">Project: Fabelo Editorial Hub (fabelo.testworkz.com)</p>
+          <p className="text-sm text-muted-foreground">Project: Fabelo Editorial Hub ({SITE_DOMAIN})</p>
         </div>
         <Link href="/panic/posts/new">
           <Button className="gap-2 bg-primary text-primary-foreground font-semibold shadow-xs">

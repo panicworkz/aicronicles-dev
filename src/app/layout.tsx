@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "sonner";
 import { Inter, Geist_Mono, Newsreader } from "next/font/google";
+import { SITE } from "@/lib/seo";
 
 const inter = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-sans", display: "optional" });
 const geistMono = Geist_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-mono", display: "optional" });
@@ -15,6 +16,10 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
+  /* Goreli adreslerin cozulecegi kok. Bu olmadan Next goreli og:image
+     yollarini mutlak adrese cevirmiyor ve derlemede uyari veriyor;
+     paylasim kartlarinda gorsel bos kalir. */
+  metadataBase: new URL(SITE),
   title: "Panic CMS",
   description: "High-Performance Publishing & Commerce Engine",
 };

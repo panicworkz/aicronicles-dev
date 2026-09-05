@@ -45,6 +45,7 @@ import {
 } from "@/components/studio/ImageStudioDrawer";
 import { ImageUploadDropzone } from "@/components/ui/image-upload-dropzone";
 import { toast } from "sonner";
+import { SITE_DOMAIN } from '@/lib/seo';
 
 export default function PanicSplitLiveStudioPage({
   params,
@@ -439,7 +440,7 @@ export default function PanicSplitLiveStudioPage({
           <div className="flex items-center gap-1.5 flex-1 min-w-[180px]">
             <Globe className="size-3.5 text-muted-foreground shrink-0" />
             <span className="text-muted-foreground truncate">
-              fabelo.testworkz.com/
+              {SITE_DOMAIN}/
             </span>
             <input
               type="text"

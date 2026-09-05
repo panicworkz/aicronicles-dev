@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '@/db';
 import { eq } from 'drizzle-orm';
+import { SITE } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +28,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 
 Published: ${(post.publishedAt || new Date()).toISOString()}
 Author: Fabelo Editorial
-Source: https://fabelo.testworkz.com/${post.slug}
+Source: ${SITE}/${post.slug}
 
 ## Excerpt
 ${post.excerpt}

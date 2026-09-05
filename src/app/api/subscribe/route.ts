@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
+/* Cikis baglantisinin tam adresi icin. Bu dosya kendi SITE_URL
+   degiskenini okuyordu; o degisken hicbir yerde ayarli degil, yani her
+   zaman koda gomulu adrese dusuyordu. Artik yayin tarafiyla ayni
+   kaynak. */
+import { SITE } from "@/lib/seo";
 
 /**
  * Bulten abonelik ucu.
@@ -25,8 +30,6 @@ const TUZAK_ALANLAR = ["website_url", "company_website", "_hp", "honeypot"];
 const GATEWAY =
   process.env.GATEWAY_URL || "http://host.docker.internal:8787/ingest/fabelo";
 
-/** Cikis baglantisinin tam adresi icin — alan adi degisince buradan gecilir */
-const SITE = process.env.SITE_URL || "https://fabelo.testworkz.com";
 
 /* --- Hiz siniri: IP basina saatte 5 abonelik ---------------------------- */
 const PENCERE = 60 * 60 * 1000;

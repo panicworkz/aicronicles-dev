@@ -7,11 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { SITE_DOMAIN } from '@/lib/seo';
 
 export default function PanicSettingsPage() {
   const [ecommerceEnabled, setEcommerceEnabled] = useState(false);
   const [siteName, setSiteName] = useState('Fabelo');
-  const [domain, setDomain] = useState('fabelo.testworkz.com');
+  const [domain, setDomain] = useState(SITE_DOMAIN);
   const [saved, setSaved] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {

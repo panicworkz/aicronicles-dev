@@ -10,6 +10,17 @@
 export const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://fabelo.testworkz.com")
   .replace(/\/+$/, "");
 
+/**
+ * Yalnizca alan adi — "fabelo.testworkz.com".
+ *
+ * CMS ekranlari adresi metin olarak gosteriyor (slug alaninin onundeki
+ * on ek, SERP onizlemesi). Bunlar da SITE'den turetilir; ayri bir
+ * NEXT_PUBLIC_SITE_DOMAIN degiskeni ikisinin ayrisabilmesi demek olurdu
+ * ve o zaman editor, yayin tarafinin bastigi adresten baskasini
+ * gosterirdi.
+ */
+export const SITE_DOMAIN = SITE.replace(/^https?:\/\//, "");
+
 /** Goreli yolu mutlak adrese cevirir. schema.org mutlak adres ister. */
 export function mutlak(yol: string | null | undefined): string | null {
   if (!yol) return null;

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '@/db';
 import { desc, eq } from 'drizzle-orm';
+import { SITE } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +23,7 @@ export async function GET() {
 ## Published Editorial Guides & Structured Data\n`;
 
   for (const p of posts) {
-    content += `- [${p.title}](https://fabelo.testworkz.com/${p.slug}): ${p.excerpt || p.title}\n`;
+    content += `- [${p.title}](${SITE}/${p.slug}): ${p.excerpt || p.title}\n`;
   }
 
   return new NextResponse(content, {

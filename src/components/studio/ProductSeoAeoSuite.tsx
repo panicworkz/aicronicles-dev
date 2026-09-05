@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { SITE, SITE_DOMAIN } from '@/lib/seo';
 
 interface ProductSeoAeoSuiteProps {
   title: string;
@@ -80,7 +81,7 @@ export function ProductSeoAeoSuite({
       price: price || '0.00',
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
-      url: `https://fabelo.testworkz.com/store/${slug}`,
+      url: `${SITE}/store/${slug}`,
     },
   };
 
@@ -194,7 +195,7 @@ export function ProductSeoAeoSuite({
             <div className="p-3.5 rounded-xl border bg-background space-y-1 font-sans">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <div className="size-4 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary">F</div>
-                <span className="truncate">fabelo.testworkz.com › store › {slug || 'product'}</span>
+                <span className="truncate">{SITE_DOMAIN} › store › {slug || 'product'}</span>
               </div>
               <h4 className="text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer line-clamp-1">
                 {displayTitle}
