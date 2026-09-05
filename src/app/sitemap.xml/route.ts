@@ -16,9 +16,13 @@ export async function GET() {
      sayfalarina kanonik adres ve yapilandirilmis veri verildi ama
      harita yalnizca yazilari sayiyordu — yani arama motoruna varliklari
      hic bildirilmiyordu. */
-  const [kategoriler, yazarlar] = await Promise.all([
+  const [kategoriler, yazarlar, sayfalar] = await Promise.all([
     db.query.categories.findMany(),
     db.query.authors.findMany(),
+    /* Sabit sayfalar — /about, /advertise, /sponsor ve digerleri.
+       Ghost bunlari haritasinda sayiyordu; bizimki saymiyordu, yani
+       fabelo.io'ya gecerken bes sayfanin kapsamini KAYBEDECEKTIK. */
+    db.query.pages.findMany({ where: eq(schema.pages.status, 'published') }),
   ]);
 
   const liste = (yol: string, oncelik: string) => `
@@ -42,6 +46,7 @@ export async function GET() {
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>`).join('')}
+  ${(sayfalar as any[]).map((s) => liste(`/${s.slug}`, '0.7')).join('')}
   ${(kategoriler as any[]).map((c) => liste(`/category/${c.slug}`, '0.7')).join('')}
   ${FABELO_TAGS.map((t) => liste(`/tag/${t}`, '0.6')).join('')}
   ${(yazarlar as any[]).map((a) => liste(`/author/${a.slug}`, '0.5')).join('')}
