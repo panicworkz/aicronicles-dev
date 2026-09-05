@@ -20,6 +20,7 @@ import { enrichArticleHtml, type MediaBoyut } from "@/components/magazine/enrich
 import CmsPage from "@/components/magazine/CmsPage";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
 import { SITE, kirintiSemasi } from "@/lib/seo";
+import { sssCikar, sssSemasi } from "@/lib/faq";
 
 export const dynamic = "force-dynamic";
 
@@ -195,6 +196,10 @@ export default async function ArticlePage({ params }: PageProps) {
   const trending = others.slice(4, 9).map(toCard);
 
   /* Yazinin tag'leri — tagsJson (fabelo.io tag'leri buraya yaziliyor) */
+  /* Yazinin govdesindeki SSS. Ayri bir alan yok — yazarin zaten
+     yazdigi bolum okunuyor, yeni bir sey doldurtulmuyor. */
+  const sorular = sssCikar(post.contentHtml);
+
   const rawTags: string[] = Array.isArray(post.tagsJson) ? (post.tagsJson as string[]) : [];
   const tagSlugs = rawTags
     .map((t) => String(t).toLowerCase().replace(/\s*&\s*/g, "-").replace(/\s+/g, "-"))
@@ -227,6 +232,14 @@ export default async function ArticlePage({ params }: PageProps) {
           ),
         }}
       />
+      {/* SSS — yalnizca gercekten varsa. Bos bir FAQPage, olmayan bir
+          sey hakkinda iddiada bulunmak olurdu. */}
+      {sorular.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(sssSemasi(sorular)) }}
+        />
+      )}
       <ArticleClientActions title={post.title} />
       <MagazineHeader />
 

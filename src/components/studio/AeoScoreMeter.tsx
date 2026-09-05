@@ -3,6 +3,7 @@
 import React from 'react';
 import { Sparkles, CheckCircle, AlertCircle, HelpCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { sssCikar } from '@/lib/faq';
 
 interface AeoScoreMeterProps {
   title: string;
@@ -23,7 +24,13 @@ export function AeoScoreMeter({
   const wordCount = plainText ? plainText.split(/\s+/).length : 0;
   const hasH2 = /<h2/i.test(contentHtml);
   const hasH3 = /<h3/i.test(contentHtml);
-  const hasFaq = /panic-faq-block|faq|frequently asked/i.test(contentHtml);
+  /* SSS puani, YAYIN tarafinin gercekten bastigi seyle olculur.
+     Onceden metinde "faq" kelimesinin gecmesi yetiyordu; yazi bu
+     puani aliyor ama sayfa hicbir FAQPage basmiyordu, cunku dogru
+     yapida bir bolum yoktu. Editorun verdigi onay, disariya soylenen
+     seyle ayni olmali. */
+  const sssSorulari = sssCikar(contentHtml);
+  const hasFaq = sssSorulari.length > 0;
   const hasLists = /<ul|<ol/i.test(contentHtml);
   const hasNumbers = /\d+%|\$\d+|\d+ (steps|tips|ways|rules)/i.test(contentHtml);
   const metaDescLength = (metaDescription || excerpt || '').length;
@@ -69,7 +76,10 @@ export function AeoScoreMeter({
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">FAQ Structured Entity</span>
             {hasFaq ? (
-              <span className="text-emerald-500 flex items-center gap-1 font-medium"><CheckCircle className="size-3.5" /> Detected</span>
+              <span className="text-emerald-500 flex items-center gap-1 font-medium">
+                <CheckCircle className="size-3.5" />
+                {sssSorulari.length} question{sssSorulari.length === 1 ? '' : 's'} published
+              </span>
             ) : (
               <span className="text-muted-foreground flex items-center gap-1"><HelpCircle className="size-3.5" /> Recommended</span>
             )}
