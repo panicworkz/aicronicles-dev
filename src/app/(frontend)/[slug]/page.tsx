@@ -19,6 +19,7 @@ import { decodeEntities, tagLabel } from "@/lib/taxonomy";
 import { enrichArticleHtml, type MediaBoyut } from "@/components/magazine/enrichArticleHtml";
 import CmsPage from "@/components/magazine/CmsPage";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
+import { SITE } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +27,10 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-/* Kanonik adres tek yerden. sitemap.xml de ayni degeri kullaniyor;
-   ikisi ayrisirsa arama motoruna celisen iki adres verilir. */
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://fabelo.testworkz.com";
+/* Kanonik adres tek yerden — artik @/lib/seo. Bu dosya kendi sabitini
+   tasiyordu; ayni deger sitemap.xml ve llms.txt'te de ayri ayri
+   yaziliydi ve ikisi ayrisirsa arama motoruna celisen iki adres
+   verilir. */
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;

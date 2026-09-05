@@ -9,6 +9,7 @@ import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magaz
 import { AdSlot } from "@/components/magazine/AdSlot";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
 import { decodeEntities } from "@/lib/taxonomy";
+import { SITE, mutlak, profilSemasi } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +21,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const author = await db.query.authors.findFirst({ where: eq(schema.authors.slug, slug) });
   if (!author) return { title: "Not Found | Fabelo" };
+  const aciklama = author.bio
+    ? decodeEntities(author.bio)
+    : `Stories written by ${author.name} for Fabelo.`;
+  const adres = `${SITE}/author/${author.slug}`;
+  const gorsel = mutlak(author.avatarUrl);
   return {
     title: `${author.name} | Fabelo`,
-    description: author.bio || `Stories written by ${author.name} for Fabelo.`,
+    description: aciklama,
+    // Bkz. kategori sayfasi: parametreli adresler ayri sayfa sayilmasin.
+    alternates: { canonical: adres },
+    openGraph: {
+      type: "profile",
+      url: adres,
+      title: author.name,
+      description: aciklama,
+      images: gorsel ? [{ url: gorsel }] : [],
+    },
+    twitter: {
+      card: "summary",
+      title: author.name,
+      description: aciklama,
+      images: gorsel ? [gorsel] : [],
+    },
   };
 }
 
@@ -59,6 +80,21 @@ export default async function AuthorPage({ params }: PageProps) {
 
   return (
     <div className="mag min-h-screen">
+      {/* Bkz. kategori sayfasi — icerik bizim urettigimiz nesneden geliyor. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            profilSemasi({
+              ad: author.name,
+              ozgecmis: author.bio ? decodeEntities(author.bio) : null,
+              gorsel: author.avatarUrl,
+              yol: `/author/${author.slug}`,
+              yazilar: posts,
+            })
+          ),
+        }}
+      />
       <MagazineHeader />
 
       <main>

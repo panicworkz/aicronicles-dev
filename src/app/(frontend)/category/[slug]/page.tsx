@@ -8,6 +8,7 @@ import MagazineFooter from "@/components/magazine/MagazineFooter";
 import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magazine/PostCard";
 import { AdSlot } from "@/components/magazine/AdSlot";
 import { SECTIONS, decodeEntities } from "@/lib/taxonomy";
+import { SITE, koleksiyonSemasi } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +20,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const category = await db.query.categories.findFirst({ where: eq(schema.categories.slug, slug) });
   if (!category) return { title: "Not Found | Fabelo" };
+  const aciklama = category.description || `Every ${category.name} story from the Fabelo desk.`;
+  const adres = `${SITE}/category/${category.slug}`;
   return {
     title: `${category.name} | Fabelo`,
-    description: category.description || `Every ${category.name} story from the Fabelo desk.`,
+    description: aciklama,
+    /* canonical: ayni listeye izleme parametreleriyle ve sayfa
+       numarasiyla gelinebiliyor (?page=1). Kanonik adres olmadan
+       bunlar arama motoruna ayri sayfalar gorunur ve birbirinin
+       sirasini yer. */
+    alternates: { canonical: adres },
+    openGraph: { type: "website", url: adres, title: category.name, description: aciklama },
+    twitter: { card: "summary", title: category.name, description: aciklama },
   };
 }
 
@@ -61,6 +71,22 @@ export default async function CategoryPage({ params }: PageProps) {
 
   return (
     <div className="mag min-h-screen">
+      {/* Yapilandirilmis veri. dangerouslySetInnerHTML burada dogru arac:
+          icerik JSON.stringify ile bizim urettigimiz nesneden geliyor,
+          disaridan gelen bir dize degil. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            koleksiyonSemasi({
+              ad: category.name,
+              aciklama: category.description || meta?.blurb,
+              yol: `/category/${category.slug}`,
+              yazilar: posts,
+            })
+          ),
+        }}
+      />
       <MagazineHeader />
 
       <main>

@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { db, schema } from "@/db";
 import { desc, eq, and, sql } from "drizzle-orm";
 import type { Metadata } from "next";
@@ -8,6 +9,7 @@ import MagazineFooter from "@/components/magazine/MagazineFooter";
 import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magazine/PostCard";
 import { AdSlot } from "@/components/magazine/AdSlot";
 import { FABELO_TAGS, tagLabel } from "@/lib/taxonomy";
+import { SITE, koleksiyonSemasi } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +19,15 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
+  const aciklama = `Every Fabelo story filed under ${tagLabel(slug)}.`;
+  const adres = `${SITE}/tag/${slug}`;
   return {
     title: `${tagLabel(slug)} | Fabelo`,
-    description: `Every Fabelo story filed under ${tagLabel(slug)}.`,
+    description: aciklama,
+    // Bkz. kategori sayfasi: parametreli adresler ayri sayfa sayilmasin.
+    alternates: { canonical: adres },
+    openGraph: { type: "website", url: adres, title: tagLabel(slug), description: aciklama },
+    twitter: { card: "summary", title: tagLabel(slug), description: aciklama },
   };
 }
 
@@ -47,6 +55,15 @@ export default async function TagPage({ params }: PageProps) {
     limit: 60,
   });
 
+  /* Bilinmeyen etiket 404 verir.
+     Kategori ve yazar sayfalari zaten oyle davraniyordu; etiket sayfasi
+     HER slug'a 200 donuyordu, yani /tag/<akla-gelen-her-sey> gecerli bir
+     sayfaydi. Bu, arama motoruna sonsuz sayida ince icerikli sayfa acar.
+     Bilinen etiketler bos olsalar bile kalir — konu var, yazi henuz yok. */
+  if (!FABELO_TAGS.includes(slug as (typeof FABELO_TAGS)[number]) && rows.length === 0) {
+    notFound();
+  }
+
   const authors = await db.query.authors.findMany();
   const categories = await db.query.categories.findMany();
   const authorById = new Map(authors.map((a: any) => [a.id, a]));
@@ -71,6 +88,20 @@ export default async function TagPage({ params }: PageProps) {
 
   return (
     <div className="mag min-h-screen">
+      {/* Bkz. kategori sayfasi — icerik bizim urettigimiz nesneden geliyor. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            koleksiyonSemasi({
+              ad: label,
+              aciklama: `Every Fabelo story filed under ${label}.`,
+              yol: `/tag/${slug}`,
+              yazilar: posts,
+            })
+          ),
+        }}
+      />
       <MagazineHeader />
 
       <main>
