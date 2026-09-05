@@ -37,6 +37,33 @@ export const YAYINCI = {
 
 /** Listede bir yaziyi anlatmaya yeten en az sey. Sayfalarin kendi kart
     tipleri (CardPost) bunun ustune oturuyor. */
+/**
+ * Kirinti yolu — BreadcrumbList.
+ *
+ * Arama sonucunda adres satirini degistirir:
+ *   fabelo.io › how-to-budget-money-a-complete-step-by-step-guide
+ * yerine
+ *   Fabelo › Personal Finance › How To Budget Money
+ *
+ * Yol her zaman kokten baslar; cagiran yalnizca kokten SONRASINI verir.
+ * Son basamak sayfanin kendisidir ve ona da adres yazilir — schema.org
+ * son ogenin adresini istege birakiyor ama vermek, listenin kismi bir
+ * yol degil tam bir yol oldugunu soyluyor.
+ */
+export function kirintiSemasi(basamaklar: { ad: string; yol: string }[]) {
+  const hepsi = [{ ad: "Fabelo", yol: "/" }, ...basamaklar];
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: hepsi.map((b, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: b.ad,
+      item: `${SITE}${b.yol === "/" ? "" : b.yol}`,
+    })),
+  };
+}
+
 export type SemaYazi = {
   slug: string;
   title: string;

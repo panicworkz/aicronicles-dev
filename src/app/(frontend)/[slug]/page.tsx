@@ -19,7 +19,7 @@ import { decodeEntities, tagLabel } from "@/lib/taxonomy";
 import { enrichArticleHtml, type MediaBoyut } from "@/components/magazine/enrichArticleHtml";
 import CmsPage from "@/components/magazine/CmsPage";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
-import { SITE } from "@/lib/seo";
+import { SITE, kirintiSemasi } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -209,6 +209,22 @@ export default async function ArticlePage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(yaziSemasi(post, author, category)),
+        }}
+      />
+      {/* Kirinti yolu ayri bir blok. Iki sema tek nesnede birlestirilebilirdi
+          ama ayri durunca biri bozulsa oteki okunur kalir. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            kirintiSemasi([
+              // Kategorisi olmayan yazi dogrudan kokun altinda durur.
+              ...(category
+                ? [{ ad: category.name, yol: `/category/${category.slug}` }]
+                : []),
+              { ad: post.title, yol: `/${post.slug}` },
+            ])
+          ),
         }}
       />
       <ArticleClientActions title={post.title} />

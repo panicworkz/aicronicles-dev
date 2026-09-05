@@ -8,7 +8,7 @@ import MagazineFooter from "@/components/magazine/MagazineFooter";
 import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magazine/PostCard";
 import { AdSlot } from "@/components/magazine/AdSlot";
 import { SECTIONS, decodeEntities } from "@/lib/taxonomy";
-import { SITE, koleksiyonSemasi } from "@/lib/seo";
+import { SITE, koleksiyonSemasi, kirintiSemasi } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +84,15 @@ export default async function CategoryPage({ params }: PageProps) {
               yol: `/category/${category.slug}`,
               yazilar: posts,
             })
+          ),
+        }}
+      />
+      {/* Bkz. yazi sayfasi — kirinti yolu ayri blokta. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            kirintiSemasi([{ ad: category.name, yol: `/category/${category.slug}` }])
           ),
         }}
       />

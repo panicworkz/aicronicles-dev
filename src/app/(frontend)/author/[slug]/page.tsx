@@ -9,7 +9,7 @@ import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magaz
 import { AdSlot } from "@/components/magazine/AdSlot";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
 import { decodeEntities } from "@/lib/taxonomy";
-import { SITE, mutlak, profilSemasi } from "@/lib/seo";
+import { SITE, mutlak, profilSemasi, kirintiSemasi } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +92,15 @@ export default async function AuthorPage({ params }: PageProps) {
               yol: `/author/${author.slug}`,
               yazilar: posts,
             })
+          ),
+        }}
+      />
+      {/* Bkz. yazi sayfasi — kirinti yolu ayri blokta. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            kirintiSemasi([{ ad: author.name, yol: `/author/${author.slug}` }])
           ),
         }}
       />
