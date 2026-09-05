@@ -37,6 +37,7 @@ export type Reklam = {
 type HamReklam = Reklam & {
   targetCategories: string[] | null;
   targetTags: string[] | null;
+  targetHome: boolean;
 };
 
 export const yayindakiReklamlar = cache(async (): Promise<HamReklam[]> => {
@@ -61,6 +62,7 @@ export const yayindakiReklamlar = cache(async (): Promise<HamReklam[]> => {
       brand: r.brand ?? null,
       targetCategories: r.targetCategories ?? [],
       targetTags: r.targetTags ?? [],
+      targetHome: Boolean(r.targetHome),
     }));
   } catch (hata) {
     // Reklam tablosu okunamazsa sayfa yine de basilsin — alan yer
@@ -70,11 +72,20 @@ export const yayindakiReklamlar = cache(async (): Promise<HamReklam[]> => {
   }
 });
 
-/** Reklam bu sayfada cikabilir mi? Bos hedef listesi = her yerde. */
+/** Reklamin bir hedefi var mi — kategori, etiket ya da ana sayfa. */
+function hedefliMi(r: HamReklam): boolean {
+  return Boolean(r.targetCategories?.length || r.targetTags?.length || r.targetHome);
+}
+
+/** Reklam bu sayfada cikabilir mi? Hicbir hedefi yoksa = her yerde. */
 function uygunMu(r: HamReklam, baglam?: Baglam): boolean {
   const kategoriler = r.targetCategories ?? [];
   const etiketler = r.targetTags ?? [];
-  if (!kategoriler.length && !etiketler.length) return true;
+  if (!hedefliMi(r)) return true;
+  // ANA SAYFA artik ayri bir hedef. Once "hedefi olmayan reklam"
+  // demekti; o zaman ana sayfaya reklam koymak icin butun hedefleri
+  // silmek ve reklami her yere birden acmak gerekiyordu.
+  if (baglam?.tur === "home") return Boolean(r.targetHome);
   if (!baglam?.slug) return false;
 
   if (baglam.tur === "category") return kategoriler.includes(baglam.slug);
@@ -102,9 +113,11 @@ export async function alaniDoldur(
   const hepsi = (await yayindakiReklamlar()).filter((r) => r.placement === placement);
   if (!hepsi.length) return null;
 
-  const hedefli = hepsi.filter(
-    (r) => (r.targetCategories?.length || r.targetTags?.length) && uygunMu(r, baglam)
-  );
+  const hedefli = hepsi.filter((r) => hedefliMi(r) && uygunMu(r, baglam));
+  /* Yedek havuz: konu hedefi OLMAYAN reklamlar. Ana sayfa isaretli
+     olanlar da buraya giriyor — ev reklami, konusu olmayan sayfanin
+     (yazar sayfasi gibi) dogal karsiligi. Yoksa o sayfalarda alan bos
+     kalirdi. */
   const genel = hepsi.filter((r) => !r.targetCategories?.length && !r.targetTags?.length);
 
   const havuz = hedefli.length ? hedefli : genel;

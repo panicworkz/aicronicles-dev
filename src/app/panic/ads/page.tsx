@@ -75,8 +75,11 @@ const PLACEMENT_CONFIG: Record<
 function konular(ad: any): { etiket: string; yol: string; tur: string }[] {
   const k = (ad?.targetCategories ?? []) as string[];
   const e = (ad?.targetTags ?? []) as string[];
-  if (!k.length && !e.length) return [{ etiket: "Everywhere", yol: "/", tur: "home" }];
+  const ana = Boolean(ad?.targetHome);
+  if (!k.length && !e.length && !ana)
+    return [{ etiket: "Everywhere", yol: "/", tur: "everywhere" }];
   return [
+    ...(ana ? [{ etiket: "home", yol: "/", tur: "home" }] : []),
     ...k.map((s) => ({ etiket: s, yol: `/category/${s}`, tur: "category" })),
     ...e.map((s) => ({ etiket: s, yol: `/tag/${s}`, tur: "tag" })),
   ];
@@ -114,6 +117,14 @@ export default function PanicAdsPage() {
   const [isActive, setIsActive] = useState(true);
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
+  /* Hedefleme artik CMS'ten yonetiliyor. Kategori ve etiket listesi
+     taksonomi uclarindan geliyor; elle slug yazdirmak yanlis yazimi
+     davet ederdi ve yanlis slug reklami sessizce her yerden siler. */
+  const [hedefKategori, setHedefKategori] = useState<string[]>([]);
+  const [hedefEtiket, setHedefEtiket] = useState<string[]>([]);
+  const [hedefAna, setHedefAna] = useState(false);
+  const [kategoriler, setKategoriler] = useState<string[]>([]);
+  const [etiketler, setEtiketler] = useState<string[]>([]);
 
   const fetchAds = async () => {
     try {
@@ -134,6 +145,26 @@ export default function PanicAdsPage() {
     fetchAds();
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const [k, e] = await Promise.all([
+          fetch('/api/categories').then((r) => r.json()).catch(() => null),
+          fetch('/api/tags').then((r) => r.json()).catch(() => null),
+        ]);
+        const al = (d: any) =>
+          (d?.categories ?? d?.tags ?? d?.items ?? d ?? [])
+            .map((x: any) => x?.slug)
+            .filter(Boolean)
+            .sort();
+        setKategoriler(al(k));
+        setEtiketler(al(e));
+      } catch {
+        /* Taksonomi okunamazsa alan bos kalir; kayit yine yapilabilir. */
+      }
+    })();
+  }, []);
+
   const openCreateModal = () => {
     setEditingAd(null);
     setName('');
@@ -144,6 +175,9 @@ export default function PanicAdsPage() {
     setIsActive(true);
     setStartsAt('');
     setEndsAt('');
+    setHedefKategori([]);
+    setHedefEtiket([]);
+    setHedefAna(false);
     setIsModalOpen(true);
   };
 
@@ -157,6 +191,9 @@ export default function PanicAdsPage() {
     setIsActive(Boolean(ad.isActive));
     setStartsAt(ad.startsAt ? new Date(ad.startsAt).toISOString().split('T')[0] : '');
     setEndsAt(ad.endsAt ? new Date(ad.endsAt).toISOString().split('T')[0] : '');
+    setHedefKategori(((ad.targetCategories ?? []) as string[]).slice());
+    setHedefEtiket(((ad.targetTags ?? []) as string[]).slice());
+    setHedefAna(Boolean(ad.targetHome));
     setIsModalOpen(true);
   };
 
@@ -178,6 +215,9 @@ export default function PanicAdsPage() {
         isActive,
         startsAt: startsAt ? new Date(startsAt).toISOString() : null,
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+        targetCategories: hedefKategori,
+        targetTags: hedefEtiket,
+        targetHome: hedefAna,
       };
 
       if (editingAd) {
@@ -193,7 +233,8 @@ export default function PanicAdsPage() {
           setIsModalOpen(false);
           fetchAds();
         } else {
-          toast.error(data.error || 'Failed to update ad');
+          toast.error(data.message || data.error || 'Failed to update ad',
+                      { duration: 9000 });
         }
       } else {
         // POST
@@ -208,7 +249,8 @@ export default function PanicAdsPage() {
           setIsModalOpen(false);
           fetchAds();
         } else {
-          toast.error(data.error || 'Failed to create ad');
+          toast.error(data.message || data.error || 'Failed to create ad',
+                      { duration: 9000 });
         }
       }
     } catch (err) {
@@ -471,8 +513,10 @@ export default function PanicAdsPage() {
                           <span
                             key={k.yol}
                             className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono border ${
-                              k.tur === "home"
+                              k.tur === "everywhere"
                                 ? "bg-muted text-muted-foreground border-border"
+                                : k.tur === "home"
+                                  ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/25"
                                 : k.tur === "tag"
                                   ? "bg-amber-500/10 text-amber-700 border-amber-500/25"
                                   : "bg-sky-500/10 text-sky-700 border-sky-500/25"
@@ -698,43 +742,112 @@ export default function PanicAdsPage() {
                 />
               </div>
 
-              {/* Bu ilan nerede cikiyor.
-                  Hedefleme su an CMS'ten degil tohumlama betiginden
-                  geliyor, o yuzden burada salt okunur — ama duzenleyen
-                  kisi ilanin hangi konu sayfalarinda dondugunu gormeden
-                  karar veremez, ve oraya tek tikla gidebilmeli. */}
-              {editingAd && (
-                <div className="rounded-lg border border-border bg-muted/30 p-3">
+              {/* BU ILAN NEREDE CIKIYOR — artik secilebilir.
+                  Onceden hedefleme yalnizca tohumlama betiginden
+                  geliyordu ve burada salt okunurdu; kampanyayi baska
+                  bir konuya tasimak icin veritabanina girmek
+                  gerekiyordu.
+
+                  Slug'lar taksonomiden geliyor, elle yazilmiyor:
+                  yanlis yazilmis bir slug reklami sessizce her
+                  sayfadan siler ve bu ekranda "Everywhere" gorunur.
+
+                  Bir sayfada dort yuva var, dolayisiyla bir konu ayni
+                  tarihlerde en cok dort kampanya tasiyabilir; besinci
+                  denemesini sunucu geri ceviriyor. */}
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <div className="flex items-center justify-between">
                   <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Appears on
                   </p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {konular(editingAd).map((k) => (
-                      <a
-                        key={k.yol}
-                        href={k.yol}
-                        target="_blank"
-                        rel="noreferrer"
-                        title={`Open ${k.yol}`}
-                        className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-mono border transition hover:border-primary hover:text-primary ${
-                          k.tur === "home"
-                            ? "bg-background text-muted-foreground border-border"
-                            : k.tur === "tag"
-                              ? "bg-amber-500/10 text-amber-700 border-amber-500/25"
-                              : "bg-sky-500/10 text-sky-700 border-sky-500/25"
-                        }`}
-                      >
-                        {k.etiket}
-                        <ExternalLink className="size-3 shrink-0" />
-                      </a>
-                    ))}
-                  </div>
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    The slot picks one campaign at random, so the page may need a
-                    refresh before this creative comes up.
-                  </p>
+                  {(hedefKategori.length > 0 || hedefEtiket.length > 0 || hedefAna) && (
+                    <button
+                      type="button"
+                      onClick={() => { setHedefKategori([]); setHedefEtiket([]); setHedefAna(false); }}
+                      className="text-[11px] text-muted-foreground underline hover:text-foreground"
+                    >
+                      Clear (everywhere)
+                    </button>
+                  )}
                 </div>
-              )}
+
+                {/* Ana sayfa AYRI bir hedef. Once "hedefi olmayan reklam
+                    ana sayfada cikar" kuralı vardi; ana sayfaya reklam
+                    koymanin ya da oradan almanin tek yolu butun
+                    hedefleri silmekti, o da reklami her yere aciyordu. */}
+                <div className="mt-3">
+                  <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">
+                    Home page
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setHedefAna(!hedefAna)}
+                    className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-mono border transition ${
+                      hedefAna
+                        ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/40"
+                        : "bg-background text-muted-foreground border-border hover:border-primary hover:text-primary"
+                    }`}
+                  >
+                    {hedefAna && <Check className="size-3 shrink-0" />}
+                    home
+                  </button>
+                </div>
+
+                {(["category", "tag"] as const).map((tur) => {
+                  const secenekler = tur === "category" ? kategoriler : etiketler;
+                  const secili = tur === "category" ? hedefKategori : hedefEtiket;
+                  const ayarla = tur === "category" ? setHedefKategori : setHedefEtiket;
+                  if (!secenekler.length) return null;
+                  return (
+                    <div key={tur} className="mt-3">
+                      <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">
+                        {tur === "category" ? "Categories" : "Topics"}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {secenekler.map((slug) => {
+                          const acik = secili.includes(slug);
+                          return (
+                            <button
+                              key={slug}
+                              type="button"
+                              onClick={() =>
+                                ayarla(acik ? secili.filter((x) => x !== slug) : [...secili, slug])
+                              }
+                              className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-mono border transition ${
+                                acik
+                                  ? tur === "tag"
+                                    ? "bg-amber-500/15 text-amber-700 border-amber-500/40"
+                                    : "bg-sky-500/15 text-sky-700 border-sky-500/40"
+                                  : "bg-background text-muted-foreground border-border hover:border-primary hover:text-primary"
+                              }`}
+                            >
+                              {acik && <Check className="size-3 shrink-0" />}
+                              {slug}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <p className="mt-3 text-[11px] text-muted-foreground">
+                  {hedefKategori.length || hedefEtiket.length || hedefAna ? (
+                    <>
+                      Runs on {hedefKategori.length + hedefEtiket.length + (hedefAna ? 1 : 0)} place
+                      {hedefKategori.length + hedefEtiket.length + (hedefAna ? 1 : 0) === 1 ? "" : "s"}. A page
+                      carries four slots, so a topic holds at most four campaigns with
+                      overlapping dates.
+                    </>
+                  ) : (
+                    <>
+                      No topic selected — the campaign runs <strong>everywhere</strong>,
+                      including the home page, and steps aside wherever a topic-specific
+                      campaign exists.
+                    </>
+                  )}
+                </p>
+              </div>
 
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div>

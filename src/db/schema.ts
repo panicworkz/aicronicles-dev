@@ -277,6 +277,10 @@ export const ads = pgTable('ads', {
   endsAt: timestamp('ends_at'),
   impressions: integer('impressions').default(0).notNull(),
   clicks: integer('clicks').default(0).notNull(),
+  /** Reklam ANA SAYFADA cikar mi.
+      Once "hedefi olmayan reklam ana sayfada cikar" kuralı vardi;
+      ana sayfayi CMS'ten yonetmenin yolu yoktu. */
+  targetHome: boolean('target_home').notNull().default(false),
   /** Bos dizi = her kategoride/etikette cikabilir */
   targetCategories: text('target_categories').array().default([]),
   targetTags: text('target_tags').array().default([]),
