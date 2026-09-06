@@ -57,8 +57,27 @@ export async function POST(request: NextRequest) {
 
   const ad = String(govde.name ?? "").trim().slice(0, 120);
   const eposta = String(govde.email ?? "").trim().toLowerCase().slice(0, 200);
-  const konu = String(govde.subject ?? "").trim().slice(0, 200);
   const mesaj = String(govde.message ?? "").trim().slice(0, 5000);
+  const kurum = String(govde.organization ?? "").trim().slice(0, 160);
+  const telefon = String(govde.phone ?? "").trim().slice(0, 40);
+  const sekmeEtiketi = String(govde.topic_label ?? "").trim().slice(0, 80);
+  const sekme = String(govde.topic ?? "").trim().slice(0, 40);
+
+  /* Sekmeye ozel alanlar. Gateway'in tablosu sabit bir alan listesi
+     bekliyor (field_rows), bizim sekmelerimiz ise sayfaya gore
+     degisiyor — o yuzden onlari mesaja BASLIKLARIYLA yaziyoruz.
+     Boylece gateway'e dokunmadan her sekme okunur bir e-posta
+     uretiyor. */
+  const ekler =
+    govde.fields && typeof govde.fields === "object"
+      ? Object.entries(govde.fields as Record<string, unknown>)
+          .map(([k, v]) => [String(k).slice(0, 80), String(v).trim().slice(0, 500)] as const)
+          .filter(([, v]) => v)
+      : [];
+
+  const konu = sekmeEtiketi
+    ? `${sekmeEtiketi} — fabelo.io`
+    : String(govde.subject ?? "").trim().slice(0, 200);
 
   if (!ad || !eposta || !mesaj) {
     return NextResponse.json(
@@ -100,9 +119,16 @@ export async function POST(request: NextRequest) {
         name: ad,
         email: eposta,
         subject: konu || "Message from fabelo.io",
-        message: mesaj,
-        form_name: "Fabelo — Contact",
+        message:
+          ekler.length
+            ? `${ekler.map(([k, v]) => `${k}: ${v}`).join("\n")}\n\n${mesaj}`
+            : mesaj,
+        form_name: `Fabelo — Contact${sekmeEtiketi ? ` (${sekmeEtiketi})` : ""}`,
         source_url: String(govde.source_url ?? `${SITE}/contact`).slice(0, 300),
+        // Gateway bunlari kendi tablosunda gosteriyor (field_rows).
+        ...(kurum ? { company: kurum } : {}),
+        ...(telefon ? { phone: telefon } : {}),
+        ...(sekme ? { project_type: sekmeEtiketi || sekme } : {}),
         lang: "en",
       }),
       signal: kontrol.signal,

@@ -4,6 +4,7 @@ import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
 import { SITE, kirintiSemasi } from "@/lib/seo";
 import ContactForm from "./ContactForm";
+import { sekmeBul } from "./sekmeler";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,18 @@ export const metadata: Metadata = {
  * durunca toplayici botlarin isine yariyor ve okuru posta programini
  * acmaya zorluyordu. Hepsi buraya yonlendirildi.
  */
-export default function ContactPage() {
+interface PageProps {
+  searchParams: Promise<{ type?: string }>;
+}
+
+export default async function ContactPage({ searchParams }: PageProps) {
+  /* Sekme SUNUCUDA seciliyor. Once istemcide useEffect ile okunuyordu:
+     sunucudan gelen HTML her zaman ilk sekmeyi tasiyor, dogru sekme
+     ancak hidrasyondan sonra aciliyordu — bir anlik yanlis sekme ve
+     JS calismayan istemcide hep "general". Adres zaten sayfanin bir
+     parcasi, sunucunun bilmemesi icin bir sebep yok. */
+  const { type } = await searchParams;
+  const acilis = sekmeBul(type).anahtar;
   return (
     <div className="mag min-h-screen">
       <script
@@ -65,7 +77,7 @@ export default function ContactPage() {
         </header>
 
         <section className="mag-wrap py-12">
-          <ContactForm />
+          <ContactForm acilis={acilis} />
         </section>
 
         <div className="h-20 sm:h-28" />
