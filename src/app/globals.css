@@ -277,12 +277,32 @@ html.dark:has(.mag)::-webkit-scrollbar-thumb:hover { background: #7d848d; }
     border-color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 1) Liste baglantilari — kunye sutunlari, icindekiler rayi, iletisim
-      sekmeleri, ana sayfadaki konu dizini. Hepsi <li> icinde. */
-.mag li > a:hover,
-.mag li > button:hover {
+/* 1) Liste baglantilari — meet.istanbul UC AYRI mesafe kullaniyor,
+      hepsi ayni degil. Once hepsine 4px vermistim; oradaki olculer:
+
+        .colophon-links a   renk, KAYMA YOK
+        .network-links a    renk + translateX(3px)
+        .dir-list a         renk + translateX(4px), rozeti de renk degistirir
+
+      Fabelo'daki karsiliklari sirasiyla kunye sutunlari (SECTIONS,
+      MASTHEAD), PanicWorkz ag bolumu, ve dizin benzeri listeler
+      (icindekiler rayi, iletisim sekmeleri, ana sayfadaki konu dizini). */
+
+/* Dizin listeleri — 4px */
+.mag aside nav ol li a:hover,
+.mag aside nav ol li button:hover,
+.mag main li > a.group:hover {
   transform: translateX(4px);
 }
+
+/* PanicWorkz ag bolumu — 3px */
+.mag footer section li > a:hover {
+  transform: translateX(3px);
+}
+
+/* Kunye sutunlari — yalnizca renk, kayma yok.
+   (footer'in dogrudan listeleri; ag bolumu <section> icinde kaldigi
+   icin ustteki kural onu ayirıyor.) */
 
 /* 2) Kartlar. PostCard ve kardeslerinin koku <article class="group">. */
 .mag article.group {
