@@ -40,9 +40,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!post) {
     const page = await db.query.pages.findFirst({ where: eq(schema.pages.slug, slug) });
     if (!page) return { title: "Not Found | Fabelo" };
+    /* Sabit sayfalarin da kanonik adresi olmali. Yazilar ve liste
+       sayfalari alirken /about, /advertise ve otekiler bossa kaliyordu;
+       izleme parametreli her adres ayri bir sayfa sayilirdi. */
+    const sayfaAciklamasi = page.metaDescription || "Fabelo publication page.";
+    const sayfaAdresi = `${SITE}/${page.slug}`;
     return {
       title: `${page.metaTitle || page.title} | Fabelo`,
-      description: page.metaDescription || "Fabelo publication page.",
+      description: sayfaAciklamasi,
+      alternates: { canonical: sayfaAdresi },
+      openGraph: {
+        type: "website",
+        url: sayfaAdresi,
+        title: page.title,
+        description: sayfaAciklamasi,
+      },
     };
   }
 
