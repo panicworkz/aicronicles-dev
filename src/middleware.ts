@@ -22,6 +22,14 @@ function isPublicApiRequest(pathname: string, method: string): boolean {
     return true;
   }
 
+  /* Reklam secimi. Her yayin sayfasindaki reklam alani bunu cagiriyor,
+     yani oturum isteyemez. Yalnizca OKUYOR: yayinda olan reklamlardan
+     birini secip kimligini, afisini ve hedefini donuyor — CMS'te zaten
+     herkese acik olarak basilan bilgiler. */
+  if (method === 'GET' && pathname === '/api/ads/pick') {
+    return true;
+  }
+
   // Newsletter sign-up — the form is on every public page, so this POST
   // cannot require a session. The route itself carries the honeypot,
   // e-mail validation and per-IP rate limit.

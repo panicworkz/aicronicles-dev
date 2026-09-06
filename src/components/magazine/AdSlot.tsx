@@ -1,11 +1,15 @@
 import React from "react";
-import Link from "next/link";
-import { alaniDoldur, type Baglam } from "@/lib/ads";
-import { gomulecekSvg } from "@/lib/inlineSvg";
-import AdTracker from "./AdTracker";
+import type { Baglam } from "@/lib/ads";
+import AdBoard from "./AdBoard";
 
 /**
- * Reklam alanlari — yalnizca sunucuda.
+ * Reklam alanlari.
+ *
+ * Bu dosya artik yalnizca OLCUYU biliyor; secimi ve afisi AdBoard
+ * istemcide yapiyor. Onceden afis burada seciliyor ve SVG'si sayfaya
+ * gomuluyordu — ana sayfanin HTML'inin yuzde 39'u reklamdi ve sayfayi
+ * onbellege almak reklam donusunu de dondururdu. Gerekcesi AdBoard'un
+ * basinda yazili.
  *
  * PostCard'in icindeyken sorun cikariyordu: arama ekrani (istemci
  * bileseni) PostCard'i iceri aliyor ve reklam kodu veritabanina
@@ -40,30 +44,14 @@ const AD_SPECS: Record<AdFormat, { w: number; h: number; note: string }> = {
   rail: { w: 387, h: 540, note: "RAIL 387 × 540" },
 };
 
-/**
- * Reklam alani.
- *
- * Yayini kendisi cekiyor: alan adini (`size`) yerlesim adi olarak kabul
- * edip CMS'te o yerlesime tanimli, tarihi gecerli ve aktif reklamlardan
- * birini basiyor. Boylece sayfalarda cagri sekli degismiyor —
- * <AdSlot size="billboard" /> yeterli.
- *
- * `creative` elle verilirse o oncelikli; ozel bir yerlesim gerektiginde
- * kullanilabilir. Hicbir reklam yoksa olculeri belli, editoryel dile
- * uygun bir yer tutucu gosteriliyor.
- */
-export async function AdSlot({
+export function AdSlot({
   format = "feature",
   label = "Advertisement",
-  creative,
-  href,
   placement,
   baglam,
 }: {
   format?: AdFormat;
   label?: string;
-  creative?: { imageUrl?: string | null; alt?: string | null } | null;
-  href?: string | null;
   /** CMS yerlesim adi — verilmezse `format` kullanilir */
   placement?: string;
   /** Sayfanin konusu; hedeflenmis reklamlar buna gore seciliyor ve
@@ -71,100 +59,18 @@ export async function AdSlot({
   baglam?: Baglam;
 }) {
   const spec = AD_SPECS[format];
-
-  // Elle verilmediyse CMS'ten al
-  const cmsReklami = creative?.imageUrl ? null : await alaniDoldur(placement ?? format, baglam);
-
-  const gorsel = creative?.imageUrl
-    ? { imageUrl: creative.imageUrl, alt: creative.alt ?? null }
-    : cmsReklami
-      ? { imageUrl: cmsReklami.imageUrl, alt: cmsReklami.alt }
-      : null;
-  const hedef = href ?? cmsReklami?.targetUrl ?? null;
-
-  /* Alanda yayinda reklam yoksa — hic tanimlanmamis ya da takvimi dolmus —
-     gri bir yer tutucu yerine kendi davetimiz giriyor. Yer tutucu hicbir
-     sey kazandirmiyordu; bu afis ziyaretciyi /advertise sayfasina
-     gonderiyor, yani bos alan satis yapiyor. */
-  const evReklami = !gorsel;
-  const adres = gorsel ? gorsel.imageUrl : `/media/house-${format}.svg`;
-  const altMetin = gorsel
-    ? gorsel.alt || label
-    : "This space is available — advertise on Fabelo";
-
-  /* Afisi sayfaya GOMUYORUZ, <img> ile basmiyoruz.
-     Bir <img> icindeki SVG'de bilesik katman yoktur: tarayici her karede
-     goruntunun tamamini islemcide yeniden tarar. Gomulu SVG'de
-     transform/opacity animasyonlari GPU'ya gidiyor. Dosya okunamazsa
-     <img>'e duserek calismaya devam ediyoruz. */
-  const gomulu = await gomulecekSvg(adres);
-
-  const body = gomulu ? (
-    <div
-      role="img"
-      aria-label={altMetin}
-      className="ad-svg size-full"
-      dangerouslySetInnerHTML={{ __html: gomulu }}
-    />
-  ) : (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={adres} alt={altMetin} className="size-full object-cover" />
-  );
-
   return (
-    /* Alan, ilanin GERCEK olcusunde. Once w-full idi: 1440px'lik bir
-       cerceve icinde 970px'lik afis duruyordu ve iki yanda 235'er piksel
-       bos krem kaliyordu — ucuz bir kutu gibi gorunuyordu. Artik cerceve
-       ilanin kendi genisligini asmiyor, dar ekranda oranini koruyarak
-       kuculuyor. */
-    <aside className="w-full" aria-label={label}>
-      <div className="mb-1.5 flex items-center gap-2">
-        <span className="folio" style={{ color: "var(--ink-3)" }}>
-          {evReklami ? "AVAILABLE SPACE" : "ADVERTISEMENT"}
-        </span>
-        <span className="flex-1 rule" />
-      </div>
-      <div
-        className="grid w-full place-items-center overflow-hidden"
-        style={{
-          background: "var(--paper-2)",
-          border: "1px solid var(--rule)",
-          aspectRatio: `${spec.w} / ${spec.h}`,
-          /* Ekran disindaki reklam hic islenmesin.
-             Afisler animasyonlu SVG; bir <img> icindeki SVG her karede
-             yeniden taranir ve bu sayfa disina ciktiginda da surer.
-             content-visibility sayesinde tarayici gorunmeyen alani
-             tamamen atliyor: dort reklam alani olsa da yalnizca ekranda
-             olan islemci harciyor.
-             contain-intrinsic-size tam olcuyu veriyor, boylece kaydirma
-             sirasinda sayfa ziplamiyor. */
-          contentVisibility: "auto",
-          containIntrinsicSize: `${spec.w}px ${spec.h}px`,
-        }}
-      >
-        {cmsReklami && hedef ? (
-          // CMS reklami: gosterim ve tiklama sayiliyor
-          <AdTracker
-            id={cmsReklami.id}
-            href={hedef}
-            baglam={baglam}
-            className="grid size-full place-items-center"
-          >
-            {body}
-          </AdTracker>
-        ) : hedef && gorsel ? (
-          <a href={hedef} target="_blank" rel="noopener noreferrer sponsored" className="grid size-full place-items-center">
-            {body}
-          </a>
-        ) : evReklami ? (
-          /* Kendi sayfamiz: yeni sekme yok, sayac yok */
-          <Link href="/advertise" className="grid size-full place-items-center">
-            {body}
-          </Link>
-        ) : (
-          body
-        )}
-      </div>
-    </aside>
+    <AdBoard
+      placement={placement ?? format}
+      baglam={baglam}
+      label={label}
+      /* Alanda yayinda reklam yoksa — hic tanimlanmamis ya da takvimi
+         dolmus — gri bir yer tutucu yerine kendi davetimiz giriyor.
+         Yer tutucu hicbir sey kazandirmiyordu; bu afis ziyaretciyi
+         /advertise sayfasina gonderiyor, yani bos alan satis yapiyor. */
+      yedekAfis={`/media/house-${format}.svg`}
+      en={spec.w}
+      boy={spec.h}
+    />
   );
 }
