@@ -35,6 +35,11 @@ export const YAYINCI = {
   url: SITE,
 } as const;
 
+/** Yayinin adi ve tanimi — besleme ve sema ayni cumleyi kullansin. */
+export const SITE_ADI = "Fabelo";
+export const SITE_TANIMI =
+  "Personal finance tips, career strategies, and AI tool reviews for ambitious professionals.";
+
 /** Listede bir yaziyi anlatmaya yeten en az sey. Sayfalarin kendi kart
     tipleri (CardPost) bunun ustune oturuyor. */
 /**
