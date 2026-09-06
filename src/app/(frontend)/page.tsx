@@ -16,13 +16,33 @@ import {
   type CardPost,
 } from "@/components/magazine/PostCard";
 import { AdSlot } from "@/components/magazine/AdSlot";
+import { SITE, SITE_ADI, yayinSemasi } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
+const ANA_ACIKLAMA =
+  "An independent desk for money, career and AI. Field-tested frameworks and honest reviews for ambitious professionals.";
+
 export const metadata: Metadata = {
   title: "Fabelo | Personal Finance, Career & AI Tools for Professionals",
-  description:
-    "An independent desk for money, career and AI. Field-tested frameworks and honest reviews for ambitious professionals.",
+  description: ANA_ACIKLAMA,
+  /* Ana sayfanin kanonik adresi yoktu — geri kalan her sayfa tipinde
+     vardi. Ana sayfaya en cok parametreli adresle gelinir (kampanya
+     etiketleri, yonlendirme izleri); kanonik adres olmadan bunlarin
+     her biri arama motoruna ayri bir ana sayfa gorunur. */
+  alternates: { canonical: `${SITE}/` },
+  openGraph: {
+    type: "website",
+    url: `${SITE}/`,
+    siteName: SITE_ADI,
+    title: "Fabelo | Personal Finance, Career & AI Tools for Professionals",
+    description: ANA_ACIKLAMA,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Fabelo",
+    description: ANA_ACIKLAMA,
+  },
 };
 
 /** Bolum basligi — basili dergi bolum isareti */
@@ -114,6 +134,14 @@ export default async function HomePage() {
 
   return (
     <div className="mag min-h-screen">
+      {/* Yayinin kimligi. Ic sayfalar isPartOf ile bir WebSite'a isaret
+          ediyordu ama o WebSite hicbir yerde tanimli degildi — tanimi
+          burada. Bkz. yazi sayfasi: icerik bizim urettigimiz nesneden
+          geliyor. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(yayinSemasi()) }}
+      />
       <MagazineHeader />
 
       <main>

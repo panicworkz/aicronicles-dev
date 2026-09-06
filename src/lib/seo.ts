@@ -43,6 +43,47 @@ export const SITE_TANIMI =
 /** Listede bir yaziyi anlatmaya yeten en az sey. Sayfalarin kendi kart
     tipleri (CardPost) bunun ustune oturuyor. */
 /**
+ * Ana sayfanin kimligi — WebSite ve Organization.
+ *
+ * Butun ic sayfalar isPartOf ile bir WebSite'a isaret ediyordu ama o
+ * WebSite'in kendisi hicbir yerde TANIMLI degildi; ana sayfa ne kanonik
+ * adres ne de yapilandirilmis veri basiyordu. Yayinin adini, adresini ve
+ * isaretini soyleyen tek yer burasi olmali.
+ *
+ * Iki nesne tek @graph icinde: WebSite'in yayincisi Organization ve
+ * ayni kimlige (@id) iki kez isaret ediliyor, yani iki ayri varlik degil
+ * birbirine bagli iki tanim.
+ */
+export function yayinSemasi() {
+  const kurumId = `${SITE}/#kurum`;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${SITE}/#site`,
+        url: `${SITE}/`,
+        name: SITE_ADI,
+        description: SITE_TANIMI,
+        publisher: { "@id": kurumId },
+        inLanguage: "en",
+      },
+      {
+        "@type": "Organization",
+        "@id": kurumId,
+        name: SITE_ADI,
+        url: `${SITE}/`,
+        description: SITE_TANIMI,
+        logo: {
+          "@type": "ImageObject",
+          url: `${SITE}/images/fabelo-logo.png`,
+        },
+      },
+    ],
+  };
+}
+
+/**
  * Kirinti yolu — BreadcrumbList.
  *
  * Arama sonucunda adres satirini degistirir:
