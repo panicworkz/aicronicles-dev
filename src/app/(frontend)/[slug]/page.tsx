@@ -19,7 +19,7 @@ import { decodeEntities, tagLabel } from "@/lib/taxonomy";
 import { enrichArticleHtml, type MediaBoyut } from "@/components/magazine/enrichArticleHtml";
 import CmsPage from "@/components/magazine/CmsPage";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
-import { SITE, kirintiSemasi } from "@/lib/seo";
+import { SITE, markali, kirintiSemasi } from "@/lib/seo";
 import { sssCikar, sssSemasi } from "@/lib/faq";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const sayfaAciklamasi = page.metaDescription || "Fabelo publication page.";
     const sayfaAdresi = `${SITE}/${page.slug}`;
     return {
-      title: `${page.metaTitle || page.title} | Fabelo`,
+      title: markali(page.metaTitle || page.title),
       description: sayfaAciklamasi,
       alternates: { canonical: sayfaAdresi },
       openGraph: {
@@ -67,7 +67,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
-    title: `${post.metaTitle || post.title} | Fabelo`,
+    title: markali(post.metaTitle || post.title),
     description: post.metaDescription || post.excerpt || undefined,
     /* canonical: ayni yaziya farkli adreslerden gelinebiliyor (izleme
        parametreleri, eski yollar). Kanonik adres olmadan arama motoru

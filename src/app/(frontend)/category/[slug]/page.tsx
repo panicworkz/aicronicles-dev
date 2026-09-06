@@ -8,7 +8,7 @@ import MagazineFooter from "@/components/magazine/MagazineFooter";
 import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magazine/PostCard";
 import { AdSlot } from "@/components/magazine/AdSlot";
 import { SECTIONS, decodeEntities } from "@/lib/taxonomy";
-import { SITE, mutlak, koleksiyonSemasi, kirintiSemasi } from "@/lib/seo";
+import { SITE, mutlak, markali, koleksiyonSemasi, kirintiSemasi } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   });
   const gorsel = mutlak((enYeni as any)?.featuredImageUrl) || `${SITE}/images/fabelo-logo.png`;
   return {
-    title: `${category.name} | Fabelo`,
+    title: markali(category.name),
     description: aciklama,
     /* canonical: ayni listeye izleme parametreleriyle ve sayfa
        numarasiyla gelinebiliyor (?page=1). Kanonik adres olmadan

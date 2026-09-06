@@ -395,10 +395,16 @@ html {
   html { scroll-behavior: auto; }
 }
 
-/* Hedef, yapiskan kunyenin tam altina otursun. Yukseklik sabit yazilmaz;
-   kunye kendi olcusunu --mag-header-h degiskenine yaziyor. */
+/* Hedef, yapiskan kunyenin altina NEFES PAYIYLA otursun. Yukseklik sabit
+   yazilmaz; kunye kendi olcusunu --mag-header-h degiskenine yaziyor.
+
+   Once yalnizca kunye yuksekligi dusuluyordu ve baslik kunyenin alt
+   kenarina yapisiyordu: "Audience Snapshot" cizginin dibinde bitiyor,
+   bolumun nerede basladigi gorunmuyordu. 2rem, yandaki yapiskan rayin
+   kendi ust payiyla ayni deger — icindekiler baglantisi ile gittigi
+   basligin ustu ayni cizgiye oturuyor. */
 .mag [id] {
-  scroll-margin-top: var(--mag-header-h, 145px); /* 36 + 72 + 34 + 3px cizgi */
+  scroll-margin-top: calc(var(--mag-header-h, 145px) + 2rem);
 }
 
 /* Footer'daki abonelik sutunu bir istisna: kendi tepesine hizalanirsa kunye

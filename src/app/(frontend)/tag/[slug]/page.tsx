@@ -9,7 +9,7 @@ import MagazineFooter from "@/components/magazine/MagazineFooter";
 import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magazine/PostCard";
 import { AdSlot } from "@/components/magazine/AdSlot";
 import { FABELO_TAGS, tagLabel } from "@/lib/taxonomy";
-import { SITE, mutlak, koleksiyonSemasi, kirintiSemasi } from "@/lib/seo";
+import { SITE, mutlak, markali, koleksiyonSemasi, kirintiSemasi } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     `${etiket} on Fabelo — ${sayi} ${sayi === 1 ? "story" : "stories"} on money, ` +
     `career and AI: field-tested frameworks and honest reviews for ambitious professionals.`;
   return {
-    title: `${tagLabel(slug)} | Fabelo`,
+    title: markali(tagLabel(slug)),
     description: aciklama,
     // Bkz. kategori sayfasi: parametreli adresler ayri sayfa sayilmasin.
     alternates: { canonical: adres },

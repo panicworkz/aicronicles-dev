@@ -1,22 +1,29 @@
 "use client";
 
 import React, { useId, useRef, useState } from "react";
-import { SEKMELER, sekmeBul, type Alan } from "./sekmeler";
+import { SEKMELER, sekmeBul, type Alan, type Sekme } from "./sekmeler";
 
 type Durum = "bos" | "gonderiliyor" | "tamam" | "hata";
 
 /**
- * Sekmeli iletisim formu.
+ * Sekmeli iletisim formu — derginin kendi dilinde.
  *
- * Her sekme sitedeki bir sabit sayfanin karsiligi (bkz. sekmeler.ts) ve
- * o sayfadan gelen okur dogru sekme acilmis buluyor: /advertise
- * sayfasindaki baglanti /contact?type=advertising diyor. Adresteki
- * deger taninmazsa ilk sekmeye dusuyor — bozuk bir baglanti bos bir
- * form gostermemeli.
+ * ILK HALI YANLISTI: sekmeler yatay bir serit, alanlar sayfanin sol
+ * yarisinda yuzen kutulardi; sagda genis bir bosluk kaliyordu ve hicbir
+ * yeri sitenin geri kalanina benzemiyordu.
  *
- * Sekme degisince ortak alanlar (ad, kurum, e-posta, telefon) KORUNUYOR;
- * yalnizca konuya ozel alanlar degisiyor. Yanlis sekmeyi acan biri
- * yazdiklarini kaybetmesin diye.
+ * Simdi sayfanin kendi kalibi kullaniliyor — CmsPage'deki (/about,
+ * /advertise) duzen: solda 240px'lik yapiskan ray, sagda govde. Ray
+ * "§ CONTENTS" navigasyonunun aynisi, cunku sekmeler zaten bir
+ * icindekiler listesi. Alanlar da kart izgarasindaki saç teli
+ * tekniginde: kapsayici --rule renginde, hucreler --paper, aradaki
+ * 1px cizgi izgaranin kendisi.
+ *
+ * Her sekme sitedeki bir sabit sayfanin karsiligi (bkz. sekmeler.ts);
+ * o sayfadan gelen okur dogru sekmeyi acilmis buluyor.
+ *
+ * Sekme degisince ortak alanlar (ad, kurum, e-posta, telefon)
+ * KORUNUYOR; yalnizca konuya ozel alanlar degisiyor.
  */
 export default function ContactForm({ acilis }: { acilis: string }) {
   const [aktif, setAktif] = useState(acilis);
@@ -69,38 +76,40 @@ export default function ContactForm({ acilis }: { acilis: string }) {
     }
   }
 
-  const alanStil = { background: "var(--paper)", borderColor: "var(--rule)", color: "var(--ink)" };
-  const alanSinif =
-    "w-full rounded-[2px] border px-3 py-2.5 text-[0.95rem] outline-none transition " +
-    "focus:border-[var(--accent-ink)]";
+  /* Alanin kendisi cercevesiz: cerceveyi izgaranin 1px'lik araligi
+     zaten ciziyor. Ust uste iki cizgi kalin ve amator duruyordu. */
+  const girdi =
+    "w-full bg-transparent text-[1rem] leading-normal outline-none " +
+    "placeholder:text-[var(--ink-3)]";
 
-  if (durum === "tamam") {
-    return (
-      <div className="rule-heavy pt-6">
-        <p className="display mb-2 text-2xl">Thank you — your message is on its way.</p>
-        <p style={{ color: "var(--ink-2)" }}>
-          It reached the desk under “{sekme.baslik}”. We read everything and reply
-          to what needs a reply, usually within two business days.
-        </p>
-      </div>
-    );
-  }
+  /** Bir form hucresi — kart izgarasindaki hucrenin aynisi. */
+  const Hucre = ({
+    etiket,
+    zorunlu,
+    children,
+    genis,
+  }: {
+    etiket: string;
+    zorunlu?: boolean;
+    children: React.ReactNode;
+    genis?: boolean;
+  }) => (
+    <div
+      className={`flex flex-col gap-2 p-6 ${genis ? "sm:col-span-2" : ""}`}
+      style={{ background: "var(--paper)" }}
+    >
+      <span className="byline">
+        {etiket.toUpperCase()}
+        {zorunlu && <span style={{ color: "var(--accent-ink)" }}> *</span>}
+      </span>
+      {children}
+    </div>
+  );
 
   const alanCiz = (a: Alan) => (
-    <div key={a.ad}>
-      <label htmlFor={a.ad} className="byline mb-1.5 block">
-        {a.etiket.toUpperCase()}
-        {a.zorunlu && <span style={{ color: "var(--accent-ink)" }}> *</span>}
-      </label>
+    <Hucre key={a.ad} etiket={a.etiket} zorunlu={a.zorunlu} genis={a.tur === "secim" && a.secenekler.some((s) => s.length > 34)}>
       {a.tur === "secim" ? (
-        <select
-          id={a.ad}
-          name={a.ad}
-          required={a.zorunlu}
-          defaultValue=""
-          className={alanSinif}
-          style={alanStil}
-        >
+        <select id={a.ad} name={a.ad} required={a.zorunlu} defaultValue="" className={girdi}>
           <option value="" disabled>
             Choose one…
           </option>
@@ -117,123 +126,155 @@ export default function ContactForm({ acilis }: { acilis: string }) {
           required={a.zorunlu}
           maxLength={300}
           placeholder={a.ipucu}
-          className={alanSinif}
-          style={alanStil}
+          className={girdi}
         />
       )}
-    </div>
+    </Hucre>
   );
 
-  return (
-    <div>
-      {/* --- Sekmeler --- */}
-      <div className="rule-heavy mb-8 flex flex-wrap gap-x-6 gap-y-2 pb-3">
-        {SEKMELER.map((s) => {
-          const acik = s.anahtar === aktif;
-          return (
-            <button
-              key={s.anahtar}
-              type="button"
-              onClick={() => setAktif(s.anahtar)}
-              aria-current={acik ? "true" : undefined}
-              className="byline pb-1 text-left transition"
-              style={{
-                color: acik ? "var(--ink)" : "var(--ink-3)",
-                borderBottom: acik ? "2px solid var(--accent-ink)" : "2px solid transparent",
-              }}
-            >
-              <span style={{ color: "var(--ink-3)" }}>{s.no}</span> {s.baslik.toUpperCase()}
-            </button>
-          );
-        })}
-      </div>
-
-      <p className="mb-8 max-w-[56ch] text-[1.02rem] leading-relaxed" style={{ color: "var(--ink-2)" }}>
-        {sekme.ozet}
-      </p>
-
-      <form ref={formRef} onSubmit={gonder} className="max-w-[62ch] space-y-8">
-        {/* --- 01: kim --- */}
-        <fieldset className="space-y-4">
-          <legend className="folio mb-3">§ WHO YOU ARE</legend>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="name" className="byline mb-1.5 block">
-                NAME<span style={{ color: "var(--accent-ink)" }}> *</span>
-              </label>
-              <input id="name" name="name" required maxLength={120} className={alanSinif} style={alanStil} />
-            </div>
-            <div>
-              <label htmlFor="organization" className="byline mb-1.5 block">
-                COMPANY / ORGANISATION
-              </label>
-              <input id="organization" name="organization" maxLength={160} className={alanSinif} style={alanStil} />
-            </div>
-            <div>
-              <label htmlFor="email" className="byline mb-1.5 block">
-                EMAIL<span style={{ color: "var(--accent-ink)" }}> *</span>
-              </label>
-              <input id="email" name="email" type="email" required maxLength={200} className={alanSinif} style={alanStil} />
-            </div>
-            <div>
-              <label htmlFor="phone" className="byline mb-1.5 block">
-                PHONE
-              </label>
-              <input id="phone" name="phone" maxLength={40} className={alanSinif} style={alanStil} />
-            </div>
-          </div>
-        </fieldset>
-
-        {/* --- 02: konuya ozel --- */}
-        <fieldset className="space-y-4">
-          <legend className="folio mb-3">§ {sekme.baslik.toUpperCase()}</legend>
-          <div className="grid gap-4 sm:grid-cols-2">{sekme.alanlar.map(alanCiz)}</div>
-        </fieldset>
-
-        {/* --- 03: mesaj --- */}
-        <fieldset>
-          <legend className="folio mb-3">§ YOUR MESSAGE</legend>
-          <label htmlFor="message" className="byline mb-1.5 block">
-            {sekme.mesajEtiketi.toUpperCase()}
-            <span style={{ color: "var(--accent-ink)" }}> *</span>
-          </label>
-          <textarea
-            id="message"
-            name="message"
-            required
-            rows={7}
-            maxLength={5000}
-            className={alanSinif}
-            style={alanStil}
-          />
-        </fieldset>
-
-        {/* Tuzak — insan gormez, ekran okuyucu da okumaz. */}
-        <div aria-hidden="true" style={{ position: "absolute", left: "-9999px" }}>
-          <label htmlFor={tuzakId}>Website</label>
-          <input id={tuzakId} name="website_url" tabIndex={-1} autoComplete="off" />
-        </div>
-
-        {durum === "hata" && (
-          <p className="text-[0.9rem]" style={{ color: "var(--accent-ink)" }}>
-            {hata}
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-center gap-4">
-          <button
-            type="submit"
-            disabled={durum === "gonderiliyor"}
-            className="byline px-5 py-2.5 transition disabled:opacity-60"
-            style={{ background: "var(--ink)", color: "var(--paper)" }}
-          >
-            {durum === "gonderiliyor" ? "SENDING…" : "SEND MESSAGE →"}
-          </button>
-          <span className="byline" style={{ color: "var(--ink-3)" }}>
-            WE REPLY WITHIN TWO BUSINESS DAYS
+  const RayOgesi = ({ s }: { s: Sekme }) => {
+    const acik = s.anahtar === aktif;
+    return (
+      <li style={{ borderTop: "1px solid var(--rule)" }}>
+        <button
+          type="button"
+          onClick={() => setAktif(s.anahtar)}
+          aria-current={acik ? "true" : undefined}
+          className="flex w-full gap-3 py-2.5 text-left text-[0.88rem] leading-snug transition-colors hover:text-[var(--accent-ink)]"
+          style={{ color: acik ? "var(--ink)" : undefined }}
+        >
+          <span className="folio shrink-0" style={{ color: acik ? "var(--accent)" : "var(--ink-3)" }}>
+            {s.no}
           </span>
+          <span style={{ fontWeight: acik ? 600 : 400 }}>{s.baslik}</span>
+        </button>
+      </li>
+    );
+  };
+
+  return (
+    <div className="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-x-12">
+      {/* --- Ray: sekmeler --- */}
+      <aside className="mb-10 lg:mb-0">
+        <div style={{ position: "sticky", top: "calc(var(--mag-header-h, 145px) + 2rem)" }}>
+          <div className="folio mb-4" style={{ color: "var(--accent)" }}>
+            § WHAT IS IT ABOUT
+          </div>
+          <nav>
+            <ol className="flex flex-col">
+              {SEKMELER.map((s) => (
+                <RayOgesi key={s.anahtar} s={s} />
+              ))}
+            </ol>
+          </nav>
+          <p
+            className="mt-6 pt-4 text-[0.82rem] leading-relaxed"
+            style={{ borderTop: "1px solid var(--rule)", color: "var(--ink-3)" }}
+          >
+            We read everything and reply to what needs a reply, usually within two
+            business days.
+          </p>
         </div>
-      </form>
+      </aside>
+
+      {/* --- Govde --- */}
+      <div>
+        {durum === "tamam" ? (
+          <div style={{ borderTop: "2px solid var(--ink)" }} className="pt-6">
+            <div className="folio mb-3" style={{ color: "var(--accent)" }}>
+              § SENT
+            </div>
+            <h2 className="display mb-4 text-[clamp(1.8rem,3vw,2.6rem)]">
+              Thank you — your message is on its way.
+            </h2>
+            <p className="max-w-[62ch] text-[1.04rem] leading-[1.78]" style={{ color: "var(--ink-2)" }}>
+              It reached the desk under <em>{sekme.baslik}</em>. We read everything and
+              reply to what needs a reply, usually within two business days.
+            </p>
+          </div>
+        ) : (
+          <form ref={formRef} onSubmit={gonder}>
+            <h2 className="display mb-4 text-[clamp(1.6rem,2.4vw,2.15rem)]">{sekme.baslik}</h2>
+            <p
+              className="mb-10 max-w-[62ch] text-[1.04rem] leading-[1.78]"
+              style={{ color: "var(--ink-2)" }}
+            >
+              {sekme.ozet}
+            </p>
+
+            {/* Kim */}
+            <div className="folio mb-4" style={{ color: "var(--accent)" }}>
+              § 01 · WHO YOU ARE
+            </div>
+            <div className="grid gap-px sm:grid-cols-2" style={{ background: "var(--rule)" }}>
+              <Hucre etiket="Name" zorunlu>
+                <input id="name" name="name" required maxLength={120} className={girdi} />
+              </Hucre>
+              <Hucre etiket="Company / organisation">
+                <input id="organization" name="organization" maxLength={160} className={girdi} />
+              </Hucre>
+              <Hucre etiket="Email" zorunlu>
+                <input id="email" name="email" type="email" required maxLength={200} className={girdi} />
+              </Hucre>
+              <Hucre etiket="Phone">
+                <input id="phone" name="phone" maxLength={40} className={girdi} />
+              </Hucre>
+            </div>
+
+            {/* Konuya ozel */}
+            <div className="folio mb-4 mt-12" style={{ color: "var(--accent)" }}>
+              § 02 · {sekme.baslik.toUpperCase()}
+            </div>
+            <div className="grid gap-px sm:grid-cols-2" style={{ background: "var(--rule)" }}>
+              {sekme.alanlar.map(alanCiz)}
+            </div>
+
+            {/* Mesaj */}
+            <div className="folio mb-4 mt-12" style={{ color: "var(--accent)" }}>
+              § 03 · YOUR MESSAGE
+            </div>
+            <div className="grid gap-px" style={{ background: "var(--rule)" }}>
+              <Hucre etiket={sekme.mesajEtiketi} zorunlu>
+                <textarea
+                  id="message"
+                  name="message"
+                  required
+                  rows={8}
+                  maxLength={5000}
+                  className={`${girdi} resize-y`}
+                />
+              </Hucre>
+            </div>
+
+            {/* Tuzak — insan gormez, ekran okuyucu da okumaz. */}
+            <div aria-hidden="true" style={{ position: "absolute", left: "-9999px" }}>
+              <label htmlFor={tuzakId}>Website</label>
+              <input id={tuzakId} name="website_url" tabIndex={-1} autoComplete="off" />
+            </div>
+
+            {durum === "hata" && (
+              <p className="mt-6 text-[0.95rem]" style={{ color: "var(--accent-ink)" }}>
+                {hata}
+              </p>
+            )}
+
+            <div
+              className="mt-10 flex flex-wrap items-center justify-between gap-4 pt-5"
+              style={{ borderTop: "2px solid var(--ink)" }}
+            >
+              <button
+                type="submit"
+                disabled={durum === "gonderiliyor"}
+                className="byline px-6 py-3 transition disabled:opacity-60"
+                style={{ background: "var(--ink)", color: "var(--paper)" }}
+              >
+                {durum === "gonderiliyor" ? "SENDING…" : "SEND MESSAGE →"}
+              </button>
+              <span className="byline">NO ADDRESS TO COPY · EVERY MESSAGE ARRIVES HERE</span>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

@@ -21,6 +21,25 @@ export const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://fabelo.testwor
  */
 export const SITE_DOMAIN = SITE.replace(/^https?:\/\//, "");
 
+/**
+ * Sekme basligina marka adini ekler — zaten varsa eklemez.
+ *
+ * Bes sabit sayfanin meta_title'i editorde "About Us | Fabelo",
+ * kirk yedi yazininki "... - Fabelo" diye yazilmis. Kod bir "| Fabelo"
+ * daha ekleyince sekmede "About Us | Fabelo | Fabelo" cikiyordu.
+ * Ayrac boru da olabiliyor tire de; ilk denememde yalnizca boruyu
+ * aramistim ve butun yazi sayfalari cift markali kalmisti.
+ *
+ * Basligin KENDISI zaten yalnizca markaysa da eklemiyoruz:
+ * /author/fabelo sayfasinda yazarin adi Fabelo ve "Fabelo | Fabelo"
+ * cikiyordu.
+ */
+export function markali(baslik: string): string {
+  const t = baslik.trim();
+  if (/^fabelo$/i.test(t)) return t;
+  return /[|\-–—:·]\s*fabelo\s*$/i.test(t) ? t : `${t} | Fabelo`;
+}
+
 /** Goreli yolu mutlak adrese cevirir. schema.org mutlak adres ister. */
 export function mutlak(yol: string | null | undefined): string | null {
   if (!yol) return null;
@@ -40,8 +59,6 @@ export const SITE_ADI = "Fabelo";
 export const SITE_TANIMI =
   "Personal finance tips, career strategies, and AI tool reviews for ambitious professionals.";
 
-/** Listede bir yaziyi anlatmaya yeten en az sey. Sayfalarin kendi kart
-    tipleri (CardPost) bunun ustune oturuyor. */
 /**
  * Ana sayfanin kimligi — WebSite ve Organization.
  *
@@ -110,6 +127,8 @@ export function kirintiSemasi(basamaklar: { ad: string; yol: string }[]) {
   };
 }
 
+/** Listede bir yaziyi anlatmaya yeten en az sey. Sayfalarin kendi kart
+    tipleri (CardPost) bunun ustune oturuyor. */
 export type SemaYazi = {
   slug: string;
   title: string;

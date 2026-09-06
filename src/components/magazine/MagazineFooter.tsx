@@ -8,13 +8,14 @@ import PanicWorkzNetwork from "./PanicWorkzNetwork";
 /** fabelo.io footer'iyla birebir baglantilar */
 const MASTHEAD_LINKS = [
   { label: "About", href: "/about" },
-  /* Sitede hicbir e-posta adresi yazmiyor; butun iletisim formdan
-     geciyor, o yuzden kunyeden dogrudan ulasilabilmeli. */
-  { label: "Contact", href: "/contact" },
   { label: "Advertise", href: "/advertise" },
   { label: "Sponsor", href: "/sponsor" },
   { label: "Terms & conditions", href: "/terms-and-conditions" },
   { label: "Data & privacy", href: "/data-and-privacy" },
+  /* En altta: sitede hicbir e-posta adresi yazmiyor, butun iletisim
+     formdan geciyor. Once About'un hemen altindaydi ama orasi kunyenin
+     sayfa listesi — Contact bir sayfa degil, listenin cikisi. */
+  { label: "Contact", href: "/contact" },
 ];
 
 /** Adresler ufukyorulmaz.com ve themez.panic.pw kunyelerinden alindi */

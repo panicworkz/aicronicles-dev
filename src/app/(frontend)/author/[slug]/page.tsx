@@ -9,7 +9,7 @@ import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magaz
 import { AdSlot } from "@/components/magazine/AdSlot";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
 import { decodeEntities } from "@/lib/taxonomy";
-import { SITE, mutlak, profilSemasi, kirintiSemasi } from "@/lib/seo";
+import { SITE, mutlak, markali, profilSemasi, kirintiSemasi } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const adres = `${SITE}/author/${author.slug}`;
   const gorsel = mutlak(author.avatarUrl);
   return {
-    title: `${author.name} | Fabelo`,
+    title: markali(author.name),
     description: aciklama,
     // Bkz. kategori sayfasi: parametreli adresler ayri sayfa sayilmasin.
     alternates: { canonical: adres },
