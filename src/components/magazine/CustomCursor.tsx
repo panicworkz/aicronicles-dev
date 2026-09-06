@@ -78,7 +78,17 @@ export default function CustomCursor() {
 
   return (
     <>
-      {/* Renk .mag'in vurgusu — elektrik cyan.
+      {/* Baslangic opakligi 1 — bu ikisi zaten YALNIZCA ilk fare
+          hareketinden sonra ciziliyor (moved), yani goründükleri an
+          fare sayfanin uzerinde demek.
+
+          Once 0'dan basliyor ve yalnizca documentElement'in
+          mouseenter'i ile 1 oluyordu. O olay imlec sayfaya DISARIDAN
+          girince tetikleniyor; sayfa acildiginda fare zaten uzerindeyse
+          (yenileme, yeni sekme, site ici gezinme) hic gelmiyor ve ikisi
+          de DOM'da olup ekranda gorunmuyordu.
+
+          Renk .mag'in vurgusu — elektrik cyan.
           `var(--accent)` YAZILAMAZ: bu iki oge .mag kapsayicisinin
           DISINDA duruyor, o yuzden degisken sitenin cyan'ina degil
           panelin mavisine (#3b4bc8) dusuyordu. Imlec sayfanin geri
@@ -86,12 +96,12 @@ export default function CustomCursor() {
       <div
         ref={ringRef}
         className="pointer-events-none fixed left-0 top-0 z-[9999] -translate-x-1/2 -translate-y-1/2 size-9 rounded-full border transition-opacity duration-200"
-        style={{ borderColor: MAG_ACCENT, opacity: 0 }}
+        style={{ borderColor: MAG_ACCENT, opacity: 1 }}
       />
       <div
         ref={dotRef}
         className="pointer-events-none fixed left-0 top-0 z-[9999] -translate-x-1/2 -translate-y-1/2 size-1.5 rounded-full transition-opacity duration-200"
-        style={{ background: MAG_ACCENT, opacity: 0 }}
+        style={{ background: MAG_ACCENT, opacity: 1 }}
       />
     </>
   );
