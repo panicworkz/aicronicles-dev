@@ -2,34 +2,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
-/**
- * Ozel imlec — nokta ve gecikmeli halka, YERLI IMLECIN YANINDA.
- *
- * Once `cursor: none` ile yerli imlec gizleniyordu ve tiklanabilir
- * yerlerde hicbir isaret kalmiyordu. Simdi yerli imlec acik: el yine
- * tarayicinin kendi eli, nokta ve halka onun yanina esas ediyor.
- * (Bir ara buraya SVG bir el cizmistim; yanlis yaklasimdi —
- * meet.istanbul'da da begenilen sey tarayicinin kendi eli.)
- *
- * Tiklanabilir bir seyin uzerindeyken halka bir tik buyuyor; bu
- * imlecin kendi geri bildirimi, elin yerine gecen bir sey degil.
- */
-
-/** Tiklanabilir sayilanlar. Devre disi birakilmis oge tiklanamaz. */
-const TIKLANABILIR = [
-  "a[href]",
-  "button",
-  "summary",
-  "label",
-  "select",
-  "input:not([type=hidden])",
-  "textarea",
-  '[role="button"]',
-  '[role="link"]',
-  '[role="tab"]',
-  "[onclick]",
-].join(",");
-
 export default function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
@@ -72,29 +44,7 @@ export default function CustomCursor() {
       if (r) r.style.opacity = "1";
     };
 
-    /** Uzerinde durdugumuz sey gercekten tiklanabilir mi? */
-    const tiklanirMi = (hedef: EventTarget | null) => {
-      const el = (hedef as HTMLElement)?.closest?.(TIKLANABILIR) as HTMLElement | null;
-      if (!el) return false;
-      if (el.hasAttribute("disabled")) return false;
-      if (el.getAttribute("aria-disabled") === "true") return false;
-      // Ekran disina saklanmis tuzak alani el gostermesin.
-      if (el.closest('[aria-hidden="true"]')) return false;
-      return true;
-    };
-
-    const vurgula = (acik: boolean) => {
-      const r = ringRef.current;
-      /* Halka `scale` ile buyuyor, `transform` ile degil: konumu her
-         karede transform'a yaziliyor, oraya olcegi de koysak dongu onu
-         her karede eziyordu. `scale` ayri bir ozellik, cakismiyor. */
-      if (r) r.style.scale = acik ? "1.35" : "1";
-    };
-
-    const onOver = (e: MouseEvent) => vurgula(tiklanirMi(e.target));
-
     window.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseover", onOver);
     document.documentElement.addEventListener("mouseleave", onLeave);
     document.documentElement.addEventListener("mouseenter", onEnter);
     raf = requestAnimationFrame(loop);
@@ -103,7 +53,6 @@ export default function CustomCursor() {
 
     return () => {
       window.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseover", onOver);
       document.documentElement.removeEventListener("mouseleave", onLeave);
       document.documentElement.removeEventListener("mouseenter", onEnter);
       cancelAnimationFrame(raf);
@@ -117,7 +66,7 @@ export default function CustomCursor() {
     <>
       <div
         ref={ringRef}
-        className="pointer-events-none fixed left-0 top-0 z-[9999] -translate-x-1/2 -translate-y-1/2 size-9 rounded-full border transition-[opacity,scale] duration-200"
+        className="pointer-events-none fixed left-0 top-0 z-[9999] -translate-x-1/2 -translate-y-1/2 size-9 rounded-full border transition-opacity duration-200"
         style={{ borderColor: "var(--accent)", opacity: 0 }}
       />
       <div

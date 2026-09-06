@@ -255,54 +255,68 @@ html.dark:has(.mag)::-webkit-scrollbar-thumb:hover { background: #7d848d; }
 .mag .marquee-track { animation: mag-marquee 46s linear infinite; }
 .mag .marquee:hover .marquee-track { animation-play-state: paused; }
 
-/* --- Hover: renk vardi, HAREKET yoktu -----------------------------------
-   Sitede baglantilar hover'da yalnizca renk degistiriyordu; okur
-   ustunde durdugunu hissetmiyordu. meet.istanbul'un dili olculdu ve
-   buraya alindi:
+/* --- Etkilesim dili ------------------------------------------------------
+   meet.istanbul'un sunucudaki stylesheet'i okundu ve kaliplari buraya
+   Fabelo'nun kendi renkleriyle alindi. Oradaki --ink/--paper/--accent-red
+   ucusunun bizdeki karsiligi --ink/--paper/--accent.
 
-     liste baglantisi   saga yaslanir      translateX(3-4px)
-     kart               yukari kalkar      translateY(-4px), cizgisi koyulasir
-     ok                 caprazlama kayar   translate(2px, -2px)
+   Olculer tahmin degil, oradan birebir:
+     liste baglantisi   renk + translateX(4px)
+     kart               translateY(-4px), basligi vurgu rengine
+     ikon butonu        %5 murekkep yikamasi
+     dolu buton         zemin vurgu rengine
+     etiket/rozet       zemin dolar, yazi kagit rengine, translateY(-1px)
+   Gecis: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) — oradaki egrinin ayni.
 
-   Mesafeler oradan birebir; daha buyugu okuma sirasinda dikkat
-   dagitiyor, daha kucugu hissedilmiyor. Yumusatma egrisi sitenin kendi
-   .plate gecisiyle ayni (0.22, 1, 0.36, 1). */
+   Renk zaten vardi; eksik olan HAREKETTI. Okur baglantinin uzerinde
+   durdugunu hissetmiyordu. */
 
-/* Liste baglantilari — kunye sutunlari, icindekiler rayi, iletisim
-   sekmeleri. Hepsi ayni yapida: bir <ol>/<ul> icinde baglanti ya da
-   buton. */
-.mag footer ul li a,
-.mag aside nav ol li a,
-.mag aside nav ol li button {
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
+.mag a,
+.mag button {
+  transition: color 0.2s ease, background-color 0.2s ease,
+    border-color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.mag footer ul li a:hover,
-.mag aside nav ol li a:hover,
-.mag aside nav ol li button:hover {
+
+/* 1) Liste baglantilari — kunye sutunlari, icindekiler rayi, iletisim
+      sekmeleri, ana sayfadaki konu dizini. Hepsi <li> icinde. */
+.mag li > a:hover,
+.mag li > button:hover {
   transform: translateX(4px);
 }
 
-/* Kartlar. PostCard ve kardeslerinin koku <article class="group">. */
+/* 2) Kartlar. PostCard ve kardeslerinin koku <article class="group">. */
 .mag article.group {
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .mag article.group:hover {
   transform: translateY(-4px);
 }
-
-/* Kartin BASLIGI, kartin herhangi bir yerinde durunca vurgu rengine
-   doner — okur basligin tam ustune gelmek zorunda kalmasin. */
+/* Baslik, kartin HERHANGI bir yerinde durunca vurgu rengine doner —
+   okur basligin tam ustune gelmek zorunda kalmasin. */
 .mag article.group:hover .headline-link {
   color: var(--accent-ink);
 }
 
-/* Ok tasiyan baglantilar: "ALL STORIES →", "← BACK TO THE FRONT PAGE".
-   Okun kendisi ayri bir oge olmadigi icin baglantiyi kaydiriyoruz. */
-.mag a.byline {
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
-}
+/* 3) Ok tasiyan baglantilar: "ALL STORIES →", "← BACK TO THE FRONT PAGE". */
 .mag a.byline:hover {
   transform: translateX(3px);
+}
+
+/* 4) Dolu buton (kunyedeki Subscribe): zaten murekkep zeminli, o yuzden
+      meet.istanbul'un tersine cevirmesi burada vurgu rengine gecmek
+      olarak karsilik buluyor. */
+.mag a[href="#subscribe"]:not(.byline):hover,
+.mag button[type="submit"]:hover {
+  background: var(--accent-ink);
+}
+
+/* 5) Etiket seridi — kunyenin altindaki kayan konu satiri. */
+.mag .marquee a:hover {
+  color: var(--accent-ink);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
 }
 
 @media (prefers-reduced-motion: reduce) {
