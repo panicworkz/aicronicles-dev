@@ -1,5 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
+import Script from "next/script";
 import { ThemeProvider } from "@/providers/theme-provider";
 import CustomCursor from "@/components/magazine/CustomCursor";
 import BackToTop from "@/components/magazine/BackToTop";
@@ -40,6 +41,19 @@ export default function FrontendLayout({
         type="application/rss+xml"
         title={SITE_ADI}
         href={`${SITE}/rss`}
+      />
+      {/* Umami olcumu — umami.panic.pw'de kayitli "Fabelo.io" sitesi.
+          O kayit 2025 subatindan beri veri tasiyor (Ghost donemi dahil);
+          yeni kayit acmak gecmisi ikiye bolerdi, o yuzden AYNI kimlik
+          kullaniliyor.
+
+          Yalnizca YAYIN katmaninda: /panic bu katmanin disinda kaldigi
+          icin yonetim ekranindaki gezinme olcume karismiyor. */}
+      <Script
+        src="https://umami.panic.pw/script.js"
+        data-website-id="f4fc9e52-de17-44ac-92b1-6b23ff6fec91"
+        strategy="afterInteractive"
+        defer
       />
       <div className="theme-fabelo min-h-screen">{children}</div>
       <CustomCursor />
