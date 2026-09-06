@@ -419,11 +419,32 @@
   border: 0;
 }
 
-/* ---- Custom cursor ---- */
+/* ---- Custom cursor ----
+   Nokta ve halka YERLI IMLECIN YANINDA duruyor, onun YERINE degil.
+
+   Once `cursor: none !important` ile yerli imlec tamamen gizleniyordu.
+   Gorunusu temizdi ama bir seyi goturuyordu: tarayicinin baglantilarda
+   gosterdigi EL. Okur neyin tiklanabilir oldugunu yalnizca renkten ya
+   da alti cizgiden anlamak zorunda kaliyordu; bir kart ya da afis
+   uzerinde hicbir isaret yoktu.
+
+   meet.istanbul'da da durum bu: orada da ozel imlec cizilmis ama
+   `display: none` ile kapatilmis ve yerli imlec acik birakilmis —
+   begenilen el zaten tarayicinin kendi eli.
+
+   Tiklanabilir ogelere ayrica `cursor: pointer` yaziyoruz: tarayici
+   bunu a[href] ve button icin kendiliginden yapiyor ama tiklama
+   isleyicisi takilmis bir div icin yapmiyor. */
 @media (pointer: fine) {
-  .has-custom-cursor,
-  .has-custom-cursor * {
-    cursor: none !important;
+  .has-custom-cursor a[href],
+  .has-custom-cursor button:not([disabled]),
+  .has-custom-cursor summary,
+  .has-custom-cursor label,
+  .has-custom-cursor [role="button"],
+  .has-custom-cursor [role="link"],
+  .has-custom-cursor [role="tab"],
+  .has-custom-cursor [onclick] {
+    cursor: pointer;
   }
 }
 

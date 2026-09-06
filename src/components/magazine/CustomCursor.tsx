@@ -1,27 +1,18 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Pointer } from "lucide-react";
 
 /**
- * Ozel imlec — nokta, gecikmeli halka ve tiklanabilir yerlerde bir el.
+ * Ozel imlec — nokta ve gecikmeli halka, YERLI IMLECIN YANINDA.
  *
- * Sitede yerli imlec kapali (`cursor: none`, bkz. globals.css). Bu iyi
- * gorunuyordu ama bir seyi de goturuyordu: tarayicinin baglantilarda
- * gosterdigi EL. Okur neyin tiklanabilir oldugunu yalnizca renkten ya
- * da alti cizgiden anlamak zorunda kaliyordu; bir kart ya da afis
- * uzerinde hicbir isaret yoktu.
+ * Once `cursor: none` ile yerli imlec gizleniyordu ve tiklanabilir
+ * yerlerde hicbir isaret kalmiyordu. Simdi yerli imlec acik: el yine
+ * tarayicinin kendi eli, nokta ve halka onun yanina esas ediyor.
+ * (Bir ara buraya SVG bir el cizmistim; yanlis yaklasimdi —
+ * meet.istanbul'da da begenilen sey tarayicinin kendi eli.)
  *
- * Simdi tiklanabilir bir sey uzerindeyken noktanin yaninda bir el
- * beliriyor ve halka bir tik buyuyor.
- *
- * NEDEN ISARETLI OGE DEGIL DE SECICI: meet.istanbul ayni isi
- * [data-cursor] nitelikleriyle yapiyor, yani her kart tek tek
- * isaretlenmis. Burada tiklanabilirlik seciciyle bulunuyor — yeni bir
- * buton eklendiginde kimsenin bir sey isaretlemesi gerekmiyor, ve
- * unutulmus bir oge sessizce isaretsiz kalmiyor. Olaylar belgeye
- * baglandigi icin sonradan gelen ogeler (istemcide dusen reklam
- * afisleri gibi) de kapsaniyor.
+ * Tiklanabilir bir seyin uzerindeyken halka bir tik buyuyor; bu
+ * imlecin kendi geri bildirimi, elin yerine gecen bir sey degil.
  */
 
 /** Tiklanabilir sayilanlar. Devre disi birakilmis oge tiklanamaz. */
@@ -42,7 +33,6 @@ const TIKLANABILIR = [
 export default function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
-  const handRef = useRef<HTMLDivElement>(null);
   const [moved, setMoved] = useState(false);
 
   useEffect(() => {
@@ -59,10 +49,6 @@ export default function CustomCursor() {
       setMoved(true);
       const dot = dotRef.current;
       if (dot) dot.style.transform = `translate(${x}px, ${y}px)`;
-      /* El noktanin sag altinda duruyor — tarayicinin kendi elinin
-         durdugu yer. Ustune binerse ikisi de okunmaz oluyor. */
-      const hand = handRef.current;
-      if (hand) hand.style.transform = `translate(${x + 12}px, ${y + 12}px)`;
     };
 
     const loop = () => {
@@ -76,10 +62,8 @@ export default function CustomCursor() {
     const onLeave = () => {
       const d = dotRef.current;
       const r = ringRef.current;
-      const h = handRef.current;
       if (d) d.style.opacity = "0";
       if (r) r.style.opacity = "0";
-      if (h) h.style.opacity = "0";
     };
     const onEnter = () => {
       const d = dotRef.current;
@@ -99,17 +83,15 @@ export default function CustomCursor() {
       return true;
     };
 
-    const elGoster = (acik: boolean) => {
-      const h = handRef.current;
+    const vurgula = (acik: boolean) => {
       const r = ringRef.current;
-      if (h) h.style.opacity = acik ? "1" : "0";
       /* Halka `scale` ile buyuyor, `transform` ile degil: konumu her
          karede transform'a yaziliyor, oraya olcegi de koysak dongu onu
          her karede eziyordu. `scale` ayri bir ozellik, cakismiyor. */
       if (r) r.style.scale = acik ? "1.35" : "1";
     };
 
-    const onOver = (e: MouseEvent) => elGoster(tiklanirMi(e.target));
+    const onOver = (e: MouseEvent) => vurgula(tiklanirMi(e.target));
 
     window.addEventListener("mousemove", onMove);
     document.addEventListener("mouseover", onOver);
@@ -143,17 +125,6 @@ export default function CustomCursor() {
         className="pointer-events-none fixed left-0 top-0 z-[9999] -translate-x-1/2 -translate-y-1/2 size-1.5 rounded-full transition-opacity duration-200"
         style={{ background: "var(--accent)", opacity: 0 }}
       />
-      <div
-        ref={handRef}
-        aria-hidden="true"
-        className="pointer-events-none fixed left-0 top-0 z-[9999] transition-opacity duration-150"
-        style={{ opacity: 0, color: "var(--accent)" }}
-      >
-        {/* Doldurma zeminin renginde: el hangi resmin ustune gelirse
-            gelsin okunur kalsin, yalnizca cizgi olarak birakilirsa
-            kalabalik bir fotografta kayboluyor. */}
-        <Pointer className="size-[18px]" strokeWidth={1.75} fill="var(--paper)" />
-      </div>
     </>
   );
 }

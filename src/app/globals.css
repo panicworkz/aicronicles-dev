@@ -255,9 +255,75 @@ html.dark:has(.mag)::-webkit-scrollbar-thumb:hover { background: #7d848d; }
 .mag .marquee-track { animation: mag-marquee 46s linear infinite; }
 .mag .marquee:hover .marquee-track { animation-play-state: paused; }
 
+/* --- Hover: renk vardi, HAREKET yoktu -----------------------------------
+   Sitede baglantilar hover'da yalnizca renk degistiriyordu; okur
+   ustunde durdugunu hissetmiyordu. meet.istanbul'un dili olculdu ve
+   buraya alindi:
+
+     liste baglantisi   saga yaslanir      translateX(3-4px)
+     kart               yukari kalkar      translateY(-4px), cizgisi koyulasir
+     ok                 caprazlama kayar   translate(2px, -2px)
+
+   Mesafeler oradan birebir; daha buyugu okuma sirasinda dikkat
+   dagitiyor, daha kucugu hissedilmiyor. Yumusatma egrisi sitenin kendi
+   .plate gecisiyle ayni (0.22, 1, 0.36, 1). */
+
+/* Liste baglantilari — kunye sutunlari, icindekiler rayi, iletisim
+   sekmeleri. Hepsi ayni yapida: bir <ol>/<ul> icinde baglanti ya da
+   buton. */
+.mag footer ul li a,
+.mag aside nav ol li a,
+.mag aside nav ol li button {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
+}
+.mag footer ul li a:hover,
+.mag aside nav ol li a:hover,
+.mag aside nav ol li button:hover {
+  transform: translateX(4px);
+}
+
+/* Kartlar. PostCard ve kardeslerinin koku <article class="group">. */
+.mag article.group {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mag article.group:hover {
+  transform: translateY(-4px);
+}
+
+/* Kartin BASLIGI, kartin herhangi bir yerinde durunca vurgu rengine
+   doner — okur basligin tam ustune gelmek zorunda kalmasin. */
+.mag article.group:hover .headline-link {
+  color: var(--accent-ink);
+}
+
+/* Ok tasiyan baglantilar: "ALL STORIES →", "← BACK TO THE FRONT PAGE".
+   Okun kendisi ayri bir oge olmadigi icin baglantiyi kaydiriyoruz. */
+.mag a.byline {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
+}
+.mag a.byline:hover {
+  transform: translateX(3px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mag .marquee-track { animation: none; }
   .mag .plate img { transition: none; }
+  /* Hareketi kapat, RENGI birak: renk tek basina da tiklanabilirligi
+     soyluyor ve hareket tercihiyle ilgisi yok. */
+  .mag footer ul li a,
+  .mag aside nav ol li a,
+  .mag aside nav ol li button,
+  .mag article.group,
+  .mag a.byline {
+    transition: color 0.2s ease;
+  }
+  .mag footer ul li a:hover,
+  .mag aside nav ol li a:hover,
+  .mag aside nav ol li button:hover,
+  .mag article.group:hover,
+  .mag a.byline:hover {
+    transform: none;
+  }
 }
 
 /* --- Yazi govdesi: editoryel okuma tipografisi -------------------------- */
