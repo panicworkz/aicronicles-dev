@@ -2,6 +2,20 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
+/**
+ * Derginin vurgu rengi — .mag'deki --accent ile ayni deger (#0fb5ce).
+ *
+ * Neden degisken degil de duz deger: bu bilesen .mag kapsayicisinin
+ * DISINDA, (frontend) katmaninda duruyor. Orada `var(--accent)`
+ * derginin cyan'ina degil panelin mavisine (#3b4bc8) dusuyor ve imlec
+ * sayfanin geri kalanindan baska bir mavide kaliyordu: kunyedeki
+ * "Subscribe free" dugmesi cyan, imlec indigo.
+ *
+ * Koyu temada da ayni: .dark .mag yalnizca --accent-ink'i degistiriyor,
+ * --accent iki temada da bu deger.
+ */
+const MAG_ACCENT = "#0fb5ce";
+
 export default function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
@@ -64,15 +78,20 @@ export default function CustomCursor() {
 
   return (
     <>
+      {/* Renk .mag'in vurgusu — elektrik cyan.
+          `var(--accent)` YAZILAMAZ: bu iki oge .mag kapsayicisinin
+          DISINDA duruyor, o yuzden degisken sitenin cyan'ina degil
+          panelin mavisine (#3b4bc8) dusuyordu. Imlec sayfanin geri
+          kalanindan baska bir mavideydi. */}
       <div
         ref={ringRef}
         className="pointer-events-none fixed left-0 top-0 z-[9999] -translate-x-1/2 -translate-y-1/2 size-9 rounded-full border transition-opacity duration-200"
-        style={{ borderColor: "var(--accent)", opacity: 0 }}
+        style={{ borderColor: MAG_ACCENT, opacity: 0 }}
       />
       <div
         ref={dotRef}
         className="pointer-events-none fixed left-0 top-0 z-[9999] -translate-x-1/2 -translate-y-1/2 size-1.5 rounded-full transition-opacity duration-200"
-        style={{ background: "var(--accent)", opacity: 0 }}
+        style={{ background: MAG_ACCENT, opacity: 0 }}
       />
     </>
   );
