@@ -19,19 +19,36 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const aciklama = `Every Fabelo story filed under ${tagLabel(slug)}.`;
   const adres = `${SITE}/tag/${slug}`;
-  /* Bkz. kategori sayfasi — bu konunun en yeni yazisinin gorseli. */
   const etiket = tagLabel(slug);
-  const enYeni = await db.query.posts.findFirst({
-    where: and(
-      eq(schema.posts.status, "published"),
-      sql`(${schema.posts.tagsJson}::text ILIKE ${"%" + etiket + "%"}
-           OR ${schema.posts.tagsJson}::text ILIKE ${"%" + slug + "%"})`
-    ),
-    orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.createdAt)],
-  });
+  /* Eslesme kurali sayfanin kendi sorgusuyla AYNI olmali — kategori
+     slug'i eslesen yazilar da bu konuya dahil. Yoksa aciklamadaki sayi
+     ile sayfadaki "N STORIES" farkli cikardi. */
+  const eslesme = and(
+    eq(schema.posts.status, "published"),
+    sql`(
+      ${schema.posts.tagsJson}::text ILIKE ${"%" + etiket + "%"}
+      OR ${schema.posts.tagsJson}::text ILIKE ${"%" + slug + "%"}
+      OR ${schema.posts.categoryId} IN (SELECT id FROM categories WHERE slug = ${slug})
+    )`
+  );
+  /* Bkz. kategori sayfasi — bu konunun en yeni yazisinin gorseli. */
+  const [enYeni, sayi] = await Promise.all([
+    db.query.posts.findFirst({
+      where: eslesme,
+      orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.createdAt)],
+    }),
+    db.$count(schema.posts, eslesme),
+  ]);
   const gorsel = mutlak((enYeni as any)?.featuredImageUrl) || `${SITE}/images/fabelo-logo.png`;
+  /* Aciklama "Every Fabelo story filed under Investing." idi — kirk
+     karakter, arama sonucunda yarim kalan bir cumle. Yazi sayisi hem
+     uzunlugu makul araliga tasiyor hem de gercek bir bilgi veriyor;
+     uydurma bir tanitim cumlesi yazmaktansa sayfada zaten duran sayiyi
+     soylemek dogru. */
+  const aciklama =
+    `${etiket} on Fabelo — ${sayi} ${sayi === 1 ? "story" : "stories"} on money, ` +
+    `career and AI: field-tested frameworks and honest reviews for ambitious professionals.`;
   return {
     title: `${tagLabel(slug)} | Fabelo`,
     description: aciklama,
@@ -112,7 +129,12 @@ export default async function TagPage({ params }: PageProps) {
           __html: JSON.stringify(
             koleksiyonSemasi({
               ad: label,
-              aciklama: `Every Fabelo story filed under ${label}.`,
+              /* Semadaki aciklama meta aciklamasiyla ayni cumle olmali;
+                 ikisi ayrisirsa sayfa kendisi hakkinda iki sey soyler. */
+              aciklama:
+                `${label} on Fabelo — ${posts.length} ${posts.length === 1 ? "story" : "stories"} ` +
+                `on money, career and AI: field-tested frameworks and honest reviews ` +
+                `for ambitious professionals.`,
               yol: `/tag/${slug}`,
               yazilar: posts,
             })
