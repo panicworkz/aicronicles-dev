@@ -26,7 +26,11 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/panic", "/panic/", "/api/", "/unsubscribe"],
       },
     ],
-    sitemap: [`${SITE}/sitemap.xml`, `${SITE}/sitemap-news.xml`],
+    /* Yalnizca ana harita duyuruluyor. sitemap-news.xml da var ama o
+       Google News icin ve yalnizca son 48 saati tasiyor; sitenin
+       Publisher Center kaydi olmadan bir ise yaramaz, duyurulunca da
+       cogu zaman bos bir dosya olarak taranir. */
+    sitemap: `${SITE}/sitemap.xml`,
     host: SITE,
   };
 }

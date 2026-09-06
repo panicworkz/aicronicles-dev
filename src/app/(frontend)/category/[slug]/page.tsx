@@ -8,7 +8,7 @@ import MagazineFooter from "@/components/magazine/MagazineFooter";
 import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magazine/PostCard";
 import { AdSlot } from "@/components/magazine/AdSlot";
 import { SECTIONS, decodeEntities } from "@/lib/taxonomy";
-import { SITE, koleksiyonSemasi, kirintiSemasi } from "@/lib/seo";
+import { SITE, mutlak, koleksiyonSemasi, kirintiSemasi } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +22,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!category) return { title: "Not Found | Fabelo" };
   const aciklama = category.description || `Every ${category.name} story from the Fabelo desk.`;
   const adres = `${SITE}/category/${category.slug}`;
+  /* Paylasim gorseli: bu bolumun EN YENI yazisinin gorseli. Liste
+     sayfasinin kendi resmi yok; markanin isaretini koymak da her bolumu
+     ayni karta cevirirdi. Yoksa markaya duser. */
+  const enYeni = await db.query.posts.findFirst({
+    where: and(eq(schema.posts.status, "published"), eq(schema.posts.categoryId, category.id)),
+    orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.createdAt)],
+  });
+  const gorsel = mutlak((enYeni as any)?.featuredImageUrl) || `${SITE}/images/fabelo-logo.png`;
   return {
     title: `${category.name} | Fabelo`,
     description: aciklama,
@@ -30,8 +38,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
        bunlar arama motoruna ayri sayfalar gorunur ve birbirinin
        sirasini yer. */
     alternates: { canonical: adres },
-    openGraph: { type: "website", url: adres, title: category.name, description: aciklama },
-    twitter: { card: "summary", title: category.name, description: aciklama },
+    openGraph: {
+      type: "website", url: adres, title: category.name,
+      description: aciklama, images: [{ url: gorsel }],
+    },
+    twitter: {
+      card: "summary_large_image", title: category.name,
+      description: aciklama, images: [gorsel],
+    },
   };
 }
 

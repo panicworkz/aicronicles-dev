@@ -9,7 +9,7 @@ import MagazineFooter from "@/components/magazine/MagazineFooter";
 import { PostCard, HorizontalStoryCard, type CardPost } from "@/components/magazine/PostCard";
 import { AdSlot } from "@/components/magazine/AdSlot";
 import { FABELO_TAGS, tagLabel } from "@/lib/taxonomy";
-import { SITE, koleksiyonSemasi, kirintiSemasi } from "@/lib/seo";
+import { SITE, mutlak, koleksiyonSemasi, kirintiSemasi } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -21,13 +21,30 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const aciklama = `Every Fabelo story filed under ${tagLabel(slug)}.`;
   const adres = `${SITE}/tag/${slug}`;
+  /* Bkz. kategori sayfasi — bu konunun en yeni yazisinin gorseli. */
+  const etiket = tagLabel(slug);
+  const enYeni = await db.query.posts.findFirst({
+    where: and(
+      eq(schema.posts.status, "published"),
+      sql`(${schema.posts.tagsJson}::text ILIKE ${"%" + etiket + "%"}
+           OR ${schema.posts.tagsJson}::text ILIKE ${"%" + slug + "%"})`
+    ),
+    orderBy: [desc(schema.posts.publishedAt), desc(schema.posts.createdAt)],
+  });
+  const gorsel = mutlak((enYeni as any)?.featuredImageUrl) || `${SITE}/images/fabelo-logo.png`;
   return {
     title: `${tagLabel(slug)} | Fabelo`,
     description: aciklama,
     // Bkz. kategori sayfasi: parametreli adresler ayri sayfa sayilmasin.
     alternates: { canonical: adres },
-    openGraph: { type: "website", url: adres, title: tagLabel(slug), description: aciklama },
-    twitter: { card: "summary", title: tagLabel(slug), description: aciklama },
+    openGraph: {
+      type: "website", url: adres, title: tagLabel(slug),
+      description: aciklama, images: [{ url: gorsel }],
+    },
+    twitter: {
+      card: "summary_large_image", title: tagLabel(slug),
+      description: aciklama, images: [gorsel],
+    },
   };
 }
 

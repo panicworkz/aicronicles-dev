@@ -37,11 +37,15 @@ export const metadata: Metadata = {
     siteName: SITE_ADI,
     title: "Fabelo | Personal Finance, Career & AI Tools for Professionals",
     description: ANA_ACIKLAMA,
+    /* Paylasim karti gorselsiz cikiyordu. Ana sayfa tek bir yaziya ait
+       olmadigi icin markanin kendi isareti kullaniliyor. */
+    images: [{ url: `${SITE}/images/fabelo-logo.png` }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Fabelo",
     description: ANA_ACIKLAMA,
+    images: [`${SITE}/images/fabelo-logo.png`],
   },
 };
 

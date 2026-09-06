@@ -54,6 +54,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         url: sayfaAdresi,
         title: page.title,
         description: sayfaAciklamasi,
+        // Sabit sayfanin kendi gorseli yok; marka isareti kullaniliyor.
+        images: [{ url: `${SITE}/images/fabelo-logo.png` }],
+      },
+      twitter: {
+        card: "summary",
+        title: page.title,
+        description: sayfaAciklamasi,
+        images: [`${SITE}/images/fabelo-logo.png`],
       },
     };
   }
