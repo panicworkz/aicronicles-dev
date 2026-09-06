@@ -37,6 +37,13 @@ function isPublicApiRequest(pathname: string, method: string): boolean {
     return true;
   }
 
+  /* Iletisim formu. Sitede hicbir e-posta adresi yazmadigi icin butun
+     iletisim buradan geciyor; oturum isteyemez. Rotanin kendisi tuzak
+     alan, alan dogrulamasi ve IP basina saatlik sinir tasiyor. */
+  if (method === 'POST' && pathname === '/api/contact') {
+    return true;
+  }
+
   // Public Ad impression & click tracking
   if (method === 'POST' && (pathname.includes('/click') || pathname.includes('/impression')) && pathname.startsWith('/api/ads/')) {
     return true;

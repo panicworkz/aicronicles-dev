@@ -8,6 +8,9 @@ import PanicWorkzNetwork from "./PanicWorkzNetwork";
 /** fabelo.io footer'iyla birebir baglantilar */
 const MASTHEAD_LINKS = [
   { label: "About", href: "/about" },
+  /* Sitede hicbir e-posta adresi yazmiyor; butun iletisim formdan
+     geciyor, o yuzden kunyeden dogrudan ulasilabilmeli. */
+  { label: "Contact", href: "/contact" },
   { label: "Advertise", href: "/advertise" },
   { label: "Sponsor", href: "/sponsor" },
   { label: "Terms & conditions", href: "/terms-and-conditions" },

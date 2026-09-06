@@ -71,6 +71,9 @@ export async function GET() {
     )
     .join('')}
   ${(sayfalar as any[]).map((s) => girdi(`/${s.slug}`, '0.7', zaman(s.updatedAt), 'monthly')).join('')}
+  ${/* /contact CMS'te degil, kodda bir rota — o yuzden elle. Sitedeki
+       butun iletisim oradan gectigi icin haritada olmali. */ ''}
+  ${girdi('/contact', '0.6', null, 'yearly')}
   ${(kategoriler as any[])
     .map((c) =>
       girdi(
