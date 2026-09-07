@@ -230,6 +230,11 @@ export const orders = pgTable('orders', {
   /* Havalede dekont notu, kartta saglayici referansi — ikisi de ayni
      soruyu cevapliyor: bu parayi hangi kayitla eslestirdik. */
   paymentReference: text('payment_reference'),
+  /* Onay kayitlari. Dijital urundeki cayma hakki istisnasi ancak
+     tuketici bilgilendirilip ONAYLADIYSA gecerli ve bunu satici
+     ispat etmek zorunda. Bkz. scripts/migration_onay_kaydi.sql */
+  termsAcceptedAt: timestamp('terms_accepted_at'),
+  digitalWaiverAt: timestamp('digital_waiver_at'),
   shippingAddressJson: jsonb('shipping_address_json'),
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

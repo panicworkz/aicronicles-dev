@@ -71,6 +71,15 @@ export async function POST(req: NextRequest) {
     const yontem = String(g?.paymentMethod ?? "") as Yontem;
     if (!YONTEMLER.includes(yontem)) return apiBadRequest("Choose how you want to pay.");
 
+    /* On bilgilendirme onayi ZORUNLU ve burada da denetleniyor.
+       Ekrandaki kutu yeterli degil: bu uc herkese acik, dogrudan
+       cagrilabilir. Onayin alindigini SATICI ispat etmek zorunda
+       (Mesafeli Sozlesmeler Yonetmeligi m.5), o yuzden onay olmadan
+       siparis olusmuyor ve onay ZAMANI kayda yaziliyor. */
+    if (!g?.termsAccepted) {
+      return apiBadRequest("Please accept the pre-information form and the sales contract.");
+    }
+
     /* Istenen urunler TEK sorguda okunuyor; kalem basina sorgu atmak
        elli kalemlik bir sepette elli gidis donus olurdu. */
     const istenen = kalemler
@@ -137,6 +146,16 @@ export async function POST(req: NextRequest) {
     }
 
     const turler = satirlar.map((s) => s.productType);
+
+    /* Dijital urunde cayma hakki istisnasi ANCAK tuketici ayrica
+       onayladiysa gecerli. Onay yoksa istisna dogmaz; o yuzden
+       siparisi bu onay olmadan almiyoruz. */
+    const dijitalVar = turler.some((t) => t !== "physical");
+    if (dijitalVar && !g?.digitalWaiver) {
+      return apiBadRequest(
+        "Please confirm you understand that items delivered immediately cannot be cancelled."
+      );
+    }
     if (!yontemUygun(yontem, turler)) {
       return apiBadRequest(
         "Cash on delivery is only available when everything in the order is shipped."
@@ -200,6 +219,10 @@ export async function POST(req: NextRequest) {
         orderStatus: "processing",
         shippingAddressJson: kargoGerekli ? adres : null,
         notes: String(g?.notes ?? "").trim().slice(0, 1000) || null,
+        /* Zaman damgasi, boolean degil: bir uyusmazlikta sorulan
+           "ne zaman onaylandi" sorusunun cevabi da dursun. */
+        termsAcceptedAt: new Date(),
+        digitalWaiverAt: dijitalVar ? new Date() : null,
       } as any)
       .returning();
 

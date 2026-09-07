@@ -31,6 +31,11 @@ export function SepetEkrani() {
   const [tuzak, setTuzak] = useState("");
   const [adres, setAdres] = useState({ line1: "", line2: "", city: "", postcode: "", country: "" });
   const [yontem, setYontem] = useState<"bank_transfer" | "cash_on_delivery">("bank_transfer");
+  /* Iki AYRI onay. Hukuken ayri seyler: birincisi "okudum", ikincisi
+     "bu hakkimdan vazgectigimi biliyorum". Tek kutuya sikistirmak
+     onayin acikligini tartismali hale getirirdi. */
+  const [sozlesmeOnay, setSozlesmeOnay] = useState(false);
+  const [dijitalOnay, setDijitalOnay] = useState(false);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
 
@@ -38,6 +43,9 @@ export function SepetEkrani() {
      Dijital bir rehber icin adres istemek gereksiz veri toplamak
      olurdu — sunucu da ayni kurali uyguluyor. */
   const kargoGerekli = kalemler.some((k) => turu(k.tur) === "physical");
+  /* Sepette aninda teslim edilen bir sey varsa cayma hakki istisnasi
+     devreye giriyor ve AYRICA onaylanmasi gerekiyor. */
+  const dijitalVar = kalemler.some((k) => turu(k.tur) !== "physical");
   const kapidaOdenebilir = kalemler.length > 0 && kalemler.every((k) => turu(k.tur) === "physical");
 
   // Kapida odeme secilmisken sepete dijital bir sey eklenirse secim gecersiz kalir.
@@ -77,6 +85,8 @@ export function SepetEkrani() {
           phone: telefon,
           notes: not,
           website_url: tuzak,
+          termsAccepted: sozlesmeOnay,
+          digitalWaiver: dijitalVar ? dijitalOnay : undefined,
           paymentMethod: gecerliYontem,
           address: kargoGerekli ? adres : null,
         }),
@@ -277,22 +287,90 @@ export function SepetEkrani() {
           </p>
         )}
 
+        {/* ONAYLAR.
+            Once burada yalnizca dugmenin altinda "siparis vererek
+            kabul etmis olursunuz" yazan bir cumle vardi. Mesafeli
+            Sozlesmeler Yonetmeligi bunu yeterli saymiyor: on
+            bilgilendirmenin yapildigi ve tuketicinin onayladigi
+            ISPAT edilebilir olmali. Onay zamani siparise yaziliyor. */}
+        <div className="mt-7 space-y-3">
+          <Onay
+            secili={sozlesmeOnay}
+            degistir={setSozlesmeOnay}
+            id="onay-sozlesme"
+          >
+            I have read and accept the{" "}
+            <Link href="/on-bilgilendirme-formu" target="_blank" className="underline">
+              Ön Bilgilendirme Formu
+            </Link>{" "}
+            and the{" "}
+            <Link href="/mesafeli-satis-sozlesmesi" target="_blank" className="underline">
+              Mesafeli Satış Sözleşmesi
+            </Link>
+            . Buying from outside Turkey? See the{" "}
+            <Link href="/terms-of-sale" target="_blank" className="underline">
+              Terms of Sale
+            </Link>
+            .
+          </Onay>
+
+          {dijitalVar && (
+            <Onay secili={dijitalOnay} degistir={setDijitalOnay} id="onay-dijital">
+              This order contains something delivered to me immediately. I understand
+              that once it is delivered I cannot cancel it, and I ask for it to be
+              delivered straight away.
+            </Onay>
+          )}
+        </div>
+
         <button
           type="submit"
-          disabled={gonderiliyor}
-          className="byline mt-6 w-full px-6 py-3.5 transition-opacity hover:opacity-90 disabled:opacity-50"
+          disabled={gonderiliyor || !sozlesmeOnay || (dijitalVar && !dijitalOnay)}
+          className="byline mt-5 w-full px-6 py-3.5 transition-opacity hover:opacity-90 disabled:opacity-40"
           style={{ background: "var(--ink)", color: "var(--paper)" }}
         >
           {gonderiliyor ? "PLACING YOUR ORDER…" : `PLACE ORDER — ${bicimliFiyat(araToplam, paraBirimi)}`}
         </button>
 
         <p className="mt-3 text-[0.82rem] leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          No card details are taken here. By ordering you accept our{" "}
-          <Link href="/terms-and-conditions" className="underline">terms</Link> and{" "}
+          No card details are taken here. Nothing is charged until you have confirmed
+          the delivery cost. See{" "}
+          <Link href="/delivery-and-returns" className="underline">delivery and returns</Link>{" "}
+          and our{" "}
           <Link href="/data-and-privacy" className="underline">privacy notice</Link>.
         </p>
       </div>
     </form>
+  );
+}
+
+/** Onay kutusu — metni tiklanabilir, kutu yeterince buyuk. */
+function Onay({
+  secili,
+  degistir,
+  id,
+  children,
+}: {
+  secili: boolean;
+  degistir: (v: boolean) => void;
+  id: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer gap-3 p-3.5 text-[0.88rem] leading-relaxed"
+      style={{ border: `1px solid ${secili ? "var(--ink)" : "var(--rule)"}` }}
+    >
+      <input
+        id={id}
+        type="checkbox"
+        checked={secili}
+        onChange={(e) => degistir(e.target.checked)}
+        className="mt-0.5 size-4 shrink-0"
+      />
+      <span>{children}</span>
+    </label>
   );
 }
 

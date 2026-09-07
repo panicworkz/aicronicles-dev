@@ -12,6 +12,14 @@ const MASTHEAD_LINKS = [
   { label: "Sponsor", href: "/sponsor" },
   { label: "Terms & conditions", href: "/terms-and-conditions" },
   { label: "Data & privacy", href: "/data-and-privacy" },
+  /* Satis metinleri. Magaza kapaliyken de burada duruyorlar: mesafeli
+     satista bu belgelerin ALISVERISTEN ONCE ulasilabilir olmasi
+     gerekiyor, siparis aninda onune konmasi degil. Turkce olanlar
+     kanunen Turkce; ceviremiyoruz. */
+  { label: "Delivery & returns", href: "/delivery-and-returns" },
+  { label: "Terms of sale", href: "/terms-of-sale" },
+  { label: "Mesafeli satış sözleşmesi", href: "/mesafeli-satis-sozlesmesi" },
+  { label: "Ön bilgilendirme formu", href: "/on-bilgilendirme-formu" },
   /* En altta: sitede hicbir e-posta adresi yazmiyor, butun iletisim
      formdan geciyor. Once About'un hemen altindaydi ama orasi kunyenin
      sayfa listesi — Contact bir sayfa degil, listenin cikisi. */
