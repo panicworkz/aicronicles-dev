@@ -310,6 +310,47 @@ export const ads = pgTable('ads', {
  * merkezi contact-gateway'e iletiliyor: gateway erisilemese bile kayit
  * kaybolmuyor.
  */
+/**
+ * Iletisim formu mesajlari.
+ *
+ * ASIL KAYIT BURASI, gateway degil. Once bu tabloya yaziliyor, sonra
+ * merkezi gateway'e iletiliyor ve iletimin sonucu gatewayStatus'a
+ * isleniyor — bulten aboneligiyle ayni sira (bkz. api/subscribe).
+ *
+ * Onceden mesaj YALNIZCA gateway'e gidiyordu: SMTP dusse mesaj siteden
+ * tarafinda hic iz birakmadan kayboluyordu ve panelde "bu mesaji
+ * cevapladim" diyebilecegin bir yer yoktu.
+ */
+export const contactMessages = pgTable('contact_messages', {
+  id: serial('id').primaryKey(),
+  /** Formdaki sekme — general | advertising | sponsorship | licensing | privacy */
+  topic: text('topic').notNull().default('general'),
+  /** Sekmenin okunabilir adi; sekme kodu sonradan degisse bile kayit
+      hangi konuda geldigini kendi icinde tasisin. */
+  topicLabel: text('topic_label'),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  organization: text('organization'),
+  phone: text('phone'),
+  subject: text('subject'),
+  message: text('message').notNull(),
+  /** Sekmeye ozel alanlar (format, butce, hangi yazi...). Sekmeler
+      degisebildigi icin sabit sutun degil, etiket->deger olarak. */
+  fields: jsonb('fields'),
+  sourceUrl: text('source_url'),
+  ip: text('ip'),
+  userAgent: text('user_agent'),
+  /** new | read | replied | archived */
+  status: text('status').notNull().default('new'),
+  /** Gateway'e iletildi mi — sent | failed */
+  gatewayStatus: text('gateway_status'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('contact_messages_status_idx').on(table.status),
+  index('contact_messages_created_at_idx').on(table.createdAt),
+]);
+
 export const subscribers = pgTable('subscribers', {
   id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),

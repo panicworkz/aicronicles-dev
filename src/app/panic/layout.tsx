@@ -24,8 +24,7 @@ import {
   Sun,
   Moon,
   ChevronLeft,
-  Ruler,
-} from "lucide-react";
+  Ruler, Inbox,} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -66,6 +65,9 @@ export default function PanicAdminLayout({
         { href: "/panic/ads", label: "Ad Campaigns", icon: Megaphone },
         { href: "/panic/ad-rules", label: "Ad Rules", icon: Ruler },
         { href: "/panic/subscribers", label: "Subscribers", icon: Mail },
+        /* Iletisim formundan gelenler. Abonelikten AYRI bir ekran:
+           biri listeye katilma, oteki cevap bekleyen bir mesaj. */
+        { href: "/panic/messages", label: "Messages", icon: Inbox },
       ],
     },
     {
