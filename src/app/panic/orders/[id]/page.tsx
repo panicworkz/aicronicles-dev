@@ -257,11 +257,21 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
                   <span className="font-mono">{formatPrice(order.total, order.currency)}</span>
                 </div>
                 <div className="flex items-center justify-between text-muted-foreground">
-                  <span>Shipping & Handling</span>
-                  <span className="font-mono">$0.00</span>
+                  <span>Shipping &amp; Handling</span>
+                  {/* Kargo henuz hesaplanmiyor; "$0.00" yerine bunu
+                      yaziyoruz cunku sifir ucret vaadi vermiyoruz. */}
+                  <span className="font-mono">
+                    {order.shipping && parseFloat(order.shipping) > 0
+                      ? formatPrice(order.shipping, order.currency)
+                      : 'Not quoted yet'}
+                  </span>
                 </div>
+                {/* Etiket ODEME DURUMUNA gore. Once her sipariste
+                    "Total Amount Paid" yaziyordu — para gelmemis
+                    olsa bile. Havale ve kapida odemede para SONRA
+                    aliniyor, yani bu satir cogu sipariste yalandi. */}
                 <div className="flex items-center justify-between font-bold text-foreground text-sm pt-2 border-t border-border">
-                  <span>Total Amount Paid</span>
+                  <span>{order.paymentStatus === 'paid' ? 'Total paid' : 'Total due'}</span>
                   <span className="font-mono text-base text-primary">{formatPrice(order.total, order.currency)}</span>
                 </div>
               </div>
@@ -274,29 +284,49 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold text-primary flex items-center gap-2">
                   <FileDown className="size-4" />
-                  <span>Digital Asset Delivery & Token Access</span>
+                  <span>Digital delivery</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-xs">
+                {/* ONCE BURADA "link is automatically delivered to
+                    customer email" YAZIYORDU. Boyle bir otomasyon YOK:
+                    hicbir yerden e-posta gitmiyor. Personel dosyanin
+                    gittigini sanip beklerdi. */}
                 <p className="text-muted-foreground">
-                  Digital download link is automatically delivered to customer email (<span className="font-mono text-foreground">{order.customerEmail}</span>).
+                  Nothing is sent automatically. Send the file to{' '}
+                  <span className="font-mono text-foreground">{order.customerEmail}</span>{' '}
+                  once the payment is confirmed.
                 </p>
                 {items.filter((i) => i.productType === 'digital').map((item) => (
                   <div key={item.id} className="p-3 rounded-md bg-background border border-border flex items-center justify-between gap-3">
                     <div className="truncate">
                       <span className="font-semibold text-foreground block">{item.title}</span>
+                      {/* Adres yoksa UYDURMA bir tane yazilmiyordu:
+                          "https://assets.fabelo.com/bundle-2026.zip"
+                          diye var olmayan bir dosya gosteriliyordu ve
+                          yaninda "Test Download" dugmesi vardi. */}
                       <span className="text-[11px] text-muted-foreground font-mono truncate block">
-                        {item.digitalAssetUrl || 'https://assets.fabelo.com/bundle-2026.zip'}
+                        {item.digitalAssetUrl || 'No file attached to this product yet'}
                       </span>
                     </div>
-                    <a
-                      href={item.digitalAssetUrl || '#'}
-                      target="_blank"
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline shrink-0"
-                    >
-                      <ExternalLink className="size-3.5" />
-                      <span>Test Download</span>
-                    </a>
+                    {item.digitalAssetUrl ? (
+                      <a
+                        href={item.digitalAssetUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline shrink-0"
+                      >
+                        <ExternalLink className="size-3.5" />
+                        <span>Open file</span>
+                      </a>
+                    ) : (
+                      <Link
+                        href={`/panic/products`}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:underline shrink-0"
+                      >
+                        <span>Add one</span>
+                      </Link>
+                    )}
                   </div>
                 ))}
               </CardContent>

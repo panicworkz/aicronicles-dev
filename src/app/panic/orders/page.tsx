@@ -104,6 +104,19 @@ export default function PanicOrdersPage() {
     }
   };
 
+  /* Siparisin turleri. API bunu productTypes DIZISI olarak gonderiyor;
+     ekran ise primaryType okuyordu — oyle bir alan yok, o yuzden her
+     siparis 'physical'e dusuyordu. Dijital bir rehber listede
+     "Physical" ve "Needs Shipping" gorunuyordu. Stat kartlarindaki
+     hatanin aynisi: iki taraf ayni seye iki ad vermis.
+
+     Dizi olmasi da dogru — bir siparis hem kupa hem rehber
+     tasiyabiliyor; tek bir tur yazmak yalan olurdu. */
+  const turleri = (order: any): string[] => {
+    const t = Array.isArray(order?.productTypes) ? order.productTypes : [];
+    return t.length ? t : ['physical'];
+  };
+
   const getProductTypeBadge = (type: string) => {
     switch (type) {
       case 'digital':
@@ -117,7 +130,14 @@ export default function PanicOrdersPage() {
   };
 
   const getDeliveryAccessBadge = (order: any) => {
-    const type = order.primaryType || 'physical';
+    /* Karma sipariste kargolanacak bir sey varsa belirleyici odur:
+       kutu yola cikmadan siparis tamamlanmis sayilmaz. */
+    const turler = turleri(order);
+    const type = turler.includes('physical')
+      ? 'physical'
+      : turler.includes('service')
+        ? 'service'
+        : 'digital';
     const payment = order.paymentStatus;
     const status = order.orderStatus;
 
@@ -383,7 +403,11 @@ export default function PanicOrdersPage() {
                     </td>
 
                     <td className="py-3 px-4">
-                      {getProductTypeBadge(order.primaryType || 'physical')}
+                      <div className="flex flex-wrap gap-1">
+                        {turleri(order).map((t: string) => (
+                          <React.Fragment key={t}>{getProductTypeBadge(t)}</React.Fragment>
+                        ))}
+                      </div>
                     </td>
 
                     <td className="py-3 px-4">
