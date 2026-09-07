@@ -6,7 +6,8 @@ import {
   Plus,
   Trash2,
   Save,
-  GripVertical,
+  ChevronUp,
+  ChevronDown,
   Eye,
   EyeOff,
   ExternalLink,
@@ -145,6 +146,39 @@ export default function FormlarSayfasi() {
     } else toast.error(d?.message || d?.error || 'Could not add', { duration: 8000 });
   }
 
+  /** Sekmeyi bir sira yukari/asagi tasir ve hemen kaydeder.
+      Once listede bir tutamac ikonu vardi ama hicbir seye bagli
+      degildi: surukleneceini vaat edip hicbir sey yapmiyordu. */
+  async function sekmeTasi(id: number, yon: -1 | 1) {
+    const i = sekmeler.findIndex((s) => s.id === id);
+    const j = i + yon;
+    if (i < 0 || j < 0 || j >= sekmeler.length) return;
+    const yeni = [...sekmeler];
+    [yeni[i], yeni[j]] = [yeni[j], yeni[i]];
+    // Numaralar da kayiyor; sunucu da ayni sekilde yeniden yaziyor.
+    setSekmeler(yeni.map((s, k) => ({ ...s, sortOrder: k, no: String(k + 1).padStart(2, "0") })));
+    const y = await fetch("/api/contact-form", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order: yeni.map((s) => s.id) }),
+    });
+    const d = await y.json();
+    if (!d?.success) {
+      toast.error(d?.message || "Order could not be saved");
+      getir();
+    }
+  }
+
+  /** Alani sekme icinde tasir; kaydetmek "Save tab" ile. */
+  function alanTasi(i: number, yon: -1 | 1) {
+    if (!acik) return;
+    const j = i + yon;
+    if (j < 0 || j >= acik.fields.length) return;
+    const f = [...acik.fields];
+    [f[i], f[j]] = [f[j], f[i]];
+    guncelle({ fields: f });
+  }
+
   async function sekmeSil(id: number) {
     if (!confirm('Delete this tab and all of its fields?')) return;
     const y = await fetch(`/api/contact-form?id=${id}`, { method: 'DELETE' });
@@ -192,16 +226,18 @@ export default function FormlarSayfasi() {
           {/* Sekme listesi */}
           <div className="overflow-hidden rounded-lg border border-border">
             <ul className="divide-y divide-border">
-              {sekmeler.map((s) => (
-                <li key={s.id}>
+              {sekmeler.map((s, i) => (
+                <li
+                  key={s.id}
+                  className={`flex items-center transition-colors ${
+                    s.id === secili ? 'bg-primary/10' : 'hover:bg-muted/50'
+                  }`}
+                >
                   <button
                     type="button"
                     onClick={() => setSecili(s.id)}
-                    className={`flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors ${
-                      s.id === secili ? 'bg-primary/10' : 'hover:bg-muted/50'
-                    }`}
+                    className="flex min-w-0 flex-1 items-center gap-2.5 px-4 py-3 text-left"
                   >
-                    <GripVertical className="size-3.5 shrink-0 text-muted-foreground" />
                     <span className="font-mono text-[11px] text-muted-foreground">{s.no}</span>
                     <span className={`truncate text-sm ${s.isActive ? 'font-medium' : 'text-muted-foreground line-through'}`}>
                       {s.title}
@@ -210,6 +246,27 @@ export default function FormlarSayfasi() {
                       {s.fields.length}
                     </span>
                   </button>
+                  {/* Sira — sekmelerin formdaki sirasi. */}
+                  <div className="flex shrink-0 flex-col pr-2">
+                    <button
+                      type="button"
+                      aria-label="Move up"
+                      disabled={i === 0}
+                      onClick={() => sekmeTasi(s.id, -1)}
+                      className="text-muted-foreground disabled:opacity-25 hover:text-foreground"
+                    >
+                      <ChevronUp className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Move down"
+                      disabled={i === sekmeler.length - 1}
+                      onClick={() => sekmeTasi(s.id, 1)}
+                      className="text-muted-foreground disabled:opacity-25 hover:text-foreground"
+                    >
+                      <ChevronDown className="size-3.5" />
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -334,6 +391,26 @@ export default function FormlarSayfasi() {
                               />
                               Required
                             </label>
+                            <div className="flex flex-col">
+                              <button
+                                type="button"
+                                aria-label="Move field up"
+                                disabled={i === 0}
+                                onClick={() => alanTasi(i, -1)}
+                                className="text-muted-foreground disabled:opacity-25 hover:text-foreground"
+                              >
+                                <ChevronUp className="size-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                aria-label="Move field down"
+                                disabled={i === acik.fields.length - 1}
+                                onClick={() => alanTasi(i, 1)}
+                                className="text-muted-foreground disabled:opacity-25 hover:text-foreground"
+                              >
+                                <ChevronDown className="size-3.5" />
+                              </button>
+                            </div>
                             <Button
                               size="sm"
                               variant="ghost"

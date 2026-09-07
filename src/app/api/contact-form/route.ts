@@ -132,6 +132,32 @@ export async function PUT(req: NextRequest) {
   }
 }
 
+/**
+ * Siralama — sekmelerin ekrandaki sirasi.
+ *
+ * Ayri bir eylem: sira degistirmek IKI kaydi birden ilgilendiriyor ve
+ * tek tek PUT atmak arada yarim bir sira birakabilirdi. Gelen dizi
+ * kesin sirayi soyluyor, hepsi tek seferde yaziliyor.
+ */
+export async function PATCH(req: NextRequest) {
+  try {
+    const g = await req.json().catch(() => ({} as any));
+    const sira = Array.isArray(g?.order) ? g.order.map((x: unknown) => parseInt(String(x), 10)) : [];
+    if (!sira.length || sira.some((n: number) => !n)) {
+      return apiBadRequest('order: sekme id dizisi gerekli.');
+    }
+    for (const [i, id] of sira.entries()) {
+      await db
+        .update(schema.contactTabs)
+        .set({ sortOrder: i, no: String(i + 1).padStart(2, '0'), updatedAt: new Date() } as any)
+        .where(eq(schema.contactTabs.id, id));
+    }
+    return NextResponse.json({ success: true });
+  } catch (hata) {
+    return handleApiError(hata, 'contact-form.PATCH');
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
