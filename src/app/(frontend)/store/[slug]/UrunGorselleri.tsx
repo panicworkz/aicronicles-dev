@@ -43,7 +43,11 @@ export function UrunGorselleri({
         <img
           src={gorseller[secili]}
           alt={baslik}
-          className="max-h-full max-w-full object-contain"
+          /* h-full w-full: object-contain zaten orani koruyor, ama
+             max-* ile kucuk bir dosya kendi boyutunda kaliyordu —
+             thumbnail ile galeri gorselleri farkli boyutta oldugu icin
+             ilk gorsel kucuk, otekiler buyuk cikiyordu. */
+          className="h-full w-full object-contain"
         />
       </div>
 

@@ -1,111 +1,186 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ShoppingCart, Globe, Save, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import React, { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Store, Globe, Loader2, ExternalLink } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { SITE_DOMAIN } from '@/lib/seo';
+import { SITE, SITE_DOMAIN } from '@/lib/seo';
 
-export default function PanicSettingsPage() {
-  const [ecommerceEnabled, setEcommerceEnabled] = useState(false);
-  const [siteName, setSiteName] = useState('Fabelo');
-  const [domain, setDomain] = useState(SITE_DOMAIN);
-  const [saved, setSaved] = useState(false);
+/**
+ * Ayarlar.
+ *
+ * ONCEKI HALI TAMAMEN SAHTEYDI. "Save Settings" bir bildirim gosterip
+ * hicbir sey kaydetmiyordu; proje adi ve alan adi duzenlenebilir
+ * gorunuyor ama hicbir yere yazilmiyordu; "Enable Product Checkout"
+ * anahtari da hicbir seye bagli degildi. Editor ayari degistirdigini
+ * saniyordu — sipariş ekranlarindaki "Total Amount Paid" ile ayni
+ * aile: panel olmayan bir seyi olmus gibi gosteriyordu.
+ *
+ * Simdi burada YALNIZCA gercekten calisan bir sey var: magazanin
+ * disariya acik olup olmadigi. Degistirir degistirmez kaydediliyor
+ * (ayri bir "kaydet" dugmesi yok — tek anahtar icin gereksiz ve
+ * kaydedilmedigi halde kaydedildi sanmaya yol aciyordu).
+ *
+ * Okunan ama degistirilmeyen degerler (alan adi gibi) artik girdi
+ * kutusu degil, duz yazi: duzenlenemiyorsa duzenlenebilir gorunmemeli.
+ */
+export default function AyarlarSayfasi() {
+  const [magazaAcik, setMagazaAcik] = useState<boolean | null>(null);
+  const [kaydediliyor, setKaydediliyor] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaved(true);
-    toast.success('Project settings saved successfully');
-    setTimeout(() => setSaved(false), 3000);
-  };
+  const getir = useCallback(async () => {
+    try {
+      const y = await fetch('/api/settings');
+      const d = await y.json();
+      setMagazaAcik(Boolean(d?.settings?.magaza_acik));
+    } catch {
+      toast.error('Settings could not be loaded');
+      setMagazaAcik(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    getir();
+  }, [getir]);
+
+  async function magazaYaz(yeni: boolean) {
+    setKaydediliyor(true);
+    /* Once ekranda degisiyor, sonra kaydediliyor: anahtar hemen tepki
+       versin. Basarisiz olursa geri aliniyor. */
+    setMagazaAcik(yeni);
+    try {
+      const y = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'magaza_acik', value: yeni }),
+      });
+      const d = await y.json();
+      if (!d?.success) throw new Error(d?.message);
+      toast.success(
+        yeni
+          ? 'The store is now open to everyone'
+          : 'The store is closed — only signed-in staff can see it'
+      );
+    } catch {
+      setMagazaAcik(!yeni);
+      toast.error('That could not be saved');
+    } finally {
+      setKaydediliyor(false);
+    }
+  }
 
   return (
     <div className="space-y-6 pb-20">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Project & Engine Settings</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Configure site branding, AEO parameters, and modular features</p>
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          What is switched on for this site.
+        </p>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <Globe className="size-4 text-primary" />
-              <span>Site Identity</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="siteName">Project Name</Label>
-                <Input
-                  id="siteName"
-                  value={siteName}
-                  onChange={(e) => setSiteName(e.target.value)}
-                  className="text-xs"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="domain">Primary Domain</Label>
-                <Input
-                  id="domain"
-                  value={domain}
-                  onChange={(e) => setDomain(e.target.value)}
-                  className="font-mono text-xs text-primary"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <Store className="size-4 text-primary" />
+            <span>The store</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-start justify-between gap-6 rounded-lg border border-border bg-muted/30 p-4">
+            <div>
+              <p className="text-xs font-semibold text-foreground">
+                Open the store to everyone
+              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                While this is off, <span className="font-mono">/store</span> answers 404
+                for visitors, stays out of robots.txt and search, and is missing from the
+                footer. You can still see it while signed in.
+              </p>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <ShoppingCart className="size-4 text-primary" />
-              <span>Modular E-Commerce Engine</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
-              <div>
-                <p className="text-xs font-semibold text-foreground">Enable Product Checkout & Digital Commerce</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Stripe payment intents, cart drawer, and order processing
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEcommerceEnabled(!ecommerceEnabled)}
-                className={`w-11 h-6 rounded-full transition-colors relative p-0.5 ${
-                  ecommerceEnabled ? 'bg-primary' : 'bg-muted'
+              {magazaAcik === false && (
+                /* Acmadan once yapilmasi gerekenler BURADA yaziyor:
+                   anahtari cevirmek kolay, eksik birakilan bir sey
+                   sahte urunleri ve bos sirket bilgilerini disariya
+                   acar. */
+                <ul className="mt-3 space-y-1 text-[11px] text-muted-foreground">
+                  <li>
+                    Before you open it: fill in the{' '}
+                    <Link href="/panic/pages" className="underline">
+                      seller and bank details
+                    </Link>{' '}
+                    marked <span className="font-mono">....</span> in the legal pages
+                  </li>
+                  <li>
+                    Remove the demo products (their SKU starts with{' '}
+                    <span className="font-mono">DEMO-</span>)
+                  </li>
+                  <li>Have the sales contract read by a lawyer</li>
+                </ul>
+              )}
+            </div>
+
+            <button
+              type="button"
+              role="switch"
+              aria-checked={Boolean(magazaAcik)}
+              aria-label="Open the store to everyone"
+              disabled={magazaAcik === null || kaydediliyor}
+              onClick={() => magazaYaz(!magazaAcik)}
+              className={`relative h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors disabled:opacity-50 ${
+                magazaAcik ? 'bg-primary' : 'bg-muted-foreground/30'
+              }`}
+            >
+              <div
+                className={`size-5 rounded-full bg-background shadow-xs transition-transform ${
+                  magazaAcik ? 'translate-x-5' : 'translate-x-0'
                 }`}
-              >
-                <div
-                  className={`size-5 rounded-full bg-background shadow-xs transition-transform ${
-                    ecommerceEnabled ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-          </CardContent>
-        </Card>
+              />
+            </button>
+          </div>
 
-        <div className="flex items-center justify-end gap-3">
-          {saved && (
-            <span className="text-xs text-primary font-medium flex items-center gap-1">
-              <Check className="size-3.5" />
-              Settings saved!
-            </span>
+          {magazaAcik === null && (
+            <p className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" /> Reading the current setting…
+            </p>
           )}
-          <Button type="submit" className="gap-1.5 font-medium">
-            <Save className="size-3.5" />
-            <span>Save Settings</span>
-          </Button>
-        </div>
-      </form>
+        </CardContent>
+      </Card>
+
+      {/* Okunan, degistirilmeyen degerler. Girdi kutusu DEGIL: bunlar
+          ortam degiskeninden geliyor ve panelden degistirilemiyor;
+          kutu icinde gostermek duzenlenebilir sanmaya yol aciyordu. */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <Globe className="size-4 text-primary" />
+            <span>Where this site lives</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <dl className="text-xs">
+            <div className="flex items-center justify-between border-b border-border py-2.5">
+              <dt className="text-muted-foreground">Address</dt>
+              <dd className="font-mono">
+                <a
+                  href={SITE}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-primary hover:underline"
+                >
+                  {SITE_DOMAIN} <ExternalLink className="size-3" />
+                </a>
+              </dd>
+            </div>
+            <div className="flex items-center justify-between py-2.5">
+              <dt className="text-muted-foreground">Set in</dt>
+              <dd className="font-mono text-muted-foreground">
+                NEXT_PUBLIC_SITE_URL
+              </dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
     </div>
   );
 }

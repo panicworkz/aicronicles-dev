@@ -14,10 +14,11 @@ import { fiyat } from "@/lib/magaza";
  * hicbir yolu kalmiyordu — adresi elle yazmak disinda. Dergi basliginda
  * da sepet yok, cunku o baslik yayin tarafina ait.
  *
- * YERI: magaza bolumunun ICINDE, derginin basliginin ALTINDA. Ilk
- * halinde ekranin en tepesine yapisan bir cubuktu ve derginin
- * basliginin bile ustunde duruyordu — yani siteye ait bir sey gibi
- * gorunuyordu, oysa yalnizca magazayi ilgilendiriyor.
+ * YERI: magazanin KENDI baslik blogunun ALTINDA — "§ STORE / From the
+ * desk"ten sonra. Once ekranin en tepesine yapisiyordu (derginin
+ * basliginin bile ustunde, siteye ait bir sey gibi), sonra <main>'in
+ * ilk ogesi oldu ama bu sefer de magaza baslinin ustunde bir afis
+ * gibi duruyordu. Artik bolumun icinde, icerigin bir parcasi.
  *
  * Serit yalnizca sepette bir sey VARKEN gorunuyor: bos sepet icin
  * kalici bir cubuk tutmak, olmayan bir seyi surekli hatirlatmak olurdu.
@@ -34,17 +35,25 @@ export function SepetSeridi() {
   if (!hazir || toplamAdet === 0) return null;
 
   return (
-    <div className="mag-wrap pt-6">
+    <div className="mag-wrap pt-8">
       <Link
         href="/store/cart"
-        className="flex items-center gap-3 px-4 py-3 transition-opacity hover:opacity-90"
-        style={{ background: "var(--ink)", color: "var(--paper)" }}
+        className="flex flex-wrap items-center gap-x-5 gap-y-1 px-5 py-3.5 transition-opacity hover:opacity-90"
+        style={{ background: "var(--ink)" }}
       >
-        <span className="byline">
+        {/* RENK HER SPAN'DA AYRI YAZILI. Kapsayiciya color vermek
+            yetmiyordu: .mag .byline kendi rengini (--ink-3) tanimliyor
+            ve mirasi eziyordu — koyu zeminde gri yazi cikiyordu,
+            okunmuyordu. */}
+        <span className="byline" style={{ color: "var(--paper)" }}>
           {toplamAdet} {toplamAdet === 1 ? "ITEM" : "ITEMS"} IN YOUR BASKET
         </span>
-        <span className="ml-auto byline">{fiyat(araToplam, paraBirimi)}</span>
-        <span className="byline">CHECKOUT →</span>
+        <span className="ml-auto display text-[1.05rem]" style={{ color: "var(--paper)" }}>
+          {fiyat(araToplam, paraBirimi)}
+        </span>
+        <span className="byline" style={{ color: "var(--accent)" }}>
+          CHECKOUT →
+        </span>
       </Link>
     </div>
   );

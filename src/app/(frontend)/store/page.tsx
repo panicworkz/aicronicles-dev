@@ -53,9 +53,6 @@ export default async function MagazaSayfasi() {
   ]);
 
   const kartlar = urunler as unknown as KartUrun[];
-  const kategoriAdi = new Map(
-    (kategoriler as any[]).map((k) => [k.id, k.name as string])
-  );
 
   /* Turlere gore sayim — vitrinin ustunde ne satildigini tek satirda
      soylemek icin. Uydurma bir tanitim cumlesi yazmaktansa sayfada
@@ -80,8 +77,6 @@ export default async function MagazaSayfasi() {
       <MagazineHeader />
 
       <main>
-        {/* Sepete giden kalici yol — derginin basliginin ALTINDA. */}
-        <SepetSeridi />
         {/* --- Vitrin kunyesi --- */}
         <header className="mag-wrap pt-12 sm:pt-16">
           <div className="rule-heavy pt-5">
@@ -105,6 +100,10 @@ export default async function MagazaSayfasi() {
             )}
           </div>
         </header>
+
+        {/* Sepete giden kalici yol — magazanin KENDI baslik blogunun
+            altinda, bolumun bir parcasi olarak. */}
+        <SepetSeridi />
 
         {kartlar.length === 0 ? (
           /* Bos vitrin. Once burada hicbir sey yoktu — urun silinince

@@ -56,7 +56,7 @@ export function UrunKarti({ urun, no }: { urun: KartUrun; no?: number }) {
                  sise, kutu ve etiketlerin kenarlari kesiliyordu —
                  okurun tam olarak neyi satin aldigini gormesi gereken
                  tek yer bu gorsel. */
-              className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
+              className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
             />
           ) : (
             <div

@@ -133,13 +133,14 @@ export default async function UrunSayfasi({ params }: PageProps) {
       <MagazineHeader />
 
       <main>
-        {/* Sepete giden kalici yol — derginin basliginin ALTINDA. */}
-        <SepetSeridi />
         <div className="mag-wrap pt-10">
           <Link href="/store" className="byline hover:text-[var(--accent-ink)]">
             ← STORE
           </Link>
         </div>
+
+        {/* Sepete giden kalici yol — magaza bolumunun icinde. */}
+        <SepetSeridi />
 
         <section className="mag-wrap pt-6">
           <div className="grid items-start gap-10 lg:grid-cols-12 lg:gap-14">

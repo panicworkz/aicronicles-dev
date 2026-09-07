@@ -15,11 +15,6 @@ import { fiyat as bicimliFiyat, TUR_VAADI, turu } from "@/lib/magaza";
  * oldugu ve nasil odeyecegi.
  */
 
-type Alan = {
-  ad: string;
-  soyad?: never;
-};
-
 export function SepetEkrani() {
   const { kalemler, hazir, adetYaz, cikar, araToplam, paraBirimi, bosalt } = useSepet();
   const router = useRouter();
@@ -127,7 +122,7 @@ export function SepetEkrani() {
               >
                 {k.gorsel ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={k.gorsel} alt="" className="max-h-full max-w-full object-contain" />
+                  <img src={k.gorsel} alt="" className="h-full w-full object-contain" />
                 ) : null}
               </Link>
 
