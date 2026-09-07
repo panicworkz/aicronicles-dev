@@ -15,6 +15,9 @@ import {
   RotateCcw,
   FileDown,
   Briefcase,
+  Landmark,
+  Banknote,
+  CreditCard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,12 +33,17 @@ export default function PanicOrdersPage() {
     totalOrders: 0,
     paidCount: 0,
     pendingFulfillmentCount: 0,
+    awaitingTransferCount: 0,
+    awaitingTransferTotal: 0,
   });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  /* Odeme yontemi suzgeci. Gunluk is "hangi havaleleri bekliyorum"
+     oldugu icin bu, durum suzgecinden daha cok kullanilacak. */
+  const [methodFilter, setMethodFilter] = useState('all');
 
   const fetchOrders = async () => {
     try {
@@ -45,6 +53,7 @@ export default function PanicOrdersPage() {
       if (paymentFilter !== 'all') url.searchParams.set('paymentStatus', paymentFilter);
       if (statusFilter !== 'all') url.searchParams.set('orderStatus', statusFilter);
       if (typeFilter !== 'all') url.searchParams.set('productType', typeFilter);
+      if (methodFilter !== 'all') url.searchParams.set('paymentMethod', methodFilter);
 
       const res = await fetch(url.toString());
       const data = await res.json();
@@ -64,7 +73,7 @@ export default function PanicOrdersPage() {
       fetchOrders();
     }, 200);
     return () => clearTimeout(timer);
-  }, [search, paymentFilter, statusFilter, typeFilter]);
+  }, [search, paymentFilter, statusFilter, typeFilter, methodFilter]);
 
   const getPaymentBadge = (status: string) => {
     switch (status) {
@@ -75,6 +84,23 @@ export default function PanicOrdersPage() {
       case 'pending':
       default:
         return <Badge variant="secondary" className="text-[10px] text-amber-600 dark:text-amber-400 font-medium"><Clock className="size-3 mr-1" /> Pending</Badge>;
+    }
+  };
+
+  /* Odeme YONTEMI — durumdan ayri bir sey. "Pending" tek basina
+     eksik bilgi: havale mi bekliyoruz yoksa parayi kurye mi alacak?
+     Ilkinde yapacak bir isimiz var, ikincisinde yok. */
+  const getMethodBadge = (method: string | null) => {
+    switch (method) {
+      case 'bank_transfer':
+        return <Badge variant="outline" className="text-[10px] font-medium gap-1"><Landmark className="size-3" /> Transfer</Badge>;
+      case 'cash_on_delivery':
+        return <Badge variant="outline" className="text-[10px] font-medium gap-1"><Banknote className="size-3" /> On delivery</Badge>;
+      case 'card':
+        return <Badge variant="outline" className="text-[10px] font-medium gap-1"><CreditCard className="size-3" /> Card</Badge>;
+      default:
+        /* Bu satirdan onceki siparislerde yontem kayitli degil. */
+        return <span className="text-[10px] text-muted-foreground">—</span>;
     }
   };
 
@@ -190,15 +216,40 @@ export default function PanicOrdersPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Pending Fulfillment</span>
-              <div className="text-xl font-bold font-mono text-amber-500">{stats.pendingFulfillmentCount} Items</div>
-            </div>
-            <div className="size-9 rounded-md bg-amber-500/10 text-amber-500 flex items-center justify-center">
-              <Package className="size-5" />
-            </div>
+        {/* Bu kart ONCE "Pending Fulfillment" idi ve HEP BOS cikiyordu:
+            API pendingFulfillment gonderiyor, ekran
+            pendingFulfillmentCount okuyordu. Adlar esitlendi.
+
+            Yerine gecen olcu daha ise yarar: bekleyen havaleler.
+            Kapida odeme buraya girmiyor — orada parayi kurye aliyor,
+            bizim takip edecegimiz bir sey yok. Tiklayinca liste o
+            siparislere suzuluyor. */}
+        <Card
+          className={methodFilter === 'bank_transfer' && paymentFilter === 'pending' ? 'ring-1 ring-primary' : ''}
+        >
+          <CardContent className="p-0">
+            <button
+              type="button"
+              onClick={() => {
+                const acik = methodFilter === 'bank_transfer' && paymentFilter === 'pending';
+                setMethodFilter(acik ? 'all' : 'bank_transfer');
+                setPaymentFilter(acik ? 'all' : 'pending');
+              }}
+              className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-muted/50"
+            >
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Awaiting Transfer</span>
+                <div className="text-xl font-bold font-mono text-amber-500">
+                  {stats.awaitingTransferCount ?? 0}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    {formatPrice(stats.awaitingTransferTotal ?? 0, 'USD')}
+                  </span>
+                </div>
+              </div>
+              <div className="size-9 rounded-md bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                <Landmark className="size-5" />
+              </div>
+            </button>
           </CardContent>
         </Card>
 
@@ -252,6 +303,17 @@ export default function PanicOrdersPage() {
                 <option value="paid">Paid</option>
                 <option value="pending">Pending</option>
                 <option value="refunded">Refunded</option>
+              </select>
+
+              <select
+                value={methodFilter}
+                onChange={(e) => setMethodFilter(e.target.value)}
+                className="h-8.5 rounded-md border bg-background px-3 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary w-full md:w-40"
+              >
+                <option value="all">How paid: All</option>
+                <option value="bank_transfer">Bank transfer</option>
+                <option value="cash_on_delivery">On delivery</option>
+                <option value="card">Card</option>
               </select>
 
               <select
@@ -325,7 +387,13 @@ export default function PanicOrdersPage() {
                     </td>
 
                     <td className="py-3 px-4">
-                      {getPaymentBadge(order.paymentStatus)}
+                      <div className="flex flex-col items-start gap-1">
+                        {getPaymentBadge(order.paymentStatus)}
+                        {/* Durumun altinda YONTEM: "Pending" tek basina
+                            eksik bilgi, havale mi bekliyoruz yoksa
+                            parayi kurye mi alacak? */}
+                        {getMethodBadge(order.paymentMethod)}
+                      </div>
                     </td>
 
                     <td className="py-3 px-4">

@@ -18,6 +18,9 @@ export async function GET(request: Request) {
     const paymentStatus = searchParams.get('paymentStatus');
     const orderStatus = searchParams.get('orderStatus');
     const typeFilter = searchParams.get('productType');
+    /* Odeme YONTEMI suzgeci. Gunluk is "hangi havaleleri bekliyorum"
+       oldugu icin durum degil yontem uzerinden de suzulebilmeli. */
+    const paymentMethod = searchParams.get('paymentMethod');
     const limit = parseInt(searchParams.get('limit') || '100', 10);
 
     const conditions: any[] = [];
@@ -38,6 +41,10 @@ export async function GET(request: Request) {
 
     if (orderStatus && orderStatus !== 'all') {
       conditions.push(eq(schema.orders.orderStatus, orderStatus));
+    }
+
+    if (paymentMethod && paymentMethod !== 'all') {
+      conditions.push(eq(schema.orders.paymentMethod, paymentMethod));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -78,29 +85,42 @@ export async function GET(request: Request) {
 
     // Calculate metrics
     let totalRev = 0;
-    let pendingFulfillment = 0;
-    let digitalCount = 0;
+    let pendingFulfillmentCount = 0;
+    let paidCount = 0;
+    /* Bekleyen havale: para HENUZ GELMEDI ve gelmesini biz
+       bekliyoruz. Kapida odeme bunun disinda — orada parayi kurye
+       aliyor, bizim yapacagimiz bir sey yok. */
+    let awaitingTransferCount = 0;
+    let awaitingTransferTotal = 0;
 
     for (const o of enrichedOrders) {
       if (o.paymentStatus === 'paid') {
         totalRev += parseFloat(String(o.total || '0'));
+        paidCount++;
       }
       if (o.orderStatus === 'processing') {
-        pendingFulfillment++;
+        pendingFulfillmentCount++;
       }
-      if (o.productTypes.includes('digital')) {
-        digitalCount++;
+      if (o.paymentStatus === 'pending' && o.paymentMethod === 'bank_transfer') {
+        awaitingTransferCount++;
+        awaitingTransferTotal += parseFloat(String(o.total || '0'));
       }
     }
 
     return NextResponse.json({
       success: true,
       orders: filteredOrders,
+      /* Alan adlari EKRANIN OKUDUGU adlar. Once API pendingFulfillment
+         ve digitalOrders gonderiyordu, ekran ise paidCount ve
+         pendingFulfillmentCount okuyordu; iki kart bu yuzden hep bos
+         cikiyordu. */
       stats: {
         totalOrders: enrichedOrders.length,
         totalRevenue: totalRev,
-        pendingFulfillment,
-        digitalOrders: digitalCount,
+        paidCount,
+        pendingFulfillmentCount,
+        awaitingTransferCount,
+        awaitingTransferTotal,
       },
     });
   } catch (err: unknown) {

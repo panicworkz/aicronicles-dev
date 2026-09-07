@@ -34,6 +34,7 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
 
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [referans, setReferans] = useState('');
   const [order, setOrder] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
 
@@ -63,6 +64,31 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
   useEffect(() => {
     fetchOrder();
   }, [orderId]);
+
+  /* Havale onayi. Odemeyi "paid" yapmak tek basina yetmiyor: hangi
+     dekontla eslestirdigimizi de yazmak gerekiyor, yoksa alti ay sonra
+     "bu para geldi mi, hangi havaleydi" sorusunun cevabi kalmiyor. */
+  const odemeOnayla = async () => {
+    setUpdating(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentStatus: 'paid', paymentReference: referans.trim() || null }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setOrder(data.order);
+        toast.success('Payment confirmed');
+      } else {
+        toast.error(data.message || 'Could not confirm the payment');
+      }
+    } catch {
+      toast.error('Could not confirm the payment');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const updateStatus = async (field: 'paymentStatus' | 'orderStatus', value: string) => {
     setUpdating(true);
@@ -379,27 +405,80 @@ export default function PanicOrderDetailPage({ params }: { params: Promise<{ id:
                 </Button>
               </div>
 
-              <div className="pt-3 border-t border-border flex items-center justify-between">
-                <span className="text-xs font-medium text-foreground">Payment Status:</span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant={order.paymentStatus === 'paid' ? 'default' : 'outline'}
-                    size="xs"
-                    disabled={updating}
-                    onClick={() => updateStatus('paymentStatus', 'paid')}
-                  >
-                    Paid
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={order.paymentStatus === 'pending' ? 'secondary' : 'outline'}
-                    size="xs"
-                    disabled={updating}
-                    onClick={() => updateStatus('paymentStatus', 'pending')}
-                  >
-                    Pending
-                  </Button>
+              {/* ODEME.
+                  Once burada yalnizca uc durum dugmesi vardi ve yontem
+                  hicbir yerde gorunmuyordu: "Pending" yaziyordu ama
+                  havale mi bekliyoruz yoksa parayi kurye mi alacak,
+                  belli degildi. Ilkinde yapacak bir isimiz var,
+                  ikincisinde yok. */}
+              <div className="pt-4 border-t border-border space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-foreground">Payment</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {order.paymentMethod === 'bank_transfer'
+                      ? 'Bank transfer'
+                      : order.paymentMethod === 'cash_on_delivery'
+                        ? 'Cash on delivery'
+                        : order.paymentMethod === 'card'
+                          ? 'Card'
+                          : 'Not recorded'}
+                  </span>
+                </div>
+
+                {order.paymentStatus !== 'paid' ? (
+                  <div className="rounded-md border border-border p-3 space-y-2.5">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      {order.paymentMethod === 'cash_on_delivery'
+                        ? 'The courier collects the money. Confirm once it has reached you.'
+                        : 'Confirm once the transfer lands. Note which payment it was — the customer was asked to quote the order number.'}
+                    </p>
+                    <Input
+                      value={referans}
+                      onChange={(e) => setReferans(e.target.value)}
+                      placeholder={
+                        order.paymentMethod === 'cash_on_delivery'
+                          ? 'Receipt number (optional)'
+                          : 'Transfer reference (optional)'
+                      }
+                      className="h-8 text-xs"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={updating}
+                      onClick={odemeOnayla}
+                      className="w-full"
+                    >
+                      {updating ? 'Saving…' : 'Confirm payment received'}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3">
+                    <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                      Payment received
+                    </p>
+                    {order.paymentReference && (
+                      <p className="mt-1 font-mono text-[11px] text-muted-foreground break-all">
+                        {order.paymentReference}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Geri alma. Ayri ve sonda: yanlislikla basilacak bir
+                    yerde durmamali. */}
+                <div className="flex items-center justify-end gap-2">
+                  {order.paymentStatus === 'paid' && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      disabled={updating}
+                      onClick={() => updateStatus('paymentStatus', 'pending')}
+                    >
+                      Undo — not received
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     variant={order.paymentStatus === 'refunded' ? 'destructive' : 'outline'}
