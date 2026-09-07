@@ -212,11 +212,16 @@ export default function FormlarSayfasi() {
 
   async function sekmeSil(id: number) {
     const s = sekmeler.find((x) => x.id === id);
+    /* Soru sayisi 0 olabiliyor; "0 question(s)" diye yazdirmak yerine
+       o cumleyi hic kurmuyoruz. 1 ve digerleri de ayri. */
+    const n = s?.fields.length ?? 0;
+    const sorular =
+      n === 0 ? '' : n === 1 ? 'Its one question goes with it, and t' : `Its ${n} questions go with it, and t`;
     const onay = await onayla({
       baslik: `Delete “${s?.title ?? 'this tab'}”?`,
       aciklama:
-        `Its ${s?.fields.length ?? 0} question(s) go with it, and the tab disappears from the ` +
-        `contact form. Messages already received are kept. This cannot be undone.`,
+        `${sorular || 'T'}he tab disappears from the contact form. Messages already ` +
+        `received are kept. This cannot be undone.`,
       onayYazisi: 'Delete tab',
       yikici: true,
     });
