@@ -16,13 +16,45 @@ export const dynamic = 'force-dynamic';
 
 const TURLER = ['text', 'select'];
 
+/**
+ * Alan adini ETIKETTEN uretir.
+ *
+ * Once panel bunu editore yazdiriyordu: "general_category" gibi bir
+ * dize, alt cizgiyle. Editorun boyle bir sey bilmesi gerekmiyor ve
+ * yanlis yazilirsa sessizce bozuluyor.
+ *
+ * Guvenle uretilebiliyor cunku bu ad YALNIZCA HTML alan adi olarak
+ * kullaniliyor; gelen mesaj kaydi alanlari ETIKETE gore sakliyor
+ * (ContactForm: ekAlanlar[a.etiket]). Yani ad degisse bile eski
+ * mesajlar okunur kaliyor.
+ */
+function adUret(etiket: string, alinanlar: Set<string>): string {
+  const kok =
+    etiket
+      .toLowerCase()
+      .replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 60) || 'alan';
+  // Ayni sekmede iki alan ayni etiketi tasiyabilir; ad benzersiz olmali.
+  let ad = kok;
+  let n = 2;
+  while (alinanlar.has(ad)) ad = `${kok}_${n++}`;
+  alinanlar.add(ad);
+  return ad;
+}
+
 /** Sekmeyi alanlariyla birlikte kaydeder. */
 async function alanlariYaz(tabId: number, alanlar: any[]) {
   await db.delete(schema.contactFields).where(eq(schema.contactFields.tabId, tabId));
+  const alinanlar = new Set<string>();
   for (const [i, a] of (alanlar ?? []).entries()) {
-    const ad = String(a?.name ?? '').trim();
     const etiket = String(a?.label ?? '').trim();
-    if (!ad || !etiket) continue;
+    if (!etiket) continue;
+    /* Ad panelden gelmiyor; etiketten uretiliyor. Eski kayitlarin adi
+       geliyorsa da onu degil etiketi esas aliyoruz — tek kaynak. */
+    const ad = adUret(etiket, alinanlar);
     await db.insert(schema.contactFields).values({
       tabId,
       name: ad.slice(0, 80),

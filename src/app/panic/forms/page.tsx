@@ -11,7 +11,6 @@ import {
   Eye,
   EyeOff,
   ExternalLink,
-  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +27,15 @@ import { toast } from 'sonner';
  * sayfalardaki baglantilar bu degeri kullaniyor, o yuzden degistirmek
  * o baglantilari kirar — ekran bunu yaninda yaziyor.
  */
+
+/** Sekmeye baglanabilecek sabit sayfalar — elle yol yazdirmak yerine. */
+const SAYFALAR = [
+  { yol: '/about', ad: 'About' },
+  { yol: '/advertise', ad: 'Advertise' },
+  { yol: '/sponsor', ad: 'Sponsor' },
+  { yol: '/terms-and-conditions', ad: 'Terms & conditions' },
+  { yol: '/data-and-privacy', ad: 'Data & privacy' },
+];
 
 type Alan = {
   id?: number;
@@ -108,8 +116,10 @@ export default function FormlarSayfasi() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: acik.id,
-          key: acik.key,
-          no: acik.no,
+          /* key ve no GONDERILMIYOR: ikisi de panelde duzenlenmiyor.
+             key adres parametresi, no ise siradan uretiliyor
+             (bkz. PATCH). Gonderilseydi ekrandaki eski bir deger
+             sunucudakini geri yazabilirdi. */
           title: acik.title,
           summary: acik.summary,
           page: acik.page,
@@ -280,61 +290,65 @@ export default function FormlarSayfasi() {
               </div>
             ) : (
               <div className="space-y-6 p-5">
-                {/* Sekme bilgileri */}
+                {/* Sekme bilgileri.
+                    URL anahtari ve numara ARTIK INPUT DEGIL: ikisi de
+                    editorun bilmesi gerekmeyen ic degerler. Numara
+                    siradan uretiliyor, anahtar ise adres parametresi —
+                    elle degistirilmesi statik sayfalardaki baglantilari
+                    kirar. Anahtar asagida bilgi olarak duruyor. */}
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      TITLE
+                      TAB NAME
                     </label>
                     <Input value={acik.title} onChange={(e) => guncelle({ title: e.target.value })} />
                   </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      URL KEY
-                    </label>
-                    <Input
-                      value={acik.key}
-                      onChange={(e) => guncelle({ key: e.target.value })}
-                      className="font-mono"
-                    />
-                    <p className="mt-1 flex items-start gap-1 text-[11px] text-amber-600">
-                      <AlertTriangle className="mt-px size-3 shrink-0" />
-                      /contact?type={acik.key} — the static pages link with this. Change it
-                      and those links stop opening this tab.
-                    </p>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      NUMBER
-                    </label>
-                    <Input value={acik.no} onChange={(e) => guncelle({ no: e.target.value })} className="font-mono" />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      LINKED PAGE
-                    </label>
-                    <Input
-                      value={acik.page ?? ''}
-                      onChange={(e) => guncelle({ page: e.target.value })}
-                      placeholder="/advertise"
-                      className="font-mono"
-                    />
-                  </div>
                   <div className="sm:col-span-2">
                     <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      SUMMARY — shown under the tab title
+                      DESCRIPTION — shown under the tab name
                     </label>
                     <Input value={acik.summary ?? ''} onChange={(e) => guncelle({ summary: e.target.value })} />
                   </div>
                   <div className="sm:col-span-2">
                     <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      MESSAGE PROMPT — the question above the message box
+                      QUESTION ABOVE THE MESSAGE BOX
                     </label>
                     <Input
                       value={acik.messageLabel}
                       onChange={(e) => guncelle({ messageLabel: e.target.value })}
                     />
                   </div>
+                  <div className="sm:col-span-2">
+                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                      WHICH PAGE SENDS PEOPLE HERE
+                    </label>
+                    <select
+                      value={acik.page ?? ''}
+                      onChange={(e) => guncelle({ page: e.target.value })}
+                      className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+                    >
+                      <option value="">— none —</option>
+                      {SAYFALAR.map((x) => (
+                        <option key={x.yol} value={x.yol}>
+                          {x.ad}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Adres — bilgi, duzenlenecek bir alan degil. */}
+                  <p className="sm:col-span-2 text-[12px] text-muted-foreground">
+                    Opens at{' '}
+                    <a
+                      href={`/contact?type=${acik.key}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-mono text-foreground underline underline-offset-2"
+                    >
+                      /contact?type={acik.key}
+                    </a>
+                    . This address is fixed — the pages that link here use it.
+                  </p>
                 </div>
 
                 {/* Alanlar */}
@@ -350,7 +364,7 @@ export default function FormlarSayfasi() {
                         guncelle({
                           fields: [
                             ...acik.fields,
-                            { name: '', label: '', type: 'text', hint: '', required: false, options: [] },
+                            { name: '', label: '', type: 'text', hint: '', required: false, options: [] }, // ad kaydederken etiketten uretiliyor
                           ],
                         })
                       }
@@ -362,25 +376,23 @@ export default function FormlarSayfasi() {
                   <div className="space-y-3">
                     {acik.fields.map((f, i) => (
                       <div key={i} className="rounded-md border border-border p-3">
-                        <div className="grid gap-3 sm:grid-cols-[1fr_1fr_120px_auto]">
+                        {/* Alan adi burada YOK: etiketten uretiliyor.
+                            Editorun "general_category" gibi bir dize
+                            yazmasi gerekmiyordu ve yanlis yazilinca
+                            sessizce bozuluyordu. */}
+                        <div className="grid gap-3 sm:grid-cols-[1fr_140px_auto]">
                           <Input
                             value={f.label}
                             onChange={(e) => alanGuncelle(i, { label: e.target.value })}
-                            placeholder="Label — shown to the visitor"
-                          />
-                          <Input
-                            value={f.name}
-                            onChange={(e) => alanGuncelle(i, { name: e.target.value })}
-                            placeholder="name (a–z, _)"
-                            className="font-mono text-[13px]"
+                            placeholder="Question shown to the visitor"
                           />
                           <select
                             value={f.type}
                             onChange={(e) => alanGuncelle(i, { type: e.target.value })}
                             className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
                           >
-                            <option value="text">Text</option>
-                            <option value="select">Choice</option>
+                            <option value="text">Free text</option>
+                            <option value="select">Pick from a list</option>
                           </select>
                           <div className="flex items-center gap-2">
                             <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -433,14 +445,14 @@ export default function FormlarSayfasi() {
                               })
                             }
                             rows={Math.max(3, f.options.length + 1)}
-                            placeholder="One option per line"
+                            placeholder="One answer per line — the visitor picks one"
                             className="mt-3 w-full rounded-md border border-input bg-transparent p-2 text-[13px]"
                           />
                         ) : (
                           <Input
                             value={f.hint ?? ''}
                             onChange={(e) => alanGuncelle(i, { hint: e.target.value })}
-                            placeholder="Placeholder text (optional)"
+                            placeholder="Hint inside the box (optional)"
                             className="mt-3"
                           />
                         )}
