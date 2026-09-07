@@ -26,11 +26,17 @@ const SOSYAL = [
   { etiket: "X", baslik: "X", adres: "https://x.com/panicworkz/" },
 ];
 
+/* Yalnizca EDITORYAL bolumler.
+   "Store" da buradaydi — Personal Finance ve Career'in yaninda, ayni
+   bicimde. Okur bir bolume girer gibi tiklayip tohumlama urunleriyle
+   dolu, odemesi calismayan bir dukkana dusuyordu. Magaza artik
+   disariya kapali (bkz. (frontend)/store/layout.tsx); dergiye uygun
+   hale gelip gercek odeme baglaninca bu listeye degil, kendi yerine
+   geri gelecek. */
 const SECTIONS = [
   { label: "Personal Finance", href: "/category/personal-finance" },
   { label: "Career", href: "/category/career" },
   { label: "AI & Tech", href: "/category/ai-tech" },
-  { label: "Store", href: "/store" },
 ];
 
 /** Sutun basligi — bolum isaretleriyle ayni dil */

@@ -22,8 +22,14 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        // Panel ve uclar arama sonuclarinda isi yok.
-        disallow: ["/panic", "/panic/", "/api/", "/unsubscribe"],
+        /* Panel ve uclar arama sonuclarinda isi yok.
+
+           /store da burada: magaza disariya kapali ve zaten 404
+           donuyor (bkz. (frontend)/store/layout.tsx). Bu satir onun
+           yerine gecmiyor, YANINA duruyor — daha once kunyeden
+           baglanti verildigi icin adresi taramis bir bot tekrar
+           denemesin diye. Magaza acildiginda bu satir kalkacak. */
+        disallow: ["/panic", "/panic/", "/api/", "/unsubscribe", "/store"],
       },
     ],
     /* Yalnizca ana harita duyuruluyor. sitemap-news.xml da var ama o

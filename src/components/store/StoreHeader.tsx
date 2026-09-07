@@ -4,7 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 import { ShoppingBag, Sparkles } from 'lucide-react';
 import { CurrencySwitcher } from '@/components/store/CurrencySwitcher';
-import { Button } from '@/components/ui/button';
 
 export function StoreHeader() {
   return (
@@ -26,11 +25,11 @@ export function StoreHeader() {
           {/* Currency Switcher */}
           <CurrencySwitcher />
 
-          <Link href="/panic/products" target="_blank">
-            <Button variant="outline" size="sm" className="h-8 text-xs font-medium">
-              CMS Admin
-            </Button>
-          </Link>
+          {/* "CMS Admin" dugmesi buradaydi ve /panic/products'a
+              gidiyordu. Magaza herkese acikken bu dugme de herkese
+              aciktı: yonetim panelinin adresini ziyaretciye
+              gosteriyordu. Panele gitmek isteyen editor zaten adresi
+              biliyor; okura soylenecek bir sey degil. */}
         </div>
       </div>
     </header>
