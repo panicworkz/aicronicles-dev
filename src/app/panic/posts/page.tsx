@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { onayla } from "@/components/ui/modal";
 import {
   Table,
   TableHeader,
@@ -16,6 +17,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { LivePreviewDrawer } from "@/components/preview/LivePreviewDrawer";
+import { toast } from "sonner";
 
 export default function PanicPostsListPage() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -53,15 +55,28 @@ export default function PanicPostsListPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this guide?")) return;
+    const onay = await onayla({
+      baslik: "Delete this guide?",
+      aciklama:
+        "It comes off the site straight away and its address stops working. This cannot be undone.",
+      onayYazisi: "Delete guide",
+      yikici: true,
+    });
+    if (!onay) return;
 
     try {
       const res = await fetch(`/api/posts/${id}`, { method: "DELETE" });
       if (res.ok) {
         setPosts(posts.filter((p) => p.id !== id));
+        toast.success("Guide deleted");
+      } else {
+        /* Once burada alert() vardi: tarayicinin kutusu, sayfayi
+           dondurup tek bir OK dugmesi gosteriyordu. Panelin geri
+           kalani zaten toast kullaniyor. */
+        toast.error("Could not delete the guide");
       }
-    } catch (err) {
-      alert("Failed to delete post");
+    } catch {
+      toast.error("Could not delete the guide");
     }
   };
 

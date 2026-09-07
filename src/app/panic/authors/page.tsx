@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { onayla } from '@/components/ui/modal';
 import { toast } from 'sonner';
 
 export default function PanicAuthorsPage() {
@@ -112,7 +113,13 @@ export default function PanicAuthorsPage() {
   };
 
   const handleDelete = async (id: number, authorName: string) => {
-    if (!confirm(`Are you sure you want to delete author "${authorName}"?`)) return;
+    const onay = await onayla({
+      baslik: `Delete “${authorName}”?`,
+      aciklama: 'Their profile page goes with them. Articles they wrote stay published. This cannot be undone.',
+      onayYazisi: 'Delete author',
+      yikici: true,
+    });
+    if (!onay) return;
 
     try {
       const res = await fetch(`/api/authors/${id}`, { method: 'DELETE' });

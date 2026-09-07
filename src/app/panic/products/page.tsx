@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { onayla } from '@/components/ui/modal';
 import { formatPrice } from '@/lib/currency';
 import { toast } from 'sonner';
 
@@ -65,7 +66,13 @@ export default function PanicProductsPage() {
 
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    const onay = await onayla({
+      baslik: 'Delete this product?',
+      aciklama: 'It comes off the store straight away. Past orders keep their record. This cannot be undone.',
+      onayYazisi: 'Delete product',
+      yikici: true,
+    });
+    if (!onay) return;
     try {
       const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
       if (res.ok) {

@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { onayla } from '@/components/ui/modal';
 import { toast } from 'sonner';
 
 export default function PanicCouponsPage() {
@@ -116,7 +117,13 @@ export default function PanicCouponsPage() {
   };
 
   const handleDeleteCoupon = async (id: number, couponCode: string) => {
-    if (!confirm(`Are you sure you want to delete coupon ${couponCode}?`)) return;
+    const onay = await onayla({
+      baslik: `Delete coupon ${couponCode}?`,
+      aciklama: 'Anyone who tries the code from here on gets nothing. This cannot be undone.',
+      onayYazisi: 'Delete coupon',
+      yikici: true,
+    });
+    if (!onay) return;
 
     try {
       const res = await fetch(`/api/coupons?id=${id}`, { method: 'DELETE' });

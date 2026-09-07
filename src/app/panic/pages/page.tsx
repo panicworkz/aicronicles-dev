@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { onayla } from '@/components/ui/modal';
 import { toast } from 'sonner';
 
 export default function PanicPagesListPage() {
@@ -44,7 +45,13 @@ export default function PanicPagesListPage() {
   }, []);
 
   const handleDelete = async (id: number, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+    const onay = await onayla({
+      baslik: `Delete “${title}”?`,
+      aciklama: 'The page comes off the site and its address stops working. This cannot be undone.',
+      onayYazisi: 'Delete page',
+      yikici: true,
+    });
+    if (!onay) return;
 
     try {
       const res = await fetch(`/api/pages/${id}`, { method: 'DELETE' });

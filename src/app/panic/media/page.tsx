@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { onayla } from '@/components/ui/modal';
 import { MediaDetailDrawer } from '@/components/studio/MediaDetailDrawer';
 import { toast } from 'sonner';
 
@@ -196,11 +197,16 @@ export default function PanicMediaPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
-                      if (confirm(`Delete "${m.filename}"?`)) {
-                        handleDeleteMedia(m.id);
-                      }
+                      const onay = await onayla({
+                        baslik: `Delete “${m.filename}”?`,
+                        aciklama:
+                          'Anywhere this image is already used, it stops loading. This cannot be undone.',
+                        onayYazisi: 'Delete image',
+                        yikici: true,
+                      });
+                      if (onay) handleDeleteMedia(m.id);
                     }}
                     className="p-1.5 rounded-md bg-background/90 text-destructive backdrop-blur hover:bg-destructive hover:text-white transition shadow-xs cursor-pointer"
                     title="Delete Image"

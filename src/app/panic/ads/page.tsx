@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { onayla } from '@/components/ui/modal';
 import { toast } from 'sonner';
 
 const PLACEMENT_CONFIG: Record<
@@ -278,7 +279,14 @@ export default function PanicAdsPage() {
   };
 
   const handleDelete = async (adId: number, adName: string) => {
-    if (!confirm(`Are you sure you want to delete ad campaign "${adName}"?`)) return;
+    const onay = await onayla({
+      baslik: `Delete “${adName}”?`,
+      aciklama:
+        'The campaign stops running immediately and its banners disappear from the site. This cannot be undone.',
+      onayYazisi: 'Delete campaign',
+      yikici: true,
+    });
+    if (!onay) return;
 
     try {
       const res = await fetch(`/api/ads?id=${adId}`, { method: 'DELETE' });

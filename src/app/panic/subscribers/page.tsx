@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { onayla } from '@/components/ui/modal';
 import {
   Table,
   TableHeader,
@@ -146,7 +147,13 @@ export default function SubscribersPage() {
   };
 
   const sil = async (a: Abone) => {
-    if (!confirm(`Delete ${a.email} permanently? This cannot be undone.`)) return;
+    const onay = await onayla({
+      baslik: 'Delete this subscriber?',
+      aciklama: `${a.email} is removed from the list and stops receiving anything. This cannot be undone.`,
+      onayYazisi: 'Delete subscriber',
+      yikici: true,
+    });
+    if (!onay) return;
     const r = await fetch(`/api/subscribers?id=${a.id}`, { method: 'DELETE' });
     if (r.ok) {
       toast.success('Record deleted.');

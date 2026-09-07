@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Modal, ModalAlt, onayla } from '@/components/ui/modal';
 import { toast } from 'sonner';
 
 /**
@@ -65,6 +66,12 @@ export default function FormlarSayfasi() {
   const [yukleniyor, setYukleniyor] = useState(true);
   const [secili, setSecili] = useState<number | null>(null);
   const [kaydediliyor, setKaydediliyor] = useState(false);
+
+  /* Yeni sekme penceresi — tarayicinin prompt()'u yerine. */
+  const [yeniAcik, setYeniAcik] = useState(false);
+  const [yeniAd, setYeniAd] = useState('');
+  const [yeniAciklama, setYeniAciklama] = useState('');
+  const [ekleniyor, setEkleniyor] = useState(false);
 
   const getir = useCallback(async () => {
     setYukleniyor(true);
@@ -138,22 +145,36 @@ export default function FormlarSayfasi() {
     }
   }
 
+  /* Yalnizca sekmenin adi soruluyor. Adres anahtari sunucuda
+     basliktan uretiliyor (bkz. anahtarUret) — editorun "press" gibi
+     bir dize dusunmesi gerekmiyordu. */
   async function sekmeEkle() {
-    const key = prompt('URL key for the new tab (lowercase, e.g. "press")');
-    if (!key) return;
-    const title = prompt('Tab title, e.g. "Press & media"');
+    const title = yeniAd.trim();
     if (!title) return;
-    const y = await fetch('/api/contact-form', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, title, messageLabel: 'Your message', fields: [] }),
-    });
-    const d = await y.json();
-    if (d?.success) {
-      toast.success('Tab added');
-      await getir();
-      setSecili(d.tab.id);
-    } else toast.error(d?.message || d?.error || 'Could not add', { duration: 8000 });
+    setEkleniyor(true);
+    try {
+      const y = await fetch('/api/contact-form', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          summary: yeniAciklama.trim() || null,
+          messageLabel: 'Your message',
+          fields: [],
+        }),
+      });
+      const d = await y.json();
+      if (d?.success) {
+        toast.success(`“${title}” added`);
+        setYeniAcik(false);
+        setYeniAd('');
+        setYeniAciklama('');
+        await getir();
+        setSecili(d.tab.id);
+      } else toast.error(d?.message || d?.error || 'Could not add', { duration: 8000 });
+    } finally {
+      setEkleniyor(false);
+    }
   }
 
   /** Sekmeyi bir sira yukari/asagi tasir ve hemen kaydeder.
@@ -190,7 +211,16 @@ export default function FormlarSayfasi() {
   }
 
   async function sekmeSil(id: number) {
-    if (!confirm('Delete this tab and all of its fields?')) return;
+    const s = sekmeler.find((x) => x.id === id);
+    const onay = await onayla({
+      baslik: `Delete “${s?.title ?? 'this tab'}”?`,
+      aciklama:
+        `Its ${s?.fields.length ?? 0} question(s) go with it, and the tab disappears from the ` +
+        `contact form. Messages already received are kept. This cannot be undone.`,
+      onayYazisi: 'Delete tab',
+      yikici: true,
+    });
+    if (!onay) return;
     const y = await fetch(`/api/contact-form?id=${id}`, { method: 'DELETE' });
     const d = await y.json();
     if (d?.success) {
@@ -223,7 +253,7 @@ export default function FormlarSayfasi() {
           >
             <ExternalLink className="mr-1.5 size-3.5" /> View form
           </a>
-          <Button size="sm" onClick={sekmeEkle}>
+          <Button size="sm" onClick={() => setYeniAcik(true)}>
             <Plus className="mr-1.5 size-3.5" /> New tab
           </Button>
         </div>
@@ -502,6 +532,56 @@ export default function FormlarSayfasi() {
           </div>
         </div>
       )}
+
+      {/* Yeni sekme. Tek soru: adi. Gerisi acildiktan sonra
+          duzenleniyor — pencerede on alan sormak yeni bir form
+          demek olurdu. */}
+      <Modal
+        acik={yeniAcik}
+        kapat={() => setYeniAcik(false)}
+        baslik="New tab"
+        aciklama="A new topic on the contact form. You can add its questions right after."
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            sekmeEkle();
+          }}
+        >
+          <div className="space-y-4 px-5 py-5">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                TAB NAME
+              </label>
+              <Input
+                value={yeniAd}
+                onChange={(e) => setYeniAd(e.target.value)}
+                placeholder="Press & media"
+                maxLength={120}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                DESCRIPTION — optional, shown under the tab name
+              </label>
+              <Input
+                value={yeniAciklama}
+                onChange={(e) => setYeniAciklama(e.target.value)}
+                placeholder="Interview requests, press enquiries and media kits."
+                maxLength={400}
+              />
+            </div>
+          </div>
+          <ModalAlt>
+            <Button type="button" variant="outline" onClick={() => setYeniAcik(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!yeniAd.trim() || ekleniyor}>
+              {ekleniyor ? 'Adding…' : 'Add tab'}
+            </Button>
+          </ModalAlt>
+        </form>
+      </Modal>
     </div>
   );
 }

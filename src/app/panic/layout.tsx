@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { OnayKatmani } from "@/components/ui/modal";
 import { LiveRatesTicker } from "@/components/studio/LiveRatesTicker";
 import { useTheme } from "@/providers/theme-provider";
 import { cn } from "@/lib/utils";
@@ -282,6 +283,10 @@ export default function PanicAdminLayout({
           {children}
         </main>
       </div>
+
+      {/* Panelin onay penceresi — her ekranin kendi kutusunu
+          kurmasi yerine tek yerde. Ekranlar onayla() cagiriyor. */}
+      <OnayKatmani />
     </div>
   );
 }

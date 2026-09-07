@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { onayla } from '@/components/ui/modal';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { toast } from 'sonner';
 
@@ -107,7 +108,13 @@ export default function PanicProductCategoriesPage() {
   };
 
   const handleDelete = async (id: number, catName: string) => {
-    if (!confirm(`Delete product category "${catName}"?`)) return;
+    const onay = await onayla({
+      baslik: `Delete “${catName}”?`,
+      aciklama: 'Products in it are kept — they simply lose this category. This cannot be undone.',
+      onayYazisi: 'Delete category',
+      yikici: true,
+    });
+    if (!onay) return;
 
     try {
       const res = await fetch(`/api/product-categories?id=${id}`, { method: 'DELETE' });

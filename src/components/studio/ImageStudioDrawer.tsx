@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { onayla } from '@/components/ui/modal';
 import { MediaPickerModal } from './MediaPickerModal';
 import { toast } from 'sonner';
 
@@ -127,8 +128,14 @@ export function ImageStudioDrawer({
     onClose();
   };
 
-  const handleDeleteImage = () => {
-    if (window.confirm('Are you sure you want to remove this image from the article?')) {
+  const handleDeleteImage = async () => {
+    const onay = await onayla({
+      baslik: 'Remove this image?',
+      aciklama: 'It comes off the article. The file stays in the media library.',
+      onayYazisi: 'Remove image',
+      yikici: true,
+    });
+    if (onay) {
       if (target?.onDelete) {
         target.onDelete();
         toast.info('Image removed from article');

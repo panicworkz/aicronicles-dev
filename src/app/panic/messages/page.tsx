@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { onayla } from '@/components/ui/modal';
 import { toast } from 'sonner';
 
 /**
@@ -124,7 +125,13 @@ export default function MesajlarSayfasi() {
   }, []);
 
   async function sil(id: number) {
-    if (!confirm('Delete this message permanently?')) return;
+    const onay = await onayla({
+      baslik: 'Delete this message?',
+      aciklama: 'The message and the sender’s details go with it. This cannot be undone.',
+      onayYazisi: 'Delete message',
+      yikici: true,
+    });
+    if (!onay) return;
     const y = await fetch(`/api/messages?id=${id}`, { method: 'DELETE' });
     const d = await y.json();
     if (d?.success) {

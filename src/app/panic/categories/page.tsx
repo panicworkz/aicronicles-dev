@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { onayla } from '@/components/ui/modal';
 import { TaxonomyArticleDrawer } from '@/components/studio/TaxonomyArticleDrawer';
 import { toast } from 'sonner';
 
@@ -121,7 +122,13 @@ export default function PanicCategoriesPage() {
   };
 
   const handleDeleteCat = async (id: number, name: string) => {
-    if (!confirm(`Delete editorial category "${name}"?`)) return;
+    const onay = await onayla({
+      baslik: `Delete “${name}”?`,
+      aciklama: 'Articles in it stay published — they simply lose this category. This cannot be undone.',
+      onayYazisi: 'Delete category',
+      yikici: true,
+    });
+    if (!onay) return;
 
     try {
       const res = await fetch(`/api/categories?id=${id}`, { method: 'DELETE' });
@@ -167,7 +174,13 @@ export default function PanicCategoriesPage() {
   };
 
   const handleDeleteTag = async (id: number, name: string) => {
-    if (!confirm(`Delete tag "${name}"?`)) return;
+    const onay = await onayla({
+      baslik: `Delete “${name}”?`,
+      aciklama: 'Articles carrying it stay published — they simply lose this tag. This cannot be undone.',
+      onayYazisi: 'Delete tag',
+      yikici: true,
+    });
+    if (!onay) return;
 
     try {
       const res = await fetch(`/api/tags?id=${id}`, { method: 'DELETE' });

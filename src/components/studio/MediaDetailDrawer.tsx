@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { onayla } from '@/components/ui/modal';
 import { toast } from 'sonner';
 
 interface MediaDetailDrawerProps {
@@ -305,8 +306,15 @@ export function MediaDetailDrawer({
             type="button"
             variant="destructive"
             size="sm"
-            onClick={() => {
-              if (confirm(`Are you sure you want to permanently delete "${displayMedia.filename}"?`)) {
+            onClick={async () => {
+              const onay = await onayla({
+                baslik: `Delete “${displayMedia.filename}”?`,
+                aciklama:
+                  'Anywhere this image is already used, it stops loading. This cannot be undone.',
+                onayYazisi: 'Delete image',
+                yikici: true,
+              });
+              if (onay) {
                 onDelete(displayMedia.id);
                 onClose();
               }

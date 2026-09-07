@@ -45,6 +45,33 @@ function adUret(etiket: string, alinanlar: Set<string>): string {
   return ad;
 }
 
+/**
+ * Sekmenin adres anahtarini BASLIKTAN uretir: "Press & media" -> "press-media".
+ *
+ * Alan adlarindaki kuralin ayni gerekcesi: bu deger /contact?type=...
+ * parametresi, yani ic bir degistirge. Editorden "kucuk harf, rakam ve
+ * tire" kurallarina uyan bir dize istemek gereksizdi — yanlis yazilinca
+ * da yalnizca bir hata mesaji donuyordu.
+ *
+ * Uretildikten SONRA degismiyor: sabit sayfalardaki baglantilar bu
+ * degeri kullaniyor, o yuzden panel duzenlemeye acmiyor.
+ */
+function anahtarUret(baslik: string, alinanlar: Set<string>): string {
+  const kok =
+    baslik
+      .toLowerCase()
+      .replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40) || 'sekme';
+  // En az iki karakter: dogrulama kurali oyle.
+  let ad = kok.length < 2 ? `${kok}-1` : kok;
+  let n = 2;
+  while (alinanlar.has(ad)) ad = `${kok.slice(0, 36)}-${n++}`;
+  return ad;
+}
+
 /** Sekmeyi alanlariyla birlikte kaydeder. */
 async function alanlariYaz(tabId: number, alanlar: any[]) {
   await db.delete(schema.contactFields).where(eq(schema.contactFields.tabId, tabId));
@@ -94,17 +121,15 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const g = await req.json().catch(() => ({} as any));
-    const key = String(g?.key ?? '').trim().toLowerCase();
     const title = String(g?.title ?? '').trim();
-    if (!/^[a-z0-9-]{2,40}$/.test(key)) {
-      return apiBadRequest('key yalnizca kucuk harf, rakam ve tire icerebilir (2-40).');
-    }
-    if (!title) return apiBadRequest('title gerekli.');
-
-    const varMi = await db.query.contactTabs.findFirst({ where: eq(schema.contactTabs.key, key) });
-    if (varMi) return apiBadRequest(`"${key}" zaten kullaniliyor.`);
+    if (!title) return apiBadRequest('Tab name is required.');
 
     const hepsi = await db.query.contactTabs.findMany();
+
+    /* Anahtar panelden GELMIYOR; basliktan uretiliyor. Kullanimda olan
+       anahtarlar veriliyor ki uretilen benzersiz olsun. */
+    const key = anahtarUret(title, new Set(hepsi.map((t: any) => t.key)));
+
     const [yeni] = await db
       .insert(schema.contactTabs)
       .values({

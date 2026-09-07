@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { ProductGalleryUploader } from '@/components/ui/product-gallery-uploader';
+import { onayla } from '@/components/ui/modal';
 import { ProductSeoAeoSuite } from '@/components/studio/ProductSeoAeoSuite';
 import { ProductSpecificationsBuilder } from '@/components/studio/ProductSpecificationsBuilder';
 import { formatPrice } from '@/lib/currency';
@@ -174,7 +175,13 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    const onay = await onayla({
+      baslik: 'Delete this product?',
+      aciklama: 'It comes off the store straight away. Past orders keep their record. This cannot be undone.',
+      onayYazisi: 'Delete product',
+      yikici: true,
+    });
+    if (!onay) return;
     try {
       const res = await fetch(`/api/products/${productId}`, { method: 'DELETE' });
       if (res.ok) {
