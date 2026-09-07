@@ -535,3 +535,24 @@ html {
 .mag footer .kunye-link-3:hover {
   color: var(--accent);
 }
+
+/* --- Yukleniyor iskeleti ------------------------------------------------
+   Sayfa sunucudan akarken gorunen ara ekran (loading.tsx).
+
+   Donen bir cark degil, sayfanin KENDI iskeleti: okur nereye ne
+   gelecegini oradan anliyor ve icerik dustugunde duzen yerinden
+   oynamiyor. Renk kagidin bir tonu; ayri bir gri getirmiyoruz.
+
+   Nabiz cok hafif — 1.6s'de %100'den %55 opakliga. Daha belirgini
+   bekleme suresini uzun hissettiriyor. */
+.mag .iskelet {
+  background: var(--paper-2);
+  animation: mag-iskelet 1.6s ease-in-out infinite;
+}
+@keyframes mag-iskelet {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mag .iskelet { animation: none; }
+}
