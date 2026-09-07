@@ -1,0 +1,40 @@
+# Goruntuye NE GIRMEYECEK.
+#
+# Bu dosya yoktu: Dockerfile "COPY . ." diyor, yani sunucudaki
+# /opt/panic klasorunde ne varsa goruntuye giriyordu — git'e hic
+# girmemis tek seferlik betikler, macOS'un ._ artiklari, veritabani
+# yedekleri, eski docker-compose kopyalari.
+#
+# Bunun iki bedeli oldu:
+#   1. next build kok dizindeki o eski betikleri de tur denetiminden
+#      geciriyor. sync_all_media.ts semadaki bir degisiklikten sonra
+#      derlenmez oldu ve UYGULAMAYLA ILGISI OLMAYAN bir dosya
+#      yayini durdurdu.
+#   2. Yedekler ve arsivler her yapida bosuna kopyalaniyordu.
+#
+# Uygulamanin kendisi src/ altinda; kok dizindeki .ts dosyalari
+# elle calistirilan tohumlama betikleri. next-env.d.ts bunun
+# disinda — onu Next'in kendisi uretiyor ve derleme istiyor.
+
+.git
+.gitignore
+node_modules
+.next
+.pnpm-store
+
+# macOS
+._*
+.DS_Store
+
+# Yedekler, arsivler, eski kopyalar
+backups
+*.bak
+*.bak.*
+*.yedek-*
+/*.sql
+/*.tar.gz
+/meet-istanbul
+
+# Kok dizindeki tek seferlik betikler (uygulama src/ altinda)
+/*.ts
+!/next-env.d.ts

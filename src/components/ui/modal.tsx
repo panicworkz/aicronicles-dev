@@ -38,6 +38,18 @@ function Katman({
   const [bindi, setBindi] = useState(false);
   useEffect(() => setBindi(true), []);
 
+  /* kapat her renderda yeni bir islev olarak geliyor (cagiranlar ok
+     islevi yaziyor). Etkiye dogrudan bagli olsaydi pencere HER
+     renderda sokulup takilirdi: yani ikinci alana bir harf yazar
+     yazmaz odak ilk alana geri sicrardi. Islevi bir kutuda tutup
+     etkiyi yalnizca acik/kapali degisimine bagliyoruz. */
+  const kapatRef = useRef(kapat);
+  /* Atama render sirasinda degil etkide: bu proje React Compiler ile
+     derleniyor ve render sirasinda ref yazmak kuraldisi. */
+  useEffect(() => {
+    kapatRef.current = kapat;
+  }, [kapat]);
+
   useEffect(() => {
     if (!acik) return;
 
@@ -58,7 +70,7 @@ function Katman({
     const tus = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        kapat();
+        kapatRef.current();
       }
       if (e.key !== 'Tab') return;
       /* Odak dongusu pencerede kalsin. */
@@ -84,7 +96,7 @@ function Katman({
       document.body.style.overflow = oncekiTasma;
       oncekiOdak?.focus?.();
     };
-  }, [acik, kapat]);
+  }, [acik]);
 
   if (!acik || !bindi) return null;
 
