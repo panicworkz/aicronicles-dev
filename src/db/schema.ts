@@ -311,6 +311,65 @@ export const ads = pgTable('ads', {
  * kaybolmuyor.
  */
 /**
+ * Iletisim formunun SEKMELERI.
+ *
+ * Once sekmeler ve alanlar kodda duruyordu (contact/sekmeler.ts): yeni
+ * bir sekme acmak ya da bir butce araligini degistirmek kod degisikligi
+ * ve yeniden derleme istiyordu. Artik panelden yonetiliyor.
+ *
+ * `key` adres parametresidir: /contact?type=advertising. Statik
+ * sayfalardaki baglantilar bu degeri kullaniyor, o yuzden bir sekmenin
+ * key'i degisirse o baglantilar da guncellenmeli — panel bunu uyariyor.
+ */
+export const contactTabs = pgTable('contact_tabs', {
+  id: serial('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  /** Sekme numarasi — "01", "02"... Ekranda gorunuyor. */
+  no: text('no').notNull().default('01'),
+  title: text('title').notNull(),
+  /** Sekmenin altindaki aciklama cumlesi. */
+  summary: text('summary'),
+  /** Bu sekmeyi acan sabit sayfa — /advertise gibi. Yalnizca kayit
+      icin: hangi sayfanin buraya baglandigini panelde gostermek. */
+  page: text('page'),
+  /** Mesaj kutusunun ustundeki soru. */
+  messageLabel: text('message_label').notNull().default('Your message'),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('contact_tabs_sort_idx').on(table.sortOrder),
+]);
+
+/**
+ * Sekmeye ozel alanlar.
+ *
+ * Ortak alanlar (ad, kurum, e-posta, telefon, mesaj) formda sabit;
+ * burada yalnizca KONUYA ozel olanlar duruyor — reklam formatı, butce
+ * araligi, hangi yazi gibi.
+ */
+export const contactFields = pgTable('contact_fields', {
+  id: serial('id').primaryKey(),
+  tabId: integer('tab_id').notNull().references(() => contactTabs.id, { onDelete: 'cascade' }),
+  /** Gonderilen veride ve e-postada kullanilan ad. */
+  name: text('name').notNull(),
+  label: text('label').notNull(),
+  /** text | select */
+  type: text('type').notNull().default('text'),
+  /** Metin alaninda yer tutucu; secimde kullanilmiyor. */
+  hint: text('hint'),
+  required: boolean('required').notNull().default(false),
+  /** type = select oldugunda secenekler. */
+  options: jsonb('options').default([]),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('contact_fields_tab_id_idx').on(table.tabId),
+]);
+
+/**
  * Iletisim formu mesajlari.
  *
  * ASIL KAYIT BURASI, gateway degil. Once bu tabloya yaziliyor, sonra

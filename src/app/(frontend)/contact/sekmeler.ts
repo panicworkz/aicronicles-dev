@@ -1,5 +1,13 @@
 /**
- * Iletisim sekmeleri.
+ * Iletisim sekmeleri — YEDEK tanim.
+ *
+ * Asil kaynak artik VERITABANI (contact_tabs / contact_fields), panelden
+ * yonetiliyor. Buradaki liste yalnizca yedek: tablolar bossa ya da
+ * veritabani okunamazsa form yine de calissin diye duruyor. Bir iletisim
+ * formunun "bugun veritabani dustu" diye kaybolmasi kabul edilemez.
+ *
+ * Ikisi ayrisirsa dogru olan veritabanidir; bu liste tohumlama
+ * betiginin (scripts/panel/form-tohumla.mjs) yazdigi ilk halidir.
  *
  * Her sekme sitedeki BIR sabit sayfanin karsiligi; o sayfadan gelen
  * okur dogru formu acilmis bulsun diye. Eslesme:

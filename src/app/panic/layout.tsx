@@ -24,7 +24,7 @@ import {
   Sun,
   Moon,
   ChevronLeft,
-  Ruler, Inbox,} from "lucide-react";
+  Ruler, Inbox, ClipboardList,} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -68,6 +68,9 @@ export default function PanicAdminLayout({
         /* Iletisim formundan gelenler. Abonelikten AYRI bir ekran:
            biri listeye katilma, oteki cevap bekleyen bir mesaj. */
         { href: "/panic/messages", label: "Messages", icon: Inbox },
+        /* Formun kendisi — sekmeler ve alanlar. Mesajlarin yaninda
+           duruyor: biri gelen kutusu, oteki o kutuyu dolduran form. */
+        { href: "/panic/forms", label: "Contact Form", icon: ClipboardList },
       ],
     },
     {

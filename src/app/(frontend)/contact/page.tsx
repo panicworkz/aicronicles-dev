@@ -4,7 +4,7 @@ import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
 import { SITE, kirintiSemasi } from "@/lib/seo";
 import ContactForm from "./ContactForm";
-import { sekmeBul } from "./sekmeler";
+import { sekmeleriGetir, sekmeSec } from "./sekmeler.sunucu";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +49,10 @@ export default async function ContactPage({ searchParams }: PageProps) {
      JS calismayan istemcide hep "general". Adres zaten sayfanin bir
      parcasi, sunucunun bilmemesi icin bir sebep yok. */
   const { type } = await searchParams;
-  const acilis = sekmeBul(type).anahtar;
+  /* Sekmeler artik veritabanindan (panelden yonetiliyor); tablo bossa
+     ya da okunamazsa koddaki yedege dusuluyor. */
+  const sekmeler = await sekmeleriGetir();
+  const acilis = sekmeSec(sekmeler, type).anahtar;
   return (
     <div className="mag min-h-screen">
       <script
@@ -77,7 +80,7 @@ export default async function ContactPage({ searchParams }: PageProps) {
         </header>
 
         <section className="mag-wrap py-12">
-          <ContactForm acilis={acilis} />
+          <ContactForm acilis={acilis} sekmeler={sekmeler} />
         </section>
 
         <div className="h-20 sm:h-28" />

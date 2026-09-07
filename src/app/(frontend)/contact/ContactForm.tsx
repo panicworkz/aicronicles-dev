@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useId, useRef, useState } from "react";
-import { SEKMELER, sekmeBul, type Alan, type Sekme } from "./sekmeler";
+import { type Alan, type Sekme } from "./sekmeler";
 
 type Durum = "bos" | "gonderiliyor" | "tamam" | "hata";
 
@@ -25,14 +25,23 @@ type Durum = "bos" | "gonderiliyor" | "tamam" | "hata";
  * Sekme degisince ortak alanlar (ad, kurum, e-posta, telefon)
  * KORUNUYOR; yalnizca konuya ozel alanlar degisiyor.
  */
-export default function ContactForm({ acilis }: { acilis: string }) {
+export default function ContactForm({
+  acilis,
+  sekmeler,
+}: {
+  acilis: string;
+  /* Sekmeler sunucudan geliyor — panelde duzenlenen liste. Bileşen
+     kendi kaynagini okumuyor ki istemci paketine veritabani kodu
+     girmesin. */
+  sekmeler: Sekme[];
+}) {
   const [aktif, setAktif] = useState(acilis);
   const [durum, setDurum] = useState<Durum>("bos");
   const [hata, setHata] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const tuzakId = useId();
 
-  const sekme = sekmeBul(aktif);
+  const sekme = sekmeler.find((s) => s.anahtar === aktif) ?? sekmeler[0];
 
   async function gonder(olay: React.FormEvent<HTMLFormElement>) {
     olay.preventDefault();
@@ -162,7 +171,7 @@ export default function ContactForm({ acilis }: { acilis: string }) {
           </div>
           <nav>
             <ol className="flex flex-col">
-              {SEKMELER.map((s) => (
+              {sekmeler.map((s) => (
                 <RayOgesi key={s.anahtar} s={s} />
               ))}
             </ol>
