@@ -53,21 +53,13 @@ export function SepetEkrani() {
   // Kapida odeme secilmisken sepete dijital bir sey eklenirse secim gecersiz kalir.
   const gecerliYontem = yontem === "cash_on_delivery" && !kapidaOdenebilir ? "bank_transfer" : yontem;
 
-  if (!hazir) {
-    return <p className="byline py-20">LOADING YOUR BASKET…</p>;
-  }
-
-  if (kalemler.length === 0) {
-    return (
-      <div className="py-20">
-        <p className="display mb-4 text-3xl">Your basket is empty.</p>
-        <Link href="/store" className="byline hover:text-[var(--accent-ink)]">
-          ← BACK TO THE STORE
-        </Link>
-      </div>
-    );
-  }
-
+  /* KANCA ERKEN CIKISLARIN USTUNDE OLMAK ZORUNDA.
+     Once asagida, "if (!hazir) return" satirlarindan sonra
+     duruyordu: sepet bos ya da okunmamisken bilesen erken
+     donuyor, kanca hic cagrilmiyor, sonraki cizimde cagriliyordu.
+     React bunu "Rendered more hooks than during the previous
+     render" (hata 310) diye reddediyor ve sayfa cokuyordu —
+     canlida hata ekranina dusuyordu. */
   useEffect(() => {
     if (!hazir || kalemler.length === 0) return;
     let iptal = false;
@@ -108,6 +100,22 @@ export function SepetEkrani() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hazir]);
+
+  if (!hazir) {
+    return <p className="byline py-20">LOADING YOUR BASKET…</p>;
+  }
+
+  if (kalemler.length === 0) {
+    return (
+      <div className="py-20">
+        <p className="display mb-4 text-3xl">Your basket is empty.</p>
+        <Link href="/store" className="byline hover:text-[var(--accent-ink)]">
+          ← BACK TO THE STORE
+        </Link>
+      </div>
+    );
+  }
+
 
   async function gonder(e: React.FormEvent) {
     e.preventDefault();
