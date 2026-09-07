@@ -103,10 +103,15 @@ function Katman({
   /* Katman z-[100010]: medya ve gorsel cekmeceleri z-[99999] ve
      [100000] kullaniyor, onay penceresi de onlarin ICINDEN aciliyor.
      Daha alcak bir deger pencereyi cekmecenin arkasina birakirdi —
-     dugme calismiyormus gibi gorunurdu. */
+     dugme calismiyormus gibi gorunurdu.
+
+     Pencere ekranin TAM ORTASINDA. Uzun bir pencere ekrana sigmazsa
+     kaydirma disarida degil kutunun icinde oluyor (max-h + overflow):
+     disarida olsaydi ortalama yuzunden ust kenar kirpilir ve yukari
+     kaydirilamazdi. */
   return createPortal(
     <div
-      className="fixed inset-0 z-[100010] flex items-start justify-center overflow-y-auto p-4 pt-[12vh]"
+      className="fixed inset-0 z-[100010] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-label={baslik}
@@ -120,7 +125,7 @@ function Katman({
       <div
         ref={kutu}
         tabIndex={-1}
-        className={`pencere-kutu relative w-full ${genislik} rounded-xl border border-border bg-background shadow-2xl outline-none`}
+        className={`pencere-kutu relative flex max-h-[85vh] w-full flex-col overflow-y-auto ${genislik} rounded-xl border border-border bg-background shadow-2xl outline-none`}
       >
         <div className="border-b border-border px-5 py-4">
           <h2 className="text-base font-semibold">{baslik}</h2>
