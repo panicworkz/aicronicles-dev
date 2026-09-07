@@ -44,6 +44,15 @@ function isPublicApiRequest(pathname: string, method: string): boolean {
     return true;
   }
 
+  /* Siparis verme. Magaza acilinca okurun bir sey almak icin hesap
+     acmasi gerekmeyecek, yani bu POST oturum isteyemez. Ucun kendisi
+     tuzak alan tasiyor ve — asil onemlisi — FIYATA GUVENMIYOR: gelen
+     govdeden yalnizca urun kimligi ve adet okunuyor, tutar
+     veritabanindan yeniden hesaplaniyor. */
+  if (method === 'POST' && pathname === '/api/checkout') {
+    return true;
+  }
+
   // Public Ad impression & click tracking
   if (method === 'POST' && (pathname.includes('/click') || pathname.includes('/impression')) && pathname.startsWith('/api/ads/')) {
     return true;

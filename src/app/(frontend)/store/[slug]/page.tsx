@@ -8,6 +8,7 @@ import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
 import { UrunKarti, type KartUrun } from "@/components/store/UrunKarti";
 import { UrunGorselleri } from "./UrunGorselleri";
+import { SepeteEkle } from "@/components/store/SepeteEkle";
 import { SITE, markali, mutlak, kirintiSemasi } from "@/lib/seo";
 import { fiyat, stokta, turu, TUR_ADI, TUR_VAADI, urunSemasi } from "@/lib/magaza";
 
@@ -25,9 +26,9 @@ export const dynamic = "force-dynamic";
  * (tiklamayla degisen tek sey o). Basligi, aciklamasi, kanonigi ve
  * schema.org/Product verisi var.
  *
- * Sepet HENUZ YOK. Uydurma bir "Add to Cart" dugmesi koymuyorum —
- * oncekinde vardi ve hicbir sey yapmiyordu, yalnizca bir bildirim
- * gosteriyordu. Yerine ne oldugu acikca yaziyor.
+ * Satin alma bolumu (SepeteEkle) gercekten calisiyor: sepete ekliyor,
+ * odeme ekranina goturuyor ve siparis olusturuyor. Oncekinde bir "Add
+ * to Cart" dugmesi vardi ve yalnizca bir bildirim gosteriyordu.
  */
 
 interface PageProps {
@@ -179,50 +180,22 @@ export default async function UrunSayfasi({ params }: PageProps) {
                   </span>
                 </div>
 
-                {/* Varyantlar — secim SEPET GELINCE calisacak; simdilik
-                    hangi secenekler oldugunu durustce listeliyoruz. */}
-                {varyantlar.length > 0 && (
-                  <div className="mt-6">
-                    <div className="folio mb-3" style={{ color: "var(--ink-3)" }}>
-                      OPTIONS
-                    </div>
-                    <ul className="flex flex-wrap gap-2">
-                      {(varyantlar as any[]).map((v) => (
-                        <li
-                          key={v.id}
-                          className="px-3 py-1.5 text-[0.88rem]"
-                          style={{ border: "1px solid var(--rule)" }}
-                        >
-                          {v.title}
-                          {v.price != null && (
-                            <span style={{ color: "var(--ink-3)" }}>
-                              {" "}
-                              · {fiyat(v.price, paraBirimi)}
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Satin alma. Dugme YOK cunku sepet henuz yok; olmayan
-                    bir seyin dugmesini koymak okuru kandirmak olurdu. */}
-                <div
-                  className="mt-7 p-5"
-                  style={{ background: "var(--paper-2)" }}
-                >
-                  <div className="folio mb-2" style={{ color: "var(--accent)" }}>
-                    HOW TO BUY
-                  </div>
-                  <p className="text-[0.95rem] leading-relaxed">
-                    Ordering opens shortly. Payment will be by bank transfer or on
-                    delivery.
-                  </p>
-                  <Link href="/contact?type=general" className="byline mt-4 inline-block">
-                    ASK ABOUT THIS →
-                  </Link>
-                </div>
+                <SepeteEkle
+                  urunId={urun.id}
+                  slug={urun.slug}
+                  baslik={urun.title}
+                  fiyat={Number(urun.price ?? 0)}
+                  paraBirimi={paraBirimi}
+                  tur={t}
+                  gorsel={urun.featuredImageUrl}
+                  varyantlar={(varyantlar as any[]).map((v) => ({
+                    id: v.id,
+                    title: v.title,
+                    price: v.price,
+                    inventory: v.inventory,
+                  }))}
+                  stokta={mevcut}
+                />
               </div>
 
               {/* Teknik ozellikler */}

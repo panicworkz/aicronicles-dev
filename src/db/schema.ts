@@ -222,6 +222,14 @@ export const orders = pgTable('orders', {
   carrier: text('carrier'),
   trackingNumber: text('tracking_number'),
   stripePaymentIntentId: text('stripe_payment_intent_id'),
+  /* Parayi nasil aliyoruz: bank_transfer | cash_on_delivery | card.
+     Sema yalnizca stripe_payment_intent_id tasiyordu, yani tek bir
+     saglayiciya gore yazilmisti; havale ve kapida odeme hicbir yere
+     kaydedilemezdi. Bkz. scripts/migration_odeme_yontemi.sql */
+  paymentMethod: text('payment_method'),
+  /* Havalede dekont notu, kartta saglayici referansi — ikisi de ayni
+     soruyu cevapliyor: bu parayi hangi kayitla eslestirdik. */
+  paymentReference: text('payment_reference'),
   shippingAddressJson: jsonb('shipping_address_json'),
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

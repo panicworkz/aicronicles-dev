@@ -2,6 +2,7 @@ import React from "react";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { jwtVerify } from "jose";
+import { SepetSaglayici } from "@/components/store/SepetSaglayici";
 
 /**
  * Magaza DISARIYA KAPALI.
@@ -65,7 +66,7 @@ export default async function StoreLayout({
       >
         This store is closed to the public — only signed-in staff can see it.
       </div>
-      {children}
+      <SepetSaglayici>{children}</SepetSaglayici>
     </>
   );
 }
