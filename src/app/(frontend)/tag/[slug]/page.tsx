@@ -40,6 +40,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }),
     db.$count(schema.posts, eslesme),
   ]);
+  /* Bilinmeyen ve bos etiket BURADA eleniyor, sayfa govdesinde degil.
+     Kural sayfadakiyle ayni; degisen tek sey ne zaman calistigi.
+
+     Sebep: (frontend)/loading.tsx bir Suspense siniri kuruyor, Next
+     iskeleti hemen akitiyor ve akis basladiktan sonra durum kodu
+     degistirilemiyor — govdedeki notFound() 404 sayfasini basiyor ama
+     yanit 200 gidiyordu. generateMetadata akistan once beklendigi icin
+     buradaki cagri gercek 404'u gonderiyor. */
+  if (!FABELO_TAGS.includes(slug as (typeof FABELO_TAGS)[number]) && sayi === 0) {
+    notFound();
+  }
+
   const gorsel = mutlak((enYeni as any)?.featuredImageUrl) || `${SITE}/images/fabelo-logo.png`;
   /* Aciklama "Every Fabelo story filed under Investing." idi — kirk
      karakter, arama sonucunda yarim kalan bir cumle. Yazi sayisi hem

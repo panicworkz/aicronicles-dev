@@ -1,4 +1,5 @@
 import React from "react";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { jwtVerify } from "jose";
@@ -47,11 +48,28 @@ async function oturumVarMi(): Promise<boolean> {
   }
 }
 
+/**
+ * Kapiyi BURASI aciyor, govde degil.
+ *
+ * (frontend)/loading.tsx bir Suspense siniri kuruyor ve Next iskeleti
+ * hemen akitmaya basliyor; akis basladiktan sonra durum kodu
+ * degistirilemiyor. Govdedeki notFound() 404 sayfasini basiyordu ama
+ * yanit 200 gidiyordu — arama motoru icin "bu sayfa var" demek.
+ *
+ * generateMetadata akistan ONCE bekleniyor, o yuzden kontrol burada.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  if (!(await oturumVarMi())) notFound();
+  /* Kapali bir dukkan indekslenmesin — oturum acmis editor gorse bile. */
+  return { title: "Store | Fabelo", robots: { index: false, follow: false } };
+}
+
 export default async function StoreLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Govdede de duruyor: metadata bir gun once calismazsa kapi kapali kalsin.
   if (!(await oturumVarMi())) notFound();
 
   return (
