@@ -18,6 +18,15 @@ import { SITE, SITE_ADI } from "@/lib/seo";
  * o yuzden katmandan gelen deger eziliyor degil.
  */
 export const metadata: Metadata = {
+  /* Yayin katmaninin VARSAYILAN basligi.
+     Kok duzen "Panic CMS" diyor — panelin adi. Kendi basligini
+     tanimlamayan bir yayin sayfasi (404 gibi) onu miras aliyordu ve
+     sunucudan gelen HTML'de sekme "Panic CMS" yaziyordu. Kendi
+     basligi olan sayfalar bunu yine eziyor. */
+  title: {
+    default: "Fabelo | Personal Finance, Career & AI Tools for Professionals",
+    template: "%s",
+  },
   icons: {
     icon: "/images/fabelo-icon.png",
     shortcut: "/images/fabelo-icon.png",
