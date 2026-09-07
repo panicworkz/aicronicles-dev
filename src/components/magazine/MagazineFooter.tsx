@@ -1,4 +1,5 @@
 import React from "react";
+import { magazaAcik } from "@/lib/magaza-durumu";
 import Link from "next/link";
 import Image from "next/image";
 import ClientForm from "./ClientForm";
@@ -73,7 +74,14 @@ function Liste({ items }: { items: { label: string; href: string }[] }) {
   );
 }
 
-export default function MagazineFooter() {
+export default async function MagazineFooter() {
+  /* Magaza ACIKSA bolum listesine geri geliyor. Once elle
+     kaldirilmisti ve acarken geri koymayi unutmak, magazayi acik ama
+     hicbir yerden ulasilamaz birakirdi. Tek kaynak:
+     lib/magaza-durumu.ts */
+  const bolumler = (await magazaAcik())
+    ? [...SECTIONS, { label: "Store", href: "/store" }]
+    : SECTIONS;
   return (
     <footer style={{ background: "var(--ink)", color: "var(--paper)" }}>
       {/* --- Ust: kunye + sutunlar ---------------------------------------
@@ -107,7 +115,7 @@ export default function MagazineFooter() {
 
           <nav className="lg:col-span-2">
             <SutunBasligi>SECTIONS</SutunBasligi>
-            <Liste items={SECTIONS} />
+            <Liste items={bolumler} />
           </nav>
 
           <nav className="lg:col-span-3">

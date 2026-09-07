@@ -122,12 +122,12 @@ export function SepetEkrani() {
             >
               <Link
                 href={`/store/${k.slug}`}
-                className="h-20 w-24 shrink-0 overflow-hidden"
+                className="flex h-20 w-24 shrink-0 items-center justify-center overflow-hidden p-1.5"
                 style={{ background: "var(--paper-2)" }}
               >
                 {k.gorsel ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={k.gorsel} alt="" className="h-full w-full object-cover" />
+                  <img src={k.gorsel} alt="" className="max-h-full max-w-full object-contain" />
                 ) : null}
               </Link>
 

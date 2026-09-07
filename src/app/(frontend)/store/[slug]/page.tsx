@@ -6,10 +6,12 @@ import { db, schema } from "@/db";
 import { and, desc, eq, ne } from "drizzle-orm";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
+import { SepetSeridi } from "@/components/store/SepetSeridi";
 import { UrunKarti, type KartUrun } from "@/components/store/UrunKarti";
 import { UrunGorselleri } from "./UrunGorselleri";
 import { SepeteEkle } from "@/components/store/SepeteEkle";
 import { SITE, markali, mutlak, kirintiSemasi } from "@/lib/seo";
+import { magazaRobots } from "@/lib/magaza-durumu";
 import { fiyat, stokta, turu, TUR_ADI, TUR_VAADI, urunSemasi } from "@/lib/magaza";
 
 export const dynamic = "force-dynamic";
@@ -55,8 +57,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: markali(urun.metaTitle || urun.title),
     description: aciklama,
     alternates: { canonical: adres },
-    // Magaza kapaliyken urunler de dizine girmemeli. Bkz. store/layout.tsx.
-    robots: { index: false, follow: false },
+    // Kapaliyken noindex; tek kaynak lib/magaza-durumu.ts
+    robots: await magazaRobots(),
     openGraph: {
       type: "website",
       url: adres,
@@ -131,6 +133,8 @@ export default async function UrunSayfasi({ params }: PageProps) {
       <MagazineHeader />
 
       <main>
+        {/* Sepete giden kalici yol — derginin basliginin ALTINDA. */}
+        <SepetSeridi />
         <div className="mag-wrap pt-10">
           <Link href="/store" className="byline hover:text-[var(--accent-ink)]">
             ← STORE

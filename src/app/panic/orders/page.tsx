@@ -393,7 +393,7 @@ export default function PanicOrdersPage() {
 
                     <td className="py-3 px-4">
                       <div className="space-y-0.5">
-                        <span className="font-semibold text-xs text-foreground group-hover:text-primary transition line-clamp-1">
+                        <span className="font-semibold text-xs text-foreground group-hover:text-primary transition">
                           {order.customerName || 'Customer'}
                         </span>
                         <span className="text-[11px] text-muted-foreground font-mono block">

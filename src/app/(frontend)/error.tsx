@@ -3,7 +3,6 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
-import MagazineFooter from "@/components/magazine/MagazineFooter";
 
 /**
  * Calisma hatasi ekrani.
@@ -80,7 +79,19 @@ export default function Error({
         <div className="h-24 sm:h-32" />
       </main>
 
-      <MagazineFooter />
+      {/* Kunye BURADA CIZILMIYOR. MagazineFooter artik magazanin acik
+          olup olmadigini veritabanindan okuyor, yani sunucu bileseni;
+          bu dosya ise "use client" olmak zorunda (Next'in hata siniri
+          boyle calisiyor) ve sunucu-only bir sey ithal edemiyor.
+
+          Zaten hata sayfasinda dev bir kunye basmak dogru da degil:
+          burada bir sey ters gitmis, okurun ihtiyaci cikis yolu. */}
+      <div
+        className="mag-wrap py-10"
+        style={{ borderTop: "1px solid var(--rule)", color: "var(--ink-3)" }}
+      >
+        <div className="byline">FABELO — INDEPENDENT MONEY, CAREER & AI DESK</div>
+      </div>
     </div>
   );
 }

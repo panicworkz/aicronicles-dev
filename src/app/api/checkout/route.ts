@@ -3,6 +3,7 @@ import { db, schema } from "@/db";
 import { eq, inArray, sql } from "drizzle-orm";
 import { handleApiError, apiBadRequest } from "@/lib/api-response";
 import { turu, stokta } from "@/lib/magaza";
+import { siparisBildir } from "@/lib/siparis-eposta";
 
 export const dynamic = "force-dynamic";
 
@@ -239,6 +240,11 @@ export async function POST(req: NextRequest) {
         updatedAt: new Date(),
       } as any)
       .where(eq(schema.customers.id, musteriId));
+
+    /* Bildirim EN SONDA ve sonucu siparisi etkilemiyor: siparis zaten
+       kaydedildi. Gecit dusse bile musteri onay sayfasini goruyor ve
+       kayit elimizde — iletisim formundaki ayni sira. */
+    await siparisBildir(siparis as any, satirlar);
 
     return NextResponse.json({
       success: true,

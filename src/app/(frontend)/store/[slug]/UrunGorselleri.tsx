@@ -32,15 +32,18 @@ export function UrunGorselleri({
 
   return (
     <div>
+      {/* Gorsel KIRPILMIYOR: urun sayfasinda okurun tam olarak neyi
+          aldigini gormesi gerekiyor. Cerceve sabit oranda duruyor ki
+          gorsel degisince duzen ziplamasin. */}
       <div
-        className="w-full overflow-hidden"
+        className="flex w-full items-center justify-center overflow-hidden p-6"
         style={{ aspectRatio: "4 / 3", background: "var(--paper-2)" }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={gorseller[secili]}
           alt={baslik}
-          className="h-full w-full object-cover"
+          className="max-h-full max-w-full object-contain"
         />
       </div>
 
@@ -62,7 +65,7 @@ export function UrunGorselleri({
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={g} alt="" className="h-full w-full object-cover" />
+              <img src={g} alt="" className="h-full w-full object-contain p-1" />
             </button>
           ))}
         </div>

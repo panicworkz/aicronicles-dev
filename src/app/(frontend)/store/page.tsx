@@ -5,8 +5,10 @@ import { db, schema } from "@/db";
 import { asc, desc, eq } from "drizzle-orm";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
+import { SepetSeridi } from "@/components/store/SepetSeridi";
 import { UrunKarti, type KartUrun } from "@/components/store/UrunKarti";
 import { SITE, markali, kirintiSemasi } from "@/lib/seo";
+import { magazaRobots } from "@/lib/magaza-durumu";
 import { TUR_ADI, turu } from "@/lib/magaza";
 
 export const dynamic = "force-dynamic";
@@ -27,15 +29,17 @@ export const dynamic = "force-dynamic";
  * Sayfa su an DISARIYA KAPALI; kapiyi layout.tsx tutuyor.
  */
 
-export const metadata: Metadata = {
-  title: markali("Store"),
-  description:
-    "Guides, templates and sessions from the Fabelo desk — the same work that goes into the reporting, in a form you can use.",
-  alternates: { canonical: `${SITE}/store` },
-  /* Magaza disariya kapaliyken dizine girmemeli. Acilinca bu satir
-     kalkacak; layout'taki kapiyla birlikte tek yerden yonetiliyor. */
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: markali("Store"),
+    description:
+      "Guides, templates and sessions from the Fabelo desk — the same work that goes into the reporting, in a form you can use.",
+    alternates: { canonical: `${SITE}/store` },
+    /* Kapaliyken noindex, acilinca kendiliginden kalkiyor.
+       Tek kaynak: lib/magaza-durumu.ts */
+    robots: await magazaRobots(),
+  };
+}
 
 export default async function MagazaSayfasi() {
   const [urunler, kategoriler] = await Promise.all([
@@ -76,6 +80,8 @@ export default async function MagazaSayfasi() {
       <MagazineHeader />
 
       <main>
+        {/* Sepete giden kalici yol — derginin basliginin ALTINDA. */}
+        <SepetSeridi />
         {/* --- Vitrin kunyesi --- */}
         <header className="mag-wrap pt-12 sm:pt-16">
           <div className="rule-heavy pt-5">

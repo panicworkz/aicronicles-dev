@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useSepet } from "@/components/store/SepetSaglayici";
 import { fiyat } from "@/lib/magaza";
 
@@ -15,6 +14,11 @@ import { fiyat } from "@/lib/magaza";
  * hicbir yolu kalmiyordu — adresi elle yazmak disinda. Dergi basliginda
  * da sepet yok, cunku o baslik yayin tarafina ait.
  *
+ * YERI: magaza bolumunun ICINDE, derginin basliginin ALTINDA. Ilk
+ * halinde ekranin en tepesine yapisan bir cubuktu ve derginin
+ * basliginin bile ustunde duruyordu — yani siteye ait bir sey gibi
+ * gorunuyordu, oysa yalnizca magazayi ilgilendiriyor.
+ *
  * Serit yalnizca sepette bir sey VARKEN gorunuyor: bos sepet icin
  * kalici bir cubuk tutmak, olmayan bir seyi surekli hatirlatmak olurdu.
  *
@@ -23,22 +27,18 @@ import { fiyat } from "@/lib/magaza";
  */
 export function SepetSeridi() {
   const { toplamAdet, araToplam, paraBirimi, hazir } = useSepet();
-  const yol = usePathname();
 
   /* hazir olana kadar cizilmiyor: sunucudan gelen HTML ile ilk cizim
      ayni olsun. Yoksa React uyari veriyor ve sayi bir an yanlis
      gorunuyor. */
   if (!hazir || toplamAdet === 0) return null;
-  if (yol?.startsWith("/store/cart") || yol?.startsWith("/store/order")) return null;
 
   return (
-    <div
-      className="sticky top-0 z-40"
-      style={{ background: "var(--ink)", color: "var(--paper)" }}
-    >
+    <div className="mag-wrap pt-6">
       <Link
         href="/store/cart"
-        className="mag-wrap flex items-center gap-3 py-2.5 transition-opacity hover:opacity-90"
+        className="flex items-center gap-3 px-4 py-3 transition-opacity hover:opacity-90"
+        style={{ background: "var(--ink)", color: "var(--paper)" }}
       >
         <span className="byline">
           {toplamAdet} {toplamAdet === 1 ? "ITEM" : "ITEMS"} IN YOUR BASKET

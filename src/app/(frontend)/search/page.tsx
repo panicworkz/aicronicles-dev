@@ -1,6 +1,7 @@
 import React from "react";
 import { db, schema } from "@/db";
 import { desc, eq } from "drizzle-orm";
+import { magazaAcik } from "@/lib/magaza-durumu";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
 import SearchClient from "./SearchClient";
@@ -28,6 +29,17 @@ export default async function SearchPage({
     limit: 60,
   });
 
+  /* Urunler yalnizca magaza ACIKKEN aramaya giriyor. Kapaliyken
+     eklemek, disariya kapali bir dukkani arama sonuclarindan sizdirmak
+     olurdu — magaza acilinca kendiliginden devreye giriyor. */
+  const urunler = (await magazaAcik())
+    ? await db.query.products.findMany({
+        where: eq(schema.products.status, "published"),
+        orderBy: [desc(schema.products.createdAt)],
+        limit: 40,
+      })
+    : [];
+
   const categories = await db.query.categories.findMany();
   const authors = await db.query.authors.findMany();
 
@@ -40,6 +52,7 @@ export default async function SearchPage({
           initialQuery={initialQuery}
           initialCategory={initialCategory}
           posts={posts}
+          urunler={urunler as any[]}
           categories={categories}
           authors={authors}
         />

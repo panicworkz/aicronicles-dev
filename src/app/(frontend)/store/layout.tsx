@@ -1,9 +1,8 @@
 import React from "react";
-import { cookies } from "next/headers";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { jwtVerify } from "jose";
 import { SepetSaglayici } from "@/components/store/SepetSaglayici";
-import { SepetSeridi } from "@/components/store/SepetSeridi";
+import { magazaAcik, magazaGorunur } from "@/lib/magaza-durumu";
 
 /**
  * Magaza DISARIYA KAPALI.
@@ -32,21 +31,20 @@ import { SepetSeridi } from "@/components/store/SepetSeridi";
  * gerekiyor: birine koyup otekini unutmak mumkun olmasin.
  */
 
-const COOKIE_NAME = "panic_session";
-
-async function oturumVarMi(): Promise<boolean> {
-  const gizli = process.env.JWT_SECRET;
-  if (!gizli) return false;
-
-  const jeton = (await cookies()).get(COOKIE_NAME)?.value;
-  if (!jeton) return false;
-
-  try {
-    await jwtVerify(jeton, new TextEncoder().encode(gizli));
-    return true;
-  } catch {
-    return false;
-  }
+/**
+ * Kapi BURADAN da tutuluyor, ama karar lib/magaza-durumu.ts'te.
+ *
+ * generateMetadata akistan once cozuluyor; govdedeki kontrol ise onun
+ * calismadigi bir durumda kapiyi acik birakmasin diye duruyor. Ikisi
+ * de ayni tek kaynagi soruyor.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  if (!(await magazaGorunur())) notFound();
+  return {
+    title: "Store | Fabelo",
+    /* Kapaliyken dizine girmiyor; acilinca kendiliginden kalkiyor. */
+    robots: (await magazaAcik()) ? undefined : { index: false, follow: false },
+  };
 }
 
 export default async function StoreLayout({
@@ -54,26 +52,24 @@ export default async function StoreLayout({
 }: {
   children: React.ReactNode;
 }) {
-  if (!(await oturumVarMi())) notFound();
+  if (!(await magazaGorunur())) notFound();
 
   return (
     <>
       {/* Editore hatirlatma: burasi yalnizca sana gorunuyor. Bu serit
           olmadan magaza acikmis gibi durur ve "neden kimse gormuyor"
           diye aranilirdi. */}
-      <div
-        className="px-4 py-2 text-center text-[13px] font-medium"
-        style={{ background: "#78350f", color: "#fef3c7" }}
-      >
-        This store is closed to the public — only signed-in staff can see it.
-      </div>
-      <SepetSaglayici>
-        {/* Sepete giden KALICI yol. Once yalnizca "Add to basket"in
-            altinda bir baglanti vardi ve sayfa degisince kayboluyordu;
-            sepete ulasmanin baska yolu yoktu. */}
-        <SepetSeridi />
-        {children}
-      </SepetSaglayici>
+      {!(await magazaAcik()) && (
+        <div
+          className="px-4 py-2 text-center text-[13px] font-medium"
+          style={{ background: "#78350f", color: "#fef3c7" }}
+        >
+          This store is closed to the public — only signed-in staff can see it.
+        </div>
+      )}
+      {/* Serit burada DEGIL, sayfalarin icinde: buradan cizilseydi
+          derginin basliginin ustunde kalirdi. Bkz. SepetSeridi. */}
+      <SepetSaglayici>{children}</SepetSaglayici>
     </>
   );
 }

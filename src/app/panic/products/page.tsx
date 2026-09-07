@@ -232,7 +232,7 @@ export default function PanicProductsPage() {
 
                     <td className="py-3 px-4 font-medium text-foreground">
                       <div className="space-y-0.5">
-                        <span className="font-semibold text-xs text-foreground group-hover:text-primary transition line-clamp-1">
+                        <span className="font-semibold text-xs text-foreground group-hover:text-primary transition">
                           {prod.title}
                         </span>
                         <span className="text-[11px] text-muted-foreground font-mono block">

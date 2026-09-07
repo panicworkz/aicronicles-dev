@@ -35,12 +35,16 @@ export function UrunKarti({ urun, no }: { urun: KartUrun; no?: number }) {
     urun.compareAtPrice != null && Number(urun.compareAtPrice) > Number(urun.price ?? 0);
 
   return (
-    <article className="group flex flex-col">
+    /* h-full: izgaradaki kartlar satirin en uzununa uzuyor ve fiyat
+       satiri hepsinde ayni hizada duruyor. Bu olmadan aciklamayi
+       kesmeden esit gorunum saglanamiyordu. */
+    <article className="group flex h-full flex-col">
       <Link href={`/store/${urun.slug}`} className="block">
-        {/* Gorsel alani her kartta ayni oranda: iceriik gelmeden de
-            duzen oturmus olsun, kartlar birbirine gore kaymasin. */}
+        {/* Gorsel alani her kartta ayni oranda: icerik gelmeden de
+            duzen oturmus olsun, kartlar birbirine gore kaymasin.
+            Icindeki gorsel KIRPILMIYOR (asagi bkz.). */}
         <div
-          className="mb-4 w-full overflow-hidden"
+          className="mb-4 flex w-full items-center justify-center overflow-hidden p-4"
           style={{ aspectRatio: "4 / 3", background: "var(--paper-2)" }}
         >
           {urun.featuredImageUrl ? (
@@ -48,7 +52,11 @@ export function UrunKarti({ urun, no }: { urun: KartUrun; no?: number }) {
             <img
               src={urun.featuredImageUrl}
               alt={urun.title}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              /* object-contain: urun fotografi KIRPILMIYOR. cover ile
+                 sise, kutu ve etiketlerin kenarlari kesiliyordu —
+                 okurun tam olarak neyi satin aldigini gormesi gereken
+                 tek yer bu gorsel. */
+              className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
             />
           ) : (
             <div
@@ -75,9 +83,13 @@ export function UrunKarti({ urun, no }: { urun: KartUrun; no?: number }) {
           {urun.title}
         </h3>
 
+        {/* ACIKLAMA KESILMIYOR. Once line-clamp-2 vardi ve cumleler
+            "..." ile yarida kaliyordu — okur urunun ne oldugunu
+            anlamadan kartin bittigini goruyordu. Kartlar h-full ile
+            esitlendigi icin kesmeye gerek de yok. */}
         {urun.description && (
           <p
-            className="mb-3 line-clamp-2 text-[0.92rem] leading-relaxed"
+            className="mb-4 text-[0.92rem] leading-relaxed"
             style={{ color: "var(--ink-2)" }}
           >
             {urun.description}

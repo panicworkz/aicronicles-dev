@@ -4,11 +4,13 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { Search as SearchIcon, X, Clock, ArrowRight, Filter } from "lucide-react";
 import { PostCard, CardPost } from "@/components/magazine/PostCard";
+import { UrunKarti, type KartUrun } from "@/components/store/UrunKarti";
 
 interface SearchClientProps {
   initialQuery: string;
   initialCategory: string;
   posts: any[];
+  urunler?: any[];
   categories: any[];
   authors: any[];
 }
@@ -17,6 +19,7 @@ export default function SearchClient({
   initialQuery,
   initialCategory,
   posts,
+  urunler = [],
   categories,
   authors,
 }: SearchClientProps) {
@@ -57,6 +60,21 @@ export default function SearchClient({
       return inTitle || inExcerpt || inSlug;
     });
   }, [posts, q, selectedCat, categoryMap]);
+
+  /* Urunler AYRI bir listede. Makalelerle karistirmak yanlis olurdu:
+     biri okunacak, oteki satin alinacak bir sey. Bolum suzgeci de
+     editoryal bolumlere ait, urunlere degil — o yuzden urunlerde
+     yalnizca metin aramasi calisiyor. */
+  const filtrelenmisUrunler = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    if (!query) return [];
+    return urunler.filter(
+      (u) =>
+        u.title?.toLowerCase().includes(query) ||
+        u.description?.toLowerCase().includes(query) ||
+        u.slug?.toLowerCase().includes(query)
+    );
+  }, [urunler, q]);
 
   return (
     <div className="space-y-8">
@@ -144,7 +162,7 @@ export default function SearchClient({
             />
           ))}
         </div>
-      ) : (
+      ) : filtrelenmisUrunler.length > 0 ? null : (
         <div className="py-20 text-center space-y-3 rounded-2xl bg-[var(--bg-2)] border border-[var(--line)]">
           <p className="text-base font-bold text-[var(--heading)]">
             No articles found matching &quot;{q}&quot;
@@ -163,6 +181,29 @@ export default function SearchClient({
           </button>
         </div>
       )}
+      {/* --- URUNLER ---
+          Makalelerden AYRI bir bolum. Biri okunacak, oteki satin
+          alinacak bir sey; ayni izgaraya karistirmak okuru yanlis
+          yere goturur. Yalnizca arama yazildiginda ve magaza acikken
+          gorunuyor. */}
+      {filtrelenmisUrunler.length > 0 && (
+        <div className="pt-12">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--line)]">
+            <h2 className="text-lg font-bold tracking-tight text-[var(--heading)]">
+              From the store
+            </h2>
+            <span className="text-xs font-mono text-[var(--muted)]">
+              {filtrelenmisUrunler.length} Results
+            </span>
+          </div>
+          <div className="mag mt-8 grid gap-x-9 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+            {filtrelenmisUrunler.map((u, i) => (
+              <UrunKarti key={u.id} urun={u as KartUrun} no={i + 1} />
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

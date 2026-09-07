@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE } from "@/lib/seo";
+import { magazaAcik } from "@/lib/magaza-durumu";
 
 /**
  * robots.txt.
@@ -16,20 +17,28 @@ import { SITE } from "@/lib/seo";
  * bloklamasi bu yaniti golgeledigi icin staging'de degisen bir sey yok
  * — dosya yalnizca uretimde gorunur hale gelir.
  */
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  /* Magaza kapaliyken /store disariniyor, acilinca kendiliginden
+     kalkiyor. Once elle yazilmisti ve acarken silmeyi unutmak
+     magazayi acik ama Google'a kapali birakirdi. */
+  const acik = await magazaAcik();
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        /* Panel ve uclar arama sonuclarinda isi yok.
-
-           /store da burada: magaza disariya kapali ve zaten 404
-           donuyor (bkz. (frontend)/store/layout.tsx). Bu satir onun
-           yerine gecmiyor, YANINA duruyor — daha once kunyeden
-           baglanti verildigi icin adresi taramis bir bot tekrar
-           denemesin diye. Magaza acildiginda bu satir kalkacak. */
-        disallow: ["/panic", "/panic/", "/api/", "/unsubscribe", "/store"],
+        // Panel ve uclar arama sonuclarinda isi yok.
+        disallow: [
+          "/panic",
+          "/panic/",
+          "/api/",
+          "/unsubscribe",
+          /* Sepet ve siparis sayfalari magaza ACIKKEN de disarida:
+             ikisi de kisiye ozel ekran. */
+          "/store/cart",
+          "/store/order",
+          ...(acik ? [] : ["/store"]),
+        ],
       },
     ],
     /* Yalnizca ana harita duyuruluyor. sitemap-news.xml da var ama o
