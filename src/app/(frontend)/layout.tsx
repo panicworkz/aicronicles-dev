@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import CustomCursor from "@/components/magazine/CustomCursor";
 import BackToTop from "@/components/magazine/BackToTop";
 import AnchorPin from "@/components/magazine/AnchorPin";
+import NavProgress from "@/components/magazine/NavProgress";
 import "./globals.css";
 import { SITE, SITE_ADI } from "@/lib/seo";
 
@@ -69,6 +70,10 @@ export default function FrontendLayout({
       <BackToTop />
       {/* Kunyedeki cipa baglantilari her sayfada var; isleyici de burada durmali. */}
       <AnchorPin />
+      {/* Gezinme cizgisi. Once burada bir iskelet ekrani (loading.tsx)
+          vardi; akis baslattigi icin sitedeki butun 404'ler 200
+          donuyordu. Ayrintisi bilesenin basinda. */}
+      <NavProgress />
     </ThemeProvider>
   );
 }

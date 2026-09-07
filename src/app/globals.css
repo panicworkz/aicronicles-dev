@@ -558,6 +558,35 @@ html {
 }
 
 /* ---------------------------------------------------------------
+   Gezinme cizgisi (components/magazine/NavProgress.tsx).
+
+   Sayfanin en ustunde 2px. Vurgu renginde, saga dogru uzuyor.
+   Iskelet ekraninin yerini aldi; nedeni bilesenin basinda yaziyor.
+   --------------------------------------------------------------- */
+.nav-cizgi {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 200;
+  height: 2px;
+  pointer-events: none;
+  background: transparent;
+}
+.nav-cizgi > span {
+  display: block;
+  height: 100%;
+  /* Renk DUZ YAZILMIS, var(--accent) degil. Bu serit yayin katmaninin
+     duzeninde duruyor ve .mag'in DISINDA kaliyor; orada --accent
+     panelin cividine (#3b4bc8) cozuluyor. Imlecte de tam olarak bu
+     olmustu (bkz. CustomCursor). Deger sitenin camgobegi. */
+  background: #0fb5ce;
+  /* Genislik her adimda degisiyor; gecis olmadan sicrayarak ilerlerdi. */
+  transition: width 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-cizgi > span { transition: none; }
+}
+
+/* ---------------------------------------------------------------
    Panel pencereleri (components/ui/modal.tsx).
 
    Perde beliriyor, kutu son bir tik buyuyerek yerine oturuyor —

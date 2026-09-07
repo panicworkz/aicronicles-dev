@@ -20,19 +20,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const author = await db.query.authors.findFirst({ where: eq(schema.authors.slug, slug) });
-  /* notFound() BURADA, sayfa govdesinde degil.
-
-     Sebep: (frontend)/loading.tsx bir Suspense siniri kuruyor ve Next
-     iskeleti hemen akitmaya basliyor. Akis basladiktan sonra durum
-     kodu degistirilemiyor; sayfa govdesindeki notFound() 404 sayfasini
-     BASIYOR ama yanit 200 olarak gidiyordu. Google'in "soft 404"
-     dedigi sey bu: olmayan adres "buldum" cevabi aliyor ve dizine
-     girebiliyor.
-
-     generateMetadata akistan ONCE bekleniyor (basligi <head>'e yazmasi
-     gerekiyor), dolayisiyla buradaki notFound() gercek 404'u
-     gonderiyor. Olcum: iskeletle 200, bu degisiklikle 404. */
-  if (!author) notFound();
+  if (!author) return { title: "Not Found | Fabelo" };
   const aciklama = author.bio
     ? decodeEntities(author.bio)
     : `Stories written by ${author.name} for Fabelo.`;
