@@ -44,6 +44,14 @@ function isPublicApiRequest(pathname: string, method: string): boolean {
     return true;
   }
 
+  /* Sepet dogrulamasi. Sepet tarayicida duruyor ve silinmis bir urun
+     orada kalabiliyor; bu uc hangi kalemlerin hala gecerli oldugunu
+     soyluyor. Yalnizca OKUYOR ve zaten herkese acik olan urun
+     bilgilerini donuyor. */
+  if (method === 'POST' && pathname === '/api/cart/check') {
+    return true;
+  }
+
   /* Siparis verme. Magaza acilinca okurun bir sey almak icin hesap
      acmasi gerekmeyecek, yani bu POST oturum isteyemez. Ucun kendisi
      tuzak alan tasiyor ve — asil onemlisi — FIYATA GUVENMIYOR: gelen

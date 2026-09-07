@@ -103,7 +103,7 @@ export default function PanicAdminLayout({
           collapsed ? "w-16" : "w-60",
         )}
       >
-        <div className="flex h-14 items-center gap-3 px-4 border-b border-border">
+        <div className="flex h-16 items-center gap-3 px-4 border-b border-border">
           {!collapsed && (
             <Link
               href="/panic"
@@ -197,7 +197,12 @@ export default function PanicAdminLayout({
       {/* Main Column */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Hubz Header with Grouped Actions & Right-Aligned Currencies */}
-        <header className="flex h-14 items-center justify-between gap-4 border-b border-border bg-background px-6 shrink-0">
+        {/* Ust cubuk h-14'ten h-16'ya: arama, uc kur, uc dugme, tema ve
+            profil hepsi 56 pikselde ust uste biniyordu. Yukseklik ve
+            araliklar acildi; kur seridi zaten dar ekranda gizleniyor
+            (bkz. LiveRatesTicker), simdi ayirici cizgiler de onunla
+            birlikte gizleniyor ki tek basina bosluk birakmasinlar. */}
+        <header className="flex h-16 items-center justify-between gap-6 border-b border-border bg-background px-6 shrink-0">
           {/* Left: Global Search Input */}
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -208,7 +213,7 @@ export default function PanicAdminLayout({
           </div>
 
           {/* Right: Grouped Badges, Quick Actions, and Profile */}
-          <div className="flex items-center gap-3 ml-auto">
+          <div className="flex items-center gap-4 ml-auto">
             {/* Live TCMB Exchange Rates */}
             <LiveRatesTicker />
 
@@ -249,7 +254,7 @@ export default function PanicAdminLayout({
               </Link>
             </div>
 
-            <div className="h-5 w-px bg-border shrink-0" />
+            <div className="hidden lg:block h-5 w-px bg-border shrink-0" />
 
             {/* Grouped Profile & Theme Toggle */}
             <div className="flex items-center gap-1 border border-border rounded-lg p-0.5 bg-background shadow-xs">
@@ -279,7 +284,7 @@ export default function PanicAdminLayout({
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-6 bg-background">
+        <main className="flex-1 overflow-y-auto px-6 py-7 bg-background">
           {children}
         </main>
       </div>

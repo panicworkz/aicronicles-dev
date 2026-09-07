@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSepet } from "@/components/store/SepetSaglayici";
@@ -16,7 +16,7 @@ import { fiyat as bicimliFiyat, TUR_VAADI, turu } from "@/lib/magaza";
  */
 
 export function SepetEkrani() {
-  const { kalemler, hazir, adetYaz, cikar, araToplam, paraBirimi, bosalt } = useSepet();
+  const { kalemler, hazir, adetYaz, cikar, fiyatYaz, araToplam, paraBirimi, bosalt } = useSepet();
   const router = useRouter();
 
   const [ad, setAd] = useState("");
@@ -33,6 +33,13 @@ export function SepetEkrani() {
   const [dijitalOnay, setDijitalOnay] = useState(false);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
+  /* Sepet tarayicida SURESIZ duruyor: silinmis ya da taslaga cekilmis
+     bir urun orada oyle kaliyordu — listede gorunuyor, toplama
+     ekleniyor, ama siparis verilince her sey topluca reddediliyordu ve
+     okur hangi kalemin sorunlu oldugunu goremiyordu. Fiyati degismis
+     bir urun de eski tutarla duruyordu. Sayfa acilinca sunucuyla
+     karsilastiriliyor. */
+  const [duseneler, setDuseneler] = useState<string[]>([]);
 
   /* Kargo yalnizca ELDEN teslim edilen bir sey varsa gerekiyor.
      Dijital bir rehber icin adres istemek gereksiz veri toplamak
@@ -60,6 +67,47 @@ export function SepetEkrani() {
       </div>
     );
   }
+
+  useEffect(() => {
+    if (!hazir || kalemler.length === 0) return;
+    let iptal = false;
+    (async () => {
+      try {
+        const y = await fetch("/api/cart/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items: kalemler.map((k) => ({ urunId: k.urunId })) }),
+        });
+        const d = await y.json();
+        if (iptal || !d?.success) return;
+
+        const gecerli = new Map<number, any>((d.items ?? []).map((u: any) => [u.urunId, u]));
+        const gidenler: string[] = [];
+        for (const k of kalemler) {
+          const u = gecerli.get(k.urunId);
+          if (!u || !u.stokta) {
+            gidenler.push(k.baslik);
+            cikar(k.urunId, k.varyantId);
+            continue;
+          }
+          /* Fiyat degistiyse sepet GUNCEL tutari gostersin. Odemede
+             zaten sunucunun fiyati gecerli; ikisi ayrisirsa okur
+             beklemedigi bir tutarla karsilasirdi. */
+          const varyant = u.varyantlar?.find((v: any) => v.id === k.varyantId);
+          const guncel = varyant?.price != null ? Number(varyant.price) : u.fiyat;
+          if (guncel !== k.fiyat) fiyatYaz(k.urunId, k.varyantId, guncel);
+        }
+        if (gidenler.length) setDuseneler(gidenler);
+      } catch {
+        /* Sunucuya ulasilamadiysa sepete DOKUNMUYORUZ: gecici bir ag
+           sorunu yuzunden okurun sepetini bosaltmak yanlis olurdu. */
+      }
+    })();
+    return () => {
+      iptal = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hazir]);
 
   async function gonder(e: React.FormEvent) {
     e.preventDefault();
@@ -104,9 +152,28 @@ export function SepetEkrani() {
     <form onSubmit={gonder} className="grid gap-10 lg:grid-cols-12 lg:gap-14">
       {/* --- Sepet --- */}
       <div className="lg:col-span-7">
-        <div className="folio mb-5" style={{ color: "var(--accent)" }}>
-          § YOUR BASKET
+        <div className="mb-5 flex items-baseline justify-between gap-4">
+          <div className="folio" style={{ color: "var(--accent)" }}>
+            § YOUR BASKET
+          </div>
+          {/* Magazaya donus yolu. Bu ekranda hicbir cikis yoktu:
+              alisverise devam etmek isteyen okurun geri tusundan
+              baska secenegi kalmiyordu. */}
+          <Link href="/store" className="byline hover:text-[var(--accent-ink)]">
+            ← KEEP SHOPPING
+          </Link>
         </div>
+
+        {duseneler.length > 0 && (
+          <p
+            className="mb-5 p-3.5 text-[0.9rem] leading-relaxed"
+            style={{ background: "var(--paper-2)" }}
+          >
+            {duseneler.length === 1
+              ? `“${duseneler[0]}” is no longer available, so we took it out of your basket.`
+              : `${duseneler.length} items are no longer available and were taken out of your basket.`}
+          </p>
+        )}
 
         <ul>
           {kalemler.map((k) => (

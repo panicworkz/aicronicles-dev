@@ -37,6 +37,10 @@ type SepetDurumu = {
   ekle: (k: Omit<SepetKalemi, "adet">, adet?: number) => void;
   adetYaz: (urunId: number, varyantId: number | null | undefined, adet: number) => void;
   cikar: (urunId: number, varyantId?: number | null) => void;
+  /* Fiyat sunucudan gelen guncel degerle degistirilebiliyor: sepette
+     haftalarca bekleyen bir urunun fiyati degismis olabilir ve eski
+     tutari gostermek, odemede baska bir tutarla karsilasmak demek. */
+  fiyatYaz: (urunId: number, varyantId: number | null | undefined, fiyat: number) => void;
   bosalt: () => void;
   toplamAdet: number;
   araToplam: number;
@@ -112,6 +116,11 @@ export function SepetSaglayici({ children }: { children: React.ReactNode }) {
 
       cikar: (urunId, varyantId) =>
         setKalemler((m) => m.filter((x) => !ayniKalem(x, urunId, varyantId))),
+
+      fiyatYaz: (urunId, varyantId, fiyat) =>
+        setKalemler((m) =>
+          m.map((x) => (ayniKalem(x, urunId, varyantId) ? { ...x, fiyat } : x))
+        ),
 
       bosalt: () => setKalemler([]),
     };
