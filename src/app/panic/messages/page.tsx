@@ -12,20 +12,30 @@ import {
   Building2,
   Phone,
   Link2,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 
 /**
- * Iletisim mesajlari.
+ * Iletisim mesajlari — iki bolmeli posta kutusu.
  *
  * Mesajlar once contact_messages tablosuna yaziliyor, sonra merkezi
  * gateway'e iletiliyor (bkz. api/contact). Bu ekran ASIL KAYDI
  * gosteriyor: gateway dusse bile mesaj burada duruyor ve iletim durumu
- * "failed" olarak isaretli geliyor.
+ * "not e-mailed" olarak isaretli geliyor.
+ *
+ * NEDEN AKORDIYON DEGIL: ilk hali satirlari acilip kapanan bir liste
+ * yapmisti. Iki sorunu vardi. Bir, acilan satir altindaki her seyi
+ * asagi itiyordu — okurken sayfa yerinden oynuyordu. Iki, mesaji
+ * acmak "okundu" isaretliyor ve listeyi BASTAN CEKIYORDU; ekran
+ * yenileniyormus gibi sicriyordu.
+ *
+ * Simdi solda liste, sagda secilen mesaj. Liste hic oynamiyor ve
+ * "okundu" yalnizca yerel duruma yaziliyor; sunucuya arka planda
+ * gidiyor, yanit beklenmiyor ve liste yeniden cekilmiyor.
  */
 
 /** Formdaki sekmeler — sitedeki sabit sayfalarla ayni bolumleme. */
@@ -61,13 +71,16 @@ type Mesaj = {
   createdAt: string;
 };
 
+const tarihKisa = (s: string) =>
+  new Date(s).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
 export default function MesajlarSayfasi() {
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
   const [sayilar, setSayilar] = useState<Record<string, number>>({});
   const [yukleniyor, setYukleniyor] = useState(true);
   const [suzgec, setSuzgec] = useState<string>('');
   const [arama, setArama] = useState('');
-  const [acik, setAcik] = useState<number | null>(null);
+  const [secili, setSecili] = useState<number | null>(null);
 
   const getir = useCallback(async () => {
     setYukleniyor(true);
@@ -77,9 +90,7 @@ export default function MesajlarSayfasi() {
       if (d?.success) {
         setMesajlar(d.messages ?? []);
         setSayilar(d.counts ?? {});
-      } else {
-        toast.error(d?.message || d?.error || 'Messages could not be loaded');
-      }
+      } else toast.error(d?.message || d?.error || 'Messages could not be loaded');
     } catch {
       toast.error('Messages could not be loaded');
     } finally {
@@ -91,18 +102,26 @@ export default function MesajlarSayfasi() {
     getir();
   }, [getir]);
 
-  async function durumDegistir(id: number, status: string) {
-    const y = await fetch('/api/messages', {
+  /** Durumu YEREL olarak degistir, sunucuya arka planda bildir.
+      Listeyi yeniden cekmiyoruz: ekranin sicramasinin sebebi oydu. */
+  const durumYaz = useCallback((id: number, status: string) => {
+    setMesajlar((m) => {
+      const eski = m.find((x) => x.id === id)?.status;
+      if (eski && eski !== status) {
+        setSayilar((s) => ({
+          ...s,
+          [eski]: Math.max(0, (s[eski] ?? 0) - 1),
+          [status]: (s[status] ?? 0) + 1,
+        }));
+      }
+      return m.map((x) => (x.id === id ? { ...x, status } : x));
+    });
+    fetch('/api/messages', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status }),
-    });
-    const d = await y.json();
-    if (d?.success) {
-      setMesajlar((m) => m.map((x) => (x.id === id ? { ...x, status } : x)));
-      getir();
-    } else toast.error(d?.message || 'Could not update');
-  }
+    }).catch(() => toast.error('Status could not be saved'));
+  }, []);
 
   async function sil(id: number) {
     if (!confirm('Delete this message permanently?')) return;
@@ -111,6 +130,7 @@ export default function MesajlarSayfasi() {
     if (d?.success) {
       toast.success('Message deleted');
       setMesajlar((m) => m.filter((x) => x.id !== id));
+      if (secili === id) setSecili(null);
       getir();
     } else toast.error(d?.message || 'Could not delete');
   }
@@ -125,11 +145,18 @@ export default function MesajlarSayfasi() {
     );
   }, [mesajlar, arama]);
 
+  const acik = suzulmus.find((m) => m.id === secili) ?? null;
   const toplam = Object.values(sayilar).reduce((a, b) => a + b, 0);
   const iletilemeyen = mesajlar.filter((m) => m.gatewayStatus === 'failed').length;
 
+  function sec(m: Mesaj) {
+    setSecili(m.id);
+    if (m.status === 'new') durumYaz(m.id, 'read');
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Baslik */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
@@ -151,52 +178,10 @@ export default function MesajlarSayfasi() {
         </div>
       </div>
 
-      {/* Ozet */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="font-mono text-2xl font-bold">{toplam}</span>
-          </CardContent>
-        </Card>
-        {DURUMLAR.slice(0, 2).map((d) => (
-          <Card key={d.anahtar}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {d.etiket}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <span className="font-mono text-2xl font-bold">{sayilar[d.anahtar] ?? 0}</span>
-            </CardContent>
-          </Card>
-        ))}
-        <Card className={iletilemeyen ? 'border-red-500/40' : undefined}>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {iletilemeyen > 0 && <AlertTriangle className="size-3.5 text-red-500" />}
-              Not e-mailed
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="font-mono text-2xl font-bold">{iletilemeyen}</span>
-            {iletilemeyen > 0 && (
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Saved here, but the mail gateway refused them.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Durum suzgeci */}
-      <div className="flex flex-wrap gap-2">
+      {/* Suzgec seridi — sayimlar rozet olarak, ayri kart yigini yerine */}
+      <div className="flex flex-wrap items-center gap-2">
         <Button variant={suzgec === '' ? 'default' : 'outline'} size="sm" onClick={() => setSuzgec('')}>
-          All
+          All <span className="ml-1.5 font-mono text-[11px] opacity-70">{toplam}</span>
         </Button>
         {DURUMLAR.map((d) => (
           <Button
@@ -206,133 +191,181 @@ export default function MesajlarSayfasi() {
             onClick={() => setSuzgec(d.anahtar)}
           >
             {d.etiket}
-            <span className="ml-1.5 font-mono text-[11px] opacity-70">
-              {sayilar[d.anahtar] ?? 0}
-            </span>
+            <span className="ml-1.5 font-mono text-[11px] opacity-70">{sayilar[d.anahtar] ?? 0}</span>
           </Button>
         ))}
+        {iletilemeyen > 0 && (
+          <Badge variant="outline" className="ml-auto border-red-500/30 bg-red-500/10 text-red-600">
+            <AlertTriangle className="mr-1 size-3.5" />
+            {iletilemeyen} not e-mailed
+          </Badge>
+        )}
       </div>
 
-      {/* Liste */}
-      {yukleniyor ? (
-        <p className="py-16 text-center text-sm text-muted-foreground">Loading…</p>
-      ) : suzulmus.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border py-20 text-center">
-          <Inbox className="mx-auto mb-3 size-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            {arama ? 'Nothing matches that search.' : 'No messages yet.'}
-          </p>
+      {/* Iki bolme */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)]">
+        {/* Liste */}
+        <div className="overflow-hidden rounded-lg border border-border">
+          {yukleniyor ? (
+            <p className="py-16 text-center text-sm text-muted-foreground">Loading…</p>
+          ) : suzulmus.length === 0 ? (
+            <div className="py-16 text-center">
+              <Inbox className="mx-auto mb-3 size-7 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                {arama ? 'Nothing matches that search.' : 'No messages yet.'}
+              </p>
+            </div>
+          ) : (
+            <ul className="max-h-[68vh] divide-y divide-border overflow-y-auto">
+              {suzulmus.map((m) => {
+                const konu = KONULAR[m.topic] ?? KONULAR.general;
+                const seciliMi = m.id === secili;
+                return (
+                  <li key={m.id}>
+                    <button
+                      type="button"
+                      onClick={() => sec(m)}
+                      className={`flex w-full flex-col gap-1 px-4 py-3 text-left transition-colors ${
+                        seciliMi ? 'bg-primary/10' : 'hover:bg-muted/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {m.status === 'new' && (
+                          <span className="size-1.5 shrink-0 rounded-full bg-primary" aria-label="new" />
+                        )}
+                        <span className={`truncate text-sm ${m.status === 'new' ? 'font-semibold' : 'font-medium'}`}>
+                          {m.name}
+                        </span>
+                        <span className="ml-auto shrink-0 font-mono text-[10px] text-muted-foreground">
+                          {tarihKisa(m.createdAt)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={`shrink-0 text-[10px] ${konu.renk}`}>
+                          {konu.etiket}
+                        </Badge>
+                        <span className="truncate text-[12px] text-muted-foreground">
+                          {m.organization || m.email}
+                        </span>
+                      </div>
+                      <p className="line-clamp-1 text-[12px] text-muted-foreground">{m.message}</p>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
-      ) : (
-        <div className="space-y-2">
-          {suzulmus.map((m) => {
-            const konu = KONULAR[m.topic] ?? KONULAR.general;
-            const acikMi = acik === m.id;
-            return (
-              <div
-                key={m.id}
-                className={`rounded-lg border transition-colors ${
-                  m.status === 'new' ? 'border-primary/40 bg-primary/[0.03]' : 'border-border'
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAcik(acikMi ? null : m.id);
-                    if (!acikMi && m.status === 'new') durumDegistir(m.id, 'read');
-                  }}
-                  className="flex w-full flex-wrap items-center gap-3 p-4 text-left"
-                >
-                  <Badge variant="outline" className={`shrink-0 text-[11px] ${konu.renk}`}>
-                    {m.topicLabel || konu.etiket}
+
+        {/* Detay */}
+        <div className="rounded-lg border border-border">
+          {!acik ? (
+            <div className="flex h-full min-h-[320px] flex-col items-center justify-center p-10 text-center">
+              <Mail className="mb-3 size-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Pick a message on the left to read it.
+              </p>
+            </div>
+          ) : (
+            <article className="flex h-full flex-col">
+              {/* Kunye */}
+              <header className="border-b border-border p-5">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className={`text-[11px] ${(KONULAR[acik.topic] ?? KONULAR.general).renk}`}
+                  >
+                    {acik.topicLabel || (KONULAR[acik.topic] ?? KONULAR.general).etiket}
                   </Badge>
-                  <span className="font-medium">{m.name}</span>
-                  <span className="text-sm text-muted-foreground">{m.email}</span>
-                  {m.organization && (
-                    <span className="hidden items-center gap-1 text-sm text-muted-foreground sm:inline-flex">
-                      <Building2 className="size-3.5" /> {m.organization}
-                    </span>
+                  {acik.status !== 'new' && (
+                    <Badge variant="outline" className="text-[11px] capitalize">
+                      {acik.status}
+                    </Badge>
                   )}
-                  <span className="ml-auto shrink-0 font-mono text-[11px] text-muted-foreground">
-                    {new Date(m.createdAt).toLocaleString('en-GB', {
-                      day: '2-digit',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
-                  {m.gatewayStatus === 'failed' && (
+                  {acik.gatewayStatus === 'failed' && (
                     <Badge variant="outline" className="border-red-500/30 bg-red-500/10 text-[11px] text-red-600">
                       not e-mailed
                     </Badge>
                   )}
-                  {m.status !== 'new' && (
-                    <Badge variant="outline" className="text-[11px] capitalize">
-                      {m.status}
-                    </Badge>
+                  <span className="ml-auto font-mono text-[11px] text-muted-foreground">
+                    {new Date(acik.createdAt).toLocaleString('en-GB', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                </div>
+                <h2 className="text-lg font-semibold">{acik.name}</h2>
+                <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-muted-foreground">
+                  <a href={`mailto:${acik.email}`} className="inline-flex items-center gap-1 hover:text-primary">
+                    <Mail className="size-3.5" /> {acik.email}
+                  </a>
+                  {acik.organization && (
+                    <span className="inline-flex items-center gap-1">
+                      <Building2 className="size-3.5" /> {acik.organization}
+                    </span>
                   )}
-                </button>
+                  {acik.phone && (
+                    <span className="inline-flex items-center gap-1">
+                      <Phone className="size-3.5" /> {acik.phone}
+                    </span>
+                  )}
+                </div>
+              </header>
 
-                {acikMi && (
-                  <div className="space-y-4 border-t border-border p-4 pt-4">
-                    {/* Sekmeye ozel alanlar */}
-                    {m.fields && Object.keys(m.fields).length > 0 && (
-                      <div className="grid gap-x-8 gap-y-2 rounded-md bg-muted/40 p-3 sm:grid-cols-2">
-                        {Object.entries(m.fields).map(([k, v]) => (
-                          <div key={k} className="text-sm">
-                            <span className="text-muted-foreground">{k}: </span>
-                            <span className="font-medium">{v}</span>
-                          </div>
-                        ))}
+              {/* Govde */}
+              <div className="flex-1 space-y-5 p-5">
+                {acik.fields && Object.keys(acik.fields).length > 0 && (
+                  <dl className="grid gap-x-8 gap-y-2 rounded-md bg-muted/40 p-4 sm:grid-cols-2">
+                    {Object.entries(acik.fields).map(([k, v]) => (
+                      <div key={k} className="text-sm">
+                        <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">{k}</dt>
+                        <dd className="font-medium">{v}</dd>
                       </div>
-                    )}
+                    ))}
+                  </dl>
+                )}
 
-                    <p className="whitespace-pre-wrap text-[0.95rem] leading-relaxed">{m.message}</p>
+                <p className="whitespace-pre-wrap text-[0.95rem] leading-relaxed">{acik.message}</p>
 
-                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-                      {m.phone && (
-                        <span className="inline-flex items-center gap-1">
-                          <Phone className="size-3.5" /> {m.phone}
-                        </span>
-                      )}
-                      {m.sourceUrl && (
-                        <a
-                          href={m.sourceUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 hover:text-primary"
-                        >
-                          <Link2 className="size-3.5" /> {m.sourceUrl.replace(/^https?:\/\//, '')}
-                        </a>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => durumDegistir(m.id, 'read')}>
-                        <MailOpen className="mr-1.5 size-3.5" /> Read
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => durumDegistir(m.id, 'replied')}>
-                        <CornerUpLeft className="mr-1.5 size-3.5" /> Replied
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => durumDegistir(m.id, 'archived')}>
-                        <Archive className="mr-1.5 size-3.5" /> Archive
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="ml-auto text-red-600 hover:bg-red-500/10"
-                        onClick={() => sil(m.id)}
-                      >
-                        <Trash2 className="mr-1.5 size-3.5" /> Delete
-                      </Button>
-                    </div>
-                  </div>
+                {acik.sourceUrl && (
+                  <a
+                    href={acik.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary"
+                  >
+                    <Link2 className="size-3.5" /> {acik.sourceUrl.replace(/^https?:\/\//, '')}
+                  </a>
                 )}
               </div>
-            );
-          })}
+
+              {/* Eylemler */}
+              <footer className="flex flex-wrap gap-2 border-t border-border p-4">
+                <Button size="sm" variant="outline" onClick={() => durumYaz(acik.id, 'read')}>
+                  <MailOpen className="mr-1.5 size-3.5" /> Read
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => durumYaz(acik.id, 'replied')}>
+                  <CornerUpLeft className="mr-1.5 size-3.5" /> Replied
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => durumYaz(acik.id, 'archived')}>
+                  <Archive className="mr-1.5 size-3.5" /> Archive
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="ml-auto text-red-600 hover:bg-red-500/10"
+                  onClick={() => sil(acik.id)}
+                >
+                  <Trash2 className="mr-1.5 size-3.5" /> Delete
+                </Button>
+              </footer>
+            </article>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
