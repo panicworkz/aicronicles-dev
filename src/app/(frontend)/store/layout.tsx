@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { jwtVerify } from "jose";
 import { SepetSaglayici } from "@/components/store/SepetSaglayici";
+import { SepetSeridi } from "@/components/store/SepetSeridi";
 
 /**
  * Magaza DISARIYA KAPALI.
@@ -66,7 +67,13 @@ export default async function StoreLayout({
       >
         This store is closed to the public — only signed-in staff can see it.
       </div>
-      <SepetSaglayici>{children}</SepetSaglayici>
+      <SepetSaglayici>
+        {/* Sepete giden KALICI yol. Once yalnizca "Add to basket"in
+            altinda bir baglanti vardi ve sayfa degisince kayboluyordu;
+            sepete ulasmanin baska yolu yoktu. */}
+        <SepetSeridi />
+        {children}
+      </SepetSaglayici>
     </>
   );
 }

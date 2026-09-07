@@ -37,7 +37,7 @@ export function SepeteEkle({
   varyantlar: Varyant[];
   stokta: boolean;
 }) {
-  const { ekle, kalemler, paraBirimi: sepetBirimi } = useSepet();
+  const { ekle, kalemler, paraBirimi: sepetBirimi, toplamAdet } = useSepet();
   const [varyantId, setVaryantId] = useState<number | null>(varyantlar[0]?.id ?? null);
   const [adet, setAdet] = useState(1);
   const [eklendi, setEklendi] = useState(false);
@@ -165,12 +165,27 @@ export function SepeteEkle({
         </button>
       </div>
 
+      {/* Eklendikten sonra ne oldugu ve NEREYE gidilecegi.
+          Once yalnizca kucuk bir metin baglantisi vardi; sayfadan
+          cikinca sepete ulasmanin yolu kalmiyordu. Simdi hem burada
+          gorunur bir dugme var hem de sayfanin tepesinde kalici bir
+          serit (SepetSeridi). */}
       {eklendi && (
-        <p className="mt-4">
-          <Link href="/store/cart" className="byline">
-            IN YOUR BASKET — GO TO CHECKOUT →
+        <div
+          className="mt-4 flex flex-wrap items-center gap-3 p-4"
+          style={{ background: "var(--paper-2)" }}
+        >
+          <span className="text-[0.95rem]">
+            In your basket — {toplamAdet} {toplamAdet === 1 ? "item" : "items"}.
+          </span>
+          <Link
+            href="/store/cart"
+            className="byline ml-auto px-4 py-2.5"
+            style={{ background: "var(--ink)", color: "var(--paper)" }}
+          >
+            GO TO CHECKOUT →
           </Link>
-        </p>
+        </div>
       )}
 
       <p className="mt-4 text-[0.85rem]" style={{ color: "var(--ink-3)" }}>
