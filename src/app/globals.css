@@ -515,3 +515,23 @@ html {
   scroll-margin-top: calc(var(--mag-header-h, 145px) + 5rem);
 }
 
+/* --- Kunye baglantilari --------------------------------------------------
+   Renk artik BURADA, satir icinde degil.
+   Onceden her baglantida `style={{ color: "#d6dae0" }}` yaziliydi ve
+   hover Tailwind sinifiyla (hover:text-[var(--accent)]) veriliyordu.
+   Satir ici stil sinifi EZER, yani hover rengi hicbir zaman devreye
+   girmiyordu: kunyedeki yedi baglantinin yedisi de olu bir hover
+   tasiyordu. Sorun sessizdi — kod dogru gorunuyor, ekranda hicbir sey
+   olmuyordu.
+
+   meet.istanbul'daki ayrim korunuyor:
+     kunye sutunlari (colophon-links)  renk, kayma yok
+     ag sutunu (network-links)         renk + 3px  (yukarida) */
+.mag footer .kunye-link   { color: #d6dae0; }
+.mag footer .kunye-link-2 { color: #9aa1aa; }
+.mag footer .kunye-link-3 { color: #6b7178; }
+.mag footer .kunye-link:hover,
+.mag footer .kunye-link-2:hover,
+.mag footer .kunye-link-3:hover {
+  color: var(--accent);
+}

@@ -169,8 +169,7 @@ export default function PanicWorkzNetwork() {
                     href={b.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[0.87rem] transition-colors hover:text-[var(--accent)]"
-                    style={{ color: "#9aa1aa" }}
+                    className="text-[0.87rem] transition-colors kunye-link-2"
                   >
                     {b.ad}
                   </a>

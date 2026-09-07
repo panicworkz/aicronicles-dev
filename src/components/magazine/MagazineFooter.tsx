@@ -49,8 +49,7 @@ function Liste({ items }: { items: { label: string; href: string }[] }) {
         <li key={s.href}>
           <Link
             href={s.href}
-            className="text-[0.95rem] transition-colors hover:text-[var(--accent)]"
-            style={{ color: "#d6dae0" }}
+            className="text-[0.95rem] transition-colors kunye-link"
           >
             {s.label}
           </Link>
@@ -142,8 +141,7 @@ export default function MagazineFooter() {
             <li key={t}>
               <Link
                 href={`/tag/${t}`}
-                className="text-[0.88rem] transition-colors hover:text-[var(--accent)]"
-                style={{ color: "#9aa1aa" }}
+                className="text-[0.88rem] transition-colors kunye-link"
               >
                 {tagLabel(t)}
               </Link>
@@ -170,8 +168,7 @@ export default function MagazineFooter() {
               href="https://panicworkz.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold transition-colors hover:text-[var(--accent)]"
-              style={{ color: "#9aa1aa" }}
+              className="font-semibold transition-colors kunye-link"
             >
               PanicWorkz
             </a>{" "}
@@ -184,8 +181,7 @@ export default function MagazineFooter() {
               href="https://panic.com.tr/"
               target="_blank"
               rel="noopener noreferrer"
-              className="transition-colors hover:text-[var(--accent)]"
-              style={{ color: "#9aa1aa" }}
+              className="transition-colors kunye-link"
             >
               PANIC CMS
             </a>{" "}
@@ -194,8 +190,7 @@ export default function MagazineFooter() {
               href="https://panicworkz.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="transition-colors hover:text-[var(--accent)]"
-              style={{ color: "#9aa1aa" }}
+              className="transition-colors kunye-link"
             >
               PANICWORKZ
             </a>
@@ -210,8 +205,7 @@ export default function MagazineFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
                 title={h.baslik}
-                className="byline transition-colors hover:text-[var(--accent)]"
-                style={{ color: "#6b7178" }}
+                className="byline transition-colors kunye-link"
               >
                 {h.etiket}
               </a>
