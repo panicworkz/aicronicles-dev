@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
+import { htmlBloklara } from '@/lib/bloklar';
 import { desc, eq, ilike, or, and } from 'drizzle-orm';
 import { handleApiError, apiUnauthorized, apiBadRequest } from '@/lib/api-response';
 
@@ -94,6 +95,9 @@ export async function POST(req: Request) {
       title,
       slug,
       contentHtml: contentHtml || '',
+      /* Yeni yazi da bloklu doguyor: sonradan cevirmeye birakirsak
+         blok duzenleme yalnizca bir kez kaydedilmis yazilarda calisir. */
+      blocksJson: htmlBloklara(contentHtml || ''),
       excerpt: excerpt || null,
       featuredImageUrl: featuredImageUrl || null,
       status: status || 'draft',

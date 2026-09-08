@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
+import { htmlBloklara } from '@/lib/bloklar';
 import { desc, eq } from 'drizzle-orm';
 import { handleApiError, apiUnauthorized, apiBadRequest } from '@/lib/api-response';
 
@@ -56,6 +57,10 @@ export async function POST(
         postId,
         title,
         contentHtml,
+        /* Surum de blok tutuyor: yoksa geri donuldugunde blok duzeni
+           HTML'den yeniden ayristirilir ve o surumde elle yapilmis
+           bolme/birlestirme kaybolurdu. */
+        blocksJson: typeof contentHtml === 'string' ? htmlBloklara(contentHtml) : undefined,
         contentJson,
         excerpt,
         authorName,

@@ -3,6 +3,7 @@ import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { eq } from 'drizzle-orm';
 import { handleApiError, apiUnauthorized, apiNotFound } from '@/lib/api-response';
+import { htmlBloklara } from '@/lib/bloklar';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,6 +42,16 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const postId = parseInt(id, 10);
     const data = await req.json().catch(() => ({}));
 
+    /* BLOKLAR BURADA TURETILIYOR, editorde degil.
+       Yaziya baska yollardan da yaziliyor — kopilot, toplu islemler,
+       eski surume donus. Cevrimi tek bir yazma noktasina koymak,
+       hepsinin ayni bloklari uretmesini garantiliyor; istemciye
+       biraksaydik yalnizca editorden gecen yazilarda blok olurdu. */
+    const bloklar =
+      typeof data.contentHtml === "string"
+        ? htmlBloklara(data.contentHtml)
+        : undefined;
+
     const [updatedPost] = await db
       .update(schema.posts)
       .set({
@@ -48,6 +59,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         slug: data.slug,
         excerpt: data.excerpt,
         contentHtml: data.contentHtml,
+        blocksJson: bloklar,
         contentJson: data.contentJson,
         featuredImageUrl: data.featuredImageUrl,
         featuredImageId: data.featuredImageId,
