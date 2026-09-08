@@ -707,14 +707,20 @@ html {
    kutu birakmak, calismayan bir arayuz vaat etmek olurdu. Ayrica
    blok semasi girdi alanlarini kabul etmiyor — kaydedilse bile
    temizlenirdi. */
-.mag .article-body ul.kontrol-listesi {
+/* Hem ul hem ol hedefleniyor: kontrol listesi sirasiz olmali ve
+   arayuz numaraliyi cevirir, ama eski bir icerikte ol kalmis olabilir
+   ve o zaman kutu hic cizilmezdi. */
+.mag .article-body ul.kontrol-listesi,
+.mag .article-body ol.kontrol-listesi {
   list-style: none;
   padding-left: 1.6em;
 }
-.mag .article-body ul.kontrol-listesi > li {
+.mag .article-body ul.kontrol-listesi > li,
+.mag .article-body ol.kontrol-listesi > li {
   position: relative;
 }
-.mag .article-body ul.kontrol-listesi > li::before {
+.mag .article-body ul.kontrol-listesi > li::before,
+.mag .article-body ol.kontrol-listesi > li::before {
   content: "";
   position: absolute;
   left: -1.55em;
@@ -725,13 +731,15 @@ html {
   border-radius: 3px;
   background: transparent;
 }
-.mag .article-body ul.kontrol-listesi > li[data-isaret="1"]::before {
+.mag .article-body ul.kontrol-listesi > li[data-isaret="1"]::before,
+.mag .article-body ol.kontrol-listesi > li[data-isaret="1"]::before {
   background: var(--accent);
   border-color: var(--accent);
 }
 /* Onay isareti: kutunun icine cizilen iki cizgi. Metin karakteri
    kullanmadik — font degisince hizalamasi kayiyor. */
-.mag .article-body ul.kontrol-listesi > li[data-isaret="1"]::after {
+.mag .article-body ul.kontrol-listesi > li[data-isaret="1"]::after,
+.mag .article-body ol.kontrol-listesi > li[data-isaret="1"]::after {
   content: "";
   position: absolute;
   left: -1.32em;
@@ -742,7 +750,8 @@ html {
   border-bottom: 1.7px solid var(--paper);
   transform: rotate(-45deg);
 }
-.mag .article-body ul.kontrol-listesi > li[data-isaret="1"] {
+.mag .article-body ul.kontrol-listesi > li[data-isaret="1"],
+.mag .article-body ol.kontrol-listesi > li[data-isaret="1"] {
   color: var(--muted);
   text-decoration: line-through;
   text-decoration-color: var(--rule);

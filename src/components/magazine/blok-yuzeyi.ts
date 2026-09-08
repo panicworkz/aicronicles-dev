@@ -806,8 +806,17 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
       );
       cubuk.appendChild(
         dugme("☑", "Kontrol listesi", () => {
-          const acik = o.classList.toggle("kontrol-listesi");
-          for (const li of Array.from(o.children)) {
+          /* Kontrol listesi SIRASIZ olmali: numara ile onay kutusunu
+             yan yana koymak hem anlamsiz hem de "1. ☑" gibi cift
+             isaretli bir satir uretiyor. Numarali listede acilirsa
+             once madde isaretlisine ceviriliyor. */
+          let hedef = o;
+          if (o.tagName === "OL" && !o.classList.contains("kontrol-listesi")) {
+            hedef = etiketDegistir(o, "ul");
+            sec(hedef);
+          }
+          const acik = hedef.classList.toggle("kontrol-listesi");
+          for (const li of Array.from(hedef.children)) {
             /* Isaret durumu ACILIRKEN veriliyor, kapanirken
                siliniyor: kapali bir listede data-isaret durursa
                tekrar acildiginda eski isaretler geri gelir ve
