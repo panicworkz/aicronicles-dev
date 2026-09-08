@@ -52,16 +52,25 @@ services:
   # Neden: gelistirme canlida yapiliyordu. Her deneme fabelo.io'yu
   # etkiliyor, her hata okurun gordugu sayfaya dusuyordu.
   #
-  # AYNI IMAJ, ayri konteyner: panic-cms:v1.0 bir kez derleniyor, ikisi
-  # de onu kullaniyor. Boylece stage'de sinanan sey canliya cikanin TA
-  # KENDISI oluyor — "stage'de calisiyordu" durumu ortadan kalkiyor.
+  # AYRI ETIKET. Once ikisi de panic-cms:v1.0 kullaniyordu; stage icin
+  # derlemek canlinin etiketini de degistiriyordu. Canli konteyner
+  # calismaya devam ettigi icin fark edilmiyordu, ama sunucu yeniden
+  # baslasa canli site denenmemis kodu alirdi.
+  #
+  # Terfi YENIDEN DERLEME degil, ETIKETLEME:
+  #   docker tag panic-cms:stage panic-cms:v1.0
+  #   docker compose up -d --force-recreate panic-cms
+  # Boylece canliya cikan sey, stage'de sinanan imajin TA KENDISI.
   #
   # AYRI VERITABANI (panic_cms_stage) ve AYRI MEDYA: stage'deki icerik
   # denemeleri canliya sizmiyor. Yalnizca KOD canliya gecer, icerik
   # gecmez.
   # =====================================================================
   panic-cms-stage:
-    image: panic-cms:v1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: panic-cms:stage
     container_name: panic-cms-stage
     restart: unless-stopped
     ports:
