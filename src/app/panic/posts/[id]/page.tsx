@@ -34,7 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { UrunSecici } from "@/components/studio/UrunSecici";
-import TipTapEditor from "@/components/editor/TipTapEditor";
+import { KaynakDuzenleyici } from "@/components/studio/KaynakDuzenleyici";
 import { AeoScoreMeter } from "@/components/studio/AeoScoreMeter";
 import { SerpSocialPreview } from "@/components/studio/SerpSocialPreview";
 import { BlockInsertToolbar } from "@/components/studio/BlockInsertToolbar";
@@ -544,14 +544,13 @@ export default function PanicSplitLiveStudioPage({
         onInsertHtml={handleInsertHtml}
       />
 
-      {/* TipTap Rich Editor */}
-      <div>
-        <TipTapEditor
-          content={contentHtml}
-          onChange={handleContentChange}
-          articleTitle={title}
-        />
-      </div>
+      {/* Kaynak gorunumu. Yazinin ASIL editoru onizlemenin uzerindeki
+          blok yuzeyi; burasi kacis kapisi — onizleme yuklenemedigi ya
+          da isaretlemeyi dogrudan gormek gerektigi zaman. */}
+      <KaynakDuzenleyici
+        value={contentHtml}
+        onChange={(html) => handleContentChange(html, contentJson)}
+      />
     </div>
   );
 
@@ -662,7 +661,7 @@ export default function PanicSplitLiveStudioPage({
             }`}
           >
             <FileText className="size-3.5 text-primary" />
-            <span>Visual Editor</span>
+            <span>Source</span>
           </button>
           <button
             type="button"

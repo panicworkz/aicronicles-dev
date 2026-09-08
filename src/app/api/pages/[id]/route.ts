@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
+import { htmlBloklara, bloklarHtmle } from '@/lib/bloklar';
 import { eq } from 'drizzle-orm';
 import { handleApiError, apiUnauthorized, apiNotFound } from '@/lib/api-response';
 
@@ -45,9 +46,17 @@ export async function PUT(
     const body = await req.json().catch(() => ({}));
     const { title, slug, contentHtml, contentJson, status, metaTitle, metaDescription } = body;
 
+    /* SABIT SAYFALAR DA SEMADAN GECIYOR.
+       Bu sayfalarin editoru artik dogrudan HTML yazilan bir kutu;
+       suzgec olmasaydi yapistirilan bir script ya da satir ici stil
+       oldugu gibi yayina cikardi. Etkisi once olculdu: dokuz sayfanin
+       dokuzu da cevrimden kayipsiz geciyor. */
+    const temizHtml =
+      typeof contentHtml === 'string' ? bloklarHtmle(htmlBloklara(contentHtml)) : contentHtml;
+
     const updateData: any = {
       title,
-      contentHtml: contentHtml || '',
+      contentHtml: temizHtml || '',
       contentJson: contentJson || null,
       status: status || 'published',
       metaTitle: metaTitle || title,

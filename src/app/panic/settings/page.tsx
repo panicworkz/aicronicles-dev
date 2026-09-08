@@ -2,8 +2,9 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Store, Globe, Loader2, ExternalLink } from 'lucide-react';
+import { Store, Globe, Loader2, ExternalLink, Type } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { FontSecici } from '@/components/studio/FontSecici';
 import { toast } from 'sonner';
 import { SITE, SITE_DOMAIN } from '@/lib/seo';
 
@@ -27,6 +28,7 @@ import { SITE, SITE_DOMAIN } from '@/lib/seo';
  */
 export default function AyarlarSayfasi() {
   const [magazaAcik, setMagazaAcik] = useState<boolean | null>(null);
+  const [fontIkilisi, setFontIkilisi] = useState<string>('newsreader-inter');
   const [kaydediliyor, setKaydediliyor] = useState(false);
 
   const getir = useCallback(async () => {
@@ -34,6 +36,9 @@ export default function AyarlarSayfasi() {
       const y = await fetch('/api/settings');
       const d = await y.json();
       setMagazaAcik(Boolean(d?.settings?.magaza_acik));
+      if (typeof d?.settings?.font_ikilisi === 'string') {
+        setFontIkilisi(d.settings.font_ikilisi);
+      }
     } catch {
       toast.error('Settings could not be loaded');
       setMagazaAcik(false);
@@ -144,6 +149,35 @@ export default function AyarlarSayfasi() {
               <Loader2 className="size-3 animate-spin" /> Reading the current setting…
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* TIPOGRAFI — site geneli, yazi basina degil. */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <Type className="size-4 text-primary" />
+            <span>Typography</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FontSecici
+            secili={fontIkilisi}
+            onSec={async (id) => {
+              const y = await fetch('/api/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'font_ikilisi', value: id }),
+              });
+              const d = await y.json();
+              if (!d?.success) throw new Error(d?.message);
+              setFontIkilisi(id);
+              /* Yayin tarafi sunucuda basiliyor: sekmeyi yenilemeden
+                 degisiklik gorunmuyor. Bunu soylemek, "kaydettim ama
+                 bir sey olmadi" dedirtmemek icin. */
+              toast.message('Reload the site to see the new typography.');
+            }}
+          />
         </CardContent>
       </Card>
 

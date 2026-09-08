@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import TipTapEditor from "@/components/editor/TipTapEditor";
+import { KaynakDuzenleyici } from "@/components/studio/KaynakDuzenleyici";
 import { BlockInsertToolbar } from "@/components/studio/BlockInsertToolbar";
 import { AeoScoreMeter } from "@/components/studio/AeoScoreMeter";
 import { SerpSocialPreview } from "@/components/studio/SerpSocialPreview";
@@ -276,14 +276,11 @@ export default function PanicNewPostPage() {
                 onInsertHtml={handleInsertHtml}
               />
 
-              {/* TipTap Visual Editor */}
+              {/* Kaynak gorunumu — kacis kapisi (bkz. KaynakDuzenleyici). */}
               <div>
-                <TipTapEditor
-                  content={contentHtml}
-                  onChange={(html, json) => {
-                    setContentHtml(html);
-                    setContentJson(json);
-                  }}
+                <KaynakDuzenleyici
+                  value={contentHtml}
+                  onChange={setContentHtml}
                 />
               </div>
             </div>

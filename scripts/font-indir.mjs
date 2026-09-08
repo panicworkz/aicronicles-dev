@@ -6,9 +6,11 @@
  * cekerken kirilmisti, ayrica her okurun tarayicisini uctan bir
  * baglantiya zorlamak hem gizlilik hem hiz meselesi.
  *
- * Bu betik Google'in css2 ucundan YALNIZCA LATIN dilimini buluyor.
- * Google zaten dosyayi unicode araligina gore boluyor; latin blogu
- * tam ihtiyacimiz olan sey. Ayrica indirilen dosyalar DEGISKEN
+ * Google'in css2 ucundan LATIN ve LATIN-EXT dilimleri aliniyor.
+ * Turkce harfler (ğ Ğ ş Ş İ) latin-ext'te; yalnizca latin alsaydik
+ * sitedeki "ŞİLE" gibi yerler yedek fontla basilirdi. Tarayici
+ * latin-ext'i ancak o harfler sayfada gecince indiriyor. Indirilen
+ * dosyalar DEGISKEN
  * (variable) — tasarim 650 gibi ara agirliklar kullaniyor, sabit
  * agirlikli dosyayla tarayici sahte kalin uretirdi.
  *
@@ -57,13 +59,23 @@ async function css(aile, aralik, italik) {
   return c.text();
 }
 
-/* Latin blogu: unicode-range'inde U+0000-00FF gecen @font-face.
-   "latin-ext" ve "cyrillic" bloklarini almiyoruz — dosyayi buyutur,
-   sitede karsiligi yok. */
-function latinYuzu(metin, italikMi) {
+/* IKI DILIM DE ALINIYOR: latin VE latin-ext.
+   TURKCE HARFLER LATIN-EXT'TE: ğ Ğ ş Ş İ (U+011E, U+011F, U+015E,
+   U+015F, U+0130). Yalnizca latin alsaydik sitedeki "ŞİLE" gibi
+   yerler yedek fontla basilir, harfler birbirine uymazdi. Yalnizca
+   "ı" (U+0131) latin dilimindedir — bu tuzaga dusmek kolay.
+
+   Cyrillic ve Yunanca alinmiyor: sitede karsiligi yok, dosyayi
+   buyutur. Tarayici latin-ext'i ancak o harfler sayfada gecince
+   indiriyor (unicode-range), yani maliyeti yok. */
+function yuzBul(metin, italikMi, dilim) {
+  const isaret = dilim === "latin" ? "U+0000-00FF" : "U+0100-02BA";
   const bloklar = metin.split("@font-face").slice(1);
   for (const b of bloklar) {
-    if (!b.includes("U+0000-00FF")) continue;
+    if (!b.includes(isaret)) continue;
+    /* latin-ext blogu latin'i de icerebiliyor; ayirt etmek icin
+       latin dilimi ararken latin-ext isaretini disliyoruz. */
+    if (dilim === "latin" && b.includes("U+0100-02BA")) continue;
     const italikTasiyor = /font-style:\s*italic/.test(b);
     if (italikTasiyor !== italikMi) continue;
     const m = b.match(/src:\s*url\((https:[^)]+\.woff2)\)/);
@@ -85,18 +97,26 @@ for (const [aile, dosya, aralik, italik] of AILELER) {
   try {
     const metin = await css(aile, aralik, italik);
 
-    const duz = latinYuzu(metin, false);
-    if (!duz) throw new Error("latin dilimi bulunamadi");
-    const n = await indir(duz, path.join(HEDEF, `${dosya}.woff2`));
-    toplam += n;
-    let satir = `${aile.padEnd(20)} ${(n / 1024).toFixed(0).padStart(4)} KB`;
+    let satir = `${aile.padEnd(20)}`;
 
-    if (italik) {
-      const it = latinYuzu(metin, true);
-      if (it) {
-        const m = await indir(it, path.join(HEDEF, `${dosya}-italic.woff2`));
-        toplam += m;
-        satir += `  + italik ${(m / 1024).toFixed(0)} KB`;
+    for (const [dilim, ek] of [["latin", ""], ["latin-ext", "-ext"]]) {
+      const duz = yuzBul(metin, false, dilim);
+      if (!duz) {
+        if (dilim === "latin") throw new Error("latin dilimi bulunamadi");
+        satir += `  ${dilim}: yok`;
+        continue;
+      }
+      const n = await indir(duz, path.join(HEDEF, `${dosya}${ek}.woff2`));
+      toplam += n;
+      satir += `  ${dilim} ${(n / 1024).toFixed(0)} KB`;
+
+      if (italik) {
+        const it = yuzBul(metin, true, dilim);
+        if (it) {
+          const m = await indir(it, path.join(HEDEF, `${dosya}${ek}-italic.woff2`));
+          toplam += m;
+          satir += ` (+it ${(m / 1024).toFixed(0)})`;
+        }
       }
     }
     console.log(satir);

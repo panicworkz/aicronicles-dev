@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/db";
+import { FONT_IKILILERI } from "@/lib/fontlar";
 import { eq } from "drizzle-orm";
 import { handleApiError, apiBadRequest } from "@/lib/api-response";
 
@@ -18,7 +19,7 @@ export const dynamic = "force-dynamic";
  * yarin bir ekran yanlis bir ad gonderirse sessizce cop birikirdi.
  */
 
-const YAZILABILIR = ["magaza_acik"] as const;
+const YAZILABILIR = ["magaza_acik", "font_ikilisi"] as const;
 type Anahtar = (typeof YAZILABILIR)[number];
 
 export async function GET() {
@@ -43,7 +44,23 @@ export async function PUT(req: NextRequest) {
       return apiBadRequest(`Unknown setting: ${anahtar}`);
     }
 
-    const deger = Boolean(g?.value);
+    /* Her ayarin degeri ayni turden degil: magaza_acik bir anahtar,
+       font_ikilisi ise bir kimlik. Hepsini Boolean'a cevirmek
+       font secimini "true" yapardi.
+
+       Font kimligi BILINEN LISTEYE karsi dogrulaniyor: dogrudan CSS
+       ve dosya yoluna giren bir deger, serbest metin olarak kabul
+       edilmemeli. */
+    let deger: unknown;
+    if (anahtar === "font_ikilisi") {
+      const istenen = String(g?.value ?? "");
+      if (!FONT_IKILILERI.some((i) => i.id === istenen)) {
+        return apiBadRequest(`Unknown font pairing: ${istenen}`);
+      }
+      deger = istenen;
+    } else {
+      deger = Boolean(g?.value);
+    }
 
     await db
       .insert(schema.siteSettings)

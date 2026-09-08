@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import TipTapEditor from "@/components/editor/TipTapEditor";
+import { KaynakDuzenleyici } from "@/components/studio/KaynakDuzenleyici";
 import { toast } from "sonner";
 
 export default function PanicNewPageStudio() {
@@ -153,7 +153,7 @@ export default function PanicNewPageStudio() {
 
       {/* Main Grid: Content Editor (Left) & Sidebar Settings (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (8 cols): Title & TipTap Rich Editor */}
+        {/* Left Column (8 cols): Title & HTML source */}
         <div className="lg:col-span-8 space-y-4">
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">Page Title</Label>
@@ -171,12 +171,9 @@ export default function PanicNewPageStudio() {
             <Label className="text-xs font-semibold">
               Page Content (Rich Visual Editor)
             </Label>
-            <TipTapEditor
-              content={contentHtml}
-              onChange={(html, json) => {
-                setContentHtml(html);
-                setContentJson(json);
-              }}
+            <KaynakDuzenleyici
+              value={contentHtml}
+              onChange={setContentHtml}
             />
           </div>
         </div>

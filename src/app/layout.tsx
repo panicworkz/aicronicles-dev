@@ -4,6 +4,9 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "sonner";
 import localFont from "next/font/local";
 import { SITE } from "@/lib/seo";
+import { db, schema } from "@/db";
+import { eq } from "drizzle-orm";
+import { ikiliyiBul, ikiliCss, ikiliDosyalari } from "@/lib/fontlar";
 
 /**
  * Yazi tipleri PROJENIN ICINDE, Google'dan degil.
@@ -25,14 +28,11 @@ import { SITE } from "@/lib/seo";
  * Agirliklar tek dosyada: bunlar degisken yazi tipleri, 100-900
  * araligini tek dosya karsiliyor.
  */
-const inter = localFont({
-  src: "../fonts/inter-latin.woff2",
-  variable: "--font-sans",
-  display: "optional",
-  weight: "100 900",
-  style: "normal",
-  fallback: ["system-ui", "-apple-system", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
-});
+/* Inter ve Newsreader ARTIK BURADA TANIMLI DEGIL: hangi ikilinin
+   yuklenecegi site ayarindan geliyor ve @font-face calisma aninda
+   basiliyor (lib/fontlar.ts). next/font ile tanimlasaydik on ikilinin
+   yirmi ailesi de derlemeye girer ve her biri icin onyukleme etiketi
+   basilirdi — okur secmedigi dokuz ikiliyi de indirirdi. */
 
 const geistMono = localFont({
   src: "../fonts/geist-mono-latin.woff2",
@@ -41,16 +41,6 @@ const geistMono = localFont({
   weight: "100 900",
   style: "normal",
   fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
-});
-
-const newsreader = localFont({
-  src: [
-    { path: "../fonts/newsreader-latin.woff2", weight: "200 800", style: "normal" },
-    { path: "../fonts/newsreader-italic-latin.woff2", weight: "200 800", style: "italic" },
-  ],
-  variable: "--font-display",
-  display: "optional",
-  fallback: ["Iowan Old Style", "Palatino", "Georgia", "Times New Roman", "serif"],
 });
 
 export const metadata: Metadata = {
@@ -62,15 +52,54 @@ export const metadata: Metadata = {
   description: "High-Performance Publishing & Commerce Engine",
 };
 
-export default function RootLayout({
+/**
+ * Secili font ikilisi. Ayardan okunuyor, yoksa varsayilan.
+ *
+ * Okuma hatasi SESSIZCE varsayilana dusuyor: veritabani bir an
+ * cevap vermedigi icin sitenin fontsuz acilmasi, ayarin
+ * uygulanmamasindan cok daha kotu olurdu.
+ */
+async function seciliIkili() {
+  try {
+    const kayit = await db.query.siteSettings.findFirst({
+      where: eq(schema.siteSettings.key, "font_ikilisi"),
+    });
+    return ikiliyiBul(typeof kayit?.value === "string" ? kayit.value : null);
+  } catch {
+    return ikiliyiBul(null);
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const ikili = await seciliIkili();
+
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Onyukleme: font ancak CSS onu isteyince inmeye baslar,
+            yani sayfanin ilk boyanmasindan sonra. Onyukleme etiketi
+            olmadan basliklar bir an yedek fontla cizilip sonra
+            degisiyor. Yalnizca SECILI ikili onyukleniyor. */}
+        {ikiliDosyalari(ikili).map((yol) => (
+          <link
+            key={yol}
+            rel="preload"
+            as="font"
+            type="font/woff2"
+            href={yol}
+            crossOrigin="anonymous"
+          />
+        ))}
+        {/* @font-face ve rol jetonlari. Satir ici basiliyor: ayri bir
+            dosya olsaydi tipografi bir istek daha gecikirdi. */}
+        <style dangerouslySetInnerHTML={{ __html: ikiliCss(ikili) }} />
+      </head>
       <body
-        className={`${inter.variable} ${geistMono.variable} ${newsreader.variable} font-sans antialiased min-h-screen bg-background text-foreground transition-colors duration-200`}
+        className={`${geistMono.variable} font-sans antialiased min-h-screen bg-background text-foreground transition-colors duration-200`}
       >
         <ThemeProvider defaultTheme="light">
           {children}
