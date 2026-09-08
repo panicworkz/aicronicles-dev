@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: panic
-      POSTGRES_PASSWORD: panic_pass
+      POSTGRES_PASSWORD: <<<parola>>>
       POSTGRES_DB: panic_cms
     volumes:
       - /opt/panic/postgres_data:/var/lib/postgresql/data
@@ -29,7 +29,7 @@ services:
       - "127.0.0.1:8230:3000"
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://panic:panic_pass@panic-postgres:5432/panic_cms
+      DATABASE_URL: postgresql://panic:<<<parola>>>@panic-postgres:5432/panic_cms
       JWT_SECRET: <<< .env dosyasindan gelir, depoya yazilmaz >>>
       MEDIA_DIR: /opt/panic/media
       # Bulten abonelikleri merkezi gateway'e buradan iletiliyor.
@@ -68,7 +68,7 @@ services:
       - "127.0.0.1:8231:3000"
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://panic:panic_pass@panic-postgres:5432/panic_cms_stage
+      DATABASE_URL: postgresql://panic:<<<parola>>>@panic-postgres:5432/panic_cms_stage
       JWT_SECRET: <<< .env dosyasindan gelir, depoya yazilmaz >>>
       MEDIA_DIR: /opt/panic/media
       NEXT_PUBLIC_SITE_URL: https://panic.panic.pw
