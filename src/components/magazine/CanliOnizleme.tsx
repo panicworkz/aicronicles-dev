@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { blokYuzeyiKur } from "@/components/magazine/blok-yuzeyi";
+import { blokYuzeyiKur, duzenlenebilirlikUygula } from "@/components/magazine/blok-yuzeyi";
 
 /**
  * YERINDE DUZENLEME — "Live In-Context".
@@ -82,8 +82,11 @@ export default function CanliOnizleme() {
       if (ozet && odakta !== ozet && typeof excerpt === "string") {
         ozet.textContent = excerpt;
       }
-      if (govde && odakta !== govde && typeof contentHtml === "string") {
+      if (govde && !govde.contains(odakta) && typeof contentHtml === "string") {
         govde.innerHTML = contentHtml;
+        /* Panelin bastigi HTML'de contenteditable yok: yeniden
+           uygulanmazsa yazi bloklari duzenlenemez hale gelir. */
+        duzenlenebilirlikUygula(govde);
       }
       if (kapak && typeof featuredImageUrl === "string" && featuredImageUrl) {
         kapak.src = featuredImageUrl;
@@ -116,7 +119,19 @@ export default function CanliOnizleme() {
 
     duzenlenebilirYap(baslik);
     duzenlenebilirYap(ozet);
-    duzenlenebilirYap(govde);
+
+    /* GOVDE ARTIK TEK PARCA DUZENLENEBILIR DEGIL.
+       Oyleydi: contentEditable govdenin tamamina veriliyor, tiklayinca
+       butun yazi odaklaniyor ve cerceve yaziyi bastan sona sariyordu.
+       Yani ekranda tek bir dev metin kutusu vardi, blok yok.
+       Duzenlenebilirlik artik blok basina veriliyor (blok-yuzeyi.ts);
+       govde yalnizca olaylari topluyor. */
+    if (govde) {
+      govde.addEventListener("input", degisti);
+      /* focusout, blur'un kabaran hali: blur kabarmadigi icin blok
+         basina gecince yakalanamiyordu. */
+      govde.addEventListener("focusout", yolla);
+    }
 
     /**
      * GORSEL DUZENLEME PENCERESI.
@@ -169,6 +184,13 @@ export default function CanliOnizleme() {
         border-radius: 2px;
       }
       [data-canli="baslik"], [data-canli="ozet"] { transition: box-shadow 120ms; }
+      /* Odak cercevesi BLOK basina. Once govdenin tamamina
+         veriliyordu ve butun yaziyi sariyordu. */
+      [data-canli="govde"] > [contenteditable]:focus {
+        outline: 2px solid var(--accent, #0fb5ce);
+        outline-offset: 6px;
+        border-radius: 2px;
+      }
       [data-canli="govde"] > * { transition: outline-color 120ms; }
       [data-canli="govde"] img { cursor: pointer; }
     `;

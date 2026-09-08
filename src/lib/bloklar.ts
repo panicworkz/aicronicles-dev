@@ -148,6 +148,12 @@ export function htmlBloklara(html?: string | null): Blok[] {
        da veritabanina yazilirlar ve her kayitta birikirlerdi. */
     oge.removeAttribute("data-blok-i");
     oge.removeAttribute("data-blok-t");
+    /* Duzenleme artiklari da temizleniyor: onizlemede her blok kendi
+       duzenlenebilir alani oldugu icin govde panele contenteditable
+       ve spellcheck ile birlikte gidiyor. Silinmezlerse veritabanina
+       yazilir ve okurun sayfasinda da duzenlenebilir bloklar olurdu. */
+    oge.removeAttribute("contenteditable");
+    oge.removeAttribute("spellcheck");
 
     switch (etiket) {
       case "p":
