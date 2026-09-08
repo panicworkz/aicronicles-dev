@@ -73,6 +73,12 @@ export const posts = pgTable('posts', {
   title: text('title').notNull(),
   slug: text('slug').notNull().unique(),
   excerpt: text('excerpt'),
+  /* Govdenin DOGRULUK KAYNAGI: blok dizisi (bkz. lib/bloklar.ts).
+     Bloklar tasinabilir, cogaltilabilir, aralarina yeni tur eklenebilir. */
+  blocksJson: jsonb('blocks_json'),
+  /* Bloklardan URETILEN HTML. Silinmedi cunku RSS, llms.txt, SSS
+     cikarimi, AEO puani ve okuma ekrani buradan besleniyor; her
+     kayitta bloklardan yeniden yaziliyor. Elle duzenlenmemeli. */
   contentHtml: text('content_html'),
   contentJson: jsonb('content_json'),
   featuredImageId: integer('featured_image_id').references(() => media.id, { onDelete: 'set null' }),
@@ -99,6 +105,10 @@ export const postRevisions = pgTable('post_revisions', {
   id: serial('id').primaryKey(),
   postId: integer('post_id').notNull().references(() => posts.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
+  /* Surumler de blok tutuyor: yoksa eski bir surume donuldugunde
+     govde HTML'den yeniden ayristirilir ve o surumun blok duzeni
+     (ornegin elle bolunmus bir paragraf) kaybolurdu. */
+  blocksJson: jsonb('blocks_json'),
   contentHtml: text('content_html'),
   contentJson: jsonb('content_json'),
   excerpt: text('excerpt'),
