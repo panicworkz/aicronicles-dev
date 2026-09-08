@@ -44,8 +44,14 @@ type Ayarlar = {
   menuAc: () => void;
   /* Bir blogu baska bir etikete cevirir (markdown kisayollari icin). */
   etiketeCevir: (blok: HTMLElement, etiket: string) => HTMLElement;
-  /* Blok arac cubugunun yeri. Iki cubuk ust uste binmesin diye. */
-  blokCubuguKutusu: () => DOMRect | null;
+  /* Bicim dugmelerinin BASILACAGI yer: blok arac cubugunun icindeki
+     bir grup. Ayri bir yuzer cubuk degil. */
+  kap: HTMLElement;
+  /* Grup gorunurlugu degisince cubugun yeniden olculmesi gerekiyor:
+     genisligi degisiyor. */
+  degisti: () => void;
+  /* Secim bir blogun icindeyse o blogu sectirir. */
+  seciminBlogunuSec: (dugum: Node | null) => void;
   blokSec: (blok: HTMLElement | null) => void;
 };
 
@@ -130,25 +136,18 @@ export function metinYuzeyiKur({
   menuAc,
   etiketeCevir,
   blokSec,
-  blokCubuguKutusu,
+  kap,
+  degisti,
+  seciminBlogunuSec,
 }: Ayarlar): () => void {
-  /* ---------------- satir ici arac cubugu ---------------- */
-
-  const cubuk = document.createElement("div");
-  cubuk.style.cssText = [
-    "position:fixed",
-    "z-index:2147483003",
-    "display:none",
-    "align-items:center",
-    "gap:1px",
-    "padding:3px",
-    "border-radius:9px",
-    "background:#1b1a18",
-    "box-shadow:0 8px 26px rgba(20,18,16,.28)",
-    "font:600 12px/1 ui-sans-serif,system-ui,sans-serif",
-    "color:#fff",
-  ].join(";");
-  document.body.appendChild(cubuk);
+  /* ---------------- bicim dugmeleri ----------------
+     AYRI BIR CUBUK DEGIL, blok cubugunun icinde bir grup.
+     Once ayri bir siyah cubuk vardi ve blogun ust kenarina yerlesen
+     beyaz blok cubuguyla ayni noktaya dusuyordu: ust uste biniyor,
+     ustelik acik zeminli tasarimin uzerinde iki farkli yuzey rengi
+     yan yana duruyordu. Konumlariyla oynamak yamaydi; iki yuzeyi tek
+     cubukta birlestirmek sorunu kaynagindan kaldiriyor. */
+  const cubuk = kap;
 
   const dugme = (yazi: string, ipucu: string, is: () => void) => {
     const d = document.createElement("button");
@@ -156,8 +155,8 @@ export function metinYuzeyiKur({
     d.innerHTML = yazi;
     d.title = ipucu;
     d.style.cssText =
-      "all:unset;cursor:pointer;padding:6px 9px;border-radius:6px;color:#fff;min-width:14px;text-align:center";
-    d.addEventListener("mouseenter", () => (d.style.background = "#38352f"));
+      "all:unset;cursor:pointer;padding:6px 8px;border-radius:6px;color:#1b1a18;min-width:14px;text-align:center";
+    d.addEventListener("mouseenter", () => (d.style.background = "#f2f0ec"));
     d.addEventListener("mouseleave", () => (d.style.background = "transparent"));
     /* mousedown durduruluyor: yoksa tiklama secimi dagitir ve
        bicimlendirilecek metin kalmaz. */
@@ -186,9 +185,9 @@ export function metinYuzeyiKur({
 
   const baglantiAlani = document.createElement("input");
   baglantiAlani.type = "url";
-  baglantiAlani.placeholder = "https://…  (Enter: uygula, Esc: vazgec)";
+  baglantiAlani.placeholder = "https://\u2026  (Enter to apply, Esc to cancel)";
   baglantiAlani.style.cssText =
-    "all:unset;box-sizing:border-box;display:none;width:250px;padding:6px 9px;border-radius:6px;background:#38352f;color:#fff;font:400 12px ui-sans-serif,system-ui";
+    "all:unset;box-sizing:border-box;display:none;width:230px;padding:6px 9px;border-radius:6px;background:#f2f0ec;color:#1b1a18;font:400 12px ui-sans-serif,system-ui";
 
   const secimiGeriKoy = () => {
     if (!saklananAralik) return;
@@ -271,54 +270,38 @@ export function metinYuzeyiKur({
     yolla();
   };
 
-  cubuk.appendChild(dugme("<b>B</b>", "Kalin (Cmd/Ctrl+B)", () => komut("bold")));
-  cubuk.appendChild(dugme("<i>I</i>", "Italik (Cmd/Ctrl+I)", () => komut("italic")));
-  cubuk.appendChild(dugme("&lt;/&gt;", "Kod", kodYap));
-  cubuk.appendChild(dugme("🔗", "Baglanti (Cmd/Ctrl+K)", baglantiVer));
-  cubuk.appendChild(dugme("x²", "Ust simge", () => komut("superscript")));
-  cubuk.appendChild(dugme("x₂", "Alt simge", () => komut("subscript")));
-  cubuk.appendChild(dugme("⌫", "Bicimi temizle", () => komut("removeFormat")));
+  cubuk.appendChild(dugme("<b>B</b>", "Bold (Cmd/Ctrl+B)", () => komut("bold")));
+  cubuk.appendChild(dugme("<i>I</i>", "Italic (Cmd/Ctrl+I)", () => komut("italic")));
+  cubuk.appendChild(dugme("&lt;/&gt;", "Code", kodYap));
+  cubuk.appendChild(dugme("🔗", "Link (Cmd/Ctrl+K)", baglantiVer));
+  cubuk.appendChild(dugme("x²", "Superscript", () => komut("superscript")));
+  cubuk.appendChild(dugme("x₂", "Subscript", () => komut("subscript")));
+  cubuk.appendChild(dugme("⌫", "Clear formatting", () => komut("removeFormat")));
   cubuk.appendChild(baglantiAlani);
 
+  /** Secim varsa bicim dugmeleri gorunur, yoksa gizli. */
   const cubuguKonumla = () => {
     const s = window.getSelection();
-    if (!s || s.isCollapsed || s.rangeCount === 0) {
-      cubuk.style.display = "none";
-      return;
-    }
-    const k = s.getRangeAt(0).getBoundingClientRect();
-    if (!k.width && !k.height) {
-      cubuk.style.display = "none";
-      return;
-    }
-    /* Secimin USTUNDE duruyor; sayfa basindaysa altina geciyor. */
-    cubuk.style.display = "flex";
-    let ust = k.top - cubuk.offsetHeight - 8;
-
-    /* BLOK CUBUGUYLA CAKISMA.
-       Ikisi de blogun ust kenarina yerlesiyordu: blogun ilk satirinda
-       metin secince ust uste biniyor, dugmeler birbirinin uzerine
-       geliyordu. Cakisma varsa satir ici cubuk blok cubugunun da
-       USTUNE cikiyor — ikisi ust uste degil, alt alta duruyor. */
-    const blokKutu = blokCubuguKutusu();
-    if (blokKutu && ust < blokKutu.bottom + 4 && k.top < blokKutu.bottom + 40) {
-      ust = blokKutu.top - cubuk.offsetHeight - 6;
-    }
-
-    cubuk.style.top = `${ust < 8 ? k.bottom + 8 : ust}px`;
-    cubuk.style.left = `${Math.max(8, Math.min(window.innerWidth - cubuk.offsetWidth - 8, k.left + k.width / 2 - cubuk.offsetWidth / 2))}px`;
+    const acik =
+      !!s && !s.isCollapsed && s.rangeCount > 0 && govde.contains(s.anchorNode);
+    if (kap.hidden === !acik) return;
+    kap.hidden = !acik;
+    /* display DE ayarlaniyor: grubun satir ici "display:contents"
+       degeri, [hidden] icin tarayicinin uyguladigi display:none'i
+       ezer — yalnizca hidden yazsaydik grup hic gizlenmezdi. */
+    kap.style.display = acik ? "contents" : "none";
+    degisti();
   };
 
   const secimDegisti = () => {
-    /* Baglanti alani acikken secim degisimi cubugu kapatmamali:
+    /* Baglanti alani acikken secim degisimi grubu kapatmamali:
        alana odaklanmak zaten secimi bozuyor. */
     if (baglantiAlani.style.display === "block") return;
     const s = window.getSelection();
-    /* Yalnizca govde icindeki secimde cikiyor: panelin baska
-       alanlarinda metin secmek bu cubugu acmamali. */
-    if (!s || s.rangeCount === 0 || !govde.contains(s.anchorNode)) {
-      cubuk.style.display = "none";
-      return;
+    /* Metin secilince blogu da seciyoruz: yoksa bicim dugmeleri
+       gorunur ama uzerinde durduklari cubuk kapali olurdu. */
+    if (s && !s.isCollapsed && govde.contains(s.anchorNode)) {
+      seciminBlogunuSec(s.anchorNode);
     }
     cubuguKonumla();
   };
@@ -468,6 +451,6 @@ export function metinYuzeyiKur({
     govde.removeEventListener("keydown", tus);
     govde.removeEventListener("paste", yapistir as EventListener);
     govde.removeEventListener("input", girdi);
-    cubuk.remove();
+    kap.innerHTML = "";
   };
 }

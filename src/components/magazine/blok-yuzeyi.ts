@@ -120,6 +120,13 @@ const GOLGE = "0 1px 2px rgba(20,18,16,.06), 0 10px 28px rgba(20,18,16,.14)";
 export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () => void {
   let secili: HTMLElement | null = null;
 
+  /* Bicim dugmelerinin durdugu grup. Blok cubugunun ICINDE yasiyor;
+     metin secilince aciliyor (bkz. blok-metin.ts). display:contents —
+     kendi bir kutu kurmuyor, dugmeler cubugun kendi hizasinda kaliyor. */
+  const metinGrubu = document.createElement("span");
+  metinGrubu.hidden = true;
+  metinGrubu.style.cssText = "display:none";
+
   /* ---------------- GERI AL / ILERI AL ----------------
      Tarayicinin kendi geri alma yigini her duzenlenebilir alan icin
      AYRI calisiyor ve blok islemlerini (tasi, sil, cogalt) hic
@@ -347,7 +354,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     switch (t) {
       case "baslik":
         o = document.createElement("h2");
-        o.textContent = "Yeni baslik";
+        o.textContent = "New heading";
         break;
       case "liste": {
         o = document.createElement("ul");
@@ -385,7 +392,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         o.setAttribute("data-blok", "kutu");
         o.setAttribute("data-tur", "bilgi");
         o.innerHTML =
-          '<div class="kutu-baslik">Bilgi</div><div class="kutu-govde"><br></div>';
+          '<div class="kutu-baslik">Info</div><div class="kutu-govde"><br></div>';
         break;
 
       case "artilar":
@@ -393,8 +400,8 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         o.className = "artilar-eksiler";
         o.setAttribute("data-blok", "artilar");
         o.innerHTML =
-          '<div class="ae-sutun ae-arti"><div class="ae-baslik">Artilari</div><ul><li><br></li></ul></div>' +
-          '<div class="ae-sutun ae-eksi"><div class="ae-baslik">Eksileri</div><ul><li><br></li></ul></div>';
+          '<div class="ae-sutun ae-arti"><div class="ae-baslik">Pros</div><ul><li><br></li></ul></div>' +
+          '<div class="ae-sutun ae-eksi"><div class="ae-baslik">Cons</div><ul><li><br></li></ul></div>';
         break;
 
       case "istatistik":
@@ -402,8 +409,8 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         o.className = "istatistik";
         o.setAttribute("data-blok", "istatistik");
         o.innerHTML =
-          '<div class="istatistik-oge"><div class="istatistik-sayi">%42</div><div class="istatistik-etiket">Aciklama</div></div>' +
-          '<div class="istatistik-oge"><div class="istatistik-sayi">3x</div><div class="istatistik-etiket">Aciklama</div></div>';
+          '<div class="istatistik-oge"><div class="istatistik-sayi">42%</div><div class="istatistik-etiket">Label</div></div>' +
+          '<div class="istatistik-oge"><div class="istatistik-sayi">3x</div><div class="istatistik-etiket">Label</div></div>';
         break;
 
       case "adimlar":
@@ -411,14 +418,14 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         o.className = "adimlar";
         o.setAttribute("data-blok", "adimlar");
         o.innerHTML =
-          '<li><div class="adim-baslik">Ilk adim</div><div class="adim-govde">Ne yapilacagini yazin.</div></li>';
+          '<li><div class="adim-baslik">First step</div><div class="adim-govde">Describe what to do.</div></li>';
         break;
 
       case "kaynakca":
         o = document.createElement("ol");
         o.className = "kaynakca";
         o.setAttribute("data-blok", "kaynakca");
-        o.innerHTML = "<li>Kaynak</li>";
+        o.innerHTML = "<li>Source</li>";
         break;
 
       case "cta":
@@ -426,8 +433,8 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         o.className = "cta";
         o.setAttribute("data-blok", "cta");
         o.innerHTML =
-          '<div class="cta-baslik">Baslik</div><div class="cta-metin">Kisa aciklama.</div>' +
-          '<div class="cta-dugme"><a href="#">Incele</a></div>';
+          '<div class="cta-baslik">Heading</div><div class="cta-metin">Short description.</div>' +
+          '<div class="cta-dugme"><a href="#">Learn more</a></div>';
         break;
 
       case "video":
@@ -481,7 +488,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
 
     blok.className = "icindekiler";
     blok.innerHTML =
-      `<div class="icindekiler-baslik">Icindekiler</div>` +
+      `<div class="icindekiler-baslik">Contents</div>` +
       `<ol class="icindekiler-liste"></ol>`;
     const liste = blok.querySelector(".icindekiler-liste")!;
 
@@ -490,7 +497,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
          kaydetmeden once bilmeli. */
       liste.innerHTML =
         `<li class="icindekiler-madde" data-derinlik="0">` +
-        `<em>En az iki baslik gerekiyor — su an liste basilmayacak.</em></li>`;
+        `<em>Needs at least two headings \u2014 nothing will be shown yet.</em></li>`;
       return;
     }
 
@@ -521,7 +528,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     menuAcik = true;
 
     for (const tanim of EKLENEBILIR_TURLER) {
-      const d = dugme(tanim.ad, `${tanim.ad} ekle`, () => {
+      const d = dugme(tanim.ad, `Insert ${tanim.ad.toLowerCase()}`, () => {
         const yeni = yeniBlokOgesi(tanim.t);
         secili!.after(yeni);
         menuKapat();
@@ -649,13 +656,13 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     ayarAcik = true;
 
     const baslik = document.createElement("div");
-    baslik.textContent = `${tanim?.ad ?? t} ayarlari`;
+    baslik.textContent = `${tanim?.ad ?? t} settings`;
     baslik.style.cssText = `font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:${R.soluk}`;
     ayarlar.appendChild(baslik);
 
     if (!tanim?.alanlar.length) {
       const bos = document.createElement("div");
-      bos.textContent = "Bu blogun ayari yok.";
+      bos.textContent = "This block has no settings.";
       bos.style.cssText = `color:${R.soluk};font-weight:400;font-size:12.5px`;
       ayarlar.appendChild(bos);
     }
@@ -779,11 +786,19 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     const tanim = BLOK_TANIMLARI[t as keyof typeof BLOK_TANIMLARI];
     cubuk.innerHTML = "";
 
+    /* BICIM GRUBU EN BASTA. Ayri bir yuzer cubuk degil, ayni cubugun
+       icinde bir bolum: metin secilince aciliyor, secim kalkinca
+       kapaniyor. Iki ayri yuzey (siyah bicim cubugu + beyaz blok
+       cubugu) hem ust uste biniyordu hem de acik zeminli tasarimda
+       yan yana yabanci duruyordu. */
+    cubuk.appendChild(metinGrubu);
+    if (!metinGrubu.hidden) cubuk.appendChild(ayirici());
+
     /* Surukleme tutamagi — blok editorlerinin isareti. */
     const tutamak = document.createElement("button");
     tutamak.type = "button";
     tutamak.textContent = "⠿";
-    tutamak.title = "Surukleyerek tasi";
+    tutamak.title = "Drag to reorder";
     tutamak.style.cssText = `all:unset;cursor:grab;padding:6px 7px;border-radius:6px;color:${R.soluk}`;
     tutamak.addEventListener("mouseenter", () => (tutamak.style.background = R.yuzeyUst));
     tutamak.addEventListener("mouseleave", () => (tutamak.style.background = "transparent"));
@@ -795,7 +810,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     if (t === "baslik") {
       for (const s of [2, 3, 4]) {
         const etkinMi = o.tagName.toLowerCase() === `h${s}`;
-        const d = dugme(`H${s}`, `Seviye ${s}`, () => {
+        const d = dugme(`H${s}`, `Heading level ${s}`, () => {
           sec(etiketDegistir(o, `h${s}`));
           bitir();
         }, etkinMi ? R.vurgu : R.ink);
@@ -827,7 +842,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
 
     if (t === "gorsel") {
       const img = o.tagName === "IMG" ? (o as HTMLImageElement) : o.querySelector("img");
-      cubuk.appendChild(dugme("Degistir", "Gorseli degistir", () => img && gorselAc(img)));
+      cubuk.appendChild(dugme("Replace", "Replace image", () => img && gorselAc(img)));
       cubuk.appendChild(ayirici());
     }
 
@@ -835,9 +850,9 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
       const s = document.createElement("select");
       s.style.cssText = `all:unset;box-sizing:border-box;cursor:pointer;padding:5px 7px;border-radius:6px;color:${R.ink};background:${R.yuzeyUst};font:500 12px ui-sans-serif,system-ui`;
       for (const [deger, etiket] of [
-        ["2", "Ana bolumler (H2)"],
+        ["2", "Main sections (H2)"],
         ["2,3", "H2 + H3"],
-        ["2,3,4", "Butun basliklar"],
+        ["2,3,4", "All headings"],
       ]) {
         const se = document.createElement("option");
         se.value = deger;
@@ -858,7 +873,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     if (t === "urun") {
       /* Urun kimligini elle yazdirmak yerine secici: ayar panelindeki
          sayi alani kimseye urun listesini gostermiyordu. */
-      cubuk.appendChild(dugme("Urun sec", "Baska bir urun sec", () => urunAc(o)));
+      cubuk.appendChild(dugme("Choose product", "Pick a different product", () => urunAc(o)));
       cubuk.appendChild(ayirici());
     }
 
@@ -890,7 +905,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         return satir ? (satir as HTMLTableRowElement).rowIndex : -1;
       };
 
-      cubuk.appendChild(dugme("+↓", "Satir ekle", () => {
+      cubuk.appendChild(dugme("+↓", "Add row", () => {
         if (!tablo) return;
         const govdeBol = tablo.tBodies[0] ?? tablo;
         const n = sutunSayisi();
@@ -902,7 +917,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         bitir();
       }));
 
-      cubuk.appendChild(dugme("+→", "Sutun ekle", () => {
+      cubuk.appendChild(dugme("+→", "Add column", () => {
         if (!tablo) return;
         for (const satir of [...tablo.rows]) {
           /* Baslik satirinda th, govdede td: yanlis etiket koymak
@@ -915,14 +930,14 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         bitir();
       }));
 
-      cubuk.appendChild(dugme("−↓", "Satiri sil", () => {
+      cubuk.appendChild(dugme("−↓", "Delete row", () => {
         if (!tablo || tablo.rows.length <= 1) return;
         const i = hangiSatir();
         tablo.deleteRow(i >= 0 ? i : tablo.rows.length - 1);
         bitir();
       }));
 
-      cubuk.appendChild(dugme("−→", "Sutunu sil", () => {
+      cubuk.appendChild(dugme("−→", "Delete column", () => {
         if (!tablo || sutunSayisi() <= 1) return;
         const i = hangiSutun();
         for (const satir of [...tablo.rows]) {
@@ -932,7 +947,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         bitir();
       }));
 
-      cubuk.appendChild(dugme("⊤", "Baslik satirini ac/kapat", () => {
+      cubuk.appendChild(dugme("⊤", "Toggle header row", () => {
         if (!tablo) return;
         const bas = tablo.tHead;
         if (bas) {
@@ -968,13 +983,13 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
 
     if (t === "liste") {
       cubuk.appendChild(
-        dugme(o.tagName === "OL" ? "1." : "•", "Numarali / madde isaretli", () => {
+        dugme(o.tagName === "OL" ? "1." : "•", "Numbered / bulleted", () => {
           sec(etiketDegistir(o, o.tagName === "OL" ? "ul" : "ol"));
           bitir();
         })
       );
       cubuk.appendChild(
-        dugme("☑", "Kontrol listesi", () => {
+        dugme("☑", "Checklist", () => {
           /* Kontrol listesi SIRASIZ olmali: numara ile onay kutusunu
              yan yana koymak hem anlamsiz hem de "1. ☑" gibi cift
              isaretli bir satir uretiyor. Numarali listede acilirsa
@@ -999,33 +1014,33 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
       cubuk.appendChild(ayirici());
     }
 
-    cubuk.appendChild(dugme("↑", "Yukari tasi", () => {
+    cubuk.appendChild(dugme("↑", "Move up", () => {
       const k = secili?.previousElementSibling;
       if (k && secili) k.before(secili);
       bitir();
     }));
-    cubuk.appendChild(dugme("↓", "Asagi tasi", () => {
+    cubuk.appendChild(dugme("↓", "Move down", () => {
       const k = secili?.nextElementSibling;
       if (k && secili) k.after(secili);
       bitir();
     }));
-    cubuk.appendChild(dugme("⧉", "Cogalt", () => {
+    cubuk.appendChild(dugme("⧉", "Duplicate", () => {
       if (!secili) return;
       const kopya = secili.cloneNode(true) as HTMLElement;
       kopya.removeAttribute("style");
       secili.after(kopya);
       bitir();
     }));
-    cubuk.appendChild(dugme("+", "Altina blok ekle", menuyuAc));
+    cubuk.appendChild(dugme("+", "Insert block below", menuyuAc));
 
     /* Ayar paneli yalnizca alani olan turlerde. Bos bir panel acan
        dugme, kullaniciya bir sey vaat edip vermemek olurdu. */
     if (tanim?.alanlar.length) {
-      cubuk.appendChild(dugme("⚙", "Ayarlar", ayarlariAc));
+      cubuk.appendChild(dugme("⚙", "Settings", ayarlariAc));
     }
 
     cubuk.appendChild(ayirici());
-    cubuk.appendChild(dugme("✕", "Sil", () => {
+    cubuk.appendChild(dugme("✕", "Delete", () => {
       /* Son blok silinmiyor: govde bosalinca contenteditable icinde
          imlec koyacak yer kalmiyor ve yazi yazilamaz hale geliyor. */
       if (!secili || govde.children.length <= 1) return;
@@ -1038,8 +1053,13 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
 
   /* ---------------- olaylar ---------------- */
 
-  const ustBlok = (hedef: EventTarget | null): HTMLElement | null => {
-    let d = hedef as HTMLElement | null;
+  const ustBlok = (hedef: EventTarget | Node | null): HTMLElement | null => {
+    /* Metin dugumunden de gelinebiliyor (secim), o yuzden once
+       ogeye cikiliyor. */
+    let d =
+      hedef instanceof Node && hedef.nodeType === Node.TEXT_NODE
+        ? hedef.parentElement
+        : (hedef as HTMLElement | null);
     while (d && d.parentElement !== govde) d = d.parentElement;
     return d;
   };
@@ -1173,7 +1193,8 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
   duzenlenebilirlikUygula(govde);
 
   /* Satir ici bicimlendirme, yapistirma temizligi, egik cizgi komutu
-     ve markdown kisayollari — TipTap'in yerini alacak parcalar. */
+     ve markdown kisayollari — TipTap'in yerini alacak parcalar.
+     Dugmeleri blok cubugunun icindeki bu gruba basiyor. */
   const metniKaldir = metinYuzeyiKur({
     govde,
     yolla,
@@ -1181,8 +1202,17 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     menuAc: menuyuAc,
     etiketeCevir: (blok, etiket) => etiketDegistir(blok, etiket),
     blokSec: sec,
-    blokCubuguKutusu: () =>
-      cubuk.style.display === "none" ? null : cubuk.getBoundingClientRect(),
+    kap: metinGrubu,
+    degisti: () => {
+      /* Grup acilip kapaninca cubugun genisligi degisiyor; hem
+         yeniden kurulmasi hem yeniden olculmesi gerekiyor. */
+      if (secili) cubuguKur(secili);
+      konumla();
+    },
+    seciminBlogunuSec: (dugum) => {
+      const blok = ustBlok(dugum);
+      if (blok && blok !== secili) sec(blok);
+    },
   });
 
   govde.addEventListener("input", yazarkenKaydet);

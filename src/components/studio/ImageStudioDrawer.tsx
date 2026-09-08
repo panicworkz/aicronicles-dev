@@ -364,7 +364,7 @@ export function ImageStudioDrawer({
              yerine gecmemeli. */
           if (newCaption && !caption.trim()) setCaption(newCaption);
           setPickerOpen(false);
-          toast.success('Gorsel secildi');
+          toast.success('Image selected');
         }}
         title="Replace Image (Library, Upload, or URL)"
         currentUrl={src}

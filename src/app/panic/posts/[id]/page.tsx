@@ -289,7 +289,7 @@ export default function PanicSplitLiveStudioPage({
                 },
                 window.location.origin
               );
-              toast.success("Gorsel guncellendi");
+              toast.success("Image updated");
             } else {
               const currentHtml = contentHtmlRef.current || "";
               const parser = new DOMParser();

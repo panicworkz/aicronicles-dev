@@ -130,7 +130,7 @@ async function executeWorkflow() {
           className="gap-1.5 text-xs rounded-md"
         >
           <ShoppingBag className="size-3.5 text-emerald-600" />
-          <span>+ Urun Karti</span>
+          <span>+ Product Card</span>
         </Button>
 
         <Button
@@ -150,7 +150,7 @@ async function executeWorkflow() {
         kapat={() => setUrunSecici(false)}
         sec={(urun) => {
           onInsertHtml(`<div data-blok="urun" data-urun-id="${urun.id}"></div>`);
-          toast.success('Urun karti eklendi');
+          toast.success('Product card inserted');
         }}
       />
     </div>

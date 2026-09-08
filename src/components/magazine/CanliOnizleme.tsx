@@ -124,7 +124,7 @@ export default function CanliOnizleme() {
         blok.innerHTML =
           `<span class="urun-blogu-baglanti">${gorsel}` +
           `<span class="urun-blogu-metin">` +
-          `<span class="urun-blogu-tur">URUN</span>` +
+          `<span class="urun-blogu-tur">PRODUCT</span>` +
           `<strong class="urun-blogu-ad"></strong>` +
           `<span class="urun-blogu-fiyat"></span>` +
           `</span></span>`;

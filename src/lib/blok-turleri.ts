@@ -49,88 +49,88 @@ export type BlokTanimi = {
    ucuncude Arial gorursunuz ve dergi hissi biter. Roller tasarimin
    kendi tipografi sistemine bagli, yani her yazida ayni duruyor. */
 export const PARAGRAF_ROLLERI = [
-  { deger: "", etiket: "Govde metni" },
-  { deger: "one-cikan", etiket: "One cikan paragraf" },
-  { deger: "kucuk-not", etiket: "Kucuk not" },
+  { deger: "", etiket: "Body text" },
+  { deger: "one-cikan", etiket: "Lead paragraph" },
+  { deger: "kucuk-not", etiket: "Small note" },
 ];
 
 export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
   paragraf: {
     t: "paragraf",
-    ad: "Paragraf",
+    ad: "Paragraph",
     eklenebilir: true,
     yeni: () => ({ t: "paragraf", html: "" }),
     yerindeYazilir: true,
     alanlar: [
       {
         ad: "rol",
-        etiket: "Bicim",
+        etiket: "Style",
         tur: "secim",
         secenekler: PARAGRAF_ROLLERI,
-        ipucu: "Tasarimin kendi tipografisi; font secilmiyor, rol seciliyor.",
+        ipucu: "Uses the design\u2019s own typography \u2014 you pick a role, not a font.",
       },
     ],
   },
 
   baslik: {
     t: "baslik",
-    ad: "Baslik",
+    ad: "Heading",
     eklenebilir: true,
     yeni: () => ({ t: "baslik", seviye: 2, html: "" }),
     yerindeYazilir: true,
     alanlar: [
       {
         ad: "seviye",
-        etiket: "Seviye",
+        etiket: "Level",
         tur: "secim",
         secenekler: [
-          { deger: "2", etiket: "H2 — ana bolum" },
-          { deger: "3", etiket: "H3 — alt bolum" },
-          { deger: "4", etiket: "H4 — kucuk baslik" },
+          { deger: "2", etiket: "H2 — section" },
+          { deger: "3", etiket: "H3 — subsection" },
+          { deger: "4", etiket: "H4 — minor heading" },
         ],
       },
       {
         ad: "id",
-        etiket: "Cipa kimligi",
+        etiket: "Anchor ID",
         tur: "metin",
-        ipucu: "Icindekiler baglantilari ve SSS cikarimi bunu kullaniyor; degistirmek eski baglantilari kirar.",
+        ipucu: "Used by contents links and FAQ extraction \u2014 changing it breaks existing links.",
       },
     ],
   },
 
   liste: {
     t: "liste",
-    ad: "Liste",
+    ad: "List",
     eklenebilir: true,
     yeni: () => ({ t: "liste", sirali: false, ogeler: [""] }),
     yerindeYazilir: true,
-    alanlar: [{ ad: "sirali", etiket: "Numarali liste", tur: "anahtar" }],
+    alanlar: [{ ad: "sirali", etiket: "Numbered list", tur: "anahtar" }],
   },
 
   gorsel: {
     t: "gorsel",
-    ad: "Gorsel",
+    ad: "Image",
     eklenebilir: true,
     yeni: () => ({ t: "gorsel", src: "" }),
     /* Gorselin uzerine yazi yazilmaz; alanlari panelden duzenleniyor. */
     yerindeYazilir: false,
     alanlar: [
-      { ad: "src", etiket: "Gorsel", tur: "gorsel" },
+      { ad: "src", etiket: "Image", tur: "gorsel" },
       {
         ad: "alt",
-        etiket: "Alternatif metin",
+        etiket: "Alt text",
         tur: "metin",
-        ipucu: "Ekran okuyucular ve gorsel yuklenmediginde gorunen metin.",
+        ipucu: "Read by screen readers and shown if the image fails to load.",
       },
-      { ad: "altyazi", etiket: "Altyazi", tur: "uzunMetin" },
-      { ad: "baglanti", etiket: "Tiklaninca gidilecek adres", tur: "metin" },
-      { ad: "genis", etiket: "Genis goster", tur: "anahtar" },
+      { ad: "altyazi", etiket: "Caption", tur: "uzunMetin" },
+      { ad: "baglanti", etiket: "Link URL", tur: "metin" },
+      { ad: "genis", etiket: "Full width", tur: "anahtar" },
     ],
   },
 
   alinti: {
     t: "alinti",
-    ad: "Alinti",
+    ad: "Quote",
     eklenebilir: true,
     yeni: () => ({ t: "alinti", html: "" }),
     yerindeYazilir: true,
@@ -139,7 +139,7 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
 
   ayrac: {
     t: "ayrac",
-    ad: "Ayrac",
+    ad: "Divider",
     eklenebilir: true,
     yeni: () => ({ t: "ayrac" }),
     yerindeYazilir: false,
@@ -148,7 +148,7 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
 
   tablo: {
     t: "tablo",
-    ad: "Tablo",
+    ad: "Table",
     /* Tablo HTML olarak tutuluyor; sifirdan tablo kurma arayuzu yok.
        Var olan tablolar duzenlenebiliyor, yenisi henuz eklenmiyor —
        yalan soylememek icin menude gorunmuyor. */
@@ -159,7 +159,7 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
 
   urun: {
     t: "urun",
-    ad: "Urun karti",
+    ad: "Product card",
     eklenebilir: true,
     yeni: () => ({ t: "urun", urunId: 0 }),
     yerindeYazilir: false,
@@ -173,55 +173,55 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
 
   icindekiler: {
     t: "icindekiler",
-    ad: "Icindekiler",
+    ad: "Table of contents",
     eklenebilir: true,
     yeni: () => ({ t: "icindekiler", seviyeler: [2, 3] }),
     yerindeYazilir: false,
     alanlar: [
       {
         ad: "seviyeler",
-        etiket: "Hangi basliklar",
+        etiket: "Include headings",
         tur: "secim",
         secenekler: [
-          { deger: "2", etiket: "Yalnizca ana bolumler (H2)" },
-          { deger: "2,3", etiket: "Ana bolumler ve alt bolumler (H2 + H3)" },
-          { deger: "2,3,4", etiket: "Butun basliklar (H2 + H3 + H4)" },
+          { deger: "2", etiket: "Main sections only (H2)" },
+          { deger: "2,3", etiket: "Sections and subsections (H2 + H3)" },
+          { deger: "2,3,4", etiket: "All headings (H2 + H3 + H4)" },
         ],
-        ipucu: "Liste yazinin basliklarindan kendiliginden uretiliyor; baslik degisince guncelleniyor.",
+        ipucu: "Built from the article\u2019s own headings and updated whenever they change.",
       },
     ],
   },
 
   kutu: {
     t: "kutu",
-    ad: "Kutu",
+    ad: "Callout",
     eklenebilir: true,
-    yeni: () => ({ t: "kutu", tur: "bilgi", baslik: "Bilgi", html: "" }),
+    yeni: () => ({ t: "kutu", tur: "bilgi", baslik: "Info", html: "" }),
     yerindeYazilir: true,
     alanlar: [
       {
         ad: "tur",
-        etiket: "Bicim",
+        etiket: "Style",
         tur: "secim",
         secenekler: [
-          { deger: "bilgi", etiket: "Bilgi" },
-          { deger: "uyari", etiket: "Uyari" },
-          { deger: "ipucu", etiket: "Ipucu" },
-          { deger: "ozet", etiket: "Kisa cevap (ozet)" },
+          { deger: "bilgi", etiket: "Info" },
+          { deger: "uyari", etiket: "Warning" },
+          { deger: "ipucu", etiket: "Tip" },
+          { deger: "ozet", etiket: "Key takeaway" },
         ],
-        ipucu: "Kisa cevap kutusu arama ve yapay zeka araclari icin ayrica degerli.",
+        ipucu: "A key takeaway box also helps search engines and AI answer tools.",
       },
     ],
   },
 
   artilar: {
     t: "artilar",
-    ad: "Artilar ve eksiler",
+    ad: "Pros & cons",
     eklenebilir: true,
     yeni: () => ({
       t: "artilar",
-      artilar: ["Ilk arti"],
-      eksiler: ["Ilk eksi"],
+      artilar: ["First pro"],
+      eksiler: ["First con"],
     }),
     yerindeYazilir: true,
     alanlar: [],
@@ -229,13 +229,13 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
 
   istatistik: {
     t: "istatistik",
-    ad: "Sayi vurgusu",
+    ad: "Key stats",
     eklenebilir: true,
     yeni: () => ({
       t: "istatistik",
       ogeler: [
-        { sayi: "%42", etiket: "Aciklama" },
-        { sayi: "3x", etiket: "Aciklama" },
+        { sayi: "42%", etiket: "Label" },
+        { sayi: "3x", etiket: "Label" },
       ],
     }),
     yerindeYazilir: true,
@@ -244,11 +244,11 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
 
   adimlar: {
     t: "adimlar",
-    ad: "Adim adim",
+    ad: "Steps",
     eklenebilir: true,
     yeni: () => ({
       t: "adimlar",
-      ogeler: [{ baslik: "Ilk adim", html: "Ne yapilacagini yazin." }],
+      ogeler: [{ baslik: "First step", html: "Describe what to do." }],
     }),
     yerindeYazilir: true,
     alanlar: [],
@@ -256,27 +256,27 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
 
   kaynakca: {
     t: "kaynakca",
-    ad: "Kaynakca",
+    ad: "References",
     eklenebilir: true,
-    yeni: () => ({ t: "kaynakca", ogeler: ["Kaynak"] }),
+    yeni: () => ({ t: "kaynakca", ogeler: ["Source"] }),
     yerindeYazilir: true,
     alanlar: [],
   },
 
   cta: {
     t: "cta",
-    ad: "Cagri kutusu",
+    ad: "Call to action",
     eklenebilir: true,
     yeni: () => ({
       t: "cta",
-      baslik: "Baslik",
-      metin: "Kisa aciklama.",
-      dugmeMetni: "Incele",
+      baslik: "Heading",
+      metin: "Short description.",
+      dugmeMetni: "Learn more",
       adres: "",
     }),
     yerindeYazilir: true,
     alanlar: [
-      { ad: "adres", etiket: "Dugmenin adresi", tur: "metin" },
+      { ad: "adres", etiket: "Button link", tur: "metin" },
     ],
   },
 
@@ -289,28 +289,28 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
     alanlar: [
       {
         ad: "adres",
-        etiket: "Video adresi",
+        etiket: "Video URL",
         tur: "metin",
-        ipucu: "YouTube ya da Vimeo adresi. Yaziya yalnizca video kimligi kaydediliyor.",
+        ipucu: "YouTube or Vimeo URL. Only the video ID is stored in the article.",
       },
     ],
   },
 
   galeri: {
     t: "galeri",
-    ad: "Galeri",
+    ad: "Gallery",
     eklenebilir: true,
     yeni: () => ({ t: "galeri", sutun: 3, gorseller: [] }),
     yerindeYazilir: false,
     alanlar: [
       {
         ad: "sutun",
-        etiket: "Sutun sayisi",
+        etiket: "Columns",
         tur: "secim",
         secenekler: [
-          { deger: "2", etiket: "2 sutun" },
-          { deger: "3", etiket: "3 sutun" },
-          { deger: "4", etiket: "4 sutun" },
+          { deger: "2", etiket: "2 columns" },
+          { deger: "3", etiket: "3 columns" },
+          { deger: "4", etiket: "4 columns" },
         ],
       },
     ],
@@ -318,7 +318,7 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
 
   ham: {
     t: "ham",
-    ad: "Ham HTML",
+    ad: "Raw HTML",
     /* Kacis kapisi. Elle eklenmesi icin bir sebep yok; ayristiricinin
        tanimadigi seyler buraya dusuyor. */
     eklenebilir: false,

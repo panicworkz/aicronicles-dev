@@ -66,9 +66,9 @@ export function UrunSecici({
         const v = await c.json();
         if (iptal) return;
         if (v.success) setUrunler(v.products ?? []);
-        else setHata(v.error || 'Urunler alinamadi');
+        else setHata(v.error || 'Could not load products');
       } catch {
-        if (!iptal) setHata('Urunler alinamadi');
+        if (!iptal) setHata('Could not load products');
       } finally {
         if (!iptal) setYukleniyor(false);
       }
@@ -81,19 +81,19 @@ export function UrunSecici({
   }, [acik, arama]);
 
   return (
-    <Modal acik={acik} kapat={kapat} baslik="Urun karti ekle" genislik="max-w-lg"
-      aciklama="Yaziya urunun kimligi gomuluyor; fiyat ve stok her acilista veriden okunuyor.">
+    <Modal acik={acik} kapat={kapat} baslik="Insert product card" genislik="max-w-lg"
+      aciklama="Only the product ID is stored \u2014 price and stock are read from the database on every view.">
       <div className="space-y-3 p-5">
         <Input
           value={arama}
           onChange={(e) => setArama(e.target.value)}
-          placeholder="Urun adi, slug ya da SKU"
+          placeholder="Product name, slug or SKU"
           autoFocus
         />
 
         <div className="max-h-[46vh] overflow-y-auto rounded-md border border-border">
           {yukleniyor && (
-            <p className="px-4 py-6 text-center text-sm text-muted-foreground">Yukleniyor…</p>
+            <p className="px-4 py-6 text-center text-sm text-muted-foreground">Loading\u2026</p>
           )}
 
           {!yukleniyor && hata && (
@@ -104,7 +104,7 @@ export function UrunSecici({
               ile magazada hic urun olmamasi ayri seyler. */}
           {!yukleniyor && !hata && urunler.length === 0 && (
             <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-              {arama ? 'Bu aramaya uyan yayinda urun yok.' : 'Yayinda urun yok.'}
+              {arama ? 'No published products match this search.' : 'No published products yet.'}
             </p>
           )}
 
@@ -146,7 +146,7 @@ export function UrunSecici({
 
       <ModalAlt>
         <Button type="button" variant="outline" onClick={kapat}>
-          Vazgec
+          Cancel
         </Button>
       </ModalAlt>
     </Modal>

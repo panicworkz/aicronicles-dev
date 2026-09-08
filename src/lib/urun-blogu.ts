@@ -2,6 +2,7 @@ import { db, schema } from "@/db";
 import { inArray } from "drizzle-orm";
 import { fiyat, stokta, turu, TUR_ADI } from "@/lib/magaza";
 import { magazaGorunur } from "@/lib/magaza-durumu";
+import { isaretleriDoldur } from "@/lib/blok-doldur";
 
 /**
  * URUN KARTI BLOGUNU OKUMA ANINDA DOLDURUR.
@@ -21,8 +22,6 @@ import { magazaGorunur } from "@/lib/magaza-durumu";
  * satin alma baglantisi da disariya acik kalirdi.
  */
 
-const ISARET = /<div data-blok="urun" data-urun-id="(\d+)"><\/div>/g;
-
 function kacir(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -32,14 +31,23 @@ function kacir(s: string): string {
 }
 
 export async function urunBloklariniDoldur(html?: string | null): Promise<string> {
-  if (!html) return "";
+  if (!html || !html.includes('data-blok="urun"')) return html ?? "";
 
-  const kimlikler = [...html.matchAll(ISARET)].map((e) => Number(e[1]));
+  /* Kimlikler once toplaniyor: her kart icin ayri sorgu atmak, on
+     urunlu bir yazida on sorgu demekti. */
+  const kimlikler: number[] = [];
+  await isaretleriDoldur(html, "urun", (o) => {
+    const k = Number(o.getAttribute("data-urun-id"));
+    if (Number.isFinite(k) && k > 0) kimlikler.push(k);
+    return "";
+  });
   if (kimlikler.length === 0) return html;
 
   /* Magaza kapaliysa isaretler TEMIZLENIYOR — bos div birakmak
      sayfada aciklanamayan bir bosluk yaratirdi. */
-  if (!(await magazaGorunur())) return html.replace(ISARET, "");
+  if (!(await magazaGorunur())) {
+    return isaretleriDoldur(html, "urun", () => "");
+  }
 
   const urunler = await db
     .select()
@@ -48,7 +56,8 @@ export async function urunBloklariniDoldur(html?: string | null): Promise<string
 
   const tablo = new Map(urunler.map((u) => [u.id, u]));
 
-  return html.replace(ISARET, (_, kimlik) => {
+  return isaretleriDoldur(html, "urun", (isaretOge) => {
+    const kimlik = isaretOge.getAttribute("data-urun-id") ?? "";
     const u = tablo.get(Number(kimlik));
 
     /* Urun silinmis ya da yayindan kaldirilmissa kart basilmiyor.
@@ -69,7 +78,7 @@ export async function urunBloklariniDoldur(html?: string | null): Promise<string
       <span class="urun-blogu-tur">${kacir(TUR_ADI[t])}</span>
       <strong class="urun-blogu-ad">${kacir(u.title)}</strong>
       <span class="urun-blogu-fiyat">${kacir(fiyat(u.price, u.currency))}${
-        var_ ? "" : ` <em class="urun-blogu-tukendi">tukendi</em>`
+        var_ ? "" : ` <em class="urun-blogu-tukendi">sold out</em>`
       }</span>
     </div>
   </a>

@@ -1,3 +1,5 @@
+import { isaretleriDoldurSenkron } from "./blok-doldur.ts";
+
 /**
  * VIDEO BLOGUNU OKUMA ANINDA BASAR.
  *
@@ -28,9 +30,6 @@ function kacir(s: string): string {
    giriyor. */
 const GECERLI = /^[A-Za-z0-9_-]{5,20}$/;
 
-const ISARET =
-  /<div data-blok="video" data-saglayici="(youtube|vimeo)" data-video="([^"]*)"(?: data-baslik="([^"]*)")?><\/div>/g;
-
 /** Adresten video kimligi cikarir; taninmazsa null. */
 export function videoKimligi(
   adres: string
@@ -48,12 +47,17 @@ export function videoKimligi(
 }
 
 export function videoBloklariniDoldur(html?: string | null): string {
-  if (!html || !html.includes('data-blok="video"')) return html ?? "";
+  if (!html) return "";
 
-  return html.replace(ISARET, (tam, saglayici, kimlik, baslik) => {
+  return isaretleriDoldurSenkron(html, "video", (isaretOge) => {
+    const saglayici =
+      isaretOge.getAttribute("data-saglayici") === "vimeo" ? "vimeo" : "youtube";
+    const kimlik = isaretOge.getAttribute("data-video") ?? "";
+    const baslik = isaretOge.getAttribute("data-baslik") ?? "";
+
     /* Gecersiz kimlikte isaret OLDUGU GIBI birakiliyor: silseydik
        yazarin koydugu blok sessizce kaybolur ve kimse fark etmezdi. */
-    if (!GECERLI.test(kimlik)) return tam;
+    if (!GECERLI.test(kimlik)) return isaretOge.outerHTML;
 
     const kapak =
       saglayici === "youtube"
@@ -64,7 +68,7 @@ export function videoBloklariniDoldur(html?: string | null): string {
         ? `https://www.youtube-nocookie.com/embed/${kimlik}?autoplay=1`
         : `https://player.vimeo.com/video/${kimlik}?autoplay=1`;
 
-    const ad = baslik ? kacir(baslik) : "Videoyu oynat";
+    const ad = baslik ? kacir(baslik) : "Play video";
 
     return (
       `<div class="video" data-blok="video" data-saglayici="${saglayici}" data-video="${kacir(kimlik)}"` +

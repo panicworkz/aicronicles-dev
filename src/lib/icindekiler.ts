@@ -1,4 +1,5 @@
 import { parse } from "node-html-parser";
+import { isaretleriDoldurSenkron } from "./blok-doldur.ts";
 
 /**
  * ICINDEKILER BLOGUNU OKUMA ANINDA BASAR.
@@ -18,8 +19,6 @@ import { parse } from "node-html-parser";
  * mumkun degil.
  */
 
-const ISARET = /<div data-blok="icindekiler" data-seviye="([\d,]*)"><\/div>/g;
-
 function kacir(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -29,14 +28,15 @@ function kacir(s: string): string {
 }
 
 export function icindekileriDoldur(html?: string | null): string {
-  if (!html || !html.includes('data-blok="icindekiler"')) return html ?? "";
+  if (!html) return "";
 
   /* Basliklar govdenin KENDISINDEN okunuyor: ayri bir yerde tutulan
      bir liste, govdeyle senkronu bozulabilecek ikinci bir dogruluk
      kaynagi olurdu. */
   const kok = parse(html);
 
-  return html.replace(ISARET, (_, ham) => {
+  return isaretleriDoldurSenkron(html, "icindekiler", (isaretOge) => {
+    const ham = isaretOge.getAttribute("data-seviye") ?? "2,3";
     const seviyeler = (ham || "2,3")
       .split(",")
       .map((x: string) => Number(x.trim()))
@@ -77,9 +77,9 @@ export function icindekileriDoldur(html?: string | null): string {
        taniyamaz, "ham HTML" blogu olarak saklar ve icindekiler bir
        daha kendini guncellemezdi — donmus bir liste. */
     return (
-      `<nav class="icindekiler" aria-label="Icindekiler"` +
+      `<nav class="icindekiler" aria-label="Contents"` +
       ` data-blok="icindekiler" data-seviye="${seviyeler.join(",")}">` +
-      `<div class="icindekiler-baslik">Icindekiler</div>` +
+      `<div class="icindekiler-baslik">Contents</div>` +
       `<ol class="icindekiler-liste">${maddeler}</ol>` +
       `</nav>`
     );
