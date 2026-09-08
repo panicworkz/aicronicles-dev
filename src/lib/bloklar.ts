@@ -140,6 +140,15 @@ export function htmlBloklara(html?: string | null): Blok[] {
     const oge = dugum as HTMLElement;
     const etiket = oge.tagName?.toLowerCase();
 
+    /* ISARETLER TEMIZLENIYOR.
+       data-blok-i / data-blok-t sunucunun basim sirasinda ekledigi
+       kolaylik isaretleri, icerigin parcasi degil. Onizlemede
+       duzenlenen govde panele isaretleriyle birlikte gidiyor; burada
+       silinmezlerse once "modellenmemis oznitelik" torbasina, oradan
+       da veritabanina yazilirlar ve her kayitta birikirlerdi. */
+    oge.removeAttribute("data-blok-i");
+    oge.removeAttribute("data-blok-t");
+
     switch (etiket) {
       case "p":
         bloklar.push({ t: "paragraf", html: oge.innerHTML, ...ozEk(oge, []) });

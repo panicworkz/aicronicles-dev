@@ -22,6 +22,42 @@ import { BLOK_TANIMLARI, EKLENEBILIR_TURLER, PARAGRAF_ROLLERI } from "@/lib/blok
  * document.createElement ile kuruluyor.
  */
 
+/**
+ * Bir ogenin blok turu.
+ *
+ * NEDEN ISARETE GUVENMIYORUZ: govde sunucuda basilirken her blogun
+ * kok etiketine turu yaziliyor (data-blok-t). Ama panel bagladiginda
+ * cerceveye veritabanindaki HAM content_html'i basiyor ve o HTML'de
+ * isaret yok — yani panel acilir acilmaz butun isaretler siliniyor ve
+ * arac cubugu turu goremez hale geliyordu. Panelin editorunden gelen
+ * HTML'de de isaret olmayacak.
+ *
+ * Bu yuzden tur ISARETTEN degil, gerekirse ETIKETTEN okunuyor. Etiket
+ * zaten turun kendisi; isaret yalnizca bir kolaylik.
+ *
+ * Bu esleme lib/bloklar.ts'deki ayristiricinin aynisi. Iki yerde
+ * durmasinin sebebi: burasi tarayicida calisiyor ve o dosyayi ithal
+ * etmek node-html-parser'i her okurun paketine sokardi.
+ */
+export function turuBul(o: Element): string {
+  const isaret = o.getAttribute("data-blok-t");
+  if (isaret) return isaret;
+  if (o.getAttribute("data-blok") === "urun") return "urun";
+  switch (o.tagName) {
+    case "P": return "paragraf";
+    case "H2": case "H3": case "H4": return "baslik";
+    case "UL": case "OL": return "liste";
+    case "FIGURE": return o.querySelector("img") ? "gorsel" : "ham";
+    case "IMG": return "gorsel";
+    case "TABLE": return "tablo";
+    case "HR": return "ayrac";
+    case "BLOCKQUOTE": return "alinti";
+    case "ASIDE": return o.classList.contains("urun-blogu") ? "urun" : "ham";
+    case "DIV": return o.querySelector("table") ? "tablo" : "ham";
+    default: return "ham";
+  }
+}
+
 type Ayarlar = {
   govde: HTMLElement;
   /* Degisikligi panele bildirir. */
@@ -139,7 +175,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
     konumla();
   };
 
-  const tur = (o: HTMLElement) => o.getAttribute("data-blok-t") || "";
+  const tur = (o: HTMLElement) => turuBul(o);
 
   const sec = (oge: HTMLElement | null) => {
     if (etkin === oge) return;
