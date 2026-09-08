@@ -108,6 +108,19 @@ export function SepetEkrani() {
   if (kalemler.length === 0) {
     return (
       <div className="py-20">
+        {/* Sepet BIZIM temizligimiz yuzunden bosaldiysa okur nedenini
+            bilmeli. Yoksa "sepetim bosalmis" diye kalir; kendisi bir
+            sey silmedigi icin de neden oldugunu anlamaz. */}
+        {duseneler.length > 0 && (
+          <p
+            className="mb-6 max-w-[52ch] p-3.5 text-[0.9rem] leading-relaxed"
+            style={{ background: "var(--paper-2)" }}
+          >
+            {duseneler.length === 1
+              ? `“${duseneler[0]}” is no longer available, so your basket is now empty.`
+              : `Those ${duseneler.length} items are no longer available, so your basket is now empty.`}
+          </p>
+        )}
         <p className="display mb-4 text-3xl">Your basket is empty.</p>
         <Link href="/store" className="byline hover:text-[var(--accent-ink)]">
           ← BACK TO THE STORE
