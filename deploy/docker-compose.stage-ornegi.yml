@@ -1,0 +1,90 @@
+name: panic-cms
+services:
+  panic-postgres:
+    image: postgres:16-alpine
+    container_name: panic-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: panic
+      POSTGRES_PASSWORD: panic_pass
+      POSTGRES_DB: panic_cms
+    volumes:
+      - /opt/panic/postgres_data:/var/lib/postgresql/data
+    networks:
+      - panic-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U panic -d panic_cms"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  panic-cms:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: panic-cms:v1.0
+    container_name: panic-cms
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8230:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://panic:panic_pass@panic-postgres:5432/panic_cms
+      JWT_SECRET: <<< .env dosyasindan gelir, depoya yazilmaz >>>
+      MEDIA_DIR: /opt/panic/media
+      # Bulten abonelikleri merkezi gateway'e buradan iletiliyor.
+      # Konteyner koprude oldugu icin sunucunun 127.0.0.1'ine
+      # host-gateway takma adiyla ulasiyoruz.
+      GATEWAY_URL: http://host.docker.internal:8787/ingest/fabelo
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /opt/panic/media:/opt/panic/media
+    networks:
+      - panic-net
+    depends_on:
+      panic-postgres:
+        condition: service_healthy
+
+  # =====================================================================
+  # STAGE — panic.panic.pw
+  #
+  # Neden: gelistirme canlida yapiliyordu. Her deneme fabelo.io'yu
+  # etkiliyor, her hata okurun gordugu sayfaya dusuyordu.
+  #
+  # AYNI IMAJ, ayri konteyner: panic-cms:v1.0 bir kez derleniyor, ikisi
+  # de onu kullaniyor. Boylece stage'de sinanan sey canliya cikanin TA
+  # KENDISI oluyor — "stage'de calisiyordu" durumu ortadan kalkiyor.
+  #
+  # AYRI VERITABANI (panic_cms_stage) ve AYRI MEDYA: stage'deki icerik
+  # denemeleri canliya sizmiyor. Yalnizca KOD canliya gecer, icerik
+  # gecmez.
+  # =====================================================================
+  panic-cms-stage:
+    image: panic-cms:v1.0
+    container_name: panic-cms-stage
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8231:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://panic:panic_pass@panic-postgres:5432/panic_cms_stage
+      JWT_SECRET: <<< .env dosyasindan gelir, depoya yazilmaz >>>
+      MEDIA_DIR: /opt/panic/media
+      NEXT_PUBLIC_SITE_URL: https://panic.panic.pw
+      # Stage'den bulten/iletisim maili GITMEZ: gercek bir adrese deneme
+      # mesaji dusmesin diye gecit bilerek bos birakildi.
+      GATEWAY_URL: ""
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /opt/panic/media-stage:/opt/panic/media
+    networks:
+      - panic-net
+    depends_on:
+      panic-postgres:
+        condition: service_healthy
+
+networks:
+  panic-net:
+    driver: bridge
