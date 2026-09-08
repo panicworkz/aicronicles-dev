@@ -422,6 +422,13 @@ html.dark:has(.mag)::-webkit-scrollbar-thumb:hover { background: #7d848d; }
   margin-block: 2em;
   background: var(--paper-2);  /* yuklenene kadar yer tutar */
 }
+/* Cerceveli gorselde alt bosluk FIGURE'a ait, img'ye degil.
+   img'nin 2em alt boslugu altyaziyi gorselden 34 piksel uzaga
+   itiyordu: kredi satiri resmin altinda degil, arada bosta duruyordu.
+   Ust bosluk da figure'dan geliyor; ikisi ust uste binmesin. */
+.mag .article-body figure { margin-block: 2em; }
+.mag .article-body figure img { margin-block: 0; }
+
 .mag .article-body figcaption,
 .mag .article-body .kg-card figcaption {
   font-family: var(--font-mono), monospace;
