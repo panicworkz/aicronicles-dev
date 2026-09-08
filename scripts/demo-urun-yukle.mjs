@@ -103,8 +103,13 @@ for (const u of urunler) {
       tur !== "physical",
       tur,
       kategoriId.get(u.category) ?? null,
-      u.thumbnail ?? null,
-      JSON.stringify(u.images ?? []),
+      /* Kapak gorseli olarak thumbnail DEGIL, galerinin ilki
+         kullaniliyor. dummyJSON'un thumbnail dosyasi urunun etrafinda
+         daha fazla bosluk tasiyor; urun sayfasinda ilk gorsel
+         otekilerden uzakta duruyordu. Ayni cekimin ayni kadraji
+         olsun diye ikisi de images dizisinden geliyor. */
+      u.images?.[0] ?? u.thumbnail ?? null,
+      JSON.stringify((u.images ?? []).slice(1)),
       JSON.stringify(u.tags ?? []),
     ]
   );

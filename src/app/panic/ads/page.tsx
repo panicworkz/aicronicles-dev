@@ -316,8 +316,9 @@ export default function PanicAdsPage() {
   return (
     <div className="flex flex-col gap-8 p-8 max-w-[1536px] mx-auto w-full">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
+      {/* Dugme grubu sikismasin — bkz. product-categories. */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
             <Megaphone className="size-8 text-primary" />
             Ad Inventory &amp; Campaigns
@@ -327,7 +328,10 @@ export default function PanicAdsPage() {
           </p>
         </div>
 
-        <Button onClick={openCreateModal} className="gap-2 font-bold shadow-xs">
+        <Button
+          onClick={openCreateModal}
+          className="shrink-0 gap-2 whitespace-nowrap font-bold shadow-xs"
+        >
           <Plus className="size-4" />
           Create New Campaign
         </Button>

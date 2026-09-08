@@ -95,8 +95,9 @@ export default function PanicPostsListPage() {
             Manage publications, SEO metadata, and visual content
           </p>
         </div>
-        <Link href="/panic/posts/new">
-          <Button size="sm" className="gap-2">
+        {/* shrink-0: uzun baslik metni dugmeyi ezmesin. */}
+        <Link href="/panic/posts/new" className="shrink-0">
+          <Button size="sm" className="gap-2 whitespace-nowrap">
             <Plus className="size-3.5" />
             <span>New Article</span>
           </Button>
