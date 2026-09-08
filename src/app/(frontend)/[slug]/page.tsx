@@ -19,6 +19,7 @@ import { decodeEntities, tagLabel } from "@/lib/taxonomy";
 import { enrichArticleHtml, type MediaBoyut } from "@/components/magazine/enrichArticleHtml";
 import { urunBloklariniDoldur } from "@/lib/urun-blogu";
 import { icindekileriDoldur } from "@/lib/icindekiler";
+import { videoBloklariniDoldur } from "@/lib/video";
 import { yazininBloklari, bloklarHtmle } from "@/lib/bloklar";
 import CmsPage from "@/components/magazine/CmsPage";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
@@ -226,8 +227,10 @@ export default async function ArticlePage({ params }: PageProps) {
   /* Icindekiler URUN KARTINDAN ONCE dolduruluyor: urun karti da
      baslik icerebilir ve icindekilere girmemeli. */
   const govdeHtml = await urunBloklariniDoldur(
+    videoBloklariniDoldur(
     icindekileriDoldur(
       enrichArticleHtml(bloklarHtmle(yazininBloklari(post), { isaretle: true }), boyutlar)
+    )
     )
   );
 

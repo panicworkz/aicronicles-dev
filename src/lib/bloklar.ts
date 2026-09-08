@@ -82,7 +82,9 @@ export type Blok =
     }
   | { t: "tablo"; html: string }
   | { t: "ayrac" }
-  | { t: "alinti"; html: string; oz?: BlokOz }
+  /* Alinti — "vurgulu" hali one cikan alinti (pull quote). Ayri bir
+     tur acmadik: ayni sey, farkli agirlikta. */
+  | { t: "alinti"; html: string; vurgulu?: boolean; oz?: BlokOz }
   /* URUN KARTI — blok modelinin asil gerekcesi.
      HTML'in ifade edemedigi bir sey: govdede duran sey bir isaret,
      icerigi (ad, fiyat, stok, gorsel) okuma aninda veritabanindan
@@ -95,6 +97,38 @@ export type Blok =
      kimse fark etmezdi. Yazar yalnizca "burada icindekiler dursun"
      ve hangi seviyeler diyor. */
   | { t: "icindekiler"; seviyeler: number[] }
+
+  /* ---- ICERIGI KENDI ICINDE OLAN TURLER ----
+     Bunlarin metni blogun icinde duruyor, yani sayfanin uzerinde
+     dogrudan yazilabiliyorlar. Veriye bagli olanlardan (urun,
+     icindekiler, video) farki bu. */
+
+  /* Kutu — bilgi, uyari, ipucu ve OZET. Dordu ayri tur olabilirdi;
+     tek tur + bicim alani yapildi cunku aralarindaki fark yalnizca
+     gorunum. Dort ayri tur, dort ayri ayristirma ve dort ayri basim
+     kurali demekti. */
+  | {
+      t: "kutu";
+      tur: "bilgi" | "uyari" | "ipucu" | "ozet";
+      baslik?: string;
+      html: string;
+    }
+  /* Artilar ve eksiler — iki sutun. */
+  | { t: "artilar"; artilar: string[]; eksiler: string[]; artiBaslik?: string; eksiBaslik?: string }
+  /* Sayi vurgusu. */
+  | { t: "istatistik"; ogeler: { sayi: string; etiket: string }[] }
+  /* Adim adim. */
+  | { t: "adimlar"; ogeler: { baslik: string; html: string }[] }
+  /* Kaynakca. */
+  | { t: "kaynakca"; ogeler: string[] }
+  /* Cagri kutusu. */
+  | { t: "cta"; baslik: string; metin?: string; dugmeMetni: string; adres: string }
+  /* Video — govdede yalnizca kimlik duruyor, oynatici okuma aninda
+     basiliyor. Sema iframe'i yasakliyor ve bu DOGRU: kaydedilen sey
+     bir kimlik, calistirilabilir bir sey degil. */
+  | { t: "video"; saglayici: "youtube" | "vimeo"; videoId: string; baslik?: string }
+  /* Galeri. */
+  | { t: "galeri"; sutun: 2 | 3 | 4; gorseller: { src: string; alt?: string }[] }
   /* Kacis kapisi: ayristiricinin tanimadigi her sey. Oldugu gibi
      basiliyor, yani icerik asla kaybolmuyor. */
   | { t: "ham"; html: string };
@@ -264,6 +298,20 @@ export function htmlBloklara(html?: string | null): Blok[] {
     oge.removeAttribute("contenteditable");
     oge.removeAttribute("spellcheck");
 
+    /* ISARET ETIKETTEN ONCE GELIYOR.
+       Bu turlerin bir kismi taninan etiketler kullaniyor: "adimlar"
+       bir ol, "kutu" bir aside. Etikete gore dagitim yapsaydik
+       adimlar siradan bir numarali liste, kutu ise "ham HTML" olurdu
+       — ikisi de duzenlenemez hale gelirdi. */
+    const isaret = oge.getAttribute("data-blok");
+    if (isaret && isaret !== "urun" && isaret !== "icindekiler") {
+      const ozelBlok = isaretliBlok(isaret, oge);
+      if (ozelBlok) {
+        bloklar.push(ozelBlok);
+        continue;
+      }
+    }
+
     switch (etiket) {
       case "p":
         bloklar.push({ t: "paragraf", html: oge.innerHTML, ...ozEk(oge, []) });
@@ -427,6 +475,104 @@ export function htmlBloklara(html?: string | null): Blok[] {
   return bloklar;
 }
 
+/**
+ * Isaretli (data-blok) ogeleri bloga cevirir.
+ *
+ * HEPSI TOLERANSLI: kullanici blogun uzerinde yazi yazarken ic
+ * yapiyi bozabilir — bir basligi silebilir, bir sutunu bosaltabilir.
+ * O yuzden her alan "varsa oradan, yoksa makul bir yerden" okunuyor.
+ * Kati okusaydik, bozulan blok sessizce bos donerdi.
+ */
+function isaretliBlok(isaret: string, o: HTMLElement): Blok | null {
+  const metin = (sec: string) => o.querySelector(sec)?.textContent?.trim() ?? "";
+  const ic = (sec: string) => o.querySelector(sec)?.innerHTML ?? "";
+  const maddeler = (sec: string) =>
+    o.querySelectorAll(sec).map((li) => li.innerHTML.trim()).filter(Boolean);
+
+  switch (isaret) {
+    case "kutu": {
+      const tur = (o.getAttribute("data-tur") ?? "bilgi") as
+        | "bilgi" | "uyari" | "ipucu" | "ozet";
+      return {
+        t: "kutu",
+        tur: ["bilgi", "uyari", "ipucu", "ozet"].includes(tur) ? tur : "bilgi",
+        ...(metin(".kutu-baslik") ? { baslik: metin(".kutu-baslik") } : {}),
+        /* Govde bulunamazsa blogun tamami: yapiyi bozan bir duzenleme
+           metni kaybettirmesin. */
+        html: ic(".kutu-govde") || o.innerHTML,
+      };
+    }
+
+    case "artilar":
+      return {
+        t: "artilar",
+        artilar: maddeler(".ae-arti li"),
+        eksiler: maddeler(".ae-eksi li"),
+        ...(metin(".ae-arti .ae-baslik") ? { artiBaslik: metin(".ae-arti .ae-baslik") } : {}),
+        ...(metin(".ae-eksi .ae-baslik") ? { eksiBaslik: metin(".ae-eksi .ae-baslik") } : {}),
+      };
+
+    case "istatistik":
+      return {
+        t: "istatistik",
+        ogeler: o.querySelectorAll(".istatistik-oge").map((k) => ({
+          sayi: k.querySelector(".istatistik-sayi")?.textContent?.trim() ?? "",
+          etiket: k.querySelector(".istatistik-etiket")?.textContent?.trim() ?? "",
+        })),
+      };
+
+    case "adimlar":
+      return {
+        t: "adimlar",
+        ogeler: o.querySelectorAll("li").map((li) => ({
+          baslik: li.querySelector(".adim-baslik")?.textContent?.trim() ?? "",
+          html: li.querySelector(".adim-govde")?.innerHTML ?? li.innerHTML,
+        })),
+      };
+
+    case "kaynakca":
+      return { t: "kaynakca", ogeler: maddeler("li") };
+
+    case "cta":
+      return {
+        t: "cta",
+        baslik: metin(".cta-baslik"),
+        ...(metin(".cta-metin") ? { metin: metin(".cta-metin") } : {}),
+        dugmeMetni: metin(".cta-dugme") || "Incele",
+        adres: o.querySelector(".cta-dugme a")?.getAttribute("href") ?? "",
+      };
+
+    case "video": {
+      const kimlik = o.getAttribute("data-video") ?? "";
+      /* Kimlik yoksa blok kurulmuyor: bos bir oynatici cercevesi
+         okura bozuk bir sayfa gosterirdi. */
+      if (!kimlik) return null;
+      const s = o.getAttribute("data-saglayici") === "vimeo" ? "vimeo" : "youtube";
+      return {
+        t: "video",
+        saglayici: s,
+        videoId: kimlik,
+        ...(o.getAttribute("data-baslik") ? { baslik: o.getAttribute("data-baslik")! } : {}),
+      };
+    }
+
+    case "galeri": {
+      const sutun = Number(o.getAttribute("data-sutun") ?? 3);
+      return {
+        t: "galeri",
+        sutun: ([2, 3, 4].includes(sutun) ? sutun : 3) as 2 | 3 | 4,
+        gorseller: o.querySelectorAll("img").map((i) => ({
+          src: i.getAttribute("src") ?? "",
+          ...(i.getAttribute("alt") ? { alt: i.getAttribute("alt")! } : {}),
+        })),
+      };
+    }
+
+    default:
+      return null;
+  }
+}
+
 /* ==================================================================
    BLOKLAR  →  HTML
    ================================================================== */
@@ -507,7 +653,91 @@ export function bloklarHtmle(
           return "<hr>";
 
         case "alinti":
-          return `<blockquote${ozYaz(b.oz)}>${b.html}</blockquote>`;
+          return `<blockquote${b.vurgulu ? ' class="vurgulu"' : ""}${ozYaz(b.oz)}>${b.html}</blockquote>`;
+
+        case "kutu":
+          return (
+            `<aside class="kutu kutu-${b.tur}" data-blok="kutu" data-tur="${b.tur}">` +
+            (b.baslik ? `<div class="kutu-baslik">${b.baslik}</div>` : "") +
+            `<div class="kutu-govde">${b.html}</div></aside>`
+          );
+
+        case "artilar": {
+          const sutun = (sinif: string, baslik: string, ogeler: string[]) =>
+            `<div class="ae-sutun ${sinif}"><div class="ae-baslik">${baslik}</div>` +
+            `<ul>${ogeler.map((x) => `<li>${x}</li>`).join("")}</ul></div>`;
+          return (
+            `<div class="artilar-eksiler" data-blok="artilar">` +
+            sutun("ae-arti", b.artiBaslik ?? "Artilari", b.artilar) +
+            sutun("ae-eksi", b.eksiBaslik ?? "Eksileri", b.eksiler) +
+            `</div>`
+          );
+        }
+
+        case "istatistik":
+          return (
+            `<div class="istatistik" data-blok="istatistik">` +
+            b.ogeler
+              .map(
+                (k) =>
+                  `<div class="istatistik-oge"><div class="istatistik-sayi">${k.sayi}</div>` +
+                  `<div class="istatistik-etiket">${k.etiket}</div></div>`
+              )
+              .join("") +
+            `</div>`
+          );
+
+        case "adimlar":
+          return (
+            `<ol class="adimlar" data-blok="adimlar">` +
+            b.ogeler
+              .map(
+                (k) =>
+                  `<li><div class="adim-baslik">${k.baslik}</div>` +
+                  `<div class="adim-govde">${k.html}</div></li>`
+              )
+              .join("") +
+            `</ol>`
+          );
+
+        case "kaynakca":
+          return (
+            `<ol class="kaynakca" data-blok="kaynakca">` +
+            b.ogeler.map((x) => `<li>${x}</li>`).join("") +
+            `</ol>`
+          );
+
+        case "cta":
+          return (
+            `<div class="cta" data-blok="cta">` +
+            `<div class="cta-baslik">${b.baslik}</div>` +
+            (b.metin ? `<div class="cta-metin">${b.metin}</div>` : "") +
+            `<div class="cta-dugme"><a${oznitelik("href", b.adres)}>${b.dugmeMetni}</a></div>` +
+            `</div>`
+          );
+
+        case "video":
+          /* Yalnizca isaret. Oynatici okuma aninda basiliyor
+             (lib/video.ts); kaydedilen sey bir kimlik, calistirilabilir
+             bir sey degil. */
+          return (
+            `<div data-blok="video" data-saglayici="${b.saglayici}"` +
+            ` data-video="${b.videoId}"` +
+            (b.baslik ? oznitelik("data-baslik", b.baslik) : "") +
+            `></div>`
+          );
+
+        case "galeri":
+          return (
+            `<div class="galeri" data-blok="galeri" data-sutun="${b.sutun}">` +
+            b.gorseller
+              .map(
+                (g) =>
+                  `<figure class="galeri-oge"><img${oznitelik("src", g.src)}${oznitelik("alt", g.alt)}></figure>`
+              )
+              .join("") +
+            `</div>`
+          );
 
         case "icindekiler":
           /* Yalnizca isaret; liste okuma aninda basiliyor

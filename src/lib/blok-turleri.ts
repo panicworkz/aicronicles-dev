@@ -192,6 +192,130 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
     ],
   },
 
+  kutu: {
+    t: "kutu",
+    ad: "Kutu",
+    eklenebilir: true,
+    yeni: () => ({ t: "kutu", tur: "bilgi", baslik: "Bilgi", html: "" }),
+    yerindeYazilir: true,
+    alanlar: [
+      {
+        ad: "tur",
+        etiket: "Bicim",
+        tur: "secim",
+        secenekler: [
+          { deger: "bilgi", etiket: "Bilgi" },
+          { deger: "uyari", etiket: "Uyari" },
+          { deger: "ipucu", etiket: "Ipucu" },
+          { deger: "ozet", etiket: "Kisa cevap (ozet)" },
+        ],
+        ipucu: "Kisa cevap kutusu arama ve yapay zeka araclari icin ayrica degerli.",
+      },
+    ],
+  },
+
+  artilar: {
+    t: "artilar",
+    ad: "Artilar ve eksiler",
+    eklenebilir: true,
+    yeni: () => ({
+      t: "artilar",
+      artilar: ["Ilk arti"],
+      eksiler: ["Ilk eksi"],
+    }),
+    yerindeYazilir: true,
+    alanlar: [],
+  },
+
+  istatistik: {
+    t: "istatistik",
+    ad: "Sayi vurgusu",
+    eklenebilir: true,
+    yeni: () => ({
+      t: "istatistik",
+      ogeler: [
+        { sayi: "%42", etiket: "Aciklama" },
+        { sayi: "3x", etiket: "Aciklama" },
+      ],
+    }),
+    yerindeYazilir: true,
+    alanlar: [],
+  },
+
+  adimlar: {
+    t: "adimlar",
+    ad: "Adim adim",
+    eklenebilir: true,
+    yeni: () => ({
+      t: "adimlar",
+      ogeler: [{ baslik: "Ilk adim", html: "Ne yapilacagini yazin." }],
+    }),
+    yerindeYazilir: true,
+    alanlar: [],
+  },
+
+  kaynakca: {
+    t: "kaynakca",
+    ad: "Kaynakca",
+    eklenebilir: true,
+    yeni: () => ({ t: "kaynakca", ogeler: ["Kaynak"] }),
+    yerindeYazilir: true,
+    alanlar: [],
+  },
+
+  cta: {
+    t: "cta",
+    ad: "Cagri kutusu",
+    eklenebilir: true,
+    yeni: () => ({
+      t: "cta",
+      baslik: "Baslik",
+      metin: "Kisa aciklama.",
+      dugmeMetni: "Incele",
+      adres: "",
+    }),
+    yerindeYazilir: true,
+    alanlar: [
+      { ad: "adres", etiket: "Dugmenin adresi", tur: "metin" },
+    ],
+  },
+
+  video: {
+    t: "video",
+    ad: "Video",
+    eklenebilir: true,
+    yeni: () => ({ t: "video", saglayici: "youtube", videoId: "" }),
+    yerindeYazilir: false,
+    alanlar: [
+      {
+        ad: "adres",
+        etiket: "Video adresi",
+        tur: "metin",
+        ipucu: "YouTube ya da Vimeo adresi. Yaziya yalnizca video kimligi kaydediliyor.",
+      },
+    ],
+  },
+
+  galeri: {
+    t: "galeri",
+    ad: "Galeri",
+    eklenebilir: true,
+    yeni: () => ({ t: "galeri", sutun: 3, gorseller: [] }),
+    yerindeYazilir: false,
+    alanlar: [
+      {
+        ad: "sutun",
+        etiket: "Sutun sayisi",
+        tur: "secim",
+        secenekler: [
+          { deger: "2", etiket: "2 sutun" },
+          { deger: "3", etiket: "3 sutun" },
+          { deger: "4", etiket: "4 sutun" },
+        ],
+      },
+    ],
+  },
+
   ham: {
     t: "ham",
     ad: "Ham HTML",
@@ -205,7 +329,11 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
 
 /** Ekleme menusunde gosterilecek turler, siralanmis halde. */
 export const EKLENEBILIR_TURLER = (
-  ["paragraf", "baslik", "gorsel", "liste", "icindekiler", "alinti", "urun", "ayrac"] as const
+  [
+    "paragraf", "baslik", "gorsel", "galeri", "liste", "icindekiler",
+    "kutu", "artilar", "adimlar", "istatistik", "alinti",
+    "video", "cta", "urun", "kaynakca", "ayrac",
+  ] as const
 ).map((t) => BLOK_TANIMLARI[t]);
 
 export function blokAdi(t: string): string {

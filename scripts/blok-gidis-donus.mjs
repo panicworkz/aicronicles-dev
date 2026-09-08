@@ -81,6 +81,23 @@ const metin = (h) => parse(h).textContent.replace(/\s+/g, "");
    Sessizce yutmak, gercekten bosluk yiyen bir hatayi gizlerdi. */
 const metinBoslukla = (h) => parse(h).textContent.replace(/\s+/g, " ").trim();
 
+/**
+ * KASITLI NORMALLESTIRMELER karsilastirmanin IKI TARAFINA da
+ * uygulaniyor.
+ *
+ * Ayristirici bilerek iki sey yapiyor: anlamsiz span kabuklarini
+ * aciyor ve TipTap'in madde icerigini sardigi <li><p>'yi kaldiriyor.
+ * Bunlari kusur saymak, isleyen iki duzeltmeyi her calistirmada
+ * kirmizi gostermek olurdu — ve gercek bir kusur o gurultude
+ * kaybolurdu. Onceki tarafa da uygulayip KALAN farka bakiyoruz.
+ */
+const normalize = (h) =>
+  h
+    .replace(/<span\b[^>]*>/gi, "")
+    .replace(/<\/span>/gi, "")
+    .replace(/<li>\s*<p>/gi, "<li>")
+    .replace(/<\/p>\s*<\/li>/gi, "</li>");
+
 /* Etiket sirasi. Ilgilendigimiz sey duzenin korunmasi: bir h2'nin
    p'ye donusmesi ya da bir listenin dagilmasi burada yakalanir. */
 const iskelet = (h) => {
@@ -114,6 +131,7 @@ const fark = (a, b) => {
 
 let temiz = 0;
 let boslukFarki = 0;
+let eklenen = 0;
 const sorunlar = [];
 const blokSayaci = {};
 
@@ -124,7 +142,7 @@ for (const y of yazilar) {
   const geri = bloklarHtmle(bloklar);
   const kusur = [];
 
-  const a = metin(y.html);
+  const a = metin(normalize(y.html));
   const b = metin(geri);
   if (a !== b) {
     let i = 0;
@@ -138,7 +156,7 @@ for (const y of yazilar) {
     boslukFarki++;
   }
 
-  const i1 = iskelet(y.html).join(",");
+  const i1 = iskelet(normalize(y.html)).join(",");
   const i2 = iskelet(geri).join(",");
   if (i1 !== i2) {
     const f = fark(iskelet(y.html), iskelet(geri));
@@ -153,10 +171,17 @@ for (const y of yazilar) {
     ["baslik kimligi", "h2,h3,h4", "id"],
   ]) {
     const f = fark(kume(y.html, sec, oz), kume(geri, sec, oz));
-    if (f.eksik.length || f.fazla.length) {
+    /* YALNIZCA KAYIP kusur sayiliyor.
+       Eklenen sey kusur degil: kimligi olmayan basliklara cipa
+       kimligi URETILIYOR (icindekiler blogunun calismasi buna bagli).
+       Ikisini ayni saymak, isleyen bir ozelligi hata gibi
+       gostermekti. */
+    if (f.eksik.length) {
       kusur.push(
-        `${ad.toUpperCase()} kaybi — dusen ${f.eksik.length}: ${f.eksik.slice(0, 3).join(" | ")}`
+        `${ad.toUpperCase()} KAYBI — dusen ${f.eksik.length}: ${f.eksik.slice(0, 3).join(" | ")}`
       );
+    } else if (f.fazla.length) {
+      eklenen += f.fazla.length;
     }
   }
 
@@ -167,7 +192,8 @@ for (const y of yazilar) {
 /* ---- rapor ----------------------------------------------------- */
 
 console.log(`\nyazi: ${yazilar.length}   temiz: ${temiz}   sorunlu: ${sorunlar.length}`);
-console.log(`yalnizca blok arasi bosluk farki (zararsiz): ${boslukFarki}\n`);
+console.log(`yalnizca blok arasi bosluk farki (zararsiz): ${boslukFarki}`);
+console.log(`uretilen baslik cipasi (kayip degil, ekleme): ${eklenen}\n`);
 console.log("blok dagilimi:");
 for (const [t, n] of Object.entries(blokSayaci).sort((a, b) => b[1] - a[1])) {
   console.log(`  ${t.padEnd(10)} ${n}`);

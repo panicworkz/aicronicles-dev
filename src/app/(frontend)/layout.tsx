@@ -7,6 +7,7 @@ import BackToTop from "@/components/magazine/BackToTop";
 import AnchorPin from "@/components/magazine/AnchorPin";
 import NavProgress from "@/components/magazine/NavProgress";
 import CanliOnizleme from "@/components/magazine/CanliOnizleme";
+import VideoOynat from "@/components/magazine/VideoOynat";
 import "./globals.css";
 import { SITE, SITE_ADI } from "@/lib/seo";
 
@@ -79,6 +80,7 @@ export default function FrontendLayout({
           denetliyor: cerceve disinda ya da ?live=1 yoksa hicbir sey
           yapmadan cikiyor. */}
       <CanliOnizleme />
+      <VideoOynat />
     </ThemeProvider>
   );
 }

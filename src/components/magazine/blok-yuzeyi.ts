@@ -37,6 +37,10 @@ import { metinYuzeyiKur } from "@/components/magazine/blok-metin";
 export function turuBul(o: Element): string {
   const isaret = o.getAttribute("data-blok-t");
   if (isaret) return isaret;
+  /* Isaret her seyden once: "adimlar" bir ol, "kutu" bir aside —
+     etikete gore bakarsak siradan liste ya da ham HTML sanilirlar. */
+  const isaret = o.getAttribute("data-blok");
+  if (isaret) return isaret;
   if (o.getAttribute("data-blok") === "urun") return "urun";
   if (o.getAttribute("data-blok") === "icindekiler") return "icindekiler";
   if (o.tagName === "NAV" && o.classList.contains("icindekiler")) return "icindekiler";
@@ -369,6 +373,71 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         o = document.createElement("div");
         o.setAttribute("data-blok", "icindekiler");
         o.setAttribute("data-seviye", "2,3");
+        break;
+
+      case "kutu":
+        o = document.createElement("aside");
+        o.className = "kutu kutu-bilgi";
+        o.setAttribute("data-blok", "kutu");
+        o.setAttribute("data-tur", "bilgi");
+        o.innerHTML =
+          '<div class="kutu-baslik">Bilgi</div><div class="kutu-govde"><br></div>';
+        break;
+
+      case "artilar":
+        o = document.createElement("div");
+        o.className = "artilar-eksiler";
+        o.setAttribute("data-blok", "artilar");
+        o.innerHTML =
+          '<div class="ae-sutun ae-arti"><div class="ae-baslik">Artilari</div><ul><li><br></li></ul></div>' +
+          '<div class="ae-sutun ae-eksi"><div class="ae-baslik">Eksileri</div><ul><li><br></li></ul></div>';
+        break;
+
+      case "istatistik":
+        o = document.createElement("div");
+        o.className = "istatistik";
+        o.setAttribute("data-blok", "istatistik");
+        o.innerHTML =
+          '<div class="istatistik-oge"><div class="istatistik-sayi">%42</div><div class="istatistik-etiket">Aciklama</div></div>' +
+          '<div class="istatistik-oge"><div class="istatistik-sayi">3x</div><div class="istatistik-etiket">Aciklama</div></div>';
+        break;
+
+      case "adimlar":
+        o = document.createElement("ol");
+        o.className = "adimlar";
+        o.setAttribute("data-blok", "adimlar");
+        o.innerHTML =
+          '<li><div class="adim-baslik">Ilk adim</div><div class="adim-govde">Ne yapilacagini yazin.</div></li>';
+        break;
+
+      case "kaynakca":
+        o = document.createElement("ol");
+        o.className = "kaynakca";
+        o.setAttribute("data-blok", "kaynakca");
+        o.innerHTML = "<li>Kaynak</li>";
+        break;
+
+      case "cta":
+        o = document.createElement("div");
+        o.className = "cta";
+        o.setAttribute("data-blok", "cta");
+        o.innerHTML =
+          '<div class="cta-baslik">Baslik</div><div class="cta-metin">Kisa aciklama.</div>' +
+          '<div class="cta-dugme"><a href="#">Incele</a></div>';
+        break;
+
+      case "video":
+        o = document.createElement("div");
+        o.setAttribute("data-blok", "video");
+        o.setAttribute("data-saglayici", "youtube");
+        o.setAttribute("data-video", "");
+        break;
+
+      case "galeri":
+        o = document.createElement("div");
+        o.className = "galeri";
+        o.setAttribute("data-blok", "galeri");
+        o.setAttribute("data-sutun", "3");
         break;
       default:
         o = document.createElement("p");
