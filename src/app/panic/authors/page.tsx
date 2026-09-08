@@ -140,7 +140,7 @@ export default function PanicAuthorsPage() {
       {/* Top Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight font-serif">Authors & Contributors</h1>
             <Badge variant="outline" className="font-mono text-xs">
               {authors.length} Members

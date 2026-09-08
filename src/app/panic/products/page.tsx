@@ -99,13 +99,16 @@ export default function PanicProductsPage() {
   return (
     <div className="space-y-6">
       {/* Header Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      {/* Dugme grubu SIKISMASIN: metin blogu min-w-0 ile kisalabiliyor,
+          dugmeler shrink-0 ile sabit. Once ikisi de esnekti ve uzun bir
+          aciklama dugmeleri birbirine gecirene kadar eziyordu. */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">Products & Store Catalog</h1>
           <p className="text-xs text-muted-foreground mt-0.5">Physical goods, digital assets, variants, multi-currency & stock management</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-3">
           <Link href="/store" target="_blank">
             <Button variant="outline" className="gap-1.5">
               <ExternalLink className="size-3.5" />

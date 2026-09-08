@@ -75,8 +75,11 @@ export default function PanicCustomersPage() {
   return (
     <div className="space-y-6">
       {/* Header Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      {/* Dugme grubu SIKISMASIN: metin blogu min-w-0 ile kisalabiliyor,
+          dugmeler shrink-0 ile sabit. Once ikisi de esnekti ve uzun bir
+          aciklama dugmeleri birbirine gecirene kadar eziyordu. */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">Customers & LTV Analytics</h1>
           <p className="text-xs text-muted-foreground mt-0.5">Customer profiles, lifetime revenue value (LTV), retention rate and order history</p>
         </div>
@@ -211,7 +214,7 @@ export default function PanicCustomersPage() {
                     onClick={() => window.location.href = `/panic/customers/${c.id}`}
                   >
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
+                      <div className="flex shrink-0 items-center gap-3">
                         <div className="size-8 rounded-md bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
                           {c.name ? c.name[0]?.toUpperCase() : 'C'}
                         </div>

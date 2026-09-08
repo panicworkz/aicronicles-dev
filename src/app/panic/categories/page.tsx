@@ -207,7 +207,7 @@ export default function PanicCategoriesPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-3">
           <Button onClick={openCreateCat} size="sm" className="gap-1.5 font-medium shadow-xs">
             <Plus className="size-4" />
             <span>New Category</span>

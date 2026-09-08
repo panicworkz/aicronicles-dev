@@ -136,27 +136,37 @@ export default function PanicProductCategoriesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        {/* Metin blogu buyuyup dugmeleri ezmesin: min-w-0 ile
+            kisalabiliyor, dugme grubu ise shrink-0 ile sabit. Once
+            ikisi de esnekti ve uzun aciklama dugmeleri birbirine
+            gecirene kadar sikistiriyordu. */}
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-primary uppercase tracking-wider font-mono">Commerce / Catalog</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Product Categories & Collections</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Organize store products, physical goods, digital assets, and consulting services into curated storefront collections
+            {/* Once tek satirda otuz kelimeydi ve butun genisligi
+                yiyordu. */}
+            Group products into collections that appear on the storefront
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link href="/store" target="_blank">
-            <Button variant="outline" size="sm" className="h-8.5 gap-1.5 text-xs font-medium">
+        <div className="flex shrink-0 items-center gap-3">
+          <Link href="/store" target="_blank" className="shrink-0">
+            <Button variant="outline" size="sm" className="h-9 gap-1.5 whitespace-nowrap text-xs font-medium">
               <ExternalLink className="size-3.5" />
-              <span>View Storefront</span>
+              <span>View storefront</span>
             </Button>
           </Link>
-          <Button onClick={openCreateModal} size="sm" className="h-8.5 gap-1.5 text-xs font-medium">
+          <Button
+            onClick={openCreateModal}
+            size="sm"
+            className="h-9 shrink-0 gap-1.5 whitespace-nowrap text-xs font-medium"
+          >
             <Plus className="size-3.5" />
-            <span>New Product Category</span>
+            <span>New collection</span>
           </Button>
         </div>
       </div>
@@ -210,48 +220,80 @@ export default function PanicProductCategoriesPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {categories.map((cat) => (
-              <Card key={cat.id} className="group hover:border-primary/60 transition shadow-xs flex flex-col justify-between">
-                <CardContent className="p-5 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1">
-                      <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-                        <FolderTree className="size-3.5" />
-                        <span>{cat.name}</span>
+            {categories.map((cat) => {
+              const adet = cat.productCount || 0;
+              const bos = adet === 0;
+              return (
+              <Card
+                key={cat.id}
+                className="group flex h-full flex-col justify-between transition hover:border-primary/60 shadow-xs"
+                /* Bos koleksiyon soluk: vitrinde gorunmuyor, yani
+                   editorun ayirt etmesi gereken bir durum. */
+                style={bos ? { opacity: 0.72 } : undefined}
+              >
+                <CardContent className="flex-1 space-y-2.5 p-5">
+                  {/* Ad ve sayi AYNI SATIRDA degil. Once oyleydi ve
+                      "EXECUTIVE CONSULTING & ADVISORY" gibi uzun bir
+                      ad iki satira sarinca rozet yukarida asili
+                      kaliyor, kartlar birbirine gore kayiyordu. */}
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h3 className="text-sm font-semibold leading-snug text-foreground">
+                      {cat.name}
+                    </h3>
+                    <span
+                      className="shrink-0 font-mono text-xs"
+                      style={{ color: bos ? undefined : undefined }}
+                    >
+                      <span className={bos ? "text-muted-foreground" : "font-semibold text-foreground"}>
+                        {adet}
                       </span>
-                      {/* Adres ?shelf= — vitrin bu parametreyle
-                          suzuyor. Once ?category= yaziliyordu ve o
-                          adres hicbir sey suzmuyordu. */}
-                      <div className="text-[11px] text-muted-foreground font-mono">
-                        /store?shelf={cat.slug}
-                      </div>
-                    </div>
-
-                    <Badge variant="secondary" className="text-xs font-mono shrink-0">
-                      {cat.productCount || 0} Products
-                    </Badge>
+                    </span>
                   </div>
 
-                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                    {cat.description || 'Curated store collection for catalog products.'}
-                  </p>
+                  {/* Aciklama YOKSA uydurma bir cumle yazmiyoruz.
+                      Once hepsine "Curated store collection for catalog
+                      products." dusuyordu; uc kart ayni cumleyi
+                      tekrarliyor ve hicbir sey soylemiyordu. */}
+                  {cat.description ? (
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      {cat.description}
+                    </p>
+                  ) : (
+                    <p className="text-xs italic text-muted-foreground/70">
+                      No description yet
+                    </p>
+                  )}
+
+                  {bos && (
+                    <p className="text-[11px] text-amber-600 dark:text-amber-500">
+                      Empty — hidden from the storefront
+                    </p>
+                  )}
                 </CardContent>
 
-                <div className="p-3 bg-muted/20 border-t flex items-center justify-between gap-2">
-                  {/* Once hep /store'a gidiyordu; hangi kategoriye
-                      tikladigin fark etmiyordu. */}
-                  <Link
-                    href={
-                      (cat.productCount || 0) > 0
-                        ? `/store?shelf=${cat.slug}`
-                        : "/store"
-                    }
-                    target="_blank"
-                    className="text-[11px] font-medium text-muted-foreground hover:text-primary flex items-center gap-1 transition"
-                  >
-                    <ExternalLink className="size-3" />
-                    <span>View Store</span>
-                  </Link>
+                <div className="flex items-center justify-between gap-2 border-t bg-muted/20 p-3">
+                  {/* Adres BURADA ve kucuk. Once kartin ikinci en
+                      belirgin ogesiydi — editorun bir sorgu dizesi
+                      okumasi gerekmiyor; yalnizca nereye gittigini
+                      merak edince bakiyor.
+
+                      Bos koleksiyonda baglanti YOK: /store'a gitmek
+                      "bu rafi gor" vaadini karsilamiyordu. */}
+                  {bos ? (
+                    <span className="font-mono text-[11px] text-muted-foreground/60">
+                      {cat.slug}
+                    </span>
+                  ) : (
+                    <Link
+                      href={`/store?shelf=${cat.slug}`}
+                      target="_blank"
+                      className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground transition hover:text-primary"
+                      title={`/store?shelf=${cat.slug}`}
+                    >
+                      <ExternalLink className="size-3" />
+                      <span>View in store</span>
+                    </Link>
+                  )}
 
                   <div className="flex items-center gap-1">
                     <Button
@@ -275,7 +317,8 @@ export default function PanicProductCategoriesPage() {
                   </div>
                 </div>
               </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

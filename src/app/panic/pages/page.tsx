@@ -76,8 +76,11 @@ export default function PanicPagesListPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      {/* Dugme grubu SIKISMASIN: metin blogu min-w-0 ile kisalabiliyor,
+          dugmeler shrink-0 ile sabit. Once ikisi de esnekti ve uzun bir
+          aciklama dugmeleri birbirine gecirene kadar eziyordu. */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">Static & Custom Pages</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             Manage corporate, legal, and custom landing pages (About, Privacy, Terms, Sponsor, etc.)
@@ -93,7 +96,7 @@ export default function PanicPagesListPage() {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
