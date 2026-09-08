@@ -1,4 +1,5 @@
 import { BLOK_TANIMLARI, EKLENEBILIR_TURLER, PARAGRAF_ROLLERI, type Alan } from "@/lib/blok-turleri";
+import { metinYuzeyiKur } from "@/components/magazine/blok-metin";
 
 /**
  * BLOK DUZENLEME YUZEYI — sayfanin uzerinde, gercek tasarimin icinde.
@@ -105,6 +106,54 @@ const GOLGE = "0 1px 2px rgba(20,18,16,.06), 0 10px 28px rgba(20,18,16,.14)";
 
 export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
   let secili: HTMLElement | null = null;
+
+  /* ---------------- GERI AL / ILERI AL ----------------
+     Tarayicinin kendi geri alma yigini her duzenlenebilir alan icin
+     AYRI calisiyor ve blok islemlerini (tasi, sil, cogalt) hic
+     gormuyor. Yani bir blogu yanlislikla silen kisinin geri donusu
+     yoktu. Kendi yigininizi tutmak bu isin sartı.
+
+     Durum olarak govdenin HTML'i saklaniyor: blok dizisi zaten
+     govdenin ta kendisi (denkligi 47 yazida olculdu), ayri bir model
+     tutmak senkronu bozulacak ikinci bir dogruluk kaynagi olurdu. */
+  const AZAMI_ADIM = 80;
+  const gecmis: string[] = [];
+  const ileri: string[] = [];
+  let sonKayit = 0;
+
+  const kaydet = () => {
+    const simdi = govde.innerHTML;
+    if (gecmis[gecmis.length - 1] === simdi) return;
+    gecmis.push(simdi);
+    if (gecmis.length > AZAMI_ADIM) gecmis.shift();
+    /* Yeni bir is yapilinca ileri gecmisi anlamini yitiriyor. */
+    ileri.length = 0;
+    sonKayit = Date.now();
+  };
+
+  /* Yazarken her harf ayri adim olmasin: yazmaya ara verilince tek
+     adim kaydediliyor. Yoksa Cmd+Z bir kelimeyi harf harf geri alirdi. */
+  const yazarkenKaydet = () => {
+    if (Date.now() - sonKayit > 900) kaydet();
+  };
+
+  const geriAl = () => {
+    if (!gecmis.length) return;
+    ileri.push(govde.innerHTML);
+    govde.innerHTML = gecmis.pop()!;
+    duzenlenebilirlikUygula(govde);
+    sec(null);
+    yolla();
+  };
+
+  const ileriAl = () => {
+    if (!ileri.length) return;
+    gecmis.push(govde.innerHTML);
+    govde.innerHTML = ileri.pop()!;
+    duzenlenebilirlikUygula(govde);
+    sec(null);
+    yolla();
+  };
   let ustunde: HTMLElement | null = null;
   let menuAcik = false;
   let ayarAcik = false;
@@ -176,6 +225,9 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
     d.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+      /* Her arac cubugu islemi geri alinabilir olsun diye islemden
+         ONCE durum saklaniyor. */
+      kaydet();
       is();
     });
     return d;
@@ -546,6 +598,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
   const surukleBasla = (e: MouseEvent) => {
     if (!secili) return;
     e.preventDefault();
+    kaydet();
     surukleniyor = true;
     document.body.style.cursor = "grabbing";
     cubuk.style.opacity = "0.35";
@@ -746,6 +799,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
     if (!blok) return;
 
     if (e.key === "Enter" && !e.shiftKey) {
+      kaydet();
       const t = turuBul(blok);
       /* Listede Enter yeni MADDE acmali, yeni blok degil. */
       if (t === "liste" || t === "tablo") return;
@@ -766,6 +820,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
       const onceki = blok.previousElementSibling as HTMLElement | null;
       if (!onceki) return;
       e.preventDefault();
+      kaydet();
       blok.remove();
       if (onceki.getAttribute("contenteditable")) {
         onceki.focus();
@@ -782,6 +837,16 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
   };
 
   const tusla = (e: KeyboardEvent) => {
+    const cmd = e.metaKey || e.ctrlKey;
+    if (cmd && e.key.toLowerCase() === "z") {
+      /* Tarayicinin kendi geri almasi devre disi: o yalnizca odakli
+         blogun metnini biliyor, blok islemlerini bilmiyor. Ikisi ayni
+         anda calissa geri alma sirasi ongorulemez olurdu. */
+      e.preventDefault();
+      if (e.shiftKey) ileriAl();
+      else geriAl();
+      return;
+    }
     if (e.key === "Escape") {
       if (menuAcik) return menuKapat();
       if (ayarAcik) return ayarKapat();
@@ -795,6 +860,19 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
   };
 
   duzenlenebilirlikUygula(govde);
+
+  /* Satir ici bicimlendirme, yapistirma temizligi, egik cizgi komutu
+     ve markdown kisayollari — TipTap'in yerini alacak parcalar. */
+  const metniKaldir = metinYuzeyiKur({
+    govde,
+    yolla,
+    kaydet,
+    menuAc: menuyuAc,
+    etiketeCevir: (blok, etiket) => etiketDegistir(blok, etiket),
+    blokSec: sec,
+  });
+
+  govde.addEventListener("input", yazarkenKaydet);
   govde.addEventListener("keydown", govdeTus);
   govde.addEventListener("mousemove", hareket);
   govde.addEventListener("mouseleave", govdedenCik);
@@ -808,6 +886,8 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
   window.addEventListener("resize", kaydir);
 
   return () => {
+    metniKaldir();
+    govde.removeEventListener("input", yazarkenKaydet);
     govde.removeEventListener("keydown", govdeTus);
     govde.removeEventListener("mousemove", hareket);
     govde.removeEventListener("mouseleave", govdedenCik);
