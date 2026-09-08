@@ -6,25 +6,35 @@ import ClientForm from "./ClientForm";
 import { FABELO_TAGS, tagLabel } from "@/lib/taxonomy";
 import PanicWorkzNetwork from "./PanicWorkzNetwork";
 
-/** fabelo.io footer'iyla birebir baglantilar */
+/** YAYIN kunyesi — derginin kendisi. */
 const MASTHEAD_LINKS = [
   { label: "About", href: "/about" },
   { label: "Advertise", href: "/advertise" },
   { label: "Sponsor", href: "/sponsor" },
   { label: "Terms & conditions", href: "/terms-and-conditions" },
   { label: "Data & privacy", href: "/data-and-privacy" },
-  /* Satis metinleri. Magaza kapaliyken de burada duruyorlar: mesafeli
-     satista bu belgelerin ALISVERISTEN ONCE ulasilabilir olmasi
-     gerekiyor, siparis aninda onune konmasi degil. Turkce olanlar
-     kanunen Turkce; ceviremiyoruz. */
-  { label: "Delivery & returns", href: "/delivery-and-returns" },
-  { label: "Terms of sale", href: "/terms-of-sale" },
-  { label: "Mesafeli satış sözleşmesi", href: "/mesafeli-satis-sozlesmesi" },
-  { label: "Ön bilgilendirme formu", href: "/on-bilgilendirme-formu" },
   /* En altta: sitede hicbir e-posta adresi yazmiyor, butun iletisim
      formdan geciyor. Once About'un hemen altindaydi ama orasi kunyenin
      sayfa listesi — Contact bir sayfa degil, listenin cikisi. */
   { label: "Contact", href: "/contact" },
+];
+
+/**
+ * MAGAZA — yayin kunyesinden AYRI bir sutun.
+ *
+ * Once hepsi tek listedeydi: About ve Advertise'in altinda "Delivery &
+ * returns" ve "Terms of sale". Dokuz satirlik tek yigin, ustelik iki
+ * ayri isten bahsediyor — biri okunacak bir yayin, oteki bir dukkan.
+ *
+ * Turkce belgeler BURADA DEGIL. Site bastan sona Ingilizce ve
+ * aralarinda iki Turkce baslik yamali duruyordu. Belgeler duruyor ve
+ * kaldirilmadi — Turkiye'ye satista kanunen gerekliler — ama onlara
+ * odeme ekranindaki onay satirindan ve Terms of sale sayfasindan
+ * ulasiliyor; yasanin istedigi an zaten siparisten oncesi.
+ */
+const STORE_LINKS = [
+  { label: "Delivery & returns", href: "/delivery-and-returns" },
+  { label: "Terms of sale", href: "/terms-of-sale" },
 ];
 
 /** Adresler ufukyorulmaz.com ve themez.panic.pw kunyelerinden alindi */
@@ -79,9 +89,13 @@ export default async function MagazineFooter() {
      kaldirilmisti ve acarken geri koymayi unutmak, magazayi acik ama
      hicbir yerden ulasilamaz birakirdi. Tek kaynak:
      lib/magaza-durumu.ts */
-  const bolumler = (await magazaAcik())
-    ? [...SECTIONS, { label: "Store", href: "/store" }]
-    : SECTIONS;
+  /* Magaza ACIKSA vitrin baglantisi magaza sutununun basina geliyor —
+     editoryal bolumlerin arasina degil. Once SECTIONS listesine
+     ekleniyordu ve okur bir bolume girer gibi dukkana giriyordu. */
+  const acik = await magazaAcik();
+  const magazaLinkleri = acik
+    ? [{ label: "Visit the store", href: "/store" }, ...STORE_LINKS]
+    : STORE_LINKS;
   return (
     <footer style={{ background: "var(--ink)", color: "var(--paper)" }}>
       {/* --- Ust: kunye + sutunlar ---------------------------------------
@@ -91,7 +105,7 @@ export default async function MagazineFooter() {
       <div className="mag-shell pb-14 pt-16 sm:pt-20">
         <div className="grid gap-x-10 gap-y-12 md:grid-cols-2 lg:grid-cols-12 lg:gap-x-12">
           {/* Kimlik */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-3">
             <div className="mb-5 flex items-center gap-3">
               <Image
                 src="/images/fabelo-logo.webp"
@@ -115,12 +129,19 @@ export default async function MagazineFooter() {
 
           <nav className="lg:col-span-2">
             <SutunBasligi>SECTIONS</SutunBasligi>
-            <Liste items={bolumler} />
+            <Liste items={SECTIONS} />
           </nav>
 
-          <nav className="lg:col-span-3">
+          <nav className="lg:col-span-2">
             <SutunBasligi>MASTHEAD</SutunBasligi>
             <Liste items={MASTHEAD_LINKS} />
+          </nav>
+
+          {/* Ticaret AYRI sutunda: yayin kunyesiyle ayni listede
+              olmasi iki farkli isi tek yigin gibi gosteriyordu. */}
+          <nav className="lg:col-span-2">
+            <SutunBasligi>STORE</SutunBasligi>
+            <Liste items={magazaLinkleri} />
           </nav>
 
           {/* Abonelik — ortadaki bosluğu doldurur ve footer'a amac katar.

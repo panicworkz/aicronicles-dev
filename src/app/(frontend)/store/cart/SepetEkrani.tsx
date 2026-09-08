@@ -180,7 +180,14 @@ export function SepetEkrani() {
           {/* Magazaya donus yolu. Bu ekranda hicbir cikis yoktu:
               alisverise devam etmek isteyen okurun geri tusundan
               baska secenegi kalmiyordu. */}
-          <Link href="/store" className="byline hover:text-[var(--accent-ink)]">
+          {/* Once ince gri bir "byline" idi ve sepetin sag ustunde
+              kayboluyordu. Alisverise devam etmek, odemeye gecmek
+              kadar sik yapilan bir sey; gorunur olmali. */}
+          <Link
+            href="/store"
+            className="byline px-3.5 py-2 transition-colors hover:text-[var(--paper)]"
+            style={{ border: "1px solid var(--ink)", color: "var(--ink)" }}
+          >
             ← KEEP SHOPPING
           </Link>
         </div>
@@ -383,18 +390,29 @@ export function SepetEkrani() {
             id="onay-sozlesme"
           >
             I have read and accept the{" "}
-            <Link href="/on-bilgilendirme-formu" target="_blank" className="underline">
-              Ön Bilgilendirme Formu
-            </Link>{" "}
-            and the{" "}
-            <Link href="/mesafeli-satis-sozlesmesi" target="_blank" className="underline">
-              Mesafeli Satış Sözleşmesi
-            </Link>
-            . Buying from outside Turkey? See the{" "}
             <Link href="/terms-of-sale" target="_blank" className="underline">
-              Terms of Sale
+              terms of sale
             </Link>
-            .
+            {" "}and the{" "}
+            <Link href="/delivery-and-returns" target="_blank" className="underline">
+              delivery and returns policy
+            </Link>
+            .{" "}
+            {/* Turkce belgeler burada duruyor cunku yasa onlarin
+                SIPARISTEN ONCE sunulmasini istiyor. Etiketleri
+                Ingilizce; site bastan sona Ingilizce ve okurun
+                hangisinin ne oldugunu anlamasi gerekiyor. */}
+            <span style={{ color: "var(--ink-3)" }}>
+              Ordering from Turkey? Turkish law applies and these govern:{" "}
+              <Link href="/on-bilgilendirme-formu" target="_blank" className="underline">
+                pre-sale information
+              </Link>{" "}
+              and the{" "}
+              <Link href="/mesafeli-satis-sozlesmesi" target="_blank" className="underline">
+                distance sales agreement
+              </Link>
+              .
+            </span>
           </Onay>
 
           {dijitalVar && (
