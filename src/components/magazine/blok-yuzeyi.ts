@@ -35,14 +35,18 @@ import { metinYuzeyiKur } from "@/components/magazine/blok-metin";
  * kendisi; isaret yalnizca kolaylik.
  */
 export function turuBul(o: Element): string {
-  const isaret = o.getAttribute("data-blok-t");
-  if (isaret) return isaret;
-  /* Isaret her seyden once: "adimlar" bir ol, "kutu" bir aside —
-     etikete gore bakarsak siradan liste ya da ham HTML sanilirlar. */
-  const isaret = o.getAttribute("data-blok");
-  if (isaret) return isaret;
-  if (o.getAttribute("data-blok") === "urun") return "urun";
-  if (o.getAttribute("data-blok") === "icindekiler") return "icindekiler";
+  /* Once sunucunun bastigi tur isareti. */
+  const turIsareti = o.getAttribute("data-blok-t");
+  if (turIsareti) return turIsareti;
+
+  /* Sonra blogun kendi isareti. Bu ETIKETTEN once geliyor: "adimlar"
+     bir ol, "kutu" bir aside — etikete gore baksaydik siradan bir
+     liste ya da ham HTML sanilirlardi. */
+  const blokIsareti = o.getAttribute("data-blok");
+  if (blokIsareti) return blokIsareti;
+
+  /* Sunucunun bastigi icindekiler listesi isaret tasiyor; yine de
+     sinifa bakiliyor: cok eski bir icerikte isaret olmayabilir. */
   if (o.tagName === "NAV" && o.classList.contains("icindekiler")) return "icindekiler";
   switch (o.tagName) {
     case "P": return "paragraf";
