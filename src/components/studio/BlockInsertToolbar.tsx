@@ -148,8 +148,8 @@ async function executeWorkflow() {
       <UrunSecici
         acik={urunSecici}
         kapat={() => setUrunSecici(false)}
-        sec={(urunId) => {
-          onInsertHtml(`<div data-blok="urun" data-urun-id="${urunId}"></div>`);
+        sec={(urun) => {
+          onInsertHtml(`<div data-blok="urun" data-urun-id="${urun.id}"></div>`);
           toast.success('Urun karti eklendi');
         }}
       />

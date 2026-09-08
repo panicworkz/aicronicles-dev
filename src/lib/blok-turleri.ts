@@ -163,14 +163,12 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
     eklenebilir: true,
     yeni: () => ({ t: "urun", urunId: 0 }),
     yerindeYazilir: false,
-    alanlar: [
-      {
-        ad: "urunId",
-        etiket: "Urun",
-        tur: "metin",
-        ipucu: "Fiyat ve stok yaziya gomulmuyor; her acilista veriden okunuyor.",
-      },
-    ],
+    /* ALAN YOK, bilerek. Once burada "urun kimligi" diye bir metin
+       kutusu vardi ve icinde 0 yaziyordu: kullaniciya urun listesini
+       gostermeden kimlik yazdirmak, bilmedigi bir sayiyi elle
+       girmesini beklemek demekti. Urun secimi arac cubugundaki
+       "Urun sec" dugmesinden, gercek urun listesiyle yapiliyor. */
+    alanlar: [],
   },
 
   ham: {

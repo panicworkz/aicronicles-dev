@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Search,
@@ -117,8 +118,16 @@ export function MediaPickerModal({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+  /* PORTAL SART.
+     Bu pencere gorsel studyosunun ICINDE basiliyordu ve studyo
+     "animate-in" ile bir donusum (transform) tasiyor. Donusum tasiyan
+     bir ata, icindeki position:fixed ogeyi EKRANA degil kendisine
+     gore hizalar — inset-0 ve max-h-[88vh] o kutuyu olcer. Sonucu
+     ekranda gorulen seydi: pencere ekranin altindan tasiyor ve
+     kaydirma hic kurulmuyordu. Bunu "max-height" ile duzeltmek yama
+     olurdu; sorun olcunun yanlis kutudan alinmasi. */
+  return createPortal(
+    <div className="fixed inset-0 z-[100020] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="relative w-full max-w-4xl max-h-[88vh] flex flex-col rounded-xl border bg-background shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex h-14 items-center justify-between gap-3 border-b px-5 shrink-0">
@@ -350,6 +359,7 @@ export function MediaPickerModal({
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

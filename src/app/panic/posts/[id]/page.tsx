@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { UrunSecici } from "@/components/studio/UrunSecici";
 import TipTapEditor from "@/components/editor/TipTapEditor";
 import { AeoScoreMeter } from "@/components/studio/AeoScoreMeter";
 import { SerpSocialPreview } from "@/components/studio/SerpSocialPreview";
@@ -81,6 +82,9 @@ export default function PanicSplitLiveStudioPage({
     isCover?: boolean;
   } | null>(null);
   const [studioOpen, setStudioOpen] = useState(false);
+  /* Onizlemeden gelen urun karti istegi. */
+  const [urunSeciciAcik, setUrunSeciciAcik] = useState(false);
+  const [urunIstek, setUrunIstek] = useState<string | null>(null);
   const [studioTarget, setStudioTarget] = useState<ImageStudioTarget | null>(
     null,
   );
@@ -202,6 +206,16 @@ export default function PanicSplitLiveStudioPage({
         }
       }
 
+      if (event.data?.type === "PANIC_OPEN_PRODUCT_PICKER") {
+        /* Onizlemeden urun karti eklendi: secici panelde aciliyor,
+           secilen urun cerceveye GERI yollaniyor. Kimligi cerceve
+           kendi ogesine yaziyor — hangi blok oldugunu yalnizca o
+           biliyor. */
+        setUrunIstek(event.data.payload?.istek ?? null);
+        setUrunSeciciAcik(true);
+        return;
+      }
+
       if (event.data?.type === "PANIC_OPEN_IMAGE_STUDIO") {
         const {
           src,
@@ -209,6 +223,9 @@ export default function PanicSplitLiveStudioPage({
           title: imgTitle,
           caption: imgCaption,
           isCover,
+          /* Onizlemeden gelen istegin kimligi. Varsa sonuc cerceveye
+             geri yollaniyor; panel govde HTML'ine HIC dokunmuyor. */
+          istek,
         } = event.data.payload || {};
         setStudioTarget({
           src,
@@ -249,6 +266,30 @@ export default function PanicSplitLiveStudioPage({
               } catch (e) {
                 // silent
               }
+            } else if (istek) {
+              /* KAYNAK ESLESTIRME YOK.
+                 Eskiden panel govde HTML'ini ayristirip gorseli
+                 src'sine gore buluyordu. Yeni eklenen gorselin src'si
+                 BOS oldugu icin hicbir seyle eslesmiyor, eslesmeyince
+                 de "src'yi her yerde degistir" yoluna dusuluyordu —
+                 bos dizgeyi degistirmek metnin her harfinin arasina
+                 adres sokardi.
+                 Ogeyi tanıyan taraf onizleme; sonucu ona yolluyoruz. */
+              iframeRef.current?.contentWindow?.postMessage(
+                {
+                  type: "PANIC_STUDIO_IMAGE_RESULT",
+                  source: "studio_parent",
+                  payload: {
+                    istek,
+                    src: newData.src,
+                    alt: newData.alt || "",
+                    title: newData.title || "",
+                    caption: newData.caption || "",
+                  },
+                },
+                window.location.origin
+              );
+              toast.success("Gorsel guncellendi");
             } else {
               const currentHtml = contentHtmlRef.current || "";
               const parser = new DOMParser();
@@ -970,6 +1011,27 @@ export default function PanicSplitLiveStudioPage({
         target={studioTarget}
         articleTitle={title}
         articleContent={contentHtml}
+      />
+
+      {/* Onizlemeden acilan urun secici. Secilen urun cerceveye geri
+          gidiyor; panel govde HTML'ine dokunmuyor. */}
+      <UrunSecici
+        acik={urunSeciciAcik}
+        kapat={() => {
+          setUrunSeciciAcik(false);
+          setUrunIstek(null);
+        }}
+        sec={(urun) => {
+          iframeRef.current?.contentWindow?.postMessage(
+            {
+              type: "PANIC_STUDIO_PRODUCT_RESULT",
+              source: "studio_parent",
+              payload: { istek: urunIstek, urun },
+            },
+            window.location.origin
+          );
+          setUrunIstek(null);
+        }}
       />
 
       {/* Split Live Canvas & Editor Image Replace Modal */}

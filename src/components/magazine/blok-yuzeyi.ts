@@ -84,7 +84,10 @@ export function duzenlenebilirlikUygula(govde: HTMLElement) {
 type Ayarlar = {
   govde: HTMLElement;
   yolla: () => void;
+  /* Gorsel duzenleme penceresini panelde acar. */
   gorselAc: (img: HTMLImageElement) => void;
+  /* Urun secici penceresini panelde acar. */
+  urunAc: (blok: HTMLElement) => void;
 };
 
 /* Renkler LITERAL yaziliyor. Arac cubugu document.body'ye takiliyor,
@@ -104,7 +107,7 @@ const R = {
 
 const GOLGE = "0 1px 2px rgba(20,18,16,.06), 0 10px 28px rgba(20,18,16,.14)";
 
-export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
+export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () => void {
   let secili: HTMLElement | null = null;
 
   /* ---------------- GERI AL / ILERI AL ----------------
@@ -397,8 +400,15 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
         menuKapat();
         sec(yeni);
         if (BLOK_TANIMLARI[tanim.t].yerindeYazilir) imleciKoy(yeni);
-        if (tanim.t === "gorsel") gorselAc(yeni.querySelector("img")!);
+        /* Gorsel ve urun bloklari BOS dogmuyor: secici hemen aciliyor.
+           Kaynaksiz bir gorsel ya da kimliksiz bir urun karti, yazara
+           "eksik" bir sey birakmak olurdu.
+           Onizlemeden gonderim ONCE yapiliyor: panel secim penceresini
+           acmadan once yeni blogun varligini bilmeli. */
         bitir();
+        if (tanim.t === "gorsel") gorselAc(yeni.querySelector("img")!);
+        if (tanim.t === "urun") urunAc(yeni);
+        return;
       });
       d.style.textAlign = "left";
       d.style.padding = "8px 10px";
@@ -690,6 +700,13 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
     if (t === "gorsel") {
       const img = o.tagName === "IMG" ? (o as HTMLImageElement) : o.querySelector("img");
       cubuk.appendChild(dugme("Degistir", "Gorseli degistir", () => img && gorselAc(img)));
+      cubuk.appendChild(ayirici());
+    }
+
+    if (t === "urun") {
+      /* Urun kimligini elle yazdirmak yerine secici: ayar panelindeki
+         sayi alani kimseye urun listesini gostermiyordu. */
+      cubuk.appendChild(dugme("Urun sec", "Baska bir urun sec", () => urunAc(o)));
       cubuk.appendChild(ayirici());
     }
 

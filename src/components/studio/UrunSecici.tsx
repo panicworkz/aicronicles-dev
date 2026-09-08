@@ -36,7 +36,10 @@ export function UrunSecici({
 }: {
   acik: boolean;
   kapat: () => void;
-  sec: (urunId: number) => void;
+  /* Yalnizca kimlik degil URUNUN KENDISI donuyor: onizleme, kayit
+     beklemeden kartin bir onizlemesini cizebilsin diye ad, fiyat ve
+     gorsele de ihtiyaci var. */
+  sec: (urun: Urun) => void;
 }) {
   const [urunler, setUrunler] = React.useState<Urun[]>([]);
   const [arama, setArama] = React.useState('');
@@ -112,7 +115,7 @@ export function UrunSecici({
                 key={u.id}
                 type="button"
                 onClick={() => {
-                  sec(u.id);
+                  sec(u);
                   kapat();
                 }}
                 className="flex w-full items-center gap-3 border-b border-border px-3 py-2.5 text-left last:border-b-0 hover:bg-muted/60"

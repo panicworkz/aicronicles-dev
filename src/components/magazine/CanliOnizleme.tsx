@@ -28,6 +28,9 @@ const OLAY_GIDEN = "PANIC_LIVE_TO_STUDIO_SYNC";
 const OLAY_GELEN = "PANIC_STUDIO_LIVE_UPDATE";
 const OLAY_HAZIR = "PANIC_STUDIO_PREVIEW_READY";
 const OLAY_GORSEL = "PANIC_OPEN_IMAGE_STUDIO";
+const OLAY_GORSEL_SONUC = "PANIC_STUDIO_IMAGE_RESULT";
+const OLAY_URUN = "PANIC_OPEN_PRODUCT_PICKER";
+const OLAY_URUN_SONUC = "PANIC_STUDIO_PRODUCT_RESULT";
 
 export default function CanliOnizleme() {
   useEffect(() => {
@@ -68,7 +71,71 @@ export default function CanliOnizleme() {
     const dinle = (olay: MessageEvent) => {
       if (olay.origin !== kok) return;
       const v = olay.data;
-      if (!v || v.type !== OLAY_GELEN) return;
+      if (!v) return;
+      if (v.type !== OLAY_GELEN && v.type !== OLAY_GORSEL_SONUC && v.type !== OLAY_URUN_SONUC) return;
+
+      if (v.type === OLAY_GORSEL_SONUC) {
+        const { istek, src, alt, title: baslikOz, caption } = v.payload ?? {};
+        const img = bekleyen.get(istek) as HTMLImageElement | undefined;
+        if (!img) return;
+        bekleyen.delete(istek);
+        if (src) img.setAttribute("src", src);
+        img.setAttribute("alt", alt ?? "");
+        if (baslikOz) img.setAttribute("title", baslikOz);
+        else img.removeAttribute("title");
+
+        /* Altyazi figure icine yaziliyor: figcaption ancak orada
+           basiliyor, yoksa girilen metin sessizce kaybolurdu. */
+        const cerceve = img.closest("figure");
+        if (cerceve) {
+          let alt2 = cerceve.querySelector("figcaption");
+          if (caption) {
+            if (!alt2) {
+              alt2 = document.createElement("figcaption");
+              cerceve.appendChild(alt2);
+              cerceve.classList.add("kg-card-hascaption");
+            }
+            alt2.textContent = caption;
+          } else if (alt2) {
+            alt2.remove();
+            cerceve.classList.remove("kg-card-hascaption");
+          }
+        }
+        yolla();
+        return;
+      }
+
+      if (v.type === OLAY_URUN_SONUC) {
+        const { istek, urun } = v.payload ?? {};
+        const blok = bekleyen.get(istek);
+        if (!blok || !urun) return;
+        bekleyen.delete(istek);
+        blok.setAttribute("data-blok", "urun");
+        blok.setAttribute("data-urun-id", String(urun.id));
+        /* Onizlemede bir KART TASLAGI ciziliyor: gercek kart sunucuda
+           basiliyor (fiyat ve stok veriden gelir), ama yazar
+           kaydedene kadar bos bir kutu gormemeli. Bu taslak
+           kaydedilmiyor — ayristirici data-blok="urun" goren her
+           ogeyi {t:"urun"} blogu olarak aliyor ve icerigini atiyor. */
+        const gorsel = urun.featuredImageUrl
+          ? `<img src="${urun.featuredImageUrl}" alt="" class="urun-blogu-gorsel">`
+          : "";
+        blok.className = "urun-blogu";
+        blok.innerHTML =
+          `<span class="urun-blogu-baglanti">${gorsel}` +
+          `<span class="urun-blogu-metin">` +
+          `<span class="urun-blogu-tur">URUN</span>` +
+          `<strong class="urun-blogu-ad"></strong>` +
+          `<span class="urun-blogu-fiyat"></span>` +
+          `</span></span>`;
+        /* Ad ve fiyat metin olarak yaziliyor, HTML olarak degil:
+           urun adinda gecen bir isaret sayfayi bozmasin. */
+        blok.querySelector(".urun-blogu-ad")!.textContent = urun.title ?? "";
+        blok.querySelector(".urun-blogu-fiyat")!.textContent =
+          `${urun.price ?? ""} ${urun.currency ?? ""}`.trim();
+        yolla();
+        return;
+      }
 
       const { title, excerpt, contentHtml, featuredImageUrl } = v.payload ?? {};
 
@@ -141,12 +208,22 @@ export default function CanliOnizleme() {
      * gorsele tiklamak hicbir sey yapmiyor, bu yuzden gorsel
      * degistirmek mumkun olmuyordu — yalnizca silmek.
      */
+    /* Bekleyen istekler. Ogeyi TANIYAN taraf burasi: panel sonucu
+       geri yolluyor, uygulamayi biz yapiyoruz. Once panel govde
+       HTML'ini src'ye gore arayip degistiriyordu; yeni eklenen
+       gorselin src'si bos oldugu icin hicbir seyle eslesmiyordu. */
+    const bekleyen = new Map<string, HTMLElement>();
+    let sayac = 0;
+
     const gorselAc = (img: HTMLImageElement) => {
+      const istek = `g${++sayac}`;
+      bekleyen.set(istek, img);
       window.parent.postMessage(
         {
           type: OLAY_GORSEL,
           source: "preview_frame",
           payload: {
+            istek,
             src: img.getAttribute("src") || "",
             alt: img.getAttribute("alt") || "",
             title: img.getAttribute("title") || "",
@@ -163,6 +240,16 @@ export default function CanliOnizleme() {
       );
     };
 
+    /** Urun karti icin secici acar. */
+    const urunAc = (blok: HTMLElement) => {
+      const istek = `u${++sayac}`;
+      bekleyen.set(istek, blok);
+      window.parent.postMessage(
+        { type: OLAY_URUN, source: "preview_frame", payload: { istek } },
+        kok
+      );
+    };
+
     /* Kapak gorseline cift tiklamak da ayni pencereyi aciyor. */
     const kapakTik = (e: MouseEvent) => {
       e.preventDefault();
@@ -173,7 +260,7 @@ export default function CanliOnizleme() {
     /* Blok denetimleri: tur farkindaligi burada degil, blok-yuzeyi.ts
        icinde ve BLOK_TANIMLARI kaydindan besleniyor. */
     const yuzeyiKaldir = govde
-      ? blokYuzeyiKur({ govde, yolla, gorselAc })
+      ? blokYuzeyiKur({ govde, yolla, gorselAc, urunAc })
       : () => {};
 
     /* Uzerine gelince ince bir isaret — okur bunu hic gormuyor. */
