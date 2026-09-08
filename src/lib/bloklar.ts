@@ -319,8 +319,10 @@ export function bloklarHtmle(
           const img = `<img${oznitelik("src", b.src)}${oznitelik("alt", b.alt)}${ozYaz(b.oz)}>`;
           /* Cerceve olmadan konmus gorsel oldugu gibi kaliyor: figure'e
              sarmak bosluk ve hizalama getirir, yazinin duzenini
-             degistirirdi. */
-          if (b.ciplak) return img;
+             degistirirdi.
+             ALTYAZISI VARSA istisna: figcaption ancak figure icinde
+             basilir, yoksa altyazi sessizce yok olurdu. */
+          if (b.ciplak && !b.altyazi) return img;
 
           const sarili = b.baglanti
             ? `<a${oznitelik("href", b.baglanti)}>${img}</a>`
