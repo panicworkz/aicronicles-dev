@@ -17,6 +17,7 @@ import {
 import { AdSlot } from "@/components/magazine/AdSlot";
 import { decodeEntities, tagLabel } from "@/lib/taxonomy";
 import { enrichArticleHtml, type MediaBoyut } from "@/components/magazine/enrichArticleHtml";
+import { urunBloklariniDoldur } from "@/lib/urun-blogu";
 import CmsPage from "@/components/magazine/CmsPage";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
 import { SITE, markali, kirintiSemasi } from "@/lib/seo";
@@ -211,6 +212,11 @@ export default async function ArticlePage({ params }: PageProps) {
   });
 
   const boyutlar = await medyaBoyutlari();
+  /* Urun karti bloklari burada doluyor: yazi govdesinde yalnizca bir
+     isaret duruyor, fiyat ve stok okuma aninda veriden geliyor. */
+  const govdeHtml = await urunBloklariniDoldur(
+    enrichArticleHtml(post.contentHtml, boyutlar)
+  );
 
   const related = others.slice(0, 4).map(toCard);
   const trending = others.slice(4, 9).map(toCard);
@@ -354,7 +360,7 @@ export default async function ArticlePage({ params }: PageProps) {
                 data-canli="govde"
                 className="article-body dropcap text-[1.06rem] leading-[1.82]"
                 dangerouslySetInnerHTML={{
-                  __html: enrichArticleHtml(post.contentHtml, boyutlar),
+                  __html: govdeHtml,
                 }}
               />
 

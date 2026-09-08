@@ -48,6 +48,12 @@ export type Blok =
   | { t: "tablo"; html: string }
   | { t: "ayrac" }
   | { t: "alinti"; html: string }
+  /* URUN KARTI — blok modelinin asil gerekcesi.
+     HTML'in ifade edemedigi bir sey: govdede duran sey bir isaret,
+     icerigi (ad, fiyat, stok, gorsel) okuma aninda veritabanindan
+     geliyor. Yazinin icine fiyat yazsaydik urun degistiginde yazi
+     yalan soylerdi. Yazar yalnizca "su urun burada dursun" diyor. */
+  | { t: "urun"; urunId: number }
   /* Kacis kapisi: ayristiricinin tanimadigi her sey. Oldugu gibi
      basiliyor, yani icerik asla kaybolmuyor. */
   | { t: "ham"; html: string };
@@ -181,7 +187,19 @@ export function htmlBloklara(html?: string | null): Blok[] {
            div'in icine konmus. Tanimasaydik "ham" kalir, yani
            editorde duzenlenemezdi. Sarmal HTML'in icinde duruyor,
            yani yatay kaydirma da bozulmuyor. */
-        if (etiket === "div" && oge.querySelector("table")) {
+        /* Urun karti isareti. Turetilen HTML'de yalnizca bos bir
+           yer tutucu duruyor; kart okuma aninda dolduruluyor
+           (lib/urun-blogu.ts). Boylece gidis-donus de kayipsiz. */
+        if (oge.getAttribute("data-blok") === "urun") {
+          const kimlik = Number(oge.getAttribute("data-urun-id"));
+          if (Number.isFinite(kimlik) && kimlik > 0) {
+            bloklar.push({ t: "urun", urunId: kimlik });
+          } else {
+            /* Kimliksiz isaret ise: atmak yerine ham birakiliyor,
+               yoksa yazarin koydugu sey sessizce yok olurdu. */
+            bloklar.push({ t: "ham", html: oge.outerHTML });
+          }
+        } else if (etiket === "div" && oge.querySelector("table")) {
           bloklar.push({ t: "tablo", html: oge.outerHTML });
         } else {
           bloklar.push({ t: "ham", html: oge.outerHTML });
@@ -241,6 +259,12 @@ export function bloklarHtmle(bloklar?: Blok[] | null): string {
 
         case "alinti":
           return `<blockquote>${b.html}</blockquote>`;
+
+        case "urun":
+          /* Yalnizca isaret. Kartin kendisi okuma aninda basiliyor;
+             RSS ve llms.txt gibi ham HTML okuyan yerlerde de bos bir
+             div kaliyor, yani hicbir yerde bozuk fiyat gorunmuyor. */
+          return `<div data-blok="urun" data-urun-id="${b.urunId}"></div>`;
 
         case "ham":
           return b.html;

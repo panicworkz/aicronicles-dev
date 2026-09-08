@@ -609,3 +609,68 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .pencere-perde, .pencere-kutu { animation: none; }
 }
+
+/* ============ URUN KARTI BLOGU ============
+   Yazi govdesine gomulen urun karti. Reklam gibi degil, yazinin
+   parcasi gibi durmasi gerekiyor: ayni olcu, ayni tipografi, yalnizca
+   ince bir cerceve ve hafif bir zemin ayirt ediyor.
+
+   Genislik 68ch olcusunun icinde kaliyor — disina tassaydi okuma
+   ritmini kirar, "sponsorlu icerik" hissi verirdi. */
+.mag .article-body .urun-blogu {
+  margin-top: 2em;
+  margin-bottom: 2em;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+  overflow: hidden;
+}
+.mag .article-body .urun-blogu-baglanti {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  text-decoration: none;
+  border: 0;
+  color: var(--ink);
+}
+.mag .article-body .urun-blogu-baglanti:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+/* Gorsel SABIT ORANDA ve object-fit: cover. Kesik ya da ezik urun
+   gorseli kalite algisini dusuruyor. */
+.mag .article-body .urun-blogu-gorsel {
+  flex: 0 0 auto;
+  width: 76px;
+  height: 76px;
+  border-radius: 7px;
+  object-fit: cover;
+  margin: 0;
+}
+.mag .article-body .urun-blogu-metin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  min-width: 0;
+}
+.mag .article-body .urun-blogu-tur {
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+/* Ad tek satirda kesilmiyor, iki satira kadar aciliyor: yarim kalan
+   urun adi her zaman ucuz gorunuyor. */
+.mag .article-body .urun-blogu-ad {
+  font-size: 1.02rem;
+  line-height: 1.35;
+  font-weight: 650;
+}
+.mag .article-body .urun-blogu-fiyat {
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+.mag .article-body .urun-blogu-tukendi {
+  font-style: normal;
+  color: #b4453f;
+}

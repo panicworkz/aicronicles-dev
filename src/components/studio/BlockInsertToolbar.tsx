@@ -4,6 +4,7 @@ import React from 'react';
 import { HelpCircle, Scale, ShoppingBag, Code, Sparkles, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { UrunSecici } from '@/components/studio/UrunSecici';
 
 interface BlockInsertToolbarProps {
   title: string;
@@ -13,6 +14,7 @@ interface BlockInsertToolbarProps {
 
 export function BlockInsertToolbar({ title, contentHtml, onInsertHtml }: BlockInsertToolbarProps) {
   const [generating, setGenerating] = React.useState<string | null>(null);
+  const [urunSecici, setUrunSecici] = React.useState(false);
 
   const handleAiAction = async (action: string) => {
     setGenerating(action);
@@ -116,6 +118,21 @@ async function executeWorkflow() {
           <span>+ Pro Tip Alert</span>
         </Button>
 
+        {/* Urun karti: yaziya fiyat degil URUN KIMLIGI giriyor, kart
+            okuma aninda veriden doluyor (lib/urun-blogu.ts). Ustteki
+            "Product CTA Box" bundan farkli — o, metni yaziya gomen bir
+            yapay zeka kutusu; bu, urune bagli canli bir blok. */}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setUrunSecici(true)}
+          className="gap-1.5 text-xs rounded-md"
+        >
+          <ShoppingBag className="size-3.5 text-emerald-600" />
+          <span>+ Urun Karti</span>
+        </Button>
+
         <Button
           type="button"
           variant="outline"
@@ -127,6 +144,15 @@ async function executeWorkflow() {
           <span>+ Code Block</span>
         </Button>
       </div>
+
+      <UrunSecici
+        acik={urunSecici}
+        kapat={() => setUrunSecici(false)}
+        sec={(urunId) => {
+          onInsertHtml(`<div data-blok="urun" data-urun-id="${urunId}"></div>`);
+          toast.success('Urun karti eklendi');
+        }}
+      />
     </div>
   );
 }
