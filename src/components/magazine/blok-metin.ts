@@ -27,6 +27,14 @@
  * veriyor.
  */
 
+import {
+  TEHLIKELI,
+  SEFFAF,
+  SATIR_ICI,
+  etiketGecerli,
+  oznitelikGecerli,
+} from "@/lib/blok-sema";
+
 type Ayarlar = {
   govde: HTMLElement;
   yolla: () => void;
@@ -39,13 +47,10 @@ type Ayarlar = {
   blokSec: (blok: HTMLElement | null) => void;
 };
 
-/* Yapistirmada IZIN VERILEN satir ici etiketler. Liste kisa olsun
-   diye degil, blok modelimizin tanidigi sey bu kadar oldugu icin:
-   tanimadigimiz her sey zaten ayristiricida kaybolur ya da "ham"
-   bloguna duser. */
-const IZINLI = new Set(["A", "B", "STRONG", "I", "EM", "CODE", "BR", "SUP", "SUB", "U", "S", "DEL"]);
-/* Blok duzeyinde izinliler: yapistirilan coklu paragraf korunsun. */
-const IZINLI_BLOK = new Set(["P", "H2", "H3", "H4", "UL", "OL", "LI", "BLOCKQUOTE", "FIGURE", "IMG", "FIGCAPTION", "TABLE", "THEAD", "TBODY", "TR", "TD", "TH", "HR"]);
+/* Kurallar SEMADAN geliyor, burada ikinci bir liste tutulmuyor.
+   Iki ayri liste tutmak tam olarak yamanin tanimi olurdu: biri
+   guncellenir, digeri unutulur ve yapistirma ile kayit farkli
+   seyleri gecirmeye baslar. Tek tanim: lib/blok-sema.ts. */
 
 /** Word/Docs artiklarini sokup yalnizca anlamli isaretlemeyi birakir. */
 export function yapistirmayiTemizle(ham: string): string {
@@ -54,26 +59,30 @@ export function yapistirmayiTemizle(ham: string): string {
 
   const gez = (dugum: Element) => {
     for (const cocuk of Array.from(dugum.children)) {
+      const etiket = cocuk.tagName.toLowerCase();
+
+      /* Tehlikeli olan ICERIGIYLE gidiyor: script'in "metni" zaten
+         metin degil. */
+      if (TEHLIKELI.has(etiket)) {
+        cocuk.remove();
+        continue;
+      }
+
       gez(cocuk);
 
-      if (IZINLI.has(cocuk.tagName) || IZINLI_BLOK.has(cocuk.tagName)) {
-        /* Etiket kalsin ama SUSU KALMASIN: satir ici renk, punto ve
-           font ailesi yapistirmayla gelirse yazi tasarimin disina
-           cikar ve tema degisikliginde oldugu gibi kalir. */
-        for (const oz of Array.from(cocuk.attributes)) {
-          const tut =
-            (cocuk.tagName === "A" && oz.name === "href") ||
-            (cocuk.tagName === "IMG" && (oz.name === "src" || oz.name === "alt"));
-          if (!tut) cocuk.removeAttribute(oz.name);
-        }
-        if (cocuk.tagName === "A") {
-          cocuk.setAttribute("rel", "noopener noreferrer");
-        }
-      } else {
-        /* Taninmayan etiket ICERIGIYLE birlikte yukari aliniyor —
-           silseydik yapistirilan metnin bir kismi kaybolurdu. */
+      if (SEFFAF.has(etiket) || !etiketGecerli(etiket)) {
+        /* Taninmayan etiket ICERIGIYLE yukari aliniyor — silseydik
+           yapistirilan metnin bir kismi kaybolurdu. */
         cocuk.replaceWith(...Array.from(cocuk.childNodes));
+        continue;
       }
+
+      for (const oz of Array.from(cocuk.attributes)) {
+        if (!oznitelikGecerli(etiket, oz.name, oz.value)) {
+          cocuk.removeAttribute(oz.name);
+        }
+      }
+      if (etiket === "a") cocuk.setAttribute("rel", "noopener noreferrer");
     }
   };
   gez(kap);
@@ -99,15 +108,16 @@ export function yapistirmayiTemizle(ham: string): string {
 export function blogunIciniTemizle(blok: HTMLElement) {
   for (const o of Array.from(blok.querySelectorAll("*"))) {
     /* span hicbir anlam tasimiyor: icerigiyle yukari aliniyor. */
-    if (o.tagName === "SPAN" || o.tagName === "FONT") {
+    const etiket = o.tagName.toLowerCase();
+    if (SEFFAF.has(etiket)) {
       o.replaceWith(...Array.from(o.childNodes));
       continue;
     }
-    o.removeAttribute("style");
-    /* Sinif yalnizca satir ici ogelerden siliniyor; blogun KENDI
-       sinifi (paragraf rolu, figure duzeni) disarida kaliyor cunku
-       burada yalnizca cocuklar geziliyor. */
-    if (IZINLI.has(o.tagName)) o.removeAttribute("class");
+    for (const oz of Array.from(o.attributes)) {
+      if (!oznitelikGecerli(etiket, oz.name, oz.value)) o.removeAttribute(oz.name);
+    }
+    /* Satir ici ogede sinif da gereksiz: bicim tasarimdan gelir. */
+    if (SATIR_ICI.has(etiket)) o.removeAttribute("class");
   }
 }
 
@@ -262,6 +272,8 @@ export function metinYuzeyiKur({
   cubuk.appendChild(dugme("<i>I</i>", "Italik (Cmd/Ctrl+I)", () => komut("italic")));
   cubuk.appendChild(dugme("&lt;/&gt;", "Kod", kodYap));
   cubuk.appendChild(dugme("🔗", "Baglanti (Cmd/Ctrl+K)", baglantiVer));
+  cubuk.appendChild(dugme("x²", "Ust simge", () => komut("superscript")));
+  cubuk.appendChild(dugme("x₂", "Alt simge", () => komut("subscript")));
   cubuk.appendChild(dugme("⌫", "Bicimi temizle", () => komut("removeFormat")));
   cubuk.appendChild(baglantiAlani);
 

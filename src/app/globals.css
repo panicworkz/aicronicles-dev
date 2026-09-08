@@ -700,3 +700,50 @@ html {
   line-height: 1.7;
   color: var(--muted);
 }
+
+/* ============ KONTROL LISTESI ============
+   Kutu CSS ile ciziliyor, gercek bir <input type=checkbox> degil.
+   Sebep: okurun sayfasinda tiklanabilir ama hicbir sey yapmayan bir
+   kutu birakmak, calismayan bir arayuz vaat etmek olurdu. Ayrica
+   blok semasi girdi alanlarini kabul etmiyor — kaydedilse bile
+   temizlenirdi. */
+.mag .article-body ul.kontrol-listesi {
+  list-style: none;
+  padding-left: 1.6em;
+}
+.mag .article-body ul.kontrol-listesi > li {
+  position: relative;
+}
+.mag .article-body ul.kontrol-listesi > li::before {
+  content: "";
+  position: absolute;
+  left: -1.55em;
+  top: 0.42em;
+  width: 0.86em;
+  height: 0.86em;
+  border: 1.5px solid var(--rule);
+  border-radius: 3px;
+  background: transparent;
+}
+.mag .article-body ul.kontrol-listesi > li[data-isaret="1"]::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+/* Onay isareti: kutunun icine cizilen iki cizgi. Metin karakteri
+   kullanmadik — font degisince hizalamasi kayiyor. */
+.mag .article-body ul.kontrol-listesi > li[data-isaret="1"]::after {
+  content: "";
+  position: absolute;
+  left: -1.32em;
+  top: 0.6em;
+  width: 0.36em;
+  height: 0.18em;
+  border-left: 1.7px solid var(--paper);
+  border-bottom: 1.7px solid var(--paper);
+  transform: rotate(-45deg);
+}
+.mag .article-body ul.kontrol-listesi > li[data-isaret="1"] {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--rule);
+}

@@ -1,4 +1,12 @@
 import { parse, HTMLElement, NodeType } from "node-html-parser";
+import {
+  TEHLIKELI,
+  SEFFAF,
+  etiketGecerli,
+  oznitelikGecerli,
+} from "./blok-sema.ts";
+/* Goreli yol bilerek: bu dosyayi goc ve olcum betikleri de dogrudan
+   Node ile calistiriyor ve orada "@/" takma adi cozulmuyor. */
 
 /**
  * BLOK MODELI.
@@ -40,7 +48,17 @@ export type BlokOz = Record<string, string>;
 export type Blok =
   | { t: "paragraf"; html: string; oz?: BlokOz }
   | { t: "baslik"; seviye: 2 | 3 | 4; html: string; id?: string; sinif?: string; oz?: BlokOz }
-  | { t: "liste"; sirali: boolean; ogeler: string[]; oz?: BlokOz }
+  | {
+      t: "liste";
+      sirali: boolean;
+      ogeler: string[];
+      /* KONTROL LISTESI. Isaretler ayri bir dizide tutuluyor cunku
+         "ogeler" yalnizca maddenin ICERIGINI saklıyor; kutunun dolu
+         mu bos mu oldugu madde metninin parcasi degil. Ayni dizide
+         tutsaydik metni her degistirdigimizde isaret de bozulurdu. */
+      isaretler?: boolean[];
+      oz?: BlokOz;
+    }
   | {
       t: "gorsel";
       src: string;
@@ -112,6 +130,52 @@ function kalanOz(oge: HTMLElement, modellenen: string[]): BlokOz | undefined {
   return Object.keys(kalan).length ? kalan : undefined;
 }
 
+/**
+ * SEMAYI UYGULAR — kayit noktasindaki guvence.
+ *
+ * Payload'in editorunde sema zorlamasi var: gecersiz isaretleme
+ * uretmek mumkun degil. Bizde o zorlama BURADA, yani yazmadan
+ * hemen once. Istemcideki suzgec (blok-metin.ts) yalnizca deneyim
+ * icin; panele baska yollardan gelen icerik — kopilot, toplu islem,
+ * elle API cagrisi — o suzgecten gecmiyor, buradan geciyor.
+ *
+ * Uc ayri islem yapiyor ve ucu de farkli bir seyi koruyor:
+ *   · TEHLIKELI etiketler icerigiyle SILINIYOR (script, iframe...):
+ *     bunlarin icerigi metin degil, sayfaya kod sokma yolu.
+ *   · SEFFAF ve taninmayan etiketler ACILIYOR (span, font...):
+ *     silseydik metnin kendisi kaybolurdu; anlam tasimadiklari icin
+ *     yalnizca kabuklari atiliyor.
+ *   · Izinsiz oznitelikler siliniyor: onclick gibi olaylar,
+ *     javascript: adresleri ve metin bloklarindaki satir ici stiller.
+ */
+function semayiUygula(kok: HTMLElement) {
+  const gez = (dugum: HTMLElement) => {
+    for (const cocuk of [...dugum.childNodes]) {
+      if (cocuk.nodeType !== NodeType.ELEMENT_NODE) continue;
+      const oge = cocuk as HTMLElement;
+      const etiket = (oge.tagName ?? "").toLowerCase();
+
+      if (TEHLIKELI.has(etiket)) {
+        oge.remove();
+        continue;
+      }
+
+      gez(oge);
+
+      if (SEFFAF.has(etiket) || !etiketGecerli(etiket)) {
+        /* Icerigi yerine geciyor: kabuk gidiyor, metin kaliyor. */
+        oge.replaceWith(...oge.childNodes);
+        continue;
+      }
+
+      for (const [ad, deger] of Object.entries(oge.attributes)) {
+        if (!oznitelikGecerli(etiket, ad, deger ?? "")) oge.removeAttribute(ad);
+      }
+    }
+  };
+  gez(kok);
+}
+
 /* ==================================================================
    HTML  →  BLOKLAR
    ================================================================== */
@@ -124,6 +188,11 @@ export function htmlBloklara(html?: string | null): Blok[] {
        satirda duran ogelerin birlesmesine yol aciyor. */
     blockTextElements: { script: true, style: true, pre: true },
   });
+
+  /* Sema HER SEYDEN ONCE: blok cikarimi artik yalnizca gecerli bir
+     agac uzerinde calisiyor, her blok turu icin ayri ayri
+     temizlemek gerekmiyor. */
+  semayiUygula(kok as HTMLElement);
 
   const bloklar: Blok[] = [];
 
@@ -184,18 +253,25 @@ export function htmlBloklara(html?: string | null): Blok[] {
 
       case "ul":
       case "ol":
+      {
+        /* Yalnizca DOGRUDAN cocuklar: ic ice listelerde alttaki
+           ogeler iki kez sayilirdi. */
+        const maddeler = oge
+          .querySelectorAll("li")
+          .filter((li) => li.parentNode === oge);
+        const kontrolMu = oge.getAttribute("class")?.includes("kontrol-listesi");
+
         bloklar.push({
           t: "liste",
           sirali: etiket === "ol",
-          ogeler: oge
-            .querySelectorAll("li")
-            /* Yalnizca DOGRUDAN cocuklar: ic ice listelerde alttaki
-               ogeler iki kez sayilirdi. */
-            .filter((li) => li.parentNode === oge)
-            .map((li) => li.innerHTML),
+          ogeler: maddeler.map((li) => li.innerHTML),
+          ...(kontrolMu
+            ? { isaretler: maddeler.map((li) => li.getAttribute("data-isaret") === "1") }
+            : {}),
           ...ozEk(oge, []),
         });
         break;
+      }
 
       case "figure": {
         const img = oge.querySelector("img");
@@ -312,7 +388,20 @@ export function bloklarHtmle(
 
         case "liste": {
           const e = b.sirali ? "ol" : "ul";
-          return `<${e}${ozYaz(b.oz)}>${b.ogeler.map((o) => `<li>${o}</li>`).join("")}</${e}>`;
+          const maddeler = b.ogeler
+            .map((o, i) => {
+              /* Isaret data-isaret'te duruyor, gorunumu CSS veriyor.
+                 Gercek bir <input type=checkbox> koymak okurun
+                 sayfasinda tiklanabilir ama hicbir sey yapmayan bir
+                 kutu birakirdi; ayrica sema girdi alanlarini kabul
+                 etmiyor. */
+              const isaret = b.isaretler?.[i];
+              return isaret === undefined
+                ? `<li>${o}</li>`
+                : `<li data-isaret="${isaret ? "1" : "0"}">${o}</li>`;
+            })
+            .join("");
+          return `<${e}${ozYaz(b.oz)}>${maddeler}</${e}>`;
         }
 
         case "gorsel": {

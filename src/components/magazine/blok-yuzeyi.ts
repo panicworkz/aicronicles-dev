@@ -693,10 +693,128 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
       cubuk.appendChild(ayirici());
     }
 
+    /* ---- TABLO DENETIMLERI ----
+       Tablolar simdiye kadar yalnizca ham HTML olarak duzenleniyordu:
+       satir eklemek icin hucre isaretlemesini elle yazmak gerekiyordu.
+       Satir ve sutun islemleri artik burada. */
+    if (t === "tablo") {
+      const tablo = (o.tagName === "TABLE" ? o : o.querySelector("table")) as HTMLTableElement | null;
+
+      /* Bir satirin hucre sayisi, birlestirilmis hucreler yuzunden
+         sutun sayisiyla ayni olmayabilir; colspan toplaniyor. */
+      const sutunSayisi = () => {
+        const ilk = tablo?.rows[0];
+        if (!ilk) return 0;
+        return [...ilk.cells].reduce((n, h) => n + (h.colSpan || 1), 0);
+      };
+
+      const hangiSutun = () => {
+        /* Imlecin bulundugu hucre; yoksa sona ekleniyor. */
+        const s = window.getSelection();
+        const hucre = (s?.anchorNode as HTMLElement | null)?.parentElement?.closest?.("td,th");
+        return hucre ? (hucre as HTMLTableCellElement).cellIndex : -1;
+      };
+
+      const hangiSatir = () => {
+        const s = window.getSelection();
+        const satir = (s?.anchorNode as HTMLElement | null)?.parentElement?.closest?.("tr");
+        return satir ? (satir as HTMLTableRowElement).rowIndex : -1;
+      };
+
+      cubuk.appendChild(dugme("+↓", "Satir ekle", () => {
+        if (!tablo) return;
+        const govdeBol = tablo.tBodies[0] ?? tablo;
+        const n = sutunSayisi();
+        const yeni = (govdeBol as HTMLTableSectionElement).insertRow();
+        for (let i = 0; i < n; i++) {
+          const h = yeni.insertCell();
+          h.innerHTML = "<br>";
+        }
+        bitir();
+      }));
+
+      cubuk.appendChild(dugme("+→", "Sutun ekle", () => {
+        if (!tablo) return;
+        for (const satir of [...tablo.rows]) {
+          /* Baslik satirinda th, govdede td: yanlis etiket koymak
+             tablonun anlamini ve ekran okuyucu davranisini bozar. */
+          const basliktaMi = satir.parentElement?.tagName === "THEAD";
+          const h = document.createElement(basliktaMi ? "th" : "td");
+          h.innerHTML = "<br>";
+          satir.appendChild(h);
+        }
+        bitir();
+      }));
+
+      cubuk.appendChild(dugme("−↓", "Satiri sil", () => {
+        if (!tablo || tablo.rows.length <= 1) return;
+        const i = hangiSatir();
+        tablo.deleteRow(i >= 0 ? i : tablo.rows.length - 1);
+        bitir();
+      }));
+
+      cubuk.appendChild(dugme("−→", "Sutunu sil", () => {
+        if (!tablo || sutunSayisi() <= 1) return;
+        const i = hangiSutun();
+        for (const satir of [...tablo.rows]) {
+          const k = i >= 0 ? i : satir.cells.length - 1;
+          if (satir.cells[k]) satir.deleteCell(k);
+        }
+        bitir();
+      }));
+
+      cubuk.appendChild(dugme("⊤", "Baslik satirini ac/kapat", () => {
+        if (!tablo) return;
+        const bas = tablo.tHead;
+        if (bas) {
+          /* Basligi kaldirirken satir SILINMIYOR, govdeye tasiniyor:
+             silseydik bir satirlik veri kaybolurdu. */
+          const govdeBol = tablo.tBodies[0] ?? tablo.createTBody();
+          for (const satir of [...bas.rows]) {
+            for (const h of [...satir.cells]) {
+              const td = document.createElement("td");
+              td.innerHTML = h.innerHTML;
+              h.replaceWith(td);
+            }
+            govdeBol.insertBefore(satir, govdeBol.firstChild);
+          }
+          bas.remove();
+        } else {
+          const ilk = tablo.rows[0];
+          if (!ilk) return;
+          const yeniBas = tablo.createTHead();
+          for (const h of [...ilk.cells]) {
+            const th = document.createElement("th");
+            th.innerHTML = h.innerHTML;
+            th.setAttribute("scope", "col");
+            h.replaceWith(th);
+          }
+          yeniBas.appendChild(ilk);
+        }
+        bitir();
+      }));
+
+      cubuk.appendChild(ayirici());
+    }
+
     if (t === "liste") {
       cubuk.appendChild(
         dugme(o.tagName === "OL" ? "1." : "•", "Numarali / madde isaretli", () => {
           sec(etiketDegistir(o, o.tagName === "OL" ? "ul" : "ol"));
+          bitir();
+        })
+      );
+      cubuk.appendChild(
+        dugme("☑", "Kontrol listesi", () => {
+          const acik = o.classList.toggle("kontrol-listesi");
+          for (const li of Array.from(o.children)) {
+            /* Isaret durumu ACILIRKEN veriliyor, kapanirken
+               siliniyor: kapali bir listede data-isaret durursa
+               tekrar acildiginda eski isaretler geri gelir ve
+               kullanici bunu beklemez. */
+            if (acik) li.setAttribute("data-isaret", "0");
+            else li.removeAttribute("data-isaret");
+          }
           bitir();
         })
       );
@@ -764,6 +882,21 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
   const tikla = (e: MouseEvent) => {
     const blok = ustBlok(e.target);
     if (blok) sec(blok);
+  };
+
+  /* Kontrol listesinde kutuya tiklamak isareti degistiriyor.
+     Kutu CSS ile ciziliyor (gercek bir input degil); tiklamanin
+     maddenin SOL kenarinda olup olmadigina bakiliyor, yoksa metnin
+     ortasina tiklamak da isareti degistirirdi. */
+  const kutuTikla = (e: MouseEvent) => {
+    const li = (e.target as HTMLElement)?.closest?.("li");
+    if (!li || !li.parentElement?.classList.contains("kontrol-listesi")) return;
+    const k = li.getBoundingClientRect();
+    if (e.clientX > k.left) return;
+    e.preventDefault();
+    kaydet();
+    li.setAttribute("data-isaret", li.getAttribute("data-isaret") === "1" ? "0" : "1");
+    yolla();
   };
 
   const gorseleCiftTik = (e: MouseEvent) => {
@@ -877,6 +1010,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
   govde.addEventListener("mousemove", hareket);
   govde.addEventListener("mouseleave", govdedenCik);
   govde.addEventListener("click", tikla);
+  govde.addEventListener("click", kutuTikla);
   govde.addEventListener("dblclick", gorseleCiftTik);
   document.addEventListener("mousedown", disariTik, true);
   document.addEventListener("mousemove", surukleHareket);
@@ -892,6 +1026,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc }: Ayarlar): () => void {
     govde.removeEventListener("mousemove", hareket);
     govde.removeEventListener("mouseleave", govdedenCik);
     govde.removeEventListener("click", tikla);
+    govde.removeEventListener("click", kutuTikla);
     govde.removeEventListener("dblclick", gorseleCiftTik);
     document.removeEventListener("mousedown", disariTik, true);
     document.removeEventListener("mousemove", surukleHareket);
