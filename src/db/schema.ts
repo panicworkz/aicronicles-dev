@@ -131,7 +131,11 @@ export const siteSettings = pgTable('site_settings', {
 });
 
 // ==========================================
-// E-COMMERCE CORE TABLES (Payload E-Commerce Standard)
+/* E-TICARET TABLOLARI.
+   Basligi "Payload E-Commerce Standard" yaziyordu — bu projede
+   Payload YOK; bagimliliklarda gecmiyor. Next.js + Drizzle + Postgres
+   kullaniliyor. Yanlis bir kaynak gostermek, sonradan bakan birini
+   olmayan bir belgeye yollar. */
 // ==========================================
 
 export const productCategories = pgTable('product_categories', {

@@ -130,6 +130,7 @@ export default function PanicProductCategoriesPage() {
     }
   };
 
+  const bosSayisi = categories.filter((c: any) => !(c.productCount > 0)).length;
   const totalProducts = categories.reduce((sum, c) => sum + (c.productCount || 0), 0);
 
   return (
@@ -176,10 +177,18 @@ export default function PanicProductCategoriesPage() {
           icon={Package}
           trend="up"
         />
+        {/* Bu kart "Commerce Architecture: Payload Standard" yaziyordu.
+            Bu projede PAYLOAD YOK — bagimliliklarda gecmiyor; Next.js,
+            Drizzle ve Postgres kullaniliyor. Ustelik bir olcu de
+            degildi, sabit bir metindi.
+
+            Yerine gercekten sayilan bir sey: bos raflar. Bos bir
+            kategori vitrinde gorunmuyor, yani editorun bilmesi
+            gereken bir sey. */}
         <StatCard
-          title="Commerce Architecture"
-          value="Payload Standard"
-          change="Multi-type support"
+          title="Empty collections"
+          value={bosSayisi}
+          change={bosSayisi > 0 ? "Not shown in the store" : "Every collection has products"}
           icon={Layers}
           trend="up"
         />
@@ -210,7 +219,12 @@ export default function PanicProductCategoriesPage() {
                         <FolderTree className="size-3.5" />
                         <span>{cat.name}</span>
                       </span>
-                      <div className="text-[11px] text-muted-foreground font-mono">/store?category={cat.slug}</div>
+                      {/* Adres ?shelf= — vitrin bu parametreyle
+                          suzuyor. Once ?category= yaziliyordu ve o
+                          adres hicbir sey suzmuyordu. */}
+                      <div className="text-[11px] text-muted-foreground font-mono">
+                        /store?shelf={cat.slug}
+                      </div>
                     </div>
 
                     <Badge variant="secondary" className="text-xs font-mono shrink-0">
@@ -224,8 +238,14 @@ export default function PanicProductCategoriesPage() {
                 </CardContent>
 
                 <div className="p-3 bg-muted/20 border-t flex items-center justify-between gap-2">
+                  {/* Once hep /store'a gidiyordu; hangi kategoriye
+                      tikladigin fark etmiyordu. */}
                   <Link
-                    href={`/store`}
+                    href={
+                      (cat.productCount || 0) > 0
+                        ? `/store?shelf=${cat.slug}`
+                        : "/store"
+                    }
                     target="_blank"
                     className="text-[11px] font-medium text-muted-foreground hover:text-primary flex items-center gap-1 transition"
                   >
