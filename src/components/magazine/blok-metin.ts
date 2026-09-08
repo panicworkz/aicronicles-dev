@@ -86,6 +86,31 @@ export function yapistirmayiTemizle(ham: string): string {
   return kap.innerHTML;
 }
 
+/**
+ * Yapistirmadan SONRA blogun icini temizler.
+ *
+ * Neden ayrica gerekiyor: girdiyi temizlemek yetmiyor. execCommand
+ * ("insertHTML") eklerken tarayici kendi hesapladigi stilleri geri
+ * yaziyor — olculdu: temizlenmis bir parca eklendikten sonra icinde
+ * style="font-size: 1.06rem" belirdi. O deger veritabanina girseydi
+ * metnin puntosu donar, tema ya da font degistiginde o parca eski
+ * boyunda kalirdi.
+ */
+export function blogunIciniTemizle(blok: HTMLElement) {
+  for (const o of Array.from(blok.querySelectorAll("*"))) {
+    /* span hicbir anlam tasimiyor: icerigiyle yukari aliniyor. */
+    if (o.tagName === "SPAN" || o.tagName === "FONT") {
+      o.replaceWith(...Array.from(o.childNodes));
+      continue;
+    }
+    o.removeAttribute("style");
+    /* Sinif yalnizca satir ici ogelerden siliniyor; blogun KENDI
+       sinifi (paragraf rolu, figure duzeni) disarida kaliyor cunku
+       burada yalnizca cocuklar geziliyor. */
+    if (IZINLI.has(o.tagName)) o.removeAttribute("class");
+  }
+}
+
 export function metinYuzeyiKur({
   govde,
   yolla,
@@ -311,6 +336,13 @@ export function metinYuzeyiKur({
           .replace(/\n/g, "<br>");
 
     document.execCommand("insertHTML", false, temiz);
+
+    /* Tarayicinin ekleme sirasinda geri yazdigi stiller burada
+       siliniyor — girdiyi temizlemek tek basina yetmiyor. */
+    let blok = e.target as HTMLElement | null;
+    while (blok && blok.parentElement !== govde) blok = blok.parentElement;
+    if (blok) blogunIciniTemizle(blok);
+
     yolla();
   };
 
