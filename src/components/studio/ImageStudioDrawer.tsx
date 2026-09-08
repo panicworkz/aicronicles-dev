@@ -356,11 +356,15 @@ export function ImageStudioDrawer({
       <MediaPickerModal
         isOpen={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSelect={(newUrl, newAlt) => {
+        onSelect={(newUrl, newAlt, newCaption) => {
           setSrc(newUrl);
           if (newAlt) setAlt(newAlt);
+          /* Kredi KENDILIGINDEN geliyor ama YAZILANI EZMIYOR: yazar
+             altyaziyi elle degistirmisse kutuphanedeki metin onun
+             yerine gecmemeli. */
+          if (newCaption && !caption.trim()) setCaption(newCaption);
           setPickerOpen(false);
-          toast.success('New image selected!');
+          toast.success('Gorsel secildi');
         }}
         title="Replace Image (Library, Upload, or URL)"
         currentUrl={src}

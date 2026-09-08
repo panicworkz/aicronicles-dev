@@ -18,6 +18,7 @@ import { AdSlot } from "@/components/magazine/AdSlot";
 import { decodeEntities, tagLabel } from "@/lib/taxonomy";
 import { enrichArticleHtml, type MediaBoyut } from "@/components/magazine/enrichArticleHtml";
 import { urunBloklariniDoldur } from "@/lib/urun-blogu";
+import { icindekileriDoldur } from "@/lib/icindekiler";
 import { yazininBloklari, bloklarHtmle } from "@/lib/bloklar";
 import CmsPage from "@/components/magazine/CmsPage";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
@@ -222,8 +223,12 @@ export default async function ArticlePage({ params }: PageProps) {
 
      Blogu olmayan yazi HTML'inden cevriliyor (yazininBloklari), yani
      gocun ulasmadigi bir kayit da dogru basiliyor. */
+  /* Icindekiler URUN KARTINDAN ONCE dolduruluyor: urun karti da
+     baslik icerebilir ve icindekilere girmemeli. */
   const govdeHtml = await urunBloklariniDoldur(
-    enrichArticleHtml(bloklarHtmle(yazininBloklari(post), { isaretle: true }), boyutlar)
+    icindekileriDoldur(
+      enrichArticleHtml(bloklarHtmle(yazininBloklari(post), { isaretle: true }), boyutlar)
+    )
   );
 
   const related = others.slice(0, 4).map(toCard);

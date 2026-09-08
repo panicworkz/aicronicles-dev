@@ -44,6 +44,8 @@ type Ayarlar = {
   menuAc: () => void;
   /* Bir blogu baska bir etikete cevirir (markdown kisayollari icin). */
   etiketeCevir: (blok: HTMLElement, etiket: string) => HTMLElement;
+  /* Blok arac cubugunun yeri. Iki cubuk ust uste binmesin diye. */
+  blokCubuguKutusu: () => DOMRect | null;
   blokSec: (blok: HTMLElement | null) => void;
 };
 
@@ -128,6 +130,7 @@ export function metinYuzeyiKur({
   menuAc,
   etiketeCevir,
   blokSec,
+  blokCubuguKutusu,
 }: Ayarlar): () => void {
   /* ---------------- satir ici arac cubugu ---------------- */
 
@@ -290,7 +293,18 @@ export function metinYuzeyiKur({
     }
     /* Secimin USTUNDE duruyor; sayfa basindaysa altina geciyor. */
     cubuk.style.display = "flex";
-    const ust = k.top - cubuk.offsetHeight - 8;
+    let ust = k.top - cubuk.offsetHeight - 8;
+
+    /* BLOK CUBUGUYLA CAKISMA.
+       Ikisi de blogun ust kenarina yerlesiyordu: blogun ilk satirinda
+       metin secince ust uste biniyor, dugmeler birbirinin uzerine
+       geliyordu. Cakisma varsa satir ici cubuk blok cubugunun da
+       USTUNE cikiyor — ikisi ust uste degil, alt alta duruyor. */
+    const blokKutu = blokCubuguKutusu();
+    if (blokKutu && ust < blokKutu.bottom + 4 && k.top < blokKutu.bottom + 40) {
+      ust = blokKutu.top - cubuk.offsetHeight - 6;
+    }
+
     cubuk.style.top = `${ust < 8 ? k.bottom + 8 : ust}px`;
     cubuk.style.left = `${Math.max(8, Math.min(window.innerWidth - cubuk.offsetWidth - 8, k.left + k.width / 2 - cubuk.offsetWidth / 2))}px`;
   };

@@ -23,7 +23,10 @@ import { toast } from 'sonner';
 interface MediaPickerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (url: string, alt?: string) => void;
+  /* Altyazi da doniyor: kutuphanedeki her gorselin kaynak/kredi
+     bilgisi caption alaninda duruyor ve secim sirasinda dusuruluyordu.
+     Sonucu, elle eklenen gorsellerin altinda kredi hic gorunmemesiydi. */
+  onSelect: (url: string, alt?: string, caption?: string) => void;
   currentUrl?: string;
   title?: string;
 }
@@ -92,7 +95,7 @@ export function MediaPickerModal({
 
       const data = await res.json();
       if (data.success && data.media?.url) {
-        onSelect(data.media.url, data.media.alt);
+        onSelect(data.media.url, data.media.alt, data.media.caption);
         toast.success('Image uploaded and selected');
         onClose();
       } else {
@@ -212,7 +215,7 @@ export function MediaPickerModal({
                       <Card
                         key={m.id}
                         onClick={() => {
-                          onSelect(m.url, m.alt);
+                          onSelect(m.url, m.alt, m.caption);
                           onClose();
                         }}
                         className={`group overflow-hidden flex flex-col transition cursor-pointer hover:border-primary ${

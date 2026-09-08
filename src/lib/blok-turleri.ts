@@ -171,6 +171,27 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
     alanlar: [],
   },
 
+  icindekiler: {
+    t: "icindekiler",
+    ad: "Icindekiler",
+    eklenebilir: true,
+    yeni: () => ({ t: "icindekiler", seviyeler: [2, 3] }),
+    yerindeYazilir: false,
+    alanlar: [
+      {
+        ad: "seviyeler",
+        etiket: "Hangi basliklar",
+        tur: "secim",
+        secenekler: [
+          { deger: "2", etiket: "Yalnizca ana bolumler (H2)" },
+          { deger: "2,3", etiket: "Ana bolumler ve alt bolumler (H2 + H3)" },
+          { deger: "2,3,4", etiket: "Butun basliklar (H2 + H3 + H4)" },
+        ],
+        ipucu: "Liste yazinin basliklarindan kendiliginden uretiliyor; baslik degisince guncelleniyor.",
+      },
+    ],
+  },
+
   ham: {
     t: "ham",
     ad: "Ham HTML",
@@ -184,7 +205,7 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
 
 /** Ekleme menusunde gosterilecek turler, siralanmis halde. */
 export const EKLENEBILIR_TURLER = (
-  ["paragraf", "baslik", "gorsel", "liste", "alinti", "urun", "ayrac"] as const
+  ["paragraf", "baslik", "gorsel", "liste", "icindekiler", "alinti", "urun", "ayrac"] as const
 ).map((t) => BLOK_TANIMLARI[t]);
 
 export function blokAdi(t: string): string {

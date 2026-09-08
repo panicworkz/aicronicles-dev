@@ -38,6 +38,8 @@ export function turuBul(o: Element): string {
   const isaret = o.getAttribute("data-blok-t");
   if (isaret) return isaret;
   if (o.getAttribute("data-blok") === "urun") return "urun";
+  if (o.getAttribute("data-blok") === "icindekiler") return "icindekiler";
+  if (o.tagName === "NAV" && o.classList.contains("icindekiler")) return "icindekiler";
   switch (o.tagName) {
     case "P": return "paragraf";
     case "H2": case "H3": case "H4": return "baslik";
@@ -363,6 +365,11 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         o.setAttribute("data-blok", "urun");
         o.setAttribute("data-urun-id", "0");
         break;
+      case "icindekiler":
+        o = document.createElement("div");
+        o.setAttribute("data-blok", "icindekiler");
+        o.setAttribute("data-seviye", "2,3");
+        break;
       default:
         o = document.createElement("p");
         o.innerHTML = "<br>";
@@ -377,6 +384,53 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     const s = window.getSelection();
     s?.removeAllRanges();
     s?.addRange(a);
+  };
+
+  /**
+   * ICINDEKILER TASLAGI.
+   *
+   * Gercek liste sunucuda basiliyor (lib/icindekiler.ts), ama yazar
+   * kaydedene kadar bos bir kutu gormemeli — ustelik hangi
+   * basliklarin listeye girdigini ANINDA gormesi gerekiyor, seviye
+   * secimi ancak boyle anlasilir. Taslak kaydedilmiyor: ayristirici
+   * data-blok="icindekiler" goren ogeyi blok olarak alip icerigini
+   * atiyor.
+   */
+  const icindekileriCiz = (blok: HTMLElement) => {
+    const seviyeler = (blok.getAttribute("data-seviye") || "2,3")
+      .split(",")
+      .map((x) => Number(x.trim()))
+      .filter((x) => x >= 2 && x <= 4);
+    const secici = seviyeler.map((s) => `h${s}`).join(",");
+    const basliklar = secici
+      ? ([...govde.querySelectorAll(secici)] as HTMLElement[])
+      : [];
+
+    blok.className = "icindekiler";
+    blok.innerHTML =
+      `<div class="icindekiler-baslik">Icindekiler</div>` +
+      `<ol class="icindekiler-liste"></ol>`;
+    const liste = blok.querySelector(".icindekiler-liste")!;
+
+    if (basliklar.length < 2) {
+      /* Sunucu da bu durumda hicbir sey basmiyor; yazar bunu
+         kaydetmeden once bilmeli. */
+      liste.innerHTML =
+        `<li class="icindekiler-madde" data-derinlik="0">` +
+        `<em>En az iki baslik gerekiyor — su an liste basilmayacak.</em></li>`;
+      return;
+    }
+
+    const enUst = Math.min(...basliklar.map((b) => Number(b.tagName[1])));
+    for (const b of basliklar) {
+      const li = document.createElement("li");
+      li.className = "icindekiler-madde";
+      li.setAttribute("data-derinlik", String(Number(b.tagName[1]) - enUst));
+      /* Metin olarak yaziliyor: baslikta gecen bir isaret listeyi
+         bozmasin. */
+      li.textContent = b.textContent?.trim() ?? "";
+      liste.appendChild(li);
+    }
   };
 
   /* ---------------- ekleme menusu ---------------- */
@@ -405,6 +459,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
            "eksik" bir sey birakmak olurdu.
            Onizlemeden gonderim ONCE yapiliyor: panel secim penceresini
            acmadan once yeni blogun varligini bilmeli. */
+        if (tanim.t === "icindekiler") icindekileriCiz(yeni);
         bitir();
         if (tanim.t === "gorsel") gorselAc(yeni.querySelector("img")!);
         if (tanim.t === "urun") urunAc(yeni);
@@ -700,6 +755,30 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     if (t === "gorsel") {
       const img = o.tagName === "IMG" ? (o as HTMLImageElement) : o.querySelector("img");
       cubuk.appendChild(dugme("Degistir", "Gorseli degistir", () => img && gorselAc(img)));
+      cubuk.appendChild(ayirici());
+    }
+
+    if (t === "icindekiler") {
+      const s = document.createElement("select");
+      s.style.cssText = `all:unset;box-sizing:border-box;cursor:pointer;padding:5px 7px;border-radius:6px;color:${R.ink};background:${R.yuzeyUst};font:500 12px ui-sans-serif,system-ui`;
+      for (const [deger, etiket] of [
+        ["2", "Ana bolumler (H2)"],
+        ["2,3", "H2 + H3"],
+        ["2,3,4", "Butun basliklar"],
+      ]) {
+        const se = document.createElement("option");
+        se.value = deger;
+        se.textContent = etiket;
+        s.appendChild(se);
+      }
+      s.value = o.getAttribute("data-seviye") || "2,3";
+      s.addEventListener("mousedown", (e) => e.stopPropagation());
+      s.addEventListener("change", () => {
+        o.setAttribute("data-seviye", s.value);
+        icindekileriCiz(o);
+        bitir();
+      });
+      cubuk.appendChild(s);
       cubuk.appendChild(ayirici());
     }
 
@@ -1029,6 +1108,8 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     menuAc: menuyuAc,
     etiketeCevir: (blok, etiket) => etiketDegistir(blok, etiket),
     blokSec: sec,
+    blokCubuguKutusu: () =>
+      cubuk.style.display === "none" ? null : cubuk.getBoundingClientRect(),
   });
 
   govde.addEventListener("input", yazarkenKaydet);

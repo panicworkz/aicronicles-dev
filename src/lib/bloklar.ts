@@ -4,6 +4,7 @@ import {
   SEFFAF,
   etiketGecerli,
   oznitelikGecerli,
+  icBaglantiMi,
 } from "./blok-sema.ts";
 /* Goreli yol bilerek: bu dosyayi goc ve olcum betikleri de dogrudan
    Node ile calistiriyor ve orada "@/" takma adi cozulmuyor. */
@@ -88,9 +89,37 @@ export type Blok =
      geliyor. Yazinin icine fiyat yazsaydik urun degistiginde yazi
      yalan soylerdi. Yazar yalnizca "su urun burada dursun" diyor. */
   | { t: "urun"; urunId: number }
+  /* ICINDEKILER — urun karti gibi, icerigi okuma aninda uretiliyor.
+     Elle yazilmis bir baglanti listesi olsaydi baslik degistiginde
+     ya da yeni bolum eklendiginde liste yalan soylemeye baslardi ve
+     kimse fark etmezdi. Yazar yalnizca "burada icindekiler dursun"
+     ve hangi seviyeler diyor. */
+  | { t: "icindekiler"; seviyeler: number[] }
   /* Kacis kapisi: ayristiricinin tanimadigi her sey. Oldugu gibi
      basiliyor, yani icerik asla kaybolmuyor. */
   | { t: "ham"; html: string };
+
+/**
+ * Baslik metninden cipa kimligi.
+ *
+ * Var olan kimliklerle ayni bicimde uretiliyor (kucuk harf, tireli),
+ * yoksa ayni yazi icinde iki farkli kimlik uslubu olurdu.
+ */
+export function baslikKimligi(metin: string): string {
+  const harita: Record<string, string> = {
+    ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u",
+    Ç: "c", Ğ: "g", İ: "i", Ö: "o", Ş: "s", Ü: "u",
+  };
+  return metin
+    .trim()
+    .toLowerCase()
+    .replace(/[çğıöşüÇĞİÖŞÜ]/g, (k) => harita[k] ?? k)
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80);
+}
 
 /** Ozniteliklerin HTML'e geri yazilmasi icin. */
 function oznitelik(ad: string, deger?: string | null): string {
@@ -171,6 +200,17 @@ function semayiUygula(kok: HTMLElement) {
       for (const [ad, deger] of Object.entries(oge.attributes)) {
         if (!oznitelikGecerli(etiket, ad, deger ?? "")) oge.removeAttribute(ad);
       }
+
+      /* IC BAGLANTIDA target ve rel YOK.
+         Icindekiler listesindeki "#baslik" baglantilari target="_blank"
+         ile kaydedilmisti; okur icindekilere tiklayinca AYNI SAYFA yeni
+         sekmede aciliyordu. Ayrica sayfa ici bir cipaya nofollow
+         yazmak anlamsiz. Dis baglantilarda ikisi de anlamli, onlara
+         dokunulmuyor. */
+      if (etiket === "a" && icBaglantiMi(oge.getAttribute("href") ?? "")) {
+        oge.removeAttribute("target");
+        oge.removeAttribute("rel");
+      }
     }
   };
   gez(kok);
@@ -236,6 +276,13 @@ export function htmlBloklara(html?: string | null): Blok[] {
           t: "baslik",
           seviye: Number(etiket[1]) as 2 | 3 | 4,
           html: oge.innerHTML,
+          /* Kimligi OLMAYAN basliga uretiliyor, olanınki asla
+             degistirilmiyor: kimlik degistirmek disaridan verilmis
+             baglantilari ve icindekiler cipalarini kirar. Kimliksiz
+             baslik ise icindekilerde hedefsiz kalirdi. */
+          ...(oge.getAttribute("id")
+            ? {}
+            : { id: baslikKimligi(oge.textContent ?? "") }),
           /* Kimlik KORUNUYOR: icindekiler baglantilari ve SSS cikarimi
              (lib/faq.ts) bu kimlikleri kullaniyor. Atsaydik sayfa ici
              baglantilar ve arama sonucundaki SSS kirilirdi. */
@@ -264,7 +311,18 @@ export function htmlBloklara(html?: string | null): Blok[] {
         bloklar.push({
           t: "liste",
           sirali: etiket === "ol",
-          ogeler: maddeler.map((li) => li.innerHTML),
+          /* TipTap madde icerigini <p> ile sariyor: <li><p>metin</p></li>.
+             Yayinda bu fazladan bir blok boslugu uretiyor ve maddeler
+             birbirinden kopuyor. Tek basina duran p aciliyor. */
+          ogeler: maddeler.map((li) => {
+            const cocuklar = li.childNodes.filter(
+              (c) => c.nodeType !== NodeType.TEXT_NODE || c.rawText.trim()
+            );
+            const tekP =
+              cocuklar.length === 1 &&
+              (cocuklar[0] as HTMLElement).tagName?.toLowerCase() === "p";
+            return tekP ? (cocuklar[0] as HTMLElement).innerHTML : li.innerHTML;
+          }),
           ...(kontrolMu
             ? { isaretler: maddeler.map((li) => li.getAttribute("data-isaret") === "1") }
             : {}),
@@ -336,7 +394,20 @@ export function htmlBloklara(html?: string | null): Blok[] {
         /* Urun karti isareti. Turetilen HTML'de yalnizca bos bir
            yer tutucu duruyor; kart okuma aninda dolduruluyor
            (lib/urun-blogu.ts). Boylece gidis-donus de kayipsiz. */
-        if (oge.getAttribute("data-blok") === "urun") {
+        if (
+          oge.getAttribute("data-blok") === "icindekiler" ||
+          (etiket === "nav" && oge.getAttribute("class")?.includes("icindekiler"))
+        ) {
+          const ham = oge.getAttribute("data-seviye") || "2,3";
+          const seviyeler = ham
+            .split(",")
+            .map((x) => Number(x.trim()))
+            .filter((x) => x >= 2 && x <= 4);
+          bloklar.push({
+            t: "icindekiler",
+            seviyeler: seviyeler.length ? seviyeler : [2, 3],
+          });
+        } else if (oge.getAttribute("data-blok") === "urun") {
           const kimlik = Number(oge.getAttribute("data-urun-id"));
           if (Number.isFinite(kimlik) && kimlik > 0) {
             bloklar.push({ t: "urun", urunId: kimlik });
@@ -437,6 +508,13 @@ export function bloklarHtmle(
 
         case "alinti":
           return `<blockquote${ozYaz(b.oz)}>${b.html}</blockquote>`;
+
+        case "icindekiler":
+          /* Yalnizca isaret; liste okuma aninda basiliyor
+             (lib/icindekiler.ts). RSS ve llms.txt gibi ham HTML okuyan
+             yerlerde bos bir div kaliyor — orada icindekiler zaten
+             anlamsiz. */
+          return `<div data-blok="icindekiler" data-seviye="${b.seviyeler.join(",")}"></div>`;
 
         case "urun":
           /* Yalnizca isaret. Kartin kendisi okuma aninda basiliyor;
