@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
+import CanliOnizleme from "@/components/magazine/CanliOnizleme";
 import ClientForm from "@/components/magazine/ClientForm";
 import ArticleClientActions from "./ArticleClientActions";
 import {
@@ -26,6 +27,8 @@ export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  /* ?live=1 — panelin onizleme cercevesi. Bkz. CanliOnizleme. */
+  searchParams: Promise<{ live?: string }>;
 }
 
 /* Kanonik adres tek yerden — artik @/lib/seo. Bu dosya kendi sabitini
@@ -144,8 +147,12 @@ async function medyaBoyutlari(): Promise<Map<string, MediaBoyut>> {
   return harita;
 }
 
-export default async function ArticlePage({ params }: PageProps) {
+export default async function ArticlePage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  /* Panelin onizleme cercevesi ?live=1 ile aciyor. Sayfa bunun
+     disinda hicbir sey degistirmiyor — okur icin fark yok. */
+  const { live } = await searchParams;
+  const onizleme = live === "1";
 
   const post = await db.query.posts.findFirst({ where: eq(schema.posts.slug, slug) });
 
@@ -159,6 +166,7 @@ export default async function ArticlePage({ params }: PageProps) {
     return (
       <div className="mag min-h-screen">
         <MagazineHeader />
+      {onizleme && <CanliOnizleme />}
         <CmsPage
           slug={page.slug}
           baslik={decodeEntities(page.title)}
@@ -291,7 +299,13 @@ export default async function ArticlePage({ params }: PageProps) {
                   § {category.name.toUpperCase()}
                 </Link>
               )}
-              <h1 className="display mb-6 text-[clamp(2.4rem,5.6vw,4.6rem)]">
+              {/* data-canli: panelin onizleme cercevesi bu isaretle
+                  bulup gunceliyor. Sinif adina bagli olsaydi bir
+                  tasarim degisikligi onizlemeyi sessizce kirardi. */}
+              <h1
+                data-canli="baslik"
+                className="display mb-6 text-[clamp(2.4rem,5.6vw,4.6rem)]"
+              >
                 {decodeEntities(post.title)}
               </h1>
               {post.excerpt && (
@@ -329,6 +343,7 @@ export default async function ArticlePage({ params }: PageProps) {
               <div className="plate w-full" style={{ aspectRatio: "21 / 9" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
+                  data-canli="kapak"
                   src={post.featuredImageUrl}
                   alt={decodeEntities(post.title)}
                   className="size-full object-cover"
@@ -344,6 +359,7 @@ export default async function ArticlePage({ params }: PageProps) {
             {/* Metin — 8 kolon, olcu 68ch */}
             <article className="lg:col-span-8">
               <div
+                data-canli="govde"
                 className="article-body dropcap text-[1.06rem] leading-[1.82]"
                 dangerouslySetInnerHTML={{
                   __html: enrichArticleHtml(post.contentHtml, boyutlar),

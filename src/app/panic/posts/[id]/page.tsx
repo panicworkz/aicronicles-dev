@@ -158,6 +158,22 @@ export default function PanicSplitLiveStudioPage({
 
     // Listen for real-time edits or image manage requests made on the live canvas
     const handleLiveMessage = (event: MessageEvent) => {
+      /* Kaynak dogrulamasi yoktu: herhangi bir sekme bu panele mesaj
+         yollayip duzenlenen yaziyi degistirebilirdi. */
+      if (event.origin !== window.location.origin) return;
+
+      /* Cerceve yuklendigini haber veriyor. Bu olmadan, cerceve
+         acilmadan once yollanan ilk icerik kayboluyor ve onizleme
+         kayitli surumde kaliyordu. */
+      if (event.data?.type === "PANIC_STUDIO_PREVIEW_READY") {
+        broadcastLiveSync(
+          titleRef.current,
+          contentHtmlRef.current,
+          featuredImageUrlRef.current,
+        );
+        return;
+      }
+
       if (event.data?.type === "PANIC_LIVE_TO_STUDIO_SYNC") {
         const { title: liveTitle, contentHtml: liveHtml } =
           event.data.payload || {};
@@ -313,7 +329,9 @@ export default function PanicSplitLiveStudioPage({
             featuredImageUrl: newCover,
           },
         },
-        "*",
+        /* "*" yerine kendi kaynagimiz: mesaj baska bir siteye
+           acilmis bir cerceveye sizmasin. */
+        window.location.origin,
       );
     }
   };
