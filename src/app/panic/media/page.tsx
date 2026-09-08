@@ -130,8 +130,11 @@ export default function PanicMediaPage() {
           <p className="text-xs text-muted-foreground mt-0.5">Manage all article graphics, infographics, gallery files and AI Vision context</p>
         </div>
 
-        <div>
-          <label className="inline-flex h-8.5 gap-1.5 px-3.5 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition shadow-2xs cursor-pointer select-none">
+        {/* shrink-0: uzun baslik metni dugmeyi kenara sikistirmasin.
+            Bu ekranda dugme <Button> degil <label> (gizli dosya
+            secici tasiyor), o yuzden ilk taramamda atlanmisti. */}
+        <div className="shrink-0">
+          <label className="inline-flex h-9 gap-1.5 px-3.5 items-center whitespace-nowrap justify-center rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition shadow-2xs cursor-pointer select-none">
             <Upload className="size-3.5" />
             <span>{uploading ? 'Optimizing WebP...' : 'Upload Image'}</span>
             <input
