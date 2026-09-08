@@ -283,12 +283,60 @@ export default function CanliOnizleme() {
     `;
     document.head.appendChild(stil);
 
+    /**
+     * ICERIK DISI ALANLAR ETKISIZ.
+     *
+     * Onizleme gercek sayfayi gosteriyor — menu, reklam, "en cok
+     * okunanlar", altbilgi. BUNLARIN DURMASI GEREKIYOR: yerinde
+     * duzenlemenin butun degeri yaziyi gercek cevresinde gormek.
+     * Manşetin logonun altinda nasil durdugu, reklamin metni nerede
+     * boldugu ancak boyle gorunuyor.
+     *
+     * Ama TIKLANABILIR olmalari gerekmiyor: menudeki bir baglantiya
+     * tiklamak cerceveyi baska bir sayfaya goturuyor ve duzenlenen
+     * yazi ekrandan kayboluyordu. Duzenlenebilir alanlarin DISINDA
+     * kalan her tiklama artik durduruluyor.
+     *
+     * Duzenlenebilir alanlar disarida: baslik, ozet, govde ve kapak.
+     */
+    const disariTikla = (e: MouseEvent) => {
+      const h = e.target as HTMLElement | null;
+      if (!h) return;
+      const duzenlenebilirIcinde =
+        h.closest('[data-canli="baslik"]') ||
+        h.closest('[data-canli="ozet"]') ||
+        h.closest('[data-canli="govde"]') ||
+        h.closest('[data-canli="kapak"]');
+      if (duzenlenebilirIcinde) return;
+
+      const etkilesimli = h.closest("a,button,summary,label,input,select");
+      if (!etkilesimli) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    document.addEventListener("click", disariTikla, true);
+
+    /* Duzenlenemeyen alan belli olsun: uzerine gelince imlec
+       degismiyor ve hafifce soluyor. Yazar neye dokunabilecegini
+       denemeden anliyor. */
+    const disStil = document.createElement("style");
+    disStil.textContent = `
+      body > *:not(script):not(style) a:hover,
+      body > *:not(script):not(style) button:hover { cursor: default; }
+      [data-canli="baslik"] *, [data-canli="ozet"] *,
+      [data-canli="govde"] *, [data-canli="kapak"] { cursor: auto; }
+      [data-canli="govde"] a:hover { cursor: text; }
+    `;
+    document.head.appendChild(disStil);
+
     /* Cerceve hazir: panel ilk icerigi yollayabilsin. Yoksa cerceve
        yuklenene kadar gonderilen mesajlar kayboluyordu. */
     window.parent.postMessage({ type: OLAY_HAZIR, source: "preview_frame" }, kok);
 
     return () => {
       window.removeEventListener("message", dinle);
+      document.removeEventListener("click", disariTikla, true);
+      disStil.remove();
       kapak?.removeEventListener("dblclick", kapakTik);
       yuzeyiKaldir();
       if (zamanlayici) clearTimeout(zamanlayici);

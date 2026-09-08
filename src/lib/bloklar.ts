@@ -129,6 +129,18 @@ export type Blok =
   | { t: "video"; saglayici: "youtube" | "vimeo"; videoId: string; baslik?: string }
   /* Galeri. */
   | { t: "galeri"; sutun: 2 | 3 | 4; gorseller: { src: string; alt?: string }[] }
+  /* Iki sutun — yan yana iki metin alani. */
+  | { t: "sutunlar"; sol: string; sag: string }
+  /* Cubuk grafik. Bir grafik kitapligi YOK: degerler dogrudan
+     CSS genisligine cevriliyor. Kitaplik okura yuzlerce kilobayt
+     JavaScript indirtirdi, ustelik yazdirmada ve ekran okuyucuda
+     bos bir tuval kalirdi. Boyle basildiginda sayilar metin olarak
+     duruyor. */
+  | {
+      t: "grafik";
+      baslik?: string;
+      ogeler: { etiket: string; deger: number; gosterim?: string }[];
+    }
   /* Kacis kapisi: ayristiricinin tanimadigi her sey. Oldugu gibi
      basiliyor, yani icerik asla kaybolmuyor. */
   | { t: "ham"; html: string };
@@ -556,6 +568,35 @@ function isaretliBlok(isaret: string, o: HTMLElement): Blok | null {
       };
     }
 
+    case "sutunlar": {
+      const sutunlar = o.querySelectorAll(".sutun").filter((k) => k.parentNode === o);
+      return {
+        t: "sutunlar",
+        sol: sutunlar[0]?.innerHTML ?? "",
+        sag: sutunlar[1]?.innerHTML ?? "",
+      };
+    }
+
+    case "grafik": {
+      const ogeler = o.querySelectorAll(".grafik-satir").map((k) => {
+        const gosterim = k.querySelector(".grafik-deger")?.textContent?.trim() ?? "";
+        /* Deger, gosterilen metinden okunuyor: yazar "62%" ya da
+           "1.240 TL" yazabilsin diye. Sayi kismi cubugun boyunu,
+           metnin tamami ise ekranda gorunen sey oluyor. */
+        const sayi = Number(String(gosterim).replace(/[^0-9.,-]/g, "").replace(",", "."));
+        return {
+          etiket: k.querySelector(".grafik-etiket")?.textContent?.trim() ?? "",
+          deger: Number.isFinite(sayi) ? sayi : 0,
+          ...(gosterim ? { gosterim } : {}),
+        };
+      });
+      return {
+        t: "grafik",
+        ...(metin(".grafik-baslik") ? { baslik: metin(".grafik-baslik") } : {}),
+        ogeler,
+      };
+    }
+
     case "galeri": {
       const sutun = Number(o.getAttribute("data-sutun") ?? 3);
       return {
@@ -726,6 +767,37 @@ export function bloklarHtmle(
             (b.baslik ? oznitelik("data-baslik", b.baslik) : "") +
             `></div>`
           );
+
+        case "sutunlar":
+          return (
+            `<div class="sutunlar" data-blok="sutunlar">` +
+            `<div class="sutun">${b.sol}</div><div class="sutun">${b.sag}</div>` +
+            `</div>`
+          );
+
+        case "grafik": {
+          /* Cubuk boylari EN BUYUK DEGERE gore olceklenyor: sabit bir
+             ust sinir kullansaydik butun degerler kucukse grafik bos
+             gorunurdu. */
+          const enBuyuk = Math.max(1, ...b.ogeler.map((k) => Math.abs(k.deger) || 0));
+          return (
+            `<div class="grafik" data-blok="grafik">` +
+            (b.baslik ? `<div class="grafik-baslik">${b.baslik}</div>` : "") +
+            b.ogeler
+              .map((k) => {
+                const oran = Math.round((Math.abs(k.deger) / enBuyuk) * 100);
+                return (
+                  `<div class="grafik-satir">` +
+                  `<div class="grafik-etiket">${k.etiket}</div>` +
+                  `<div class="grafik-yol"><div class="grafik-cubuk" style="width:${oran}%"></div></div>` +
+                  `<div class="grafik-deger">${k.gosterim ?? k.deger}</div>` +
+                  `</div>`
+                );
+              })
+              .join("") +
+            `</div>`
+          );
+        }
 
         case "galeri":
           return (

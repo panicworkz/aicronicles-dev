@@ -34,6 +34,23 @@ export default function AdTracker({
     const el = ref.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
 
+    /* ONIZLEMEDE SAYILMIYOR.
+       Panelin canli onizlemesi gercek sayfayi bir cerceve icinde
+       aciyor; reklamlar da orada gorunuyor ve bu gorunum gosterim
+       olarak kaydediliyordu. Yani bir yaziyi on kez acip duzenleyen
+       kisi, kendi reklam sayaclarini on gosterim sisiriyordu —
+       kampanya raporlari ic trafikle kirleniyordu.
+
+       Kosul CanliOnizleme ile ayni: cerceve icinde VE ?live=1.
+       Ikisini birden aramak, cerceve icinde acilan gercek bir
+       okumayi yanlislikla dislamamak icin. */
+    if (
+      window !== window.parent &&
+      new URLSearchParams(window.location.search).get("live") === "1"
+    ) {
+      return;
+    }
+
     const gozlemci = new IntersectionObserver(
       (girisler) => {
         for (const g of girisler) {

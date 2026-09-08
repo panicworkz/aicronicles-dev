@@ -20,8 +20,6 @@ import {
   History,
   Check,
   Share2,
-  Columns,
-  Eye,
   Settings,
   PanelRightClose,
   PanelRightOpen,
@@ -60,7 +58,7 @@ export default function PanicSplitLiveStudioPage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [autosaving, setAutosaving] = useState(false);
-  const [viewMode, setViewMode] = useState<"editor" | "live" | "split">(
+  const [viewMode, setViewMode] = useState<"editor" | "live">(
     "editor",
   );
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">(
@@ -85,6 +83,10 @@ export default function PanicSplitLiveStudioPage({
   /* Onizlemeden gelen urun karti istegi. */
   const [urunSeciciAcik, setUrunSeciciAcik] = useState(false);
   const [urunIstek, setUrunIstek] = useState<string | null>(null);
+  /* Onizleme kendini bildirdi mi. Bildirmezse yazi erisilemez
+     olmasin diye HTML gorunumu oneriliyor. */
+  const [onizlemeHazir, setOnizlemeHazir] = useState(false);
+  const [onizlemeGecikti, setOnizlemeGecikti] = useState(false);
   const [studioTarget, setStudioTarget] = useState<ImageStudioTarget | null>(
     null,
   );
@@ -175,6 +177,7 @@ export default function PanicSplitLiveStudioPage({
          acilmadan once yollanan ilk icerik kayboluyor ve onizleme
          kayitli surumde kaliyordu. */
       if (event.data?.type === "PANIC_STUDIO_PREVIEW_READY") {
+        setOnizlemeHazir(true);
         broadcastLiveSync(
           titleRef.current,
           contentHtmlRef.current,
@@ -368,6 +371,16 @@ export default function PanicSplitLiveStudioPage({
     window.addEventListener("message", handleLiveMessage);
     return () => window.removeEventListener("message", handleLiveMessage);
   }, [postId]);
+
+  /* Onizleme sekiz saniyede kendini bildirmezse bir sey ters gitmis
+     demektir (sunucu kapali, sayfa hata veriyor, cerceve engellendi).
+     Sessizce bos bir cerceve gostermek yerine kacis kapisini
+     oneriyoruz — yoksa yaziya erisilecek baska yol kalmiyor. */
+  useEffect(() => {
+    if (onizlemeHazir || viewMode !== "live") return;
+    const t = setTimeout(() => setOnizlemeGecikti(true), 8000);
+    return () => clearTimeout(t);
+  }, [onizlemeHazir, viewMode, iframeKey]);
 
   const broadcastLiveSync = (
     newTitle: string,
@@ -564,6 +577,18 @@ export default function PanicSplitLiveStudioPage({
           <span>Live In-Context Canvas</span>
         </div>
 
+        {/* Onizleme gec kaldi: sessizce bos bir cerceve birakmak
+            yerine kacis kapisini goster. */}
+        {onizlemeGecikti && !onizlemeHazir && (
+          <button
+            type="button"
+            onClick={() => setViewMode("editor")}
+            className="flex cursor-pointer items-center gap-1.5 rounded-md border border-amber-400/60 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+          >
+            Preview isn’t responding — edit the HTML instead
+          </button>
+        )}
+
         {/* Device Switcher */}
         <div className="flex items-center rounded-lg border bg-muted/40 p-0.5">
           <Button
@@ -649,45 +674,28 @@ export default function PanicSplitLiveStudioPage({
           </div>
         </div>
 
-        {/* Center: Main 3-Way Mode Switcher */}
-        <div className="flex items-center rounded-xl border border-border/80 bg-muted/30 p-0.5 text-xs shadow-2xs">
-          <button
-            type="button"
-            onClick={() => setViewMode("editor")}
-            className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer ${
-              viewMode === "editor"
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <FileText className="size-3.5 text-primary" />
-            <span>Source</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode("live")}
-            className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer ${
-              viewMode === "live"
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Eye className="size-3.5 text-emerald-500" />
-            <span>Live In-Context</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode("split")}
-            className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer ${
-              viewMode === "split"
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Columns className="size-3.5 text-blue-500" />
-            <span>Split View</span>
-          </button>
-        </div>
+        {/* UC MODLU ANAHTAR KALDIRILDI.
+            Yazinin editoru artik tek bir sey: onizlemenin uzerindeki
+            blok yuzeyi. "Source" ve "Split View" ayri birer duzenleme
+            yolu gibi duruyor ama ayni govdeyi yaziyorlardi — secenek
+            sunmak, hangisinin dogru oldugunu kullaniciya sordurmakti.
+
+            HTML yine erisilebilir, ama bir MOD degil bir kacis kapisi:
+            asagidaki dugme ya da onizleme yuklenemediginde kendiliginden
+            aciliyor. */}
+        <button
+          type="button"
+          onClick={() => setViewMode(viewMode === "editor" ? "live" : "editor")}
+          className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+            viewMode === "editor"
+              ? "border-primary/60 bg-primary/10 text-foreground"
+              : "border-border/80 text-muted-foreground hover:text-foreground"
+          }`}
+          title="Edit the raw HTML — use it when the preview cannot load"
+        >
+          <FileText className="size-3.5" />
+          <span>{viewMode === "editor" ? "Back to canvas" : "HTML"}</span>
+        </button>
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">
@@ -752,7 +760,7 @@ export default function PanicSplitLiveStudioPage({
       <div className="flex flex-1 overflow-hidden">
         {/* Main Content / Canvas Area (Resizes automatically when sidebar is toggled) */}
         <div className="flex-1 h-full overflow-hidden bg-background">
-          {/* Mode 1: Visual Editor */}
+          {/* HTML kacis kapisi — mod degil, gecici gorunum. */}
           {viewMode === "editor" && (
             <div className="w-full h-full overflow-y-auto p-6">
               <div className="max-w-6xl mx-auto py-4 space-y-6">
@@ -761,21 +769,9 @@ export default function PanicSplitLiveStudioPage({
             </div>
           )}
 
-          {/* Mode 2: Live In-Context Canvas */}
+          {/* Asil editor: onizlemenin uzerindeki blok yuzeyi. */}
           {viewMode === "live" && (
             <div className="w-full h-full">{renderLiveCanvas()}</div>
-          )}
-
-          {/* Mode 3: Split View */}
-          {viewMode === "split" && (
-            <div className="flex w-full h-full overflow-hidden">
-              <div className="w-full lg:w-1/2 border-r bg-background overflow-y-auto p-6 space-y-6">
-                {renderVisualEditorContent()}
-              </div>
-              <div className="hidden lg:flex lg:w-1/2 h-full">
-                {renderLiveCanvas()}
-              </div>
-            </div>
           )}
         </div>
 

@@ -450,6 +450,58 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         o.setAttribute("data-blok", "galeri");
         o.setAttribute("data-sutun", "3");
         break;
+
+      case "tablo": {
+        /* Uc satir uc sutun, ilk satir baslik. Bos bir tablo
+           vermek yerine kullanilabilir bir iskelet: yazar hucreleri
+           doldurup gecmeli, once satir eklemek zorunda kalmamali. */
+        o = document.createElement("table");
+        const bas = document.createElement("thead");
+        const basSatir = document.createElement("tr");
+        for (let i = 0; i < 3; i++) {
+          const th = document.createElement("th");
+          th.setAttribute("scope", "col");
+          th.textContent = `Column ${i + 1}`;
+          basSatir.appendChild(th);
+        }
+        bas.appendChild(basSatir);
+        o.appendChild(bas);
+        const govdeBol = document.createElement("tbody");
+        for (let r = 0; r < 2; r++) {
+          const tr = document.createElement("tr");
+          for (let c = 0; c < 3; c++) {
+            const td = document.createElement("td");
+            td.innerHTML = "<br>";
+            tr.appendChild(td);
+          }
+          govdeBol.appendChild(tr);
+        }
+        o.appendChild(govdeBol);
+        break;
+      }
+
+      case "sutunlar":
+        o = document.createElement("div");
+        o.className = "sutunlar";
+        o.setAttribute("data-blok", "sutunlar");
+        o.innerHTML =
+          '<div class="sutun"><p>Left column.</p></div>' +
+          '<div class="sutun"><p>Right column.</p></div>';
+        break;
+
+      case "grafik":
+        o = document.createElement("div");
+        o.className = "grafik";
+        o.setAttribute("data-blok", "grafik");
+        o.innerHTML =
+          '<div class="grafik-baslik">Chart title</div>' +
+          '<div class="grafik-satir"><div class="grafik-etiket">First</div>' +
+          '<div class="grafik-yol"><div class="grafik-cubuk" style="width:100%"></div></div>' +
+          '<div class="grafik-deger">62%</div></div>' +
+          '<div class="grafik-satir"><div class="grafik-etiket">Second</div>' +
+          '<div class="grafik-yol"><div class="grafik-cubuk" style="width:61%"></div></div>' +
+          '<div class="grafik-deger">38%</div></div>';
+        break;
       default:
         o = document.createElement("p");
         o.innerHTML = "<br>";
