@@ -87,9 +87,15 @@ export default function ContactForm({
 
   /* Alanin kendisi cercevesiz: cerceveyi izgaranin 1px'lik araligi
      zaten ciziyor. Ust uste iki cizgi kalin ve amator duruyordu. */
+  /* GIRDININ CERCEVESI VAR.
+     Once yalnizca seffaf bir metin alaniydi; kutulari birbirinden
+     izgara boslugu ayiriyordu. Sonuc: nereye yazilacagi belli
+     degildi — form bir tabloya benziyordu, doldurulacak bir seye
+     degil. Odeme ekraninda ayni kalibi zaten cerceveli kullandik. */
   const girdi =
-    "w-full bg-transparent text-[1rem] leading-normal outline-none " +
-    "placeholder:text-[var(--ink-3)]";
+    "w-full bg-transparent px-3 py-2.5 text-[0.98rem] leading-normal outline-none " +
+    "border border-[var(--rule)] transition-colors " +
+    "focus:border-[var(--ink)] placeholder:text-[var(--ink-3)]";
 
   /** Bir form hucresi — kart izgarasindaki hucrenin aynisi. */
   const Hucre = ({
@@ -103,14 +109,14 @@ export default function ContactForm({
     children: React.ReactNode;
     genis?: boolean;
   }) => (
-    <div
-      className={`flex flex-col gap-2 p-6 ${genis ? "sm:col-span-2" : ""}`}
-      style={{ background: "var(--paper)" }}
-    >
-      <span className="byline">
-        {etiket.toUpperCase()}
+    /* Etiket BUYUK HARF DEGIL ve daha koyu. Once "byline" idi:
+       tek aralikli, 11px, acik gri, hepsi buyuk harf — bir formda
+       okunmasi en zor bicim. */
+    <div className={`flex flex-col gap-1.5 ${genis ? "sm:col-span-2" : ""}`}>
+      <label className="text-[0.86rem]" style={{ color: "var(--ink-2)" }}>
+        {etiket}
         {zorunlu && <span style={{ color: "var(--accent-ink)" }}> *</span>}
-      </span>
+      </label>
       {children}
     </div>
   );
@@ -211,11 +217,13 @@ export default function ContactForm({
               {sekme.ozet}
             </p>
 
-            {/* Kim */}
+            {/* Bolum basliklari sadelesti: "§ 01 · WHO YOU ARE" gibi
+                numarali isaretler dergi dilinden geliyordu ama formda
+                gurultu yapiyor — okur zaten sirayla dolduruyor. */}
             <div className="folio mb-4" style={{ color: "var(--accent)" }}>
-              § 01 · WHO YOU ARE
+              ABOUT YOU
             </div>
-            <div className="grid gap-px sm:grid-cols-2" style={{ background: "var(--rule)" }}>
+            <div className="grid gap-5 sm:grid-cols-2">
               <Hucre etiket="Name" zorunlu>
                 <input id="name" name="name" required maxLength={120} className={girdi} />
               </Hucre>
@@ -231,24 +239,31 @@ export default function ContactForm({
             </div>
 
             {/* Konuya ozel */}
-            <div className="folio mb-4 mt-12" style={{ color: "var(--accent)" }}>
-              § 02 · {sekme.baslik.toUpperCase()}
-            </div>
-            <div className="grid gap-px sm:grid-cols-2" style={{ background: "var(--rule)" }}>
-              {sekme.alanlar.map(alanCiz)}
-            </div>
+            {sekme.alanlar.length > 0 && (
+              <>
+                <div className="folio mb-4 mt-10" style={{ color: "var(--accent)" }}>
+                  {sekme.baslik.toUpperCase()}
+                </div>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {sekme.alanlar.map(alanCiz)}
+                </div>
+              </>
+            )}
 
             {/* Mesaj */}
-            <div className="folio mb-4 mt-12" style={{ color: "var(--accent)" }}>
-              § 03 · YOUR MESSAGE
+            <div className="folio mb-4 mt-10" style={{ color: "var(--accent)" }}>
+              YOUR MESSAGE
             </div>
-            <div className="grid gap-px" style={{ background: "var(--rule)" }}>
+            <div className="grid gap-5">
               <Hucre etiket={sekme.mesajEtiketi} zorunlu>
+                {/* Sekiz satir kocaman bir bosluk biraktiriyordu ve
+                    form bitmemis gibi duruyordu. Bes satir yeterli;
+                    yazan buyutebiliyor. */}
                 <textarea
                   id="message"
                   name="message"
                   required
-                  rows={8}
+                  rows={5}
                   maxLength={5000}
                   className={`${girdi} resize-y`}
                 />

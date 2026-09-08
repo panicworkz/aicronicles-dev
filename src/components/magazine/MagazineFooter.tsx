@@ -123,7 +123,11 @@ export default async function MagazineFooter() {
               actually earn their subscription.
             </p>
             <div className="folio mt-6" style={{ color: "#6b7178" }}>
-              ISTANBUL · LONDON · REMOTE
+              {/* Turkce buyuk harf: "i" harfinin buyugu "İ" (noktali).
+                  ATASEHIR/SILE yazmak yanlis olurdu. Yazi tipi bu
+                  karakteri tasiyor — latin-ext alt kumesiyle
+                  birlikte gomuldu. */}
+              ATAŞEHİR · ŞİLE · MIAMI · REMOTE
             </div>
           </div>
 
