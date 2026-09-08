@@ -674,3 +674,22 @@ html {
   font-style: normal;
   color: #b4453f;
 }
+
+/* ============ PARAGRAF ROLLERI ============
+   Editorde font ADI degil ROL seciliyor. Serbest font secici dergi
+   tipografisini yazidan yaziya dagitirdi; roller tasarimin kendi
+   olcegine bagli kaldigi icin her yazida ayni duruyor. */
+.mag .article-body p.one-cikan {
+  font-size: 1.24rem;
+  line-height: 1.62;
+  color: var(--ink);
+  border-left: 2px solid var(--accent);
+  padding-left: 1.1rem;
+  margin-top: 1.7em;
+  margin-bottom: 1.7em;
+}
+.mag .article-body p.kucuk-not {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--muted);
+}

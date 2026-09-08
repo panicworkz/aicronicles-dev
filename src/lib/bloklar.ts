@@ -27,10 +27,20 @@ import { parse, HTMLElement, NodeType } from "node-html-parser";
  * saglayan sey bu.
  */
 
+/**
+ * Modellemedigimiz oznitelikler.
+ *
+ * Olcum sirasinda uc sey kayboluyordu: bir baslikta satir ici style,
+ * bir gorselde title ve data-caption. Bunlari tek tek alanlara
+ * cevirmek her yeni oznitelikte ayni isi tekrar yaptirirdi. Torba
+ * yaklasimi kalici: tanimadigimiz ne varsa duruyor ve geri yaziliyor.
+ */
+export type BlokOz = Record<string, string>;
+
 export type Blok =
-  | { t: "paragraf"; html: string }
-  | { t: "baslik"; seviye: 2 | 3 | 4; html: string; id?: string }
-  | { t: "liste"; sirali: boolean; ogeler: string[] }
+  | { t: "paragraf"; html: string; oz?: BlokOz }
+  | { t: "baslik"; seviye: 2 | 3 | 4; html: string; id?: string; sinif?: string; oz?: BlokOz }
+  | { t: "liste"; sirali: boolean; ogeler: string[]; oz?: BlokOz }
   | {
       t: "gorsel";
       src: string;
@@ -44,10 +54,16 @@ export type Blok =
       /* figure'suz, dogrudan govdeye konmus gorsel. Isaretlenmezse
          cikista figure'e sariliyor ve sayfa duzeni degisiyor. */
       ciplak?: boolean;
+      /* figure'un kendi sinifi — yeniden uretmek yerine oldugu gibi
+         saklaniyor: Ghost'un sinif dizilimi surumden surume degisiyor. */
+      sinif?: string;
+      /* img uzerindeki modellenmemis oznitelikler (title, data-caption,
+         width, height...). */
+      oz?: BlokOz;
     }
   | { t: "tablo"; html: string }
   | { t: "ayrac" }
-  | { t: "alinti"; html: string }
+  | { t: "alinti"; html: string; oz?: BlokOz }
   /* URUN KARTI — blok modelinin asil gerekcesi.
      HTML'in ifade edemedigi bir sey: govdede duran sey bir isaret,
      icerigi (ad, fiyat, stok, gorsel) okuma aninda veritabanindan
@@ -67,6 +83,33 @@ function oznitelik(ad: string, deger?: string | null): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
   return ` ${ad}="${kacisli}"`;
+}
+
+/** Ozniteliklerin tamamini geri yazar. */
+function ozYaz(oz?: BlokOz): string {
+  if (!oz) return "";
+  return Object.entries(oz)
+    .map(([k, v]) => oznitelik(k, v))
+    .join("");
+}
+
+/**
+ * Modellenmis olanlarin DISINDA kalan oznitelikler.
+ * Bos deger tasiyanlar atiliyor: id="" gibi seyler HTML'de hicbir sey
+ * yapmiyor, saklamak blogu gereksiz sisirirdi.
+ */
+function ozEk(oge: HTMLElement, modellenen: string[]) {
+  const oz = kalanOz(oge, modellenen);
+  return oz ? { oz } : {};
+}
+
+function kalanOz(oge: HTMLElement, modellenen: string[]): BlokOz | undefined {
+  const kalan: BlokOz = {};
+  for (const [k, v] of Object.entries(oge.attributes)) {
+    if (modellenen.includes(k) || !v) continue;
+    kalan[k] = v;
+  }
+  return Object.keys(kalan).length ? kalan : undefined;
 }
 
 /* ==================================================================
@@ -99,7 +142,7 @@ export function htmlBloklara(html?: string | null): Blok[] {
 
     switch (etiket) {
       case "p":
-        bloklar.push({ t: "paragraf", html: oge.innerHTML });
+        bloklar.push({ t: "paragraf", html: oge.innerHTML, ...ozEk(oge, []) });
         break;
 
       case "h2":
@@ -113,6 +156,14 @@ export function htmlBloklara(html?: string | null): Blok[] {
              (lib/faq.ts) bu kimlikleri kullaniyor. Atsaydik sayfa ici
              baglantilar ve arama sonucundaki SSS kirilirdi. */
           ...(oge.getAttribute("id") ? { id: oge.getAttribute("id")! } : {}),
+          /* Sinif OLDUGU GIBI korunuyor, dayatilmiyor. Olcum gosterdi:
+             basliklarin bir kismi "scroll-mt-24 font-serif" tasiyor,
+             bir kismi ciplak. Hepsine ev stilini yazsaydik ciplak
+             olanlar birden serif olur ve cipa boslugu kazanirdi —
+             yani goc, kimsenin istemedigi bir tasarim degisikligi
+             yapardi. Yeni baslik ekleyen editor sinifi kendisi verir. */
+          ...(oge.getAttribute("class") ? { sinif: oge.getAttribute("class")! } : {}),
+          ...ozEk(oge, ["id", "class"]),
         });
         break;
 
@@ -127,6 +178,7 @@ export function htmlBloklara(html?: string | null): Blok[] {
                ogeler iki kez sayilirdi. */
             .filter((li) => li.parentNode === oge)
             .map((li) => li.innerHTML),
+          ...ozEk(oge, []),
         });
         break;
 
@@ -151,6 +203,8 @@ export function htmlBloklara(html?: string | null): Blok[] {
             ...(oge.getAttribute("class")?.includes("kg-width-wide")
               ? { genis: true }
               : {}),
+            ...(oge.getAttribute("class") ? { sinif: oge.getAttribute("class")! } : {}),
+            ...ozEk(img, ["src", "alt"]),
           });
         } else {
           bloklar.push({ t: "ham", html: oge.outerHTML });
@@ -163,6 +217,7 @@ export function htmlBloklara(html?: string | null): Blok[] {
           t: "gorsel",
           src: oge.getAttribute("src") ?? "",
           ...(oge.getAttribute("alt") ? { alt: oge.getAttribute("alt")! } : {}),
+          ...ozEk(oge, ["src", "alt"]),
           ciplak: true,
         });
         break;
@@ -178,7 +233,7 @@ export function htmlBloklara(html?: string | null): Blok[] {
         break;
 
       case "blockquote":
-        bloklar.push({ t: "alinti", html: oge.innerHTML });
+        bloklar.push({ t: "alinti", html: oge.innerHTML, ...ozEk(oge, []) });
         break;
 
       default:
@@ -214,27 +269,39 @@ export function htmlBloklara(html?: string | null): Blok[] {
    BLOKLAR  →  HTML
    ================================================================== */
 
-export function bloklarHtmle(bloklar?: Blok[] | null): string {
+/**
+ * @param isaretle Her blogun KOK ETIKETINE data-blok-i (sira) ve
+ *   data-blok-t (tur) yaziyor. Duzenleme katmani turu buradan okuyor;
+ *   yoksa gorsel mi paragraf mi oldugunu DOM'u koklayarak tahmin etmek
+ *   gerekirdi ve her yeni tur yeni bir ozel durum olurdu.
+ *
+ *   SARMALAYICI DIV EKLENMIYOR, bilerek. Yayin CSS'i dogrudan cocuk
+ *   seciciye dayaniyor (.article-body > * + *); araya bir katman
+ *   koysaydik yazinin butun dikey bosluklari cokerdi. Isaretler
+ *   bloklarin kendi etiketine giriyor, DOM yapisi degismiyor.
+ */
+export function bloklarHtmle(
+  bloklar?: Blok[] | null,
+  { isaretle = false }: { isaretle?: boolean } = {}
+): string {
   if (!Array.isArray(bloklar) || bloklar.length === 0) return "";
 
-  return bloklar
+  const govde = bloklar
     .map((b) => {
       switch (b.t) {
         case "paragraf":
-          return `<p>${b.html}</p>`;
+          return `<p${ozYaz(b.oz)}>${b.html}</p>`;
 
         case "baslik":
-          /* Sinif da geri yaziliyor: yayin tarafinda basliklarin
-             cipa boslugu bu sinifla veriliyor (scroll-mt-24). */
-          return `<h${b.seviye}${oznitelik("id", b.id)} class="scroll-mt-24 font-serif">${b.html}</h${b.seviye}>`;
+          return `<h${b.seviye}${oznitelik("id", b.id)}${oznitelik("class", b.sinif)}${ozYaz(b.oz)}>${b.html}</h${b.seviye}>`;
 
         case "liste": {
           const e = b.sirali ? "ol" : "ul";
-          return `<${e}>${b.ogeler.map((o) => `<li>${o}</li>`).join("")}</${e}>`;
+          return `<${e}${ozYaz(b.oz)}>${b.ogeler.map((o) => `<li>${o}</li>`).join("")}</${e}>`;
         }
 
         case "gorsel": {
-          const img = `<img${oznitelik("src", b.src)}${oznitelik("alt", b.alt)}>`;
+          const img = `<img${oznitelik("src", b.src)}${oznitelik("alt", b.alt)}${ozYaz(b.oz)}>`;
           /* Cerceve olmadan konmus gorsel oldugu gibi kaliyor: figure'e
              sarmak bosluk ve hizalama getirir, yazinin duzenini
              degistirirdi. */
@@ -243,11 +310,16 @@ export function bloklarHtmle(bloklar?: Blok[] | null): string {
           const sarili = b.baglanti
             ? `<a${oznitelik("href", b.baglanti)}>${img}</a>`
             : img;
-          const sinif = b.genis
+          const altyazi = b.altyazi ? `<figcaption>${b.altyazi}</figcaption>` : "";
+          /* Ozgun sinif varsa OLDUGU GIBI kullaniliyor. Yeniden
+             uretmek Ghost'un sinif dizilimini tahmin etmek demek;
+             bir surumde degisirse gorseller sessizce dar kolona
+             duserdi. Yalnizca yeni eklenen gorseller icin uretiliyor. */
+          const uretilen = b.genis
             ? "kg-card kg-image-card kg-width-wide"
             : "kg-card kg-image-card";
-          const altyazi = b.altyazi ? `<figcaption>${b.altyazi}</figcaption>` : "";
-          const tamSinif = b.altyazi ? `${sinif} kg-card-hascaption` : sinif;
+          const tamSinif =
+            b.sinif ?? (b.altyazi ? `${uretilen} kg-card-hascaption` : uretilen);
           return `<figure class="${tamSinif}">${sarili}${altyazi}</figure>`;
         }
 
@@ -258,7 +330,7 @@ export function bloklarHtmle(bloklar?: Blok[] | null): string {
           return "<hr>";
 
         case "alinti":
-          return `<blockquote>${b.html}</blockquote>`;
+          return `<blockquote${ozYaz(b.oz)}>${b.html}</blockquote>`;
 
         case "urun":
           /* Yalnizca isaret. Kartin kendisi okuma aninda basiliyor;
@@ -272,6 +344,17 @@ export function bloklarHtmle(bloklar?: Blok[] | null): string {
         default:
           return "";
       }
+    });
+
+  if (!isaretle) return govde.join("\n");
+
+  /* Isaret ilk etiketin icine, etiket adindan hemen sonra giriyor.
+     Kok etiketi bulmak icin dizgeyi yeniden ayristirmiyoruz: her blok
+     kendi HTML'ini burada uretti, yani ilk "<ad" her zaman kok. */
+  return govde
+    .map((h, i) => {
+      const t = bloklar[i].t;
+      return h.replace(/^<([a-zA-Z][a-zA-Z0-9]*)/, `<$1 data-blok-i="${i}" data-blok-t="${t}"`);
     })
     .join("\n");
 }

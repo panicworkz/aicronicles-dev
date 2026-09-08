@@ -18,6 +18,7 @@ import { AdSlot } from "@/components/magazine/AdSlot";
 import { decodeEntities, tagLabel } from "@/lib/taxonomy";
 import { enrichArticleHtml, type MediaBoyut } from "@/components/magazine/enrichArticleHtml";
 import { urunBloklariniDoldur } from "@/lib/urun-blogu";
+import { yazininBloklari, bloklarHtmle } from "@/lib/bloklar";
 import CmsPage from "@/components/magazine/CmsPage";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
 import { SITE, markali, kirintiSemasi } from "@/lib/seo";
@@ -212,10 +213,17 @@ export default async function ArticlePage({ params }: PageProps) {
   });
 
   const boyutlar = await medyaBoyutlari();
-  /* Urun karti bloklari burada doluyor: yazi govdesinde yalnizca bir
-     isaret duruyor, fiyat ve stok okuma aninda veriden geliyor. */
+
+  /* GOVDE ARTIK BLOKLARDAN BASILIYOR.
+     Isaretli uretim her blogun kok etiketine turunu yaziyor
+     (data-blok-t); duzenleme katmani turu oradan okuyor. Boylece
+     "bu gorsel mi paragraf mi" sorusu DOM koklayarak degil, tek bir
+     yerden cevaplaniyor ve yeni tur eklemek ozel durum gerektirmiyor.
+
+     Blogu olmayan yazi HTML'inden cevriliyor (yazininBloklari), yani
+     gocun ulasmadigi bir kayit da dogru basiliyor. */
   const govdeHtml = await urunBloklariniDoldur(
-    enrichArticleHtml(post.contentHtml, boyutlar)
+    enrichArticleHtml(bloklarHtmle(yazininBloklari(post), { isaretle: true }), boyutlar)
   );
 
   const related = others.slice(0, 4).map(toCard);
@@ -307,7 +315,11 @@ export default async function ArticlePage({ params }: PageProps) {
                 {decodeEntities(post.title)}
               </h1>
               {post.excerpt && (
+                /* data-canli="ozet": bu isaret YOKTU, o yuzden basligin
+                   altindaki aciklama onizlemede hic duzenlenemiyordu.
+                   Panel de bu alani hicbir yonde eslestirmiyordu. */
                 <p
+                  data-canli="ozet"
                   className="mb-7 max-w-[62ch] text-[1.15rem] leading-relaxed sm:text-[1.28rem]"
                   style={{ color: "var(--ink-2)" }}
                 >

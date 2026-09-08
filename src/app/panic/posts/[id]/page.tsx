@@ -108,6 +108,11 @@ export default function PanicSplitLiveStudioPage({
   slugRef.current = slug;
   const featuredImageUrlRef = useRef(featuredImageUrl);
   featuredImageUrlRef.current = featuredImageUrl;
+  /* Ozet de ref tutuyor: cerceveden gelen mesaj en guncel degeri
+     gormeli, yoksa kapanan bir kapali deger (stale closure) eski
+     aciklamayi geri yazar. */
+  const excerptRef = useRef(excerpt);
+  excerptRef.current = excerpt;
 
   useEffect(() => {
     // Fetch Categories
@@ -175,8 +180,14 @@ export default function PanicSplitLiveStudioPage({
       }
 
       if (event.data?.type === "PANIC_LIVE_TO_STUDIO_SYNC") {
-        const { title: liveTitle, contentHtml: liveHtml } =
-          event.data.payload || {};
+        const {
+          title: liveTitle,
+          contentHtml: liveHtml,
+          /* Ozet EKLENDI: onizlemede basligin altindaki aciklamayi
+             duzenlemek mumkun degildi cunku bu alan iki yonde de
+             tasinmiyordu. */
+          excerpt: liveExcerpt,
+        } = event.data.payload || {};
         if (liveTitle !== undefined) {
           setTitle(liveTitle);
           titleRef.current = liveTitle;
@@ -184,6 +195,10 @@ export default function PanicSplitLiveStudioPage({
         if (liveHtml !== undefined) {
           setContentHtml(liveHtml);
           contentHtmlRef.current = liveHtml;
+        }
+        if (liveExcerpt !== undefined) {
+          setExcerpt(liveExcerpt);
+          excerptRef.current = liveExcerpt;
         }
       }
 
@@ -317,6 +332,7 @@ export default function PanicSplitLiveStudioPage({
     newTitle: string,
     newHtml: string,
     newCover: string,
+    newExcerpt: string = excerptRef.current,
   ) => {
     if (iframeRef.current && iframeRef.current.contentWindow) {
       iframeRef.current.contentWindow.postMessage(
@@ -327,6 +343,7 @@ export default function PanicSplitLiveStudioPage({
             title: newTitle,
             contentHtml: newHtml,
             featuredImageUrl: newCover,
+            excerpt: newExcerpt,
           },
         },
         /* "*" yerine kendi kaynagimiz: mesaj baska bir siteye
