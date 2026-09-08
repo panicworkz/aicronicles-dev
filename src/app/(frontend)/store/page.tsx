@@ -80,6 +80,9 @@ export default async function MagazaSayfasi({
     if (u.categoryId) rafSayisi.set(u.categoryId, (rafSayisi.get(u.categoryId) ?? 0) + 1);
   }
 
+  /* Yalnizca icinde urun OLAN raflar gosteriliyor. */
+  const doluRaflar = (kategoriler as any[]).filter((k) => (rafSayisi.get(k.id) ?? 0) > 0);
+
   const acikRaf = shelf
     ? (kategoriler as any[]).find((k) => k.slug === shelf) ?? null
     : null;
@@ -97,8 +100,6 @@ export default async function MagazaSayfasi({
     acc[t] = (acc[t] ?? 0) + 1;
     return acc;
   }, {});
-
-  const [bas, ...kalan] = kartlar;
 
   return (
     <div className="mag min-h-screen">
@@ -144,8 +145,63 @@ export default async function MagazaSayfasi({
           </div>
         </header>
 
-        {/* Sepete giden kalici yol — magazanin KENDI baslik blogunun
-            altinda, bolumun bir parcasi olarak. */}
+        {/* --- RAFLAR ---
+            Once sag sutunda dikey bir listeydi ve iki sorun uretiyordu:
+            liste bitince altinda kocaman bir bosluk kaliyordu, ve bos
+            raflar soluk gorundugu icin "stokta yok" gibi okunuyordu —
+            oysa anlami "bu rafta hic urun yok".
+
+            Simdi baslik altinda yatay bir serit ve BOS RAFLAR HIC
+            GORUNMUYOR. Bir dukkan bos rafini vitrine koymaz; urun
+            girilince raf kendiliginden geri geliyor. */}
+        {doluRaflar.length > 0 && (
+          <nav className="mag-wrap pt-8">
+            <div className="folio mb-3" style={{ color: "var(--ink-3)" }}>
+              SHELVES
+            </div>
+            <ul className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <li>
+                <Link
+                  href="/store"
+                  className="text-[0.95rem] transition-colors"
+                  style={
+                    acikRaf
+                      ? { color: "var(--ink-3)" }
+                      : { color: "var(--accent-ink)", fontWeight: 500 }
+                  }
+                >
+                  Everything
+                  <span className="folio ml-1.5" style={{ color: "var(--ink-3)" }}>
+                    {tumKartlar.length}
+                  </span>
+                </Link>
+              </li>
+              {doluRaflar.map((k: any) => {
+                const secili = acikRaf?.id === k.id;
+                return (
+                  <li key={k.id}>
+                    <Link
+                      href={`/store?shelf=${k.slug}`}
+                      className="text-[0.95rem] transition-colors hover:text-[var(--accent-ink)]"
+                      style={
+                        secili
+                          ? { color: "var(--accent-ink)", fontWeight: 500 }
+                          : { color: "var(--ink-2)" }
+                      }
+                    >
+                      {k.name}
+                      <span className="folio ml-1.5" style={{ color: "var(--ink-3)" }}>
+                        {rafSayisi.get(k.id)}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        )}
+
+        {/* Sepete giden kalici yol. */}
         <SepetSeridi />
 
         {kartlar.length === 0 ? (
@@ -172,81 +228,30 @@ export default async function MagazaSayfasi({
           </section>
         ) : (
           <>
-            {/* --- Ilk urun genis, digerleri izgarada ---
-                Dergideki manset kalibinin aynisi: ilk kart daha buyuk
-                duruyor, gozun nereden baslayacagi belli oluyor. */}
-            <section className="mag-wrap pt-12">
-              <div className="grid items-start gap-10 lg:grid-cols-12 lg:gap-14">
-                <div className="lg:col-span-7">
-                  <UrunKarti urun={bas} no={1} />
-                </div>
-                <div className="lg:col-span-5 lg:rule-v lg:pl-14">
-                  <div className="folio mb-5" style={{ color: "var(--accent)" }}>
-                    § SHELVES
-                  </div>
-                  {/* RAFLAR TIKLANABILIR. Once yalnizca isim ve sayi
-                      yaziyordu; okur bir bolum listesi gorup tikliyor
-                      ve hicbir sey olmuyordu.
-
-                      Bos raflar baglanti DEGIL: tiklatmak okuru bos
-                      bir sayfaya goturur. */}
-                  <ul>
-                    {(kategoriler as any[]).map((k, i) => {
-                      const adet = rafSayisi.get(k.id) ?? 0;
-                      const secili = acikRaf?.id === k.id;
-                      const icerik = (
-                        <div
-                          className="flex items-baseline gap-3 py-3 transition-colors"
-                          style={secili ? { color: "var(--accent-ink)" } : undefined}
-                        >
-                          <span className="folio shrink-0" style={{ color: "var(--ink-3)" }}>
-                            {String(i + 1).padStart(2, "0")}
-                          </span>
-                          <span className="text-[0.95rem]">{k.name}</span>
-                          <span className="folio ml-auto" style={{ color: "var(--ink-3)" }}>
-                            {adet}
-                          </span>
-                        </div>
-                      );
-                      return (
-                        <li key={k.id} style={{ borderTop: "1px solid var(--rule)" }}>
-                          {adet === 0 ? (
-                            <div style={{ opacity: 0.45 }}>{icerik}</div>
-                          ) : (
-                            <Link
-                              href={secili ? "/store" : `/store?shelf=${k.slug}`}
-                              className="block hover:text-[var(--accent-ink)]"
-                            >
-                              {icerik}
-                            </Link>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  <p
-                    className="mt-6 text-[0.9rem] leading-relaxed"
-                    style={{ color: "var(--ink-2)" }}
-                  >
-                    Everything is sold directly by Fabelo. Payment is by bank transfer
-                    or on delivery.
-                  </p>
-                </div>
+            {/* --- URUNLER ---
+                Once "ilk urun genis + sag sutunda raf listesi + altta
+                izgara" seklindeydi. Raflar sag sutundan cikinca o
+                sutun bosaldi ve manset urunun yaninda kocaman bir
+                bosluk kaldi. Tek ve esit bir izgara hem o boslugu
+                kaldiriyor hem de bir vitrinin dogru bicimi: urunler
+                birbirine gore hiyerarsik degil. */}
+            <section className="mag-wrap pt-10">
+              <div className="grid gap-x-9 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+                {kartlar.map((u, i) => (
+                  <UrunKarti key={u.id} urun={u} no={i + 1} />
+                ))}
               </div>
             </section>
 
-            {kalan.length > 0 && (
-              <section className="mag-wrap pt-16">
-                <div className="rule-heavy mb-8 pt-5">
-                  <div className="folio">§ EVERYTHING ELSE</div>
-                </div>
-                <div className="grid gap-x-9 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-                  {kalan.map((u, i) => (
-                    <UrunKarti key={u.id} urun={u} no={i + 2} />
-                  ))}
-                </div>
-              </section>
-            )}
+            <section className="mag-wrap pt-16">
+              <p
+                className="max-w-[52ch] text-[0.95rem] leading-relaxed"
+                style={{ color: "var(--ink-2)", borderTop: "1px solid var(--rule)", paddingTop: "1.25rem" }}
+              >
+                Everything is sold directly by Fabelo. Payment is by bank transfer or on
+                delivery.
+              </p>
+            </section>
           </>
         )}
 
