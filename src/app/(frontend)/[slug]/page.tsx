@@ -6,7 +6,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import MagazineHeader from "@/components/magazine/MagazineHeader";
 import MagazineFooter from "@/components/magazine/MagazineFooter";
-import CanliOnizleme from "@/components/magazine/CanliOnizleme";
 import ClientForm from "@/components/magazine/ClientForm";
 import ArticleClientActions from "./ArticleClientActions";
 import {
@@ -27,8 +26,6 @@ export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-  /* ?live=1 — panelin onizleme cercevesi. Bkz. CanliOnizleme. */
-  searchParams: Promise<{ live?: string }>;
 }
 
 /* Kanonik adres tek yerden — artik @/lib/seo. Bu dosya kendi sabitini
@@ -147,12 +144,8 @@ async function medyaBoyutlari(): Promise<Map<string, MediaBoyut>> {
   return harita;
 }
 
-export default async function ArticlePage({ params, searchParams }: PageProps) {
+export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
-  /* Panelin onizleme cercevesi ?live=1 ile aciyor. Sayfa bunun
-     disinda hicbir sey degistirmiyor — okur icin fark yok. */
-  const { live } = await searchParams;
-  const onizleme = live === "1";
 
   const post = await db.query.posts.findFirst({ where: eq(schema.posts.slug, slug) });
 
@@ -166,7 +159,6 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
     return (
       <div className="mag min-h-screen">
         <MagazineHeader />
-      {onizleme && <CanliOnizleme />}
         <CmsPage
           slug={page.slug}
           baslik={decodeEntities(page.title)}

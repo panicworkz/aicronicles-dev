@@ -6,6 +6,7 @@ import CustomCursor from "@/components/magazine/CustomCursor";
 import BackToTop from "@/components/magazine/BackToTop";
 import AnchorPin from "@/components/magazine/AnchorPin";
 import NavProgress from "@/components/magazine/NavProgress";
+import CanliOnizleme from "@/components/magazine/CanliOnizleme";
 import "./globals.css";
 import { SITE, SITE_ADI } from "@/lib/seo";
 
@@ -74,6 +75,10 @@ export default function FrontendLayout({
           vardi; akis baslattigi icin sitedeki butun 404'ler 200
           donuyordu. Ayrintisi bilesenin basinda. */}
       <NavProgress />
+      {/* Panelin onizleme cercevesi. Kendi kosulunu kendisi
+          denetliyor: cerceve disinda ya da ?live=1 yoksa hicbir sey
+          yapmadan cikiyor. */}
+      <CanliOnizleme />
     </ThemeProvider>
   );
 }

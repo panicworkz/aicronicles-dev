@@ -36,7 +36,17 @@ const OLAY_HAZIR = "PANIC_STUDIO_PREVIEW_READY";
 
 export default function CanliOnizleme() {
   useEffect(() => {
+    /* KOSUL BURADA, sunucuda degil.
+       Once sayfa ?live=1 goruldugunde bu bileseni render ediyordu;
+       ama sunucu tarafindaki o kosul tutmuyordu ve bilesen agaca hic
+       girmiyordu — chunk yukleniyor, kod hic calismiyordu. Kosulu
+       tarayiciya almak hem sorunu bitiriyor hem daha dogru: burada
+       zaten pencerenin cerceve icinde olup olmadigina bakmak
+       gerekiyor, o da yalnizca tarayicida bilinen bir sey.
+
+       Okur icin bedeli yok: cerceve disinda ilk satirda cikiyor. */
     if (window === window.parent) return;
+    if (new URLSearchParams(window.location.search).get("live") !== "1") return;
 
     const kok = window.location.origin;
     const baslik = document.querySelector<HTMLElement>('[data-canli="baslik"]');
