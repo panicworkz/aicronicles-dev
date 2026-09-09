@@ -169,10 +169,40 @@ export function blokYuzeyiKur({
     gecmisiBildir();
   };
 
-  /* Yazarken her harf ayri adim olmasin: yazmaya ara verilince tek
-     adim kaydediliyor. Yoksa Cmd+Z bir kelimeyi harf harf geri alirdi. */
-  const yazarkenKaydet = () => {
-    if (Date.now() - sonKayit > 900) kaydet();
+  /**
+   * YAZARKEN GECMIS KAYDI — harf harf degil, KELIME kelime.
+   *
+   * Her tus vurusunu ayri adim yapmak yanlis olurdu: bir cumleyi geri
+   * almak icin otuz kez Cmd+Z gerekirdi. Butun editorler yazmayi
+   * gruplar; buradaki gruplama iki yerde kesiliyor — yazmaya ara
+   * verilince ve KELIME BITINCE (bosluk, satir sonu, noktalama).
+   *
+   * OLAY "beforeinput", "input" DEGIL. Bu bir duzeltme: input olayi
+   * degisiklikten SONRA calisiyor, yani alinan anlik goruntu yazilan
+   * harfi zaten iceriyordu ve bir dizinin ILK harfi geri alinamiyordu.
+   * Kullanici bunu "tek harf icin duyarli degil" diye tarif etti;
+   * dogru tarifti. beforeinput degisiklikten once calisiyor, yani
+   * kaydedilen sey yazmaya baslamadan onceki hal.
+   */
+  const KELIME_SONU = /^[\s.,;:!?)\]}"'—–-]$/;
+
+  const yazarkenKaydet = (e: Event) => {
+    const olay = e as InputEvent;
+    const veri = olay.data ?? "";
+
+    const kelimeBitti =
+      veri.length === 1 && KELIME_SONU.test(veri);
+    /* Satir sonu ve yapistirma da sinir sayiliyor: ikisi de
+       "buraya kadar bir sey bitti" demek. */
+    const buyukDegisiklik =
+      olay.inputType === "insertParagraph" ||
+      olay.inputType === "insertLineBreak" ||
+      olay.inputType?.startsWith("insertFromPaste") === true ||
+      olay.inputType?.startsWith("delete") === true;
+
+    if (kelimeBitti || buyukDegisiklik || Date.now() - sonKayit > 700) {
+      kaydet();
+    }
   };
 
   const geriAl = () => {
@@ -1466,7 +1496,7 @@ export function blokYuzeyiKur({
     },
   });
 
-  govde.addEventListener("input", yazarkenKaydet);
+  govde.addEventListener("beforeinput", yazarkenKaydet);
   govde.addEventListener("keydown", govdeTus);
   govde.addEventListener("mousemove", hareket);
   govde.addEventListener("mouseleave", govdedenCik);
@@ -1487,7 +1517,7 @@ export function blokYuzeyiKur({
     ileriAl,
     kaldir: () => {
     metniKaldir();
-    govde.removeEventListener("input", yazarkenKaydet);
+    govde.removeEventListener("beforeinput", yazarkenKaydet);
     govde.removeEventListener("keydown", govdeTus);
     govde.removeEventListener("mousemove", hareket);
     govde.removeEventListener("mouseleave", govdedenCik);
