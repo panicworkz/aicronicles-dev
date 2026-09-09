@@ -400,7 +400,17 @@ export default function CanliOnizleme() {
        — kullanici odaktan tam sayfaya donunce cubugu blogun cok
        uzaginda goruyordu. Yuzey zaten resize'i dinliyor. */
     const odakSonrasiOlc = () => {
-      requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
+      /* CIFT kare bekleniyor: tek requestAnimationFrame, otuz bes
+         ogeyi gizleyen stil degisikliginden SONRAKI duzen
+         hesabindan once tetikleniyordu ve cubuk hala eski
+         koordinatlarda olculuyordu (olculdu: 142 piksel sapma).
+         Ikinci kare, tarayicinin duzeni yeniden hesaplamasindan
+         sonraya dusuyor. Gecikmeli bir tekrar da var: gorseller
+         yeniden akarken yukseklikler bir kez daha degisebiliyor. */
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => window.dispatchEvent(new Event("resize")))
+      );
+      setTimeout(() => window.dispatchEvent(new Event("resize")), 220);
     };
 
     /* Cerceve hazir: panel ilk icerigi yollayabilsin. Yoksa cerceve
