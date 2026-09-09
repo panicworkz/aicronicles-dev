@@ -75,6 +75,7 @@ export default function CanliOnizleme() {
       if (!v) return;
       if (v.type === OLAY_ODAK) {
         odakUygula(Boolean(v.payload?.acik));
+        odakSonrasiOlc();
         return;
       }
       if (v.type !== OLAY_GELEN && v.type !== OLAY_GORSEL_SONUC && v.type !== OLAY_URUN_SONUC) return;
@@ -375,6 +376,14 @@ export default function CanliOnizleme() {
         while (d && d.parentElement && d.parentElement !== document.documentElement) {
           for (const kardes of Array.from(d.parentElement.children)) {
             if (kardes === d) continue;
+            /* EDITORUN KENDI YUZEYI GIZLENMIYOR.
+               Arac cubugu, blok menusu ve ayar paneli document.body'ye
+               takili, yani govdenin atasiyla KARDES. Bu kontrol
+               olmadan odak kipi onlari da "icerik disi" sayip
+               gizliyordu: odaga gecince duzenleme arayuzunun tamami
+               kayboluyordu. */
+            if (kardes.hasAttribute("data-panic-yuzey")) continue;
+
             const icindeIsaretliVar = isaretliler.some(
               (i) => kardes.contains(i) || kardes === i
             );
@@ -384,6 +393,14 @@ export default function CanliOnizleme() {
         }
       }
       odakStili.textContent = "[data-panic-gizli]{display:none !important}";
+    };
+
+    /* Odak acilip kapaninca sayfanin duzeni degisiyor ve secili
+       blogun yeri kayiyor; arac cubugu eski koordinatlarda kaliyordu
+       — kullanici odaktan tam sayfaya donunce cubugu blogun cok
+       uzaginda goruyordu. Yuzey zaten resize'i dinliyor. */
+    const odakSonrasiOlc = () => {
+      requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
     };
 
     /* Cerceve hazir: panel ilk icerigi yollayabilsin. Yoksa cerceve
