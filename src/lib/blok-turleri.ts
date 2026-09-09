@@ -61,6 +61,21 @@ export const PARAGRAF_ROLLERI = [
   { deger: "kucuk-not", etiket: "Small note" },
 ];
 
+/**
+ * TABLO HAZIR SETLERI.
+ *
+ * Bos bir tabloya bakip sutun basliklarini sifirdan dusunmek, en cok
+ * vakit alan ve en sik atlanan is. Yaygin dort duzen hazir geliyor;
+ * basliklar uzerine yazilabilir.
+ */
+export const TABLO_SETLERI = [
+  { ad: "Comparison", basliklar: ["Feature", "Option A", "Option B"], satir: 4 },
+  { ad: "Pricing", basliklar: ["Plan", "Price", "Best for"], satir: 3 },
+  { ad: "Pros & cons", basliklar: ["Aspect", "Pro", "Con"], satir: 4 },
+  { ad: "Specs", basliklar: ["Property", "Value"], satir: 5 },
+  { ad: "Timeline", basliklar: ["Date", "What happened"], satir: 4 },
+];
+
 export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
   paragraf: {
     t: "paragraf",

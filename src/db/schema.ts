@@ -78,9 +78,13 @@ export const posts = pgTable('posts', {
   blocksJson: jsonb('blocks_json'),
   /* Bloklardan URETILEN HTML. Silinmedi cunku RSS, llms.txt, SSS
      cikarimi, AEO puani ve okuma ekrani buradan besleniyor; her
-     kayitta bloklardan yeniden yaziliyor. Elle duzenlenmemeli. */
+     kayitta bloklardan yeniden yaziliyor. Elle duzenlenmemeli.
+
+     content_json KALDIRILDI: TipTap'in kendi belge agaciydi, TipTap
+     gittikten sonra hicbir yerde okunmuyordu. Yazilan ama okunmayan
+     bir sutun, ileride "acaba bu mu dogru?" diye sorulacak ikinci bir
+     govde kaynagi olurdu. */
   contentHtml: text('content_html'),
-  contentJson: jsonb('content_json'),
   featuredImageId: integer('featured_image_id').references(() => media.id, { onDelete: 'set null' }),
   featuredImageUrl: text('featured_image_url'),
   status: text('status').notNull().default('published'),
@@ -110,7 +114,6 @@ export const postRevisions = pgTable('post_revisions', {
      (ornegin elle bolunmus bir paragraf) kaybolurdu. */
   blocksJson: jsonb('blocks_json'),
   contentHtml: text('content_html'),
-  contentJson: jsonb('content_json'),
   excerpt: text('excerpt'),
   authorName: text('author_name').default('Admin'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -122,7 +125,6 @@ export const pages = pgTable('pages', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
   slug: text('slug').notNull().unique(),
-  contentJson: jsonb('content_json'),
   contentHtml: text('content_html'),
   status: text('status').notNull().default('published'),
   metaTitle: text('meta_title'),
@@ -165,7 +167,6 @@ export const products = pgTable('products', {
   slug: text('slug').notNull().unique(),
   description: text('description'),
   contentHtml: text('content_html'),
-  contentJson: jsonb('content_json'),
   featuredImageUrl: text('featured_image_url'),
   galleryUrls: jsonb('gallery_urls').default([]),
   price: numeric('price', { precision: 10, scale: 2 }).notNull().default('0.00'),

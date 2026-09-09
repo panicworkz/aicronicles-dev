@@ -5,6 +5,7 @@ import {
   etiketGecerli,
   oznitelikGecerli,
   icBaglantiMi,
+  stiliTemizle,
 } from "./blok-sema.ts";
 /* Goreli yol bilerek: bu dosyayi goc ve olcum betikleri de dogrudan
    Node ile calistiriyor ve orada "@/" takma adi cozulmuyor. */
@@ -244,7 +245,17 @@ function semayiUygula(kok: HTMLElement) {
       }
 
       for (const [ad, deger] of Object.entries(oge.attributes)) {
-        if (!oznitelikGecerli(etiket, ad, deger ?? "")) oge.removeAttribute(ad);
+        if (!oznitelikGecerli(etiket, ad, deger ?? "")) {
+          oge.removeAttribute(ad);
+          continue;
+        }
+        /* Izinli style'in ICI de suzuluyor: duzenleme izleri
+           (outline, opacity, cursor) icerigin parcasi degil. */
+        if (ad.toLowerCase() === "style") {
+          const temiz = stiliTemizle(deger ?? "");
+          if (temiz) oge.setAttribute("style", temiz);
+          else oge.removeAttribute("style");
+        }
       }
 
       /* IC BAGLANTIDA target ve rel YOK.
@@ -309,6 +320,10 @@ export function htmlBloklara(html?: string | null): Blok[] {
        yazilir ve okurun sayfasinda da duzenlenebilir bloklar olurdu. */
     oge.removeAttribute("contenteditable");
     oge.removeAttribute("spellcheck");
+    /* Duzenleme yuzeyinin kendi isaretleri (secim, surukleme). */
+    for (const ad of Object.keys(oge.attributes)) {
+      if (ad.startsWith("data-panic-")) oge.removeAttribute(ad);
+    }
 
     /* ISARET ETIKETTEN ONCE GELIYOR.
        Bu turlerin bir kismi taninan etiketler kullaniyor: "adimlar"

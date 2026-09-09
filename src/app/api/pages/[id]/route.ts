@@ -44,7 +44,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await req.json().catch(() => ({}));
-    const { title, slug, contentHtml, contentJson, status, metaTitle, metaDescription } = body;
+    const { title, slug, contentHtml, status, metaTitle, metaDescription } = body;
 
     /* SABIT SAYFALAR DA SEMADAN GECIYOR.
        Bu sayfalarin editoru artik dogrudan HTML yazilan bir kutu;
@@ -57,7 +57,6 @@ export async function PUT(
     const updateData: any = {
       title,
       contentHtml: temizHtml || '',
-      contentJson: contentJson || null,
       status: status || 'published',
       metaTitle: metaTitle || title,
       metaDescription: metaDescription || '',

@@ -87,6 +87,9 @@ export default function PanicSplitLiveStudioPage({
      olmasin diye HTML gorunumu oneriliyor. */
   const [onizlemeHazir, setOnizlemeHazir] = useState(false);
   const [onizlemeGecikti, setOnizlemeGecikti] = useState(false);
+  /* Odak kipi: onizlemede yalnizca yaziyi goster. Duzenlenemeyen
+     alanlar (menu, reklam, altbilgi) gorunmez oluyor. */
+  const [odak, setOdak] = useState(false);
   const [studioTarget, setStudioTarget] = useState<ImageStudioTarget | null>(
     null,
   );
@@ -95,7 +98,6 @@ export default function PanicSplitLiveStudioPage({
   const [slug, setSlug] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [contentHtml, setContentHtml] = useState("");
-  const [contentJson, setContentJson] = useState<any>(null);
   const [featuredImageUrl, setFeaturedImageUrl] = useState("");
   const [featuredImageAlt, setFeaturedImageAlt] = useState("");
   const [status, setStatus] = useState("published");
@@ -147,7 +149,6 @@ export default function PanicSplitLiveStudioPage({
           slugRef.current = initialSlug;
           setExcerpt(p.excerpt || "");
           setContentHtml(p.contentHtml || "");
-          setContentJson(p.contentJson || null);
           setFeaturedImageUrl(p.featuredImageUrl || "");
           setFeaturedImageAlt(p.metaTitle || p.title || "");
           setStatus(p.status || "published");
@@ -254,7 +255,6 @@ export default function PanicSplitLiveStudioPage({
                     slug: slugRef.current,
                     excerpt,
                     contentHtml: contentHtmlRef.current,
-                    contentJson,
                     featuredImageUrl: newData.src,
                     status,
                     readingTime,
@@ -344,7 +344,6 @@ export default function PanicSplitLiveStudioPage({
                     slug: slugRef.current,
                     excerpt,
                     contentHtml: updatedHtml,
-                    contentJson,
                     featuredImageUrl: featuredImageUrlRef.current,
                     status,
                     readingTime,
@@ -382,6 +381,15 @@ export default function PanicSplitLiveStudioPage({
     return () => clearTimeout(t);
   }, [onizlemeHazir, viewMode, iframeKey]);
 
+  /* Odak degisince cerceveye bildiriliyor; cerceve yeniden yuklendiginde
+     de (iframeKey) yeniden gonderiliyor, yoksa kip kayboluyor. */
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: "PANIC_STUDIO_FOCUS", source: "studio_parent", payload: { acik: odak } },
+      window.location.origin
+    );
+  }, [odak, onizlemeHazir, iframeKey]);
+
   const broadcastLiveSync = (
     newTitle: string,
     newHtml: string,
@@ -413,10 +421,9 @@ export default function PanicSplitLiveStudioPage({
     broadcastLiveSync(newTitle, contentHtml, featuredImageUrl);
   };
 
-  const handleContentChange = (newHtml: string, newJson: any) => {
+  const handleContentChange = (newHtml: string) => {
     setContentHtml(newHtml);
     contentHtmlRef.current = newHtml;
-    setContentJson(newJson);
     broadcastLiveSync(title, newHtml, featuredImageUrl);
   };
 
@@ -446,7 +453,6 @@ export default function PanicSplitLiveStudioPage({
           slug: slugRef.current || slug,
           excerpt,
           contentHtml,
-          contentJson,
           featuredImageUrl,
           status,
           readingTime,
@@ -475,7 +481,6 @@ export default function PanicSplitLiveStudioPage({
   const handleRestoreRevision = (rev: any) => {
     if (rev.title) setTitle(rev.title);
     if (rev.contentHtml) setContentHtml(rev.contentHtml);
-    if (rev.contentJson) setContentJson(rev.contentJson);
     broadcastLiveSync(
       rev.title || title,
       rev.contentHtml || contentHtml,
@@ -510,6 +515,16 @@ export default function PanicSplitLiveStudioPage({
   // Render the Visual Editor Form
   const renderVisualEditorContent = () => (
     <div className="space-y-4">
+      {/* Kacis kipinden donus. Bu gorunume yalnizca onizleme
+          yanit vermediginde geliniyor; cikis yolu gorunur olmali. */}
+      <button
+        type="button"
+        onClick={() => setViewMode("live")}
+        className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+      >
+        ← Back to the canvas
+      </button>
+
       {/* Frameless Large Title */}
       <div className="space-y-3">
         <textarea
@@ -562,7 +577,7 @@ export default function PanicSplitLiveStudioPage({
           da isaretlemeyi dogrudan gormek gerektigi zaman. */}
       <KaynakDuzenleyici
         value={contentHtml}
-        onChange={(html) => handleContentChange(html, contentJson)}
+        onChange={(html) => handleContentChange(html)}
       />
     </div>
   );
@@ -588,6 +603,24 @@ export default function PanicSplitLiveStudioPage({
             Preview isn’t responding — edit the HTML instead
           </button>
         )}
+
+        {/* ODAK: duzenlenemeyen alanlari gizler.
+            Tamamen kaldirmak yerine anahtar: yerinde duzenlemenin
+            degeri yaziyi gercek cevresinde gormek — manşetin altinda
+            nasil durdugu, reklamin metni nerede boldugu. Ama her zaman
+            gerekmiyor. */}
+        <button
+          type="button"
+          onClick={() => setOdak((o) => !o)}
+          className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium transition ${
+            odak
+              ? "border-primary/60 bg-primary/10 text-foreground"
+              : "border-border/80 text-muted-foreground hover:text-foreground"
+          }`}
+          title={odak ? "Show the full page around the article" : "Hide everything except the article"}
+        >
+          {odak ? "Full page" : "Focus"}
+        </button>
 
         {/* Device Switcher */}
         <div className="flex items-center rounded-lg border bg-muted/40 p-0.5">
@@ -674,28 +707,12 @@ export default function PanicSplitLiveStudioPage({
           </div>
         </div>
 
-        {/* UC MODLU ANAHTAR KALDIRILDI.
-            Yazinin editoru artik tek bir sey: onizlemenin uzerindeki
-            blok yuzeyi. "Source" ve "Split View" ayri birer duzenleme
-            yolu gibi duruyor ama ayni govdeyi yaziyorlardi — secenek
-            sunmak, hangisinin dogru oldugunu kullaniciya sordurmakti.
-
-            HTML yine erisilebilir, ama bir MOD degil bir kacis kapisi:
-            asagidaki dugme ya da onizleme yuklenemediginde kendiliginden
-            aciliyor. */}
-        <button
-          type="button"
-          onClick={() => setViewMode(viewMode === "editor" ? "live" : "editor")}
-          className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
-            viewMode === "editor"
-              ? "border-primary/60 bg-primary/10 text-foreground"
-              : "border-border/80 text-muted-foreground hover:text-foreground"
-          }`}
-          title="Edit the raw HTML — use it when the preview cannot load"
-        >
-          <FileText className="size-3.5" />
-          <span>{viewMode === "editor" ? "Back to canvas" : "HTML"}</span>
-        </button>
+        {/* HTML DUGMESI DE KALDIRILDI.
+            Yazinin her yeri tuval uzerinde duzenlenebiliyor; ayri bir
+            "HTML" dugmesi kullaniciyi ham isaretlemenin icine cagiran,
+            ama hicbir sey kazandirmayan bir kapi oluyordu. Kacis
+            kapisi duruyor: onizleme kendini bildirmezse asagidaki
+            uyari onu aciyor. */}
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">

@@ -17,6 +17,25 @@ import React, { useEffect, useRef, useState } from "react";
 const MAG_ACCENT = "#0fb5ce";
 
 export default function CustomCursor() {
+  /* ONIZLEMEDE KAPALI.
+     Panelin canli onizlemesi yayin sayfasini bir cerceve icinde
+     acyor; nokta-ve-halka imleci orada da ciziliyordu. Metin
+     duzenlerken imlecin nerede oldugunu gormek gerekiyor — ozel imlec
+     yazi imlecini gizliyor ve secim yaparken ne sectiginizi
+     gostermiyordu. Okur tarafinda duruyor; kapatilan yalnizca
+     duzenleme yuzeyi.
+
+     Kosul CanliOnizleme ve AdTracker ile ayni: cerceve icinde VE
+     ?live=1. Hook'lardan ONCE degil, hook kurallarini bozmamak icin
+     bir durum olarak tutuluyor. */
+  const [onizlemede, setOnizlemede] = useState(false);
+  useEffect(() => {
+    setOnizlemede(
+      window !== window.parent &&
+        new URLSearchParams(window.location.search).get("live") === "1"
+    );
+  }, []);
+
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
   const [moved, setMoved] = useState(false);

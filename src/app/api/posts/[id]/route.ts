@@ -3,7 +3,7 @@ import { getSession } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { eq } from 'drizzle-orm';
 import { handleApiError, apiUnauthorized, apiNotFound } from '@/lib/api-response';
-import { htmlBloklara } from '@/lib/bloklar';
+import { htmlBloklara, bloklarHtmle } from '@/lib/bloklar';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,15 +52,23 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         ? htmlBloklara(data.contentHtml)
         : undefined;
 
+    /* content_html BLOKLARDAN URETILIYOR, istemciden geleni oldugu
+       gibi yazmiyoruz.
+       Boyle olmasi gerektigini bastan soylemistim ama yazma
+       noktasinda uygulamamistim: sonucu, duzenleme artiklarinin
+       (contenteditable, secim cercevesi) kayitli HTML'e sizmasiydi.
+       Okur bunu gormuyordu cunku sayfa bloklardan basiliyor — ama
+       RSS, llms.txt ve SSS cikarimi content_html'i okuyor. */
+    const temizHtml = bloklar ? bloklarHtmle(bloklar) : undefined;
+
     const [updatedPost] = await db
       .update(schema.posts)
       .set({
         title: data.title,
         slug: data.slug,
         excerpt: data.excerpt,
-        contentHtml: data.contentHtml,
+        contentHtml: temizHtml,
         blocksJson: bloklar,
-        contentJson: data.contentJson,
         featuredImageUrl: data.featuredImageUrl,
         featuredImageId: data.featuredImageId,
         status: data.status,

@@ -44,7 +44,6 @@ export default function PanicNewPostPage() {
   const [slug, setSlug] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [contentHtml, setContentHtml] = useState("");
-  const [contentJson, setContentJson] = useState<any>(null);
   const [featuredImageUrl, setFeaturedImageUrl] = useState(
     "/media/default.webp",
   );
@@ -126,7 +125,6 @@ export default function PanicNewPostPage() {
           slug,
           excerpt,
           contentHtml,
-          contentJson,
           featuredImageUrl,
           status,
           readingTime,

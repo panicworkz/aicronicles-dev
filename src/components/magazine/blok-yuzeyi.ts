@@ -1,4 +1,4 @@
-import { BLOK_TANIMLARI, EKLENEBILIR_TURLER, PARAGRAF_ROLLERI, type Alan } from "@/lib/blok-turleri";
+import { BLOK_TANIMLARI, EKLENEBILIR_TURLER, PARAGRAF_ROLLERI, TABLO_SETLERI, type Alan } from "@/lib/blok-turleri";
 import { metinYuzeyiKur } from "@/components/magazine/blok-metin";
 
 /**
@@ -224,6 +224,20 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
   /* Uzerine gelinen blogu gosteren ince cerceve. Ogenin kendi
      style'ini kirletmemek icin ayri bir katman: outline yazsaydik
      kaydedilen HTML'e style="outline:..." olarak sizardi. */
+  /* Duzenleme gorunumunun stilleri. Ogelerin style ozniteligine
+     yazmak yerine burada: satir ici stil kaydedilen HTML'e sizabiliyor
+     (tabloda style semaca izinli). */
+  const yuzeyStili = document.createElement("style");
+  yuzeyStili.textContent = `
+    [data-canli="govde"] > [data-panic-secili] {
+      outline: 2px solid ${R.vurgu};
+      outline-offset: 6px;
+      border-radius: 2px;
+    }
+    [data-canli="govde"] > [data-panic-suruklenen] { opacity: .55; }
+  `;
+  document.head.appendChild(yuzeyStili);
+
   const isaretci = document.createElement("div");
   isaretci.setAttribute("data-panic-yuzey", "1");
   isaretci.style.cssText = [
@@ -308,23 +322,22 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     isaretci.style.boxShadow = `0 0 0 1px ${R.cizgi}`;
   };
 
+  /* SECIM CERCEVESI SATIR ICI STIL DEGIL, ISARET.
+     Once ogenin style'ina yaziliyordu ve tabloda style semaca izinli
+     oldugu icin secim cercevesi KAYDEDILEN HTML'E sizdi:
+     <table style="outline: rgb(15,181,206) solid 2px; ...">.
+     Duzenleme izi icerige karismamali; isaret ayristiricida
+     temizleniyor, gorunumu de asagidaki stil sayfasi veriyor. */
   const seciliCerceve = () => {
     if (!secili) return;
-    secili.style.outline = `2px solid ${R.vurgu}`;
-    secili.style.outlineOffset = "6px";
-    secili.style.borderRadius = "2px";
+    secili.setAttribute("data-panic-secili", "1");
   };
 
   /* ---------------- secim ---------------- */
 
   function sec(oge: HTMLElement | null) {
     if (secili && secili.isConnected) {
-      secili.style.outline = "";
-      secili.style.outlineOffset = "";
-      secili.style.borderRadius = "";
-      /* Bos style ozniteligi HTML'e sizmasin: kaydedilen govdede
-         style="" birikirdi. */
-      if (!secili.getAttribute("style")) secili.removeAttribute("style");
+      secili.removeAttribute("data-panic-secili");
     }
     menuKapat();
     ayarKapat();
@@ -887,7 +900,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     surukleniyor = true;
     document.body.style.cursor = "grabbing";
     cubuk.style.opacity = "0.35";
-    secili.style.opacity = "0.55";
+    secili.setAttribute("data-panic-suruklenen", "1");
   };
 
   const surukleHareket = (e: MouseEvent) => {
@@ -913,7 +926,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     document.body.style.cursor = "";
     cubuk.style.opacity = "1";
     if (secili) {
-      secili.style.opacity = "";
+      secili.removeAttribute("data-panic-suruklenen");
       seciliCerceve();
     }
     bitir();
@@ -1050,21 +1063,32 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         const govdeBol = tablo.tBodies[0] ?? tablo;
         const n = sutunSayisi();
         const yeni = (govdeBol as HTMLTableSectionElement).insertRow();
+        /* ILK HUCRE ADLANDIRILIYOR: bos bir satir eklemek, kullaniciyi
+           once "buraya ne yazacaktim" diye dusundurup sonra yazdiriyor.
+           Varsayilan bir ad, uzerine yazilacak bir baslangic veriyor. */
+        const sira = (govdeBol as HTMLTableSectionElement).rows.length;
         for (let i = 0; i < n; i++) {
           const h = yeni.insertCell();
-          h.innerHTML = "<br>";
+          if (i === 0) h.textContent = `Row ${sira}`;
+          else h.innerHTML = "<br>";
         }
         bitir();
       }));
 
       cubuk.appendChild(dugme("+→", "Add column", () => {
         if (!tablo) return;
+        const sira = sutunSayisi() + 1;
         for (const satir of [...tablo.rows]) {
           /* Baslik satirinda th, govdede td: yanlis etiket koymak
              tablonun anlamini ve ekran okuyucu davranisini bozar. */
           const basliktaMi = satir.parentElement?.tagName === "THEAD";
           const h = document.createElement(basliktaMi ? "th" : "td");
-          h.innerHTML = "<br>";
+          if (basliktaMi) {
+            h.setAttribute("scope", "col");
+            h.textContent = `Column ${sira}`;
+          } else {
+            h.innerHTML = "<br>";
+          }
           satir.appendChild(h);
         }
         bitir();
@@ -1117,6 +1141,34 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         }
         bitir();
       }));
+
+      /* HAZIR SETLER — yalnizca tablo HENUZ DOLDURULMAMISKEN.
+         Dolu bir tabloyu sifirlayan bir menu, bir yanlis tiklamayla
+         yazilmis butun veriyi silerdi. Tablo varsayilan haldeyken
+         (basliklar "Column N", govde bos) set secmek guvenli. */
+      if (tablo && tabloBos(tablo)) {
+        const sec2 = document.createElement("select");
+        sec2.style.cssText = `all:unset;box-sizing:border-box;cursor:pointer;padding:5px 7px;border-radius:6px;color:${R.ink};background:${R.yuzeyUst};font:500 12px ui-sans-serif,system-ui`;
+        const bosSecenek = document.createElement("option");
+        bosSecenek.value = "";
+        bosSecenek.textContent = "Start from…";
+        sec2.appendChild(bosSecenek);
+        for (const set of TABLO_SETLERI) {
+          const o = document.createElement("option");
+          o.value = set.ad;
+          o.textContent = set.ad;
+          sec2.appendChild(o);
+        }
+        sec2.addEventListener("mousedown", (e) => e.stopPropagation());
+        sec2.addEventListener("change", () => {
+          const set = TABLO_SETLERI.find((x) => x.ad === sec2.value);
+          if (!set || !tablo) return;
+          kaydet();
+          tabloyuKur(tablo, set.basliklar, set.satir);
+          bitir();
+        });
+        cubuk.appendChild(sec2);
+      }
 
       cubuk.appendChild(ayirici());
     }
@@ -1190,6 +1242,38 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
       bitir();
     }, R.tehlike));
   }
+
+  /** Tablo hala varsayilan halde mi (govdesi bos). */
+  const tabloBos = (tablo: HTMLTableElement) => {
+    for (const satir of [...tablo.rows]) {
+      if (satir.parentElement?.tagName === "THEAD") continue;
+      for (const h of [...satir.cells]) {
+        if ((h.textContent ?? "").trim()) return false;
+      }
+    }
+    return true;
+  };
+
+  /** Tabloyu verilen basliklar ve satir sayisiyla yeniden kurar. */
+  const tabloyuKur = (tablo: HTMLTableElement, basliklar: string[], satir: number) => {
+    tablo.innerHTML = "";
+    const bas = tablo.createTHead();
+    const basSatir = bas.insertRow();
+    for (const b of basliklar) {
+      const th = document.createElement("th");
+      th.setAttribute("scope", "col");
+      th.textContent = b;
+      basSatir.appendChild(th);
+    }
+    const govdeBol = tablo.createTBody();
+    for (let r = 0; r < satir; r++) {
+      const tr = govdeBol.insertRow();
+      for (let c = 0; c < basliklar.length; c++) {
+        const td = tr.insertCell();
+        td.innerHTML = "<br>";
+      }
+    }
+  };
 
   /* ---------------- olaylar ---------------- */
 
@@ -1388,5 +1472,6 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     menu.remove();
     ayarlar.remove();
     isaretci.remove();
+    yuzeyStili.remove();
   };
 }

@@ -45,7 +45,7 @@ export async function POST(
     const { id } = await params;
     const postId = parseInt(id, 10);
     const body = await request.json().catch(() => ({}));
-    const { title, contentHtml, contentJson, excerpt, authorName = 'Editor' } = body;
+    const { title, contentHtml, excerpt, authorName = 'Editor' } = body;
 
     if (!title) {
       return apiBadRequest('Title is required');
@@ -61,7 +61,6 @@ export async function POST(
            HTML'den yeniden ayristirilir ve o surumde elle yapilmis
            bolme/birlestirme kaybolurdu. */
         blocksJson: typeof contentHtml === 'string' ? htmlBloklara(contentHtml) : undefined,
-        contentJson,
         excerpt,
         authorName,
       } as any)

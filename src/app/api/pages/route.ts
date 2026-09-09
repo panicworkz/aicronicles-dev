@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { title, slug, contentHtml, contentJson, status, metaTitle, metaDescription } = body;
+    const { title, slug, contentHtml, status, metaTitle, metaDescription } = body;
 
     /* SABIT SAYFALAR DA SEMADAN GECIYOR.
        Bu sayfalarin editoru artik dogrudan HTML yazilan bir kutu;
@@ -51,7 +51,6 @@ export async function POST(req: Request) {
       title,
       slug: cleanSlug,
       contentHtml: temizHtml || '',
-      contentJson: contentJson || null,
       status: status || 'published',
       metaTitle: metaTitle || title,
       metaDescription: metaDescription || '',

@@ -31,6 +31,7 @@ const OLAY_GORSEL = "PANIC_OPEN_IMAGE_STUDIO";
 const OLAY_GORSEL_SONUC = "PANIC_STUDIO_IMAGE_RESULT";
 const OLAY_URUN = "PANIC_OPEN_PRODUCT_PICKER";
 const OLAY_URUN_SONUC = "PANIC_STUDIO_PRODUCT_RESULT";
+const OLAY_ODAK = "PANIC_STUDIO_FOCUS";
 
 export default function CanliOnizleme() {
   useEffect(() => {
@@ -72,6 +73,10 @@ export default function CanliOnizleme() {
       if (olay.origin !== kok) return;
       const v = olay.data;
       if (!v) return;
+      if (v.type === OLAY_ODAK) {
+        odakUygula(Boolean(v.payload?.acik));
+        return;
+      }
       if (v.type !== OLAY_GELEN && v.type !== OLAY_GORSEL_SONUC && v.type !== OLAY_URUN_SONUC) return;
 
       if (v.type === OLAY_GORSEL_SONUC) {
@@ -335,6 +340,42 @@ export default function CanliOnizleme() {
     `;
     document.head.appendChild(disStil);
 
+    /**
+     * ODAK KIPI — icerik disi alanlari gizler.
+     *
+     * Menu, reklam ve altbilgi duzenlenemiyor; bazen de yalnizca
+     * yaziya bakmak isteniyor. Ama bunlari SECICIYLE gizlemek
+     * (header, footer, aside...) tasarim degisince sessizce kirilir.
+     * Onun yerine yazinin bulundugu daldan yukari cikip her
+     * seviyedeki KARDESLERI gizliyoruz: yapinin kendisini izliyor.
+     */
+    const odakStili = document.createElement("style");
+    document.head.appendChild(odakStili);
+
+    const odakUygula = (acik: boolean) => {
+      const yazi = document.querySelector<HTMLElement>('[data-canli="yazi"]');
+      /* Isaret yoksa (ornegin sabit sayfa) hicbir sey yapilmiyor:
+         yanlis bir seyi gizlemektense hic gizlememek yeglenir. */
+      if (!yazi) return;
+
+      for (const o of Array.from(document.querySelectorAll("[data-panic-gizli]"))) {
+        o.removeAttribute("data-panic-gizli");
+      }
+      if (!acik) {
+        odakStili.textContent = "";
+        return;
+      }
+
+      let d: HTMLElement | null = yazi;
+      while (d && d.parentElement && d.parentElement !== document.documentElement) {
+        for (const kardes of Array.from(d.parentElement.children)) {
+          if (kardes !== d) kardes.setAttribute("data-panic-gizli", "1");
+        }
+        d = d.parentElement;
+      }
+      odakStili.textContent = "[data-panic-gizli]{display:none !important}";
+    };
+
     /* Cerceve hazir: panel ilk icerigi yollayabilsin. Yoksa cerceve
        yuklenene kadar gonderilen mesajlar kayboluyordu. */
     window.parent.postMessage({ type: OLAY_HAZIR, source: "preview_frame" }, kok);
@@ -347,6 +388,7 @@ export default function CanliOnizleme() {
       yuzeyiKaldir();
       if (zamanlayici) clearTimeout(zamanlayici);
       stil.remove();
+      odakStili.remove();
     };
   }, []);
 

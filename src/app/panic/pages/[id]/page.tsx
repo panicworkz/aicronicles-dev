@@ -40,7 +40,6 @@ export default function PanicEditPageStudio({
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [contentHtml, setContentHtml] = useState("");
-  const [contentJson, setContentJson] = useState<any>(null);
   const [status, setStatus] = useState("published");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
@@ -57,7 +56,6 @@ export default function PanicEditPageStudio({
           setTitle(p.title || "");
           setSlug(p.slug || "");
           setContentHtml(p.contentHtml || "");
-          setContentJson(p.contentJson || null);
           setStatus(p.status || "published");
           setMetaTitle(p.metaTitle || "");
           setMetaDescription(p.metaDescription || "");
@@ -91,7 +89,6 @@ export default function PanicEditPageStudio({
           title,
           slug,
           contentHtml,
-          contentJson,
           status,
           metaTitle: metaTitle || title,
           metaDescription: metaDescription || "",

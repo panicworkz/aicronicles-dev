@@ -21,7 +21,6 @@ export default function PanicNewPageStudio() {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [contentHtml, setContentHtml] = useState("");
-  const [contentJson, setContentJson] = useState<any>(null);
   const [status, setStatus] = useState("published");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
@@ -58,7 +57,6 @@ export default function PanicNewPageStudio() {
           title,
           slug,
           contentHtml,
-          contentJson,
           status,
           metaTitle: metaTitle || title,
           metaDescription: metaDescription || "",

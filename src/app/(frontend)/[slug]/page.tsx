@@ -285,7 +285,12 @@ export default async function ArticlePage({ params }: PageProps) {
       <ArticleClientActions title={post.title} />
       <MagazineHeader />
 
-      <main>
+      {/* data-canli="yazi": onizlemedeki ODAK kipi bu isaretten
+          yararlaniyor — yazinin bulundugu daldan yukari cikip her
+          seviyedeki kardesleri gizliyor. Secici tahmin etmek yerine
+          (header, footer, aside, reklam...) yapiyi izlemek, tasarim
+          degistiginde kirilmayan tek yol. */}
+      <main data-canli="yazi">
         {/* ============== BASLIK BLOGU (tam genislik hissi) ============== */}
         <header className="mag-wrap pt-10 sm:pt-14">
           <nav className="byline mb-7 flex items-center gap-2">
