@@ -93,6 +93,12 @@ export default function CustomCursor() {
     };
   }, []);
 
+  /* ONIZLEMEDE HIC CIZILMIYOR.
+     Once yalnizca durum hesaplaniyordu ama KULLANILMIYORDU — imlec
+     panelde gorunmeye devam ediyordu. Metin duzenlerken ozel imlec
+     yazi imlecini gizliyor ve secim yaparken ne secildigini
+     gostermiyor; CMS'te standart imlec dogru olan. */
+  if (onizlemede) return null;
   if (!moved) return null;
 
   return (
