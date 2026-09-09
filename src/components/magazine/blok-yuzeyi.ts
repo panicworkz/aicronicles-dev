@@ -572,41 +572,122 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     menu.style.display = "none";
   };
 
+  /* Menu iki bicimde aciliyor: DAR LISTE ve ANLATIMLI hali.
+     Dar liste hizli ekleme icin; anlatimli hali her blogun ne
+     oldugunu kucuk bir cizim ve tek cumleyle gosteriyor. "Kutu" ya da
+     "Sayi vurgusu" adlari tek basina hicbir sey soylemiyordu — yazarin
+     ekleyip gormesi gerekiyordu. */
+  let menuGenis = false;
+
+  const blokEkle = (tanim: (typeof EKLENEBILIR_TURLER)[number]) => {
+    const yeni = yeniBlokOgesi(tanim.t);
+    secili!.after(yeni);
+    menuKapat();
+    sec(yeni);
+    if (BLOK_TANIMLARI[tanim.t].yerindeYazilir) imleciKoy(yeni);
+    if (tanim.t === "icindekiler") icindekileriCiz(yeni);
+    /* Gorsel ve urun bloklari BOS dogmuyor: secici hemen aciliyor.
+       Gonderim ONCE yapiliyor — panel secim penceresini acmadan once
+       yeni blogun varligini bilmeli. */
+    bitir();
+    if (tanim.t === "gorsel") gorselAc(yeni.querySelector("img")!);
+    if (tanim.t === "urun") urunAc(yeni);
+  };
+
+  const simgeCiz = (tanim: (typeof EKLENEBILIR_TURLER)[number]) => {
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    c.setAttribute("viewBox", "0 0 24 24");
+    c.setAttribute("width", "34");
+    c.setAttribute("height", "34");
+    c.setAttribute("aria-hidden", "true");
+    c.style.cssText = `flex:0 0 auto;color:${R.soluk};fill:currentColor`;
+    c.innerHTML = tanim.simge ?? "";
+    return c;
+  };
+
+  const menuyuDoldur = () => {
+    menu.innerHTML = "";
+    menu.style.minWidth = menuGenis ? "420px" : "168px";
+    menu.style.maxHeight = "min(62vh, 520px)";
+    menu.style.overflowY = "auto";
+
+    const serit = document.createElement("div");
+    serit.style.cssText = `display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 4px 6px;border-bottom:1px solid ${R.cizgi};margin-bottom:4px`;
+    const ust = document.createElement("span");
+    ust.textContent = "Insert block";
+    ust.style.cssText = `color:${R.soluk};font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding-left:6px`;
+    serit.appendChild(ust);
+    const anahtar = dugme(
+      menuGenis ? "Compact" : "What are these?",
+      "Show what each block does",
+      () => {
+        menuGenis = !menuGenis;
+        menuyuDoldur();
+        menuyuKonumla();
+      }
+    );
+    anahtar.style.fontSize = "11.5px";
+    anahtar.style.color = R.vurgu;
+    serit.appendChild(anahtar);
+    menu.appendChild(serit);
+
+    for (const tanim of EKLENEBILIR_TURLER) {
+      if (!menuGenis) {
+        const d = dugme(tanim.ad, `Insert ${tanim.ad.toLowerCase()}`, () => blokEkle(tanim));
+        d.style.textAlign = "left";
+        d.style.padding = "8px 10px";
+        d.style.fontSize = "13px";
+        menu.appendChild(d);
+        continue;
+      }
+
+      const kart = document.createElement("button");
+      kart.type = "button";
+      kart.title = `Insert ${tanim.ad.toLowerCase()}`;
+      kart.style.cssText =
+        "all:unset;box-sizing:border-box;display:flex;gap:11px;align-items:flex-start;width:100%;cursor:pointer;padding:9px 10px;border-radius:8px";
+      kart.addEventListener("mouseenter", () => (kart.style.background = R.yuzeyUst));
+      kart.addEventListener("mouseleave", () => (kart.style.background = "transparent"));
+      kart.addEventListener("mousedown", (e) => e.preventDefault());
+      kart.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        kaydet();
+        blokEkle(tanim);
+      });
+
+      kart.appendChild(simgeCiz(tanim));
+
+      const metinKap = document.createElement("span");
+      metinKap.style.cssText = "display:flex;flex-direction:column;gap:2px;min-width:0";
+      const ad = document.createElement("span");
+      ad.textContent = tanim.ad;
+      ad.style.cssText = `color:${R.ink};font-size:13px;font-weight:600`;
+      const acik = document.createElement("span");
+      acik.textContent = tanim.aciklama ?? "";
+      acik.style.cssText = `color:${R.soluk};font-size:11.5px;font-weight:400;line-height:1.4`;
+      metinKap.appendChild(ad);
+      metinKap.appendChild(acik);
+      kart.appendChild(metinKap);
+
+      menu.appendChild(kart);
+    }
+  };
+
+  const menuyuKonumla = () => {
+    const k = cubuk.getBoundingClientRect();
+    menu.style.display = "flex";
+    menu.style.top = `${Math.max(8, Math.min(window.innerHeight - menu.offsetHeight - 8, k.bottom + 6))}px`;
+    menu.style.left = `${Math.max(8, Math.min(window.innerWidth - menu.offsetWidth - 8, k.right - menu.offsetWidth))}px`;
+  };
+
   const menuyuAc = () => {
     if (!secili) return;
     if (menuAcik) return menuKapat();
     ayarKapat();
-    menu.innerHTML = "";
     menuAcik = true;
-
-    for (const tanim of EKLENEBILIR_TURLER) {
-      const d = dugme(tanim.ad, `Insert ${tanim.ad.toLowerCase()}`, () => {
-        const yeni = yeniBlokOgesi(tanim.t);
-        secili!.after(yeni);
-        menuKapat();
-        sec(yeni);
-        if (BLOK_TANIMLARI[tanim.t].yerindeYazilir) imleciKoy(yeni);
-        /* Gorsel ve urun bloklari BOS dogmuyor: secici hemen aciliyor.
-           Kaynaksiz bir gorsel ya da kimliksiz bir urun karti, yazara
-           "eksik" bir sey birakmak olurdu.
-           Onizlemeden gonderim ONCE yapiliyor: panel secim penceresini
-           acmadan once yeni blogun varligini bilmeli. */
-        if (tanim.t === "icindekiler") icindekileriCiz(yeni);
-        bitir();
-        if (tanim.t === "gorsel") gorselAc(yeni.querySelector("img")!);
-        if (tanim.t === "urun") urunAc(yeni);
-        return;
-      });
-      d.style.textAlign = "left";
-      d.style.padding = "8px 10px";
-      d.style.fontSize = "13px";
-      menu.appendChild(d);
-    }
-
-    const k = cubuk.getBoundingClientRect();
-    menu.style.display = "flex";
-    menu.style.top = `${Math.min(window.innerHeight - menu.offsetHeight - 8, k.bottom + 6)}px`;
-    menu.style.left = `${Math.max(8, k.right - menu.offsetWidth)}px`;
+    menuyuDoldur();
+    menuyuKonumla();
   };
 
   /* ---------------- ayar paneli ----------------
