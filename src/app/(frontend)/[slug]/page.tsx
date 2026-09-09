@@ -286,12 +286,13 @@ export default async function ArticlePage({ params }: PageProps) {
       <MagazineHeader />
 
       <main>
-        {/* data-canli="yazi": ODAK kipinde gorunur kalacak bolgeler.
-            Once <main> isaretliydi ama bu fazla kabaydi — reklamlar,
-            yazar kutusu, bulten seridi ve "Keep reading" de onun
-            icinde, yani odakta hepsi kaliyordu. Isaret artik yazinin
-            KENDI iki parcasinda: baslik blogu ve metin sutunu. */}
-        <header data-canli="yazi" className="mag-wrap pt-10 sm:pt-14">
+        {/* data-odak: ODAK kipinde gorunur kalacak bolgeler.
+            Once <main>, sonra <article> isaretliydi; ikisi de fazla
+            kabaydi — reklam, yazar kutusu, bulten seridi ve "Keep
+            reading" onlarin icinde kaliyordu. Isaret artik tam olarak
+            DUZENLENEBILIR alanlarda: baslik blogu ve metin govdesi.
+            Odak, yazarin bu ekranda degistirebildigi sey. */}
+        <header data-odak="1" className="mag-wrap pt-10 sm:pt-14">
           <nav className="byline mb-7 flex items-center gap-2">
             <Link href="/" className="hover:text-[var(--accent-ink)]">
               HOME
@@ -379,9 +380,13 @@ export default async function ArticlePage({ params }: PageProps) {
         <div className="mag-wrap pt-14">
           <div className="grid gap-14 lg:grid-cols-12">
             {/* Metin — 8 kolon, olcu 68ch */}
-            <article data-canli="yazi" className="lg:col-span-8">
+            <article className="lg:col-span-8">
               <div
                 data-canli="govde"
+                /* ODAK kipinde gorunur kalacak ikinci bolge. Ayri bir
+                   oznitelik cunku bu oge data-canli="govde" olmak
+                   zorunda: blok yuzeyi onu oradan buluyor. */
+                data-odak="1"
                 className="article-body dropcap text-[1.06rem] leading-[1.82]"
                 dangerouslySetInnerHTML={{
                   __html: govdeHtml,

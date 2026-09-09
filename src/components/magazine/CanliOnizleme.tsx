@@ -353,9 +353,7 @@ export default function CanliOnizleme() {
     document.head.appendChild(odakStili);
 
     const odakUygula = (acik: boolean) => {
-      const isaretliler = [
-        ...document.querySelectorAll<HTMLElement>('[data-canli="yazi"]'),
-      ];
+      const isaretliler = [...document.querySelectorAll<HTMLElement>("[data-odak]")];
       /* Isaret yoksa (ornegin sabit sayfa) hicbir sey yapilmiyor:
          yanlis bir seyi gizlemektense hic gizlememek yeglenir. */
       if (!isaretliler.length) return;
