@@ -184,14 +184,23 @@ export default function AboutSayfasi() {
             What is PANIC?
           </div>
 
-          {/* Isim harf harf: acilim once GORULUYOR, sonra okunuyor. */}
-          <div className="mt-8 flex flex-wrap items-end gap-x-4 gap-y-5 sm:gap-x-7">
+          {/* Isim harf harf: acilim once GORULUYOR, sonra okunuyor.
+              HARF KELIMESININ ORTASINDA duruyor. Once her harf kendi
+              sutununun SOLUNA yaslıydı ve sutun genisligini alttaki
+              kelime belirliyordu (POST-CMS genis, CORE dar); harfler
+              duzensiz araliklarla dagiliyordu. En cok "I"da
+              gorunuyordu — dar bir glif, genis bir kelimenin
+              solunda asili kaliyordu. */}
+          <div className="mt-8 flex flex-wrap items-end gap-x-7 gap-y-6 sm:gap-x-10">
             {HARFLER.map((h) => (
-              <div key={h.harf} className="flex flex-col">
-                <span className="text-5xl font-semibold leading-none tracking-tight sm:text-6xl">
+              <div key={h.harf} className="flex flex-col items-center">
+                {/* Sabit genislik: harflerin kendi genisligi cok farkli
+                    (I ile C arasinda uc kat fark var) ve bu, kelimeler
+                    ayni genislikte olsa bile ritmi bozuyordu. */}
+                <span className="flex h-[1em] w-9 items-center justify-center text-5xl font-semibold leading-none tracking-tight sm:w-11 sm:text-6xl">
                   {h.harf}
                 </span>
-                <span className="mt-2.5 text-[10.5px] uppercase tracking-[0.14em] text-white/40">
+                <span className="mt-3.5 text-[10.5px] uppercase tracking-[0.14em] text-white/40">
                   {h.kelime}
                 </span>
               </div>
