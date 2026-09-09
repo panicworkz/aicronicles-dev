@@ -148,6 +148,9 @@ export function metinYuzeyiKur({
      yan yana duruyordu. Konumlariyla oynamak yamaydi; iki yuzeyi tek
      cubukta birlestirmek sorunu kaynagindan kaldiriyor. */
   const cubuk = kap;
+  /* Bicim grubu blok cubugunun icinde ama kendi ogesi; tiklama
+     engelinin disinda kalmasi icin ayrica isaretleniyor. */
+  kap.setAttribute("data-panic-yuzey", "1");
 
   const dugme = (yazi: string, ipucu: string, is: () => void) => {
     const d = document.createElement("button");

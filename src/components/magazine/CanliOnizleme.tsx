@@ -302,6 +302,12 @@ export default function CanliOnizleme() {
     const disariTikla = (e: MouseEvent) => {
       const h = e.target as HTMLElement | null;
       if (!h) return;
+      /* Editorun kendi arayuzu bu engelin DISINDA: arac cubugu, blok
+         menusu ve ayar paneli govdenin disinda yasiyor ve dugmeleri
+         birer <button>. Isaretlemeseydik kendi denetimlerimizi de
+         engellemis olurduk — nitekim bir sure oyle oldu. */
+      if (h.closest("[data-panic-yuzey]")) return;
+
       const duzenlenebilirIcinde =
         h.closest('[data-canli="baslik"]') ||
         h.closest('[data-canli="ozet"]') ||

@@ -183,6 +183,12 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
 
   const kat = (zIndex: number) => {
     const e = document.createElement("div");
+    /* EDITORUN KENDI YUZEYI OLARAK ISARETLENIYOR.
+       Onizlemede icerik disi alanlarin tiklanmasi engelleniyor
+       (CanliOnizleme). O engel arac cubugunu da yutuyordu: cubuk
+       govdenin disinda yasiyor ve dugmeleri birer <button>. Menu ve
+       ayar paneli hic acilmiyordu. */
+    e.setAttribute("data-panic-yuzey", "1");
     e.style.cssText = [
       "position:fixed",
       `z-index:${zIndex}`,
@@ -219,6 +225,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
      style'ini kirletmemek icin ayri bir katman: outline yazsaydik
      kaydedilen HTML'e style="outline:..." olarak sizardi. */
   const isaretci = document.createElement("div");
+  isaretci.setAttribute("data-panic-yuzey", "1");
   isaretci.style.cssText = [
     "position:fixed",
     "z-index:2147482999",
