@@ -24,12 +24,20 @@ node_modules
 
 # macOS
 ._*
+**/._*
 .DS_Store
 
 # Yedekler, arsivler, eski kopyalar
 backups
+# ALT KLASORLER DE KAPSANIYOR.
+# "*.bak.*" yalnizca KOK dizindeki dosyalari esliyor: * karakteri /
+# gecmiyor. Bu yuzden src/components/editor/TipTapEditor.tsx.bak.*
+# dosyalari imaja giriyordu — TipTap kaldirildiktan sonra bile
+# konteynerde duruyorlardi.
 *.bak
 *.bak.*
+**/*.bak
+**/*.bak.*
 *.yedek-*
 /*.sql
 /*.tar.gz
