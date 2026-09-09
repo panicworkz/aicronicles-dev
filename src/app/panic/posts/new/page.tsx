@@ -23,7 +23,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { KaynakDuzenleyici } from "@/components/studio/KaynakDuzenleyici";
-import { BlockInsertToolbar } from "@/components/studio/BlockInsertToolbar";
 import { AeoScoreMeter } from "@/components/studio/AeoScoreMeter";
 import { SerpSocialPreview } from "@/components/studio/SerpSocialPreview";
 import { ImageUploadDropzone } from "@/components/ui/image-upload-dropzone";
@@ -83,10 +82,6 @@ export default function PanicNewPostPage() {
     }
   };
 
-  const handleInsertHtml = (htmlToInsert: string) => {
-    setContentHtml((prev) => `${prev || ""}\n\n${htmlToInsert}`);
-    toast.success("AI Block added to publication");
-  };
 
   // AI Auto-Fill for Excerpt & SEO Metadata
   const handleAiAutoFillMeta = () => {
@@ -266,13 +261,6 @@ export default function PanicNewPostPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Rich Block Quick Insert Toolbar */}
-              <BlockInsertToolbar
-                title={title}
-                contentHtml={contentHtml}
-                onInsertHtml={handleInsertHtml}
-              />
 
               {/* Kaynak gorunumu — kacis kapisi (bkz. KaynakDuzenleyici). */}
               <div>

@@ -35,7 +35,6 @@ import { UrunSecici } from "@/components/studio/UrunSecici";
 import { KaynakDuzenleyici } from "@/components/studio/KaynakDuzenleyici";
 import { AeoScoreMeter } from "@/components/studio/AeoScoreMeter";
 import { SerpSocialPreview } from "@/components/studio/SerpSocialPreview";
-import { BlockInsertToolbar } from "@/components/studio/BlockInsertToolbar";
 import { RevisionHistoryDrawer } from "@/components/studio/RevisionHistoryDrawer";
 import { MediaPickerModal } from "@/components/studio/MediaPickerModal";
 import {
@@ -439,13 +438,6 @@ export default function PanicSplitLiveStudioPage({
     broadcastLiveSync(title, newHtml, featuredImageUrl);
   };
 
-  const handleInsertHtml = (snippetHtml: string) => {
-    const combined = `${contentHtml}\n${snippetHtml}`;
-    setContentHtml(combined);
-    contentHtmlRef.current = combined;
-    broadcastLiveSync(title, combined, featuredImageUrl);
-    toast.success("Block added to article");
-  };
 
   const handleSave = async (isAuto = false) => {
     if (!title.trim()) {
@@ -608,15 +600,6 @@ export default function PanicSplitLiveStudioPage({
             Preview isn’t responding — edit the HTML instead
           </button>
         )}
-
-        {/* YZ eylemleri TUVALDE. Once yalnizca HTML gorunumunde
-            duruyorlardi; o gorunum artik bir kacis kapisi oldugu icin
-            eylemler neredeyse erisilemez hale gelmisti. */}
-        <BlockInsertToolbar
-          title={title}
-          contentHtml={contentHtml}
-          onInsertHtml={handleInsertHtml}
-        />
 
         {/* ODAK: duzenlenemeyen alanlari gizler.
             Tamamen kaldirmak yerine anahtar: yerinde duzenlemenin

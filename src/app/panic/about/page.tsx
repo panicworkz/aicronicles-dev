@@ -141,8 +141,12 @@ export default function AboutSayfasi() {
   ];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-10">
-      {/* --------------------------- Basli k --------------------------- */}
+    /* Genislik SINIRLANMIYOR: panelin diger sayfalari (Settings,
+       Products, Media) tam alani kullaniyor; burasi ortada dar bir
+       serit olarak duruyordu ve yan yana geldiginde ayri bir uygulama
+       gibi gorunuyordu. */
+    <div className="space-y-6 pb-20">
+      {/* --------------------------- Baslik --------------------------- */}
       <div className="rounded-xl border border-border bg-linear-to-b from-primary/5 to-transparent p-7">
         <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
           <Gauge className="size-3.5 text-primary" />
@@ -153,7 +157,7 @@ export default function AboutSayfasi() {
           Post-CMS Architecture for Native, Intelligent Core
         </h1>
 
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-4 max-w-[78ch] text-sm leading-relaxed text-muted-foreground">
           Most publishing tools ask you to write in one place and hope it looks
           right in another. PANIC removes the gap: the article is structured
           data, the editor is the published page, and everything that could go
@@ -169,19 +173,23 @@ export default function AboutSayfasi() {
         </CardHeader>
         <CardContent className="space-y-5">
           {ACILIM.map((k) => (
-            <div key={k.kelime} className="grid gap-2 sm:grid-cols-[150px_1fr] sm:gap-5">
+            <div key={k.kelime} className="grid gap-2 sm:grid-cols-[210px_1fr] sm:gap-7">
               <div>
                 <div className="text-sm font-semibold text-foreground">{k.kelime}</div>
                 <div className="mt-0.5 text-xs leading-snug text-primary">{k.ozet}</div>
               </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">{k.metin}</p>
+              {/* Olcu korunuyor: tam genislikte bir satir 160 karaktere
+                  ulasiyor ve goz satir basini kaybediyor. */}
+              <p className="max-w-[78ch] text-sm leading-relaxed text-muted-foreground">
+                {k.metin}
+              </p>
             </div>
           ))}
         </CardContent>
       </Card>
 
       {/* ------------------------- Yetenekler ------------------------- */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
         {yetenekler.map((y) => {
           const Simge = y.simge;
           return (
@@ -212,7 +220,7 @@ export default function AboutSayfasi() {
         <CardHeader>
           <CardTitle className="text-sm font-semibold">How decisions get made here</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
+        <CardContent className="max-w-[78ch] space-y-3 text-sm leading-relaxed text-muted-foreground">
           <p>
             <strong className="text-foreground">Measure, don’t assume.</strong> The
             move to blocks was not trusted until all 47 published articles had
