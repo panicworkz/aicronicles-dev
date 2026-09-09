@@ -24,6 +24,8 @@ import {
   PanelRightClose,
   PanelRightOpen,
   ChevronRight,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,6 +94,9 @@ export default function PanicSplitLiveStudioPage({
   /* Odak kipi: onizlemede yalnizca yaziyi goster. Duzenlenemeyen
      alanlar (menu, reklam, altbilgi) gorunmez oluyor. */
   const [odak, setOdak] = useState(false);
+  /* Geri alma yigininin derinligi. Onizlemeden bildiriliyor; dugmeler
+     kullanilamaz oldugunda soluk gorunsun diye. */
+  const [gecmisDerinligi, setGecmisDerinligi] = useState({ geri: 0, ileri: 0 });
   /* Secim hatirlaniyor: her yazi acilista tercihi yeniden yapmak
      gereksiz. Sunucuda okunmuyor, yalnizca bu tarayicinin tercihi. */
   useEffect(() => {
@@ -219,6 +224,14 @@ export default function PanicSplitLiveStudioPage({
           setExcerpt(liveExcerpt);
           excerptRef.current = liveExcerpt;
         }
+      }
+
+      if (event.data?.type === "PANIC_STUDIO_HISTORY_STATE") {
+        setGecmisDerinligi({
+          geri: Number(event.data.payload?.geri ?? 0),
+          ileri: Number(event.data.payload?.ileri ?? 0),
+        });
+        return;
       }
 
       if (event.data?.type === "PANIC_OPEN_PRODUCT_PICKER") {
@@ -582,86 +595,141 @@ export default function PanicSplitLiveStudioPage({
   // Render the Live Web Preview Canvas
   const renderLiveCanvas = () => (
     <div className="flex flex-col w-full h-full bg-muted/30 overflow-hidden relative">
-      {/* Live Studio Control Bar */}
-      <div className="flex h-9 items-center justify-between gap-2 border-b bg-background/80 backdrop-blur-xs px-4 shrink-0">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-          <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Live In-Context Canvas</span>
+      {/* ------------------------- DENETIM SERIDI -------------------------
+          IKI GRUP: solda durum, sagda denetimler.
+
+          Once serit justify-between ile BES ogeyi esit dagitiyordu;
+          Focus dugmesi ortada asili kaliyor, ayar kenar cubugu acilip
+          kapandiginda genislik degistigi icin her sey yer degistiriyordu.
+          Ustelik yukseklikler birbirini tutmuyordu: Focus 24 piksel,
+          cihaz secici 28.
+
+          Simdi tek bir sag kume var, ogeler ince cizgilerle ayrilmis ve
+          hepsi ayni yukseklikte. Kenar cubugu ne yaparsa yapsin kume
+          sag kenara yasli kaliyor. */}
+      <div className="flex h-11 items-center justify-between gap-3 border-b bg-background/80 px-4 backdrop-blur-xs shrink-0">
+        {/* --- sol: durum --- */}
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" />
+          <span className="truncate text-xs font-medium text-muted-foreground">
+            Live In-Context Canvas
+          </span>
+
+          {/* Uyari SOLDA, durumun yaninda: sagdaki kumeyi itip
+              denetimleri yerinden oynatmasin. */}
+          {onizlemeGecikti && !onizlemeHazir && (
+            <button
+              type="button"
+              onClick={() => setViewMode("editor")}
+              className="ml-2 hidden cursor-pointer items-center gap-1.5 rounded-md border border-amber-400/60 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800 sm:flex dark:bg-amber-950/40 dark:text-amber-200"
+            >
+              Preview isn’t responding — edit the HTML
+            </button>
+          )}
         </div>
 
-        {/* Onizleme gec kaldi: sessizce bos bir cerceve birakmak
-            yerine kacis kapisini goster. */}
-        {onizlemeGecikti && !onizlemeHazir && (
+        {/* --- sag: denetimler --- */}
+        <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border/70 bg-muted/30 p-1">
+          {/* GERI AL / ILERI AL — TEK yigin.
+              Blok yuzeyinde metin duzenlemesi de blok islemleri de
+              (tasi, sil, cogalt, ekle) ayni sirada duruyor. Metin ve
+              blok icin ayri iki dugme koymak, iki farkli gecmis varmis
+              izlenimi verirdi. Cmd+Z zaten ayni yigini suruyor;
+              bunlar onu gorunur kiliyor. */}
+          {(
+            [
+              ["geri", Undo2, "Undo (Cmd/Ctrl+Z)", gecmisDerinligi.geri],
+              ["ileri", Redo2, "Redo (Cmd/Ctrl+Shift+Z)", gecmisDerinligi.ileri],
+            ] as const
+          ).map(([yon, Simge, ipucu, derinlik]) => (
+            <button
+              key={yon}
+              type="button"
+              disabled={derinlik === 0}
+              onClick={() =>
+                iframeRef.current?.contentWindow?.postMessage(
+                  { type: "PANIC_STUDIO_HISTORY", source: "studio_parent", payload: { yon } },
+                  window.location.origin
+                )
+              }
+              title={derinlik === 0 ? `${ipucu} — nothing to ${yon === "geri" ? "undo" : "redo"}` : ipucu}
+              className={`flex size-7 items-center justify-center rounded-md transition ${
+                derinlik === 0
+                  ? "cursor-not-allowed text-muted-foreground/35"
+                  : "cursor-pointer text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Simge className="size-3.5" />
+            </button>
+          ))}
+
+          <span className="mx-0.5 h-4 w-px bg-border" />
+
+          {/* ODAK. Tamamen kaldirmak yerine anahtar: yerinde
+              duzenlemenin degeri yaziyi gercek cevresinde gormek —
+              manşetin altinda nasil durdugu, reklamin metni nerede
+              boldugu. Ama her zaman gerekmiyor. */}
           <button
             type="button"
-            onClick={() => setViewMode("editor")}
-            className="flex cursor-pointer items-center gap-1.5 rounded-md border border-amber-400/60 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+            onClick={() =>
+              setOdak((o) => {
+                try {
+                  localStorage.setItem("panic_odak", o ? "0" : "1");
+                } catch {}
+                return !o;
+              })
+            }
+            className={`h-7 cursor-pointer rounded-md px-2.5 text-[11px] font-medium transition ${
+              odak
+                ? "bg-background text-foreground shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+            title={
+              odak
+                ? "Show the full page around the article"
+                : "Hide everything except the article"
+            }
           >
-            Preview isn’t responding — edit the HTML instead
+            {odak ? "Full page" : "Focus"}
           </button>
-        )}
 
-        {/* ODAK: duzenlenemeyen alanlari gizler.
-            Tamamen kaldirmak yerine anahtar: yerinde duzenlemenin
-            degeri yaziyi gercek cevresinde gormek — manşetin altinda
-            nasil durdugu, reklamin metni nerede boldugu. Ama her zaman
-            gerekmiyor. */}
-        <button
-          type="button"
-          onClick={() =>
-            setOdak((o) => {
-              try {
-                localStorage.setItem("panic_odak", o ? "0" : "1");
-              } catch {}
-              return !o;
-            })
-          }
-          className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium transition ${
-            odak
-              ? "border-primary/60 bg-primary/10 text-foreground"
-              : "border-border/80 text-muted-foreground hover:text-foreground"
-          }`}
-          title={odak ? "Show the full page around the article" : "Hide everything except the article"}
-        >
-          {odak ? "Full page" : "Focus"}
-        </button>
+          <span className="mx-0.5 h-4 w-px bg-border" />
 
-        {/* Device Switcher */}
-        <div className="flex items-center rounded-lg border bg-muted/40 p-0.5">
-          <Button
-            variant={deviceMode === "desktop" ? "secondary" : "ghost"}
-            size="icon-xs"
-            onClick={() => setDeviceMode("desktop")}
-            title="Desktop 100%"
+          {/* Cihaz secici. Kendi cercevesi kaldirildi: kume zaten bir
+              cerceve, ic ice iki cerceve gereksiz agirlik yapiyordu. */}
+          {(
+            [
+              ["desktop", Monitor, "Desktop 100%"],
+              ["tablet", Tablet, "Tablet 768px"],
+              ["mobile", Smartphone, "Mobile 375px"],
+            ] as const
+          ).map(([kip, Simge, ipucu]) => (
+            <button
+              key={kip}
+              type="button"
+              onClick={() => setDeviceMode(kip)}
+              title={ipucu}
+              className={`flex size-7 cursor-pointer items-center justify-center rounded-md transition ${
+                deviceMode === kip
+                  ? "bg-background text-foreground shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Simge className="size-3.5" />
+            </button>
+          ))}
+
+          <span className="mx-0.5 h-4 w-px bg-border" />
+
+          <button
+            type="button"
+            onClick={() => setIframeKey((prev) => prev + 1)}
+            title="Reload the preview"
+            className="flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition hover:text-foreground"
           >
-            <Monitor className="size-3" />
-          </Button>
-          <Button
-            variant={deviceMode === "tablet" ? "secondary" : "ghost"}
-            size="icon-xs"
-            onClick={() => setDeviceMode("tablet")}
-            title="Tablet 768px"
-          >
-            <Tablet className="size-3" />
-          </Button>
-          <Button
-            variant={deviceMode === "mobile" ? "secondary" : "ghost"}
-            size="icon-xs"
-            onClick={() => setDeviceMode("mobile")}
-            title="Mobile 375px"
-          >
-            <Smartphone className="size-3" />
-          </Button>
+            <RefreshCw className="size-3.5" />
+          </button>
         </div>
-
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onClick={() => setIframeKey((prev) => prev + 1)}
-          title="Reload Frame"
-        >
-          <RefreshCw className="size-3" />
-        </Button>
       </div>
 
       {/* Responsive Live Frame Canvas */}

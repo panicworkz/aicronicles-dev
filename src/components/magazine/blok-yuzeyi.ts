@@ -98,6 +98,9 @@ type Ayarlar = {
   gorselAc: (img: HTMLImageElement) => void;
   /* Urun secici penceresini panelde acar. */
   urunAc: (blok: HTMLElement) => void;
+  /* Geri alma yigini degisince panele bildirir: dugmeler ne zaman
+     kullanilabilir oldugunu bilsin. */
+  gecmisDegisti?: (geri: number, ileri: number) => void;
 };
 
 /* Renkler LITERAL yaziliyor. Arac cubugu document.body'ye takiliyor,
@@ -117,7 +120,19 @@ const R = {
 
 const GOLGE = "0 1px 2px rgba(20,18,16,.06), 0 10px 28px rgba(20,18,16,.14)";
 
-export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () => void {
+export type BlokYuzeyi = {
+  kaldir: () => void;
+  geriAl: () => void;
+  ileriAl: () => void;
+};
+
+export function blokYuzeyiKur({
+  govde,
+  yolla,
+  gorselAc,
+  urunAc,
+  gecmisDegisti,
+}: Ayarlar): BlokYuzeyi {
   let secili: HTMLElement | null = null;
 
   /* Bicim dugmelerinin durdugu grup. Blok cubugunun ICINDE yasiyor;
@@ -141,6 +156,8 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
   const ileri: string[] = [];
   let sonKayit = 0;
 
+  const gecmisiBildir = () => gecmisDegisti?.(gecmis.length, ileri.length);
+
   const kaydet = () => {
     const simdi = govde.innerHTML;
     if (gecmis[gecmis.length - 1] === simdi) return;
@@ -149,6 +166,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     /* Yeni bir is yapilinca ileri gecmisi anlamini yitiriyor. */
     ileri.length = 0;
     sonKayit = Date.now();
+    gecmisiBildir();
   };
 
   /* Yazarken her harf ayri adim olmasin: yazmaya ara verilince tek
@@ -164,6 +182,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     duzenlenebilirlikUygula(govde);
     sec(null);
     yolla();
+    gecmisiBildir();
   };
 
   const ileriAl = () => {
@@ -173,6 +192,7 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     duzenlenebilirlikUygula(govde);
     sec(null);
     yolla();
+    gecmisiBildir();
   };
   let ustunde: HTMLElement | null = null;
   let menuAcik = false;
@@ -1460,7 +1480,12 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
   window.addEventListener("scroll", kaydir, true);
   window.addEventListener("resize", kaydir);
 
-  return () => {
+  gecmisiBildir();
+
+  return {
+    geriAl,
+    ileriAl,
+    kaldir: () => {
     metniKaldir();
     govde.removeEventListener("input", yazarkenKaydet);
     govde.removeEventListener("keydown", govdeTus);
@@ -1480,5 +1505,6 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
     ayarlar.remove();
     isaretci.remove();
     yuzeyStili.remove();
+    },
   };
 }

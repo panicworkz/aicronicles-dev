@@ -32,6 +32,8 @@ const OLAY_GORSEL_SONUC = "PANIC_STUDIO_IMAGE_RESULT";
 const OLAY_URUN = "PANIC_OPEN_PRODUCT_PICKER";
 const OLAY_URUN_SONUC = "PANIC_STUDIO_PRODUCT_RESULT";
 const OLAY_ODAK = "PANIC_STUDIO_FOCUS";
+const OLAY_GECMIS = "PANIC_STUDIO_HISTORY";
+const OLAY_GECMIS_DURUM = "PANIC_STUDIO_HISTORY_STATE";
 
 export default function CanliOnizleme() {
   useEffect(() => {
@@ -73,12 +75,24 @@ export default function CanliOnizleme() {
       if (olay.origin !== kok) return;
       const v = olay.data;
       if (!v) return;
+      if (v.type === OLAY_GECMIS) {
+        if (v.payload?.yon === "ileri") yuzey?.ileriAl();
+        else yuzey?.geriAl();
+        return;
+      }
+
       if (v.type === OLAY_ODAK) {
         odakUygula(Boolean(v.payload?.acik));
         odakSonrasiOlc();
         return;
       }
-      if (v.type !== OLAY_GELEN && v.type !== OLAY_GORSEL_SONUC && v.type !== OLAY_URUN_SONUC) return;
+      if (
+        v.type !== OLAY_GELEN &&
+        v.type !== OLAY_GORSEL_SONUC &&
+        v.type !== OLAY_URUN_SONUC
+      ) {
+        return;
+      }
 
       if (v.type === OLAY_GORSEL_SONUC) {
         const { istek, src, alt, title: baslikOz, caption } = v.payload ?? {};
@@ -265,9 +279,29 @@ export default function CanliOnizleme() {
 
     /* Blok denetimleri: tur farkindaligi burada degil, blok-yuzeyi.ts
        icinde ve BLOK_TANIMLARI kaydindan besleniyor. */
-    const yuzeyiKaldir = govde
-      ? blokYuzeyiKur({ govde, yolla, gorselAc, urunAc })
-      : () => {};
+    /* TEK GECMIS YIGINI. Panelde iki ayri geri alma dugmesi
+       (biri metin, biri blok icin) iki farkli gecmis varmis izlenimi
+       verirdi; oysa yigin bastan beri tek ve ikisini de kapsiyor —
+       metin duzenlemesi de blok tasima/silme de ayni sirada duruyor. */
+    const yuzey = govde
+      ? blokYuzeyiKur({
+          govde,
+          yolla,
+          gorselAc,
+          urunAc,
+          gecmisDegisti: (geri, ileriSayi) => {
+            window.parent.postMessage(
+              {
+                type: OLAY_GECMIS_DURUM,
+                source: "preview_frame",
+                payload: { geri, ileri: ileriSayi },
+              },
+              kok
+            );
+          },
+        })
+      : null;
+    const yuzeyiKaldir = () => yuzey?.kaldir();
 
     /* Uzerine gelince ince bir isaret — okur bunu hic gormuyor. */
     const stil = document.createElement("style");

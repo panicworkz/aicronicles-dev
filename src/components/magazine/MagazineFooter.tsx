@@ -13,6 +13,7 @@ const MASTHEAD_LINKS = [
   { label: "Sponsor", href: "/sponsor" },
   { label: "Terms & conditions", href: "/terms-and-conditions" },
   { label: "Data & privacy", href: "/data-and-privacy" },
+  { label: "Support", href: "/support" },
   /* En altta: sitede hicbir e-posta adresi yazmiyor, butun iletisim
      formdan geciyor. Once About'un hemen altindaydi ama orasi kunyenin
      sayfa listesi — Contact bir sayfa degil, listenin cikisi. */
