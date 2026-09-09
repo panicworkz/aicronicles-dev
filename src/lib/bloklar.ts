@@ -130,6 +130,9 @@ export type Blok =
   | { t: "video"; saglayici: "youtube" | "vimeo"; videoId: string; baslik?: string }
   /* Galeri. */
   | { t: "galeri"; sutun: 2 | 3 | 4; gorseller: { src: string; alt?: string }[] }
+  /* Kod blogu. Icerik DUZ METIN olarak tutuluyor: kod icinde gecen
+     "<" ve "&" isaretleri isaretleme sanilirsa kod bozulur. */
+  | { t: "kod"; kod: string; dil?: string }
   /* Iki sutun — yan yana iki metin alani. */
   | { t: "sutunlar"; sol: string; sag: string }
   /* Cubuk grafik. Bir grafik kitapligi YOK: degerler dogrudan
@@ -283,7 +286,11 @@ export function htmlBloklara(html?: string | null): Blok[] {
   const kok = parse(html, {
     /* Bosluklar korunuyor: aralarindaki bosluklari yutmak, ayni
        satirda duran ogelerin birlesmesine yol aciyor. */
-    blockTextElements: { script: true, style: true, pre: true },
+    /* pre AYRISTIRILIYOR (ham metin degil): kod blogunun icindeki
+       <code> ogesini bulabilmek ve varliklari (&lt; &amp;) cozup
+       yeniden kacislayabilmek icin. Ham birakildiginda kod metni
+       "<code>..." dizgesi olarak geliyordu. */
+    blockTextElements: { script: true, style: true },
   });
 
   /* Sema HER SEYDEN ONCE: blok cikarimi artik yalnizca gecerli bir
@@ -583,6 +590,15 @@ function isaretliBlok(isaret: string, o: HTMLElement): Blok | null {
       };
     }
 
+    case "kod":
+      return {
+        t: "kod",
+        /* textContent: kod icindeki isaretler cozulmus haliyle
+           aliniyor, uretimde yeniden kacisliyor. */
+        kod: o.querySelector("code")?.textContent ?? o.textContent ?? "",
+        ...(o.getAttribute("data-dil") ? { dil: o.getAttribute("data-dil")! } : {}),
+      };
+
     case "sutunlar": {
       const sutunlar = o.querySelectorAll(".sutun").filter((k) => k.parentNode === o);
       return {
@@ -782,6 +798,19 @@ export function bloklarHtmle(
             (b.baslik ? oznitelik("data-baslik", b.baslik) : "") +
             `></div>`
           );
+
+        case "kod": {
+          /* Kod KACISLANIYOR: aksi halde icindeki bir etiket sayfanin
+             parcasi olur ve hem kod bozulur hem sayfa. */
+          const kacisli = b.kod
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+          return (
+            `<pre class="kod" data-blok="kod"${oznitelik("data-dil", b.dil)}>` +
+            `<code>${kacisli}</code></pre>`
+          );
+        }
 
         case "sutunlar":
           return (

@@ -24,7 +24,9 @@ import {
   Sun,
   Moon,
   ChevronLeft,
-  Ruler, Inbox, ClipboardList,} from "lucide-react";
+  Ruler, Inbox, ClipboardList,
+  Info,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -90,7 +92,10 @@ export default function PanicAdminLayout({
     },
     {
       title: "SYSTEM",
-      items: [{ href: "/panic/settings", label: "Settings", icon: Settings }],
+      items: [
+        { href: "/panic/settings", label: "Settings", icon: Settings },
+        { href: "/panic/about", label: "About PANIC", icon: Info },
+      ],
     },
   ];
 

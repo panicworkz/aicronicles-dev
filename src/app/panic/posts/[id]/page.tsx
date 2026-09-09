@@ -58,9 +58,12 @@ export default function PanicSplitLiveStudioPage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [autosaving, setAutosaving] = useState(false);
-  const [viewMode, setViewMode] = useState<"editor" | "live">(
-    "editor",
-  );
+  /* ACILIS KIPI TUVAL.
+     Varsayilan "editor" idi: HTML gorunumune giden dugmeyi
+     kaldirmama ragmen yazi her acildiginda oraya dusuyordu — asil
+     sebep buydu. Yazinin editoru tuval; ham isaretleme yalnizca
+     onizleme yanit vermediginde one cikiyor. */
+  const [viewMode, setViewMode] = useState<"editor" | "live">("live");
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">(
     "desktop",
   );
@@ -90,6 +93,15 @@ export default function PanicSplitLiveStudioPage({
   /* Odak kipi: onizlemede yalnizca yaziyi goster. Duzenlenemeyen
      alanlar (menu, reklam, altbilgi) gorunmez oluyor. */
   const [odak, setOdak] = useState(false);
+  /* Secim hatirlaniyor: her yazi acilista tercihi yeniden yapmak
+     gereksiz. Sunucuda okunmuyor, yalnizca bu tarayicinin tercihi. */
+  useEffect(() => {
+    try {
+      setOdak(localStorage.getItem("panic_odak") === "1");
+    } catch {
+      /* Gizli sekmede localStorage erisimi hata verebiliyor. */
+    }
+  }, []);
   const [studioTarget, setStudioTarget] = useState<ImageStudioTarget | null>(
     null,
   );
@@ -565,13 +577,6 @@ export default function PanicSplitLiveStudioPage({
         </div>
       </div>
 
-      {/* Rich Block Quick Insert Toolbar */}
-      <BlockInsertToolbar
-        title={title}
-        contentHtml={contentHtml}
-        onInsertHtml={handleInsertHtml}
-      />
-
       {/* Kaynak gorunumu. Yazinin ASIL editoru onizlemenin uzerindeki
           blok yuzeyi; burasi kacis kapisi — onizleme yuklenemedigi ya
           da isaretlemeyi dogrudan gormek gerektigi zaman. */}
@@ -604,6 +609,15 @@ export default function PanicSplitLiveStudioPage({
           </button>
         )}
 
+        {/* YZ eylemleri TUVALDE. Once yalnizca HTML gorunumunde
+            duruyorlardi; o gorunum artik bir kacis kapisi oldugu icin
+            eylemler neredeyse erisilemez hale gelmisti. */}
+        <BlockInsertToolbar
+          title={title}
+          contentHtml={contentHtml}
+          onInsertHtml={handleInsertHtml}
+        />
+
         {/* ODAK: duzenlenemeyen alanlari gizler.
             Tamamen kaldirmak yerine anahtar: yerinde duzenlemenin
             degeri yaziyi gercek cevresinde gormek — manşetin altinda
@@ -611,7 +625,14 @@ export default function PanicSplitLiveStudioPage({
             gerekmiyor. */}
         <button
           type="button"
-          onClick={() => setOdak((o) => !o)}
+          onClick={() =>
+            setOdak((o) => {
+              try {
+                localStorage.setItem("panic_odak", o ? "0" : "1");
+              } catch {}
+              return !o;
+            })
+          }
           className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium transition ${
             odak
               ? "border-primary/60 bg-primary/10 text-foreground"

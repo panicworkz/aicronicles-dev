@@ -500,6 +500,13 @@ export function blokYuzeyiKur({ govde, yolla, gorselAc, urunAc }: Ayarlar): () =
         break;
       }
 
+      case "kod":
+        o = document.createElement("pre");
+        o.className = "kod";
+        o.setAttribute("data-blok", "kod");
+        o.innerHTML = "<code>code here</code>";
+        break;
+
       case "sutunlar":
         o = document.createElement("div");
         o.className = "sutunlar";

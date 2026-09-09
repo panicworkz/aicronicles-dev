@@ -399,6 +399,26 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
     alanlar: [],
   },
 
+  kod: {
+    t: "kod",
+    ad: "Code",
+    aciklama: "A code block. Characters are escaped, never rendered.",
+    simge: '<rect x="1" y="4" width="22" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M9 9l-3 3 3 3M15 9l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+    eklenebilir: true,
+    yeni: () => ({ t: "kod", kod: "" }),
+    /* Kod yerinde yazilabiliyor ama bicimlendirme uygulanmiyor:
+       kodun icinde kalin/italik olmaz. */
+    yerindeYazilir: true,
+    alanlar: [
+      {
+        ad: "dil",
+        etiket: "Language",
+        tur: "metin",
+        ipucu: "Shown as a label; used later for syntax highlighting.",
+      },
+    ],
+  },
+
   ham: {
     t: "ham",
     aciklama: "Markup the editor did not recognise.",
@@ -417,7 +437,7 @@ export const EKLENEBILIR_TURLER = (
   [
     "paragraf", "baslik", "gorsel", "galeri", "liste", "tablo",
     "icindekiler", "kutu", "artilar", "adimlar", "istatistik", "grafik",
-    "alinti", "sutunlar", "video", "cta", "urun", "kaynakca", "ayrac",
+    "alinti", "sutunlar", "kod", "video", "cta", "urun", "kaynakca", "ayrac",
   ] as const
 ).map((t) => BLOK_TANIMLARI[t]);
 

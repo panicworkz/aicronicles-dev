@@ -285,14 +285,13 @@ export default async function ArticlePage({ params }: PageProps) {
       <ArticleClientActions title={post.title} />
       <MagazineHeader />
 
-      {/* data-canli="yazi": onizlemedeki ODAK kipi bu isaretten
-          yararlaniyor — yazinin bulundugu daldan yukari cikip her
-          seviyedeki kardesleri gizliyor. Secici tahmin etmek yerine
-          (header, footer, aside, reklam...) yapiyi izlemek, tasarim
-          degistiginde kirilmayan tek yol. */}
-      <main data-canli="yazi">
-        {/* ============== BASLIK BLOGU (tam genislik hissi) ============== */}
-        <header className="mag-wrap pt-10 sm:pt-14">
+      <main>
+        {/* data-canli="yazi": ODAK kipinde gorunur kalacak bolgeler.
+            Once <main> isaretliydi ama bu fazla kabaydi — reklamlar,
+            yazar kutusu, bulten seridi ve "Keep reading" de onun
+            icinde, yani odakta hepsi kaliyordu. Isaret artik yazinin
+            KENDI iki parcasinda: baslik blogu ve metin sutunu. */}
+        <header data-canli="yazi" className="mag-wrap pt-10 sm:pt-14">
           <nav className="byline mb-7 flex items-center gap-2">
             <Link href="/" className="hover:text-[var(--accent-ink)]">
               HOME
@@ -380,7 +379,7 @@ export default async function ArticlePage({ params }: PageProps) {
         <div className="mag-wrap pt-14">
           <div className="grid gap-14 lg:grid-cols-12">
             {/* Metin — 8 kolon, olcu 68ch */}
-            <article className="lg:col-span-8">
+            <article data-canli="yazi" className="lg:col-span-8">
               <div
                 data-canli="govde"
                 className="article-body dropcap text-[1.06rem] leading-[1.82]"

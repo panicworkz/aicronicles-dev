@@ -353,10 +353,12 @@ export default function CanliOnizleme() {
     document.head.appendChild(odakStili);
 
     const odakUygula = (acik: boolean) => {
-      const yazi = document.querySelector<HTMLElement>('[data-canli="yazi"]');
+      const isaretliler = [
+        ...document.querySelectorAll<HTMLElement>('[data-canli="yazi"]'),
+      ];
       /* Isaret yoksa (ornegin sabit sayfa) hicbir sey yapilmiyor:
          yanlis bir seyi gizlemektense hic gizlememek yeglenir. */
-      if (!yazi) return;
+      if (!isaretliler.length) return;
 
       for (const o of Array.from(document.querySelectorAll("[data-panic-gizli]"))) {
         o.removeAttribute("data-panic-gizli");
@@ -366,12 +368,22 @@ export default function CanliOnizleme() {
         return;
       }
 
-      let d: HTMLElement | null = yazi;
-      while (d && d.parentElement && d.parentElement !== document.documentElement) {
-        for (const kardes of Array.from(d.parentElement.children)) {
-          if (kardes !== d) kardes.setAttribute("data-panic-gizli", "1");
+      /* YAZI BIRDEN COK PARCA olabiliyor: baslik blogu ve metin
+         sutunu ayri ogeler. Her isaretliden yukari cikip kardesleri
+         gizliyoruz — ama ICINDE BASKA BIR ISARETLI OLAN kardese
+         dokunmuyoruz, yoksa biri digerini gizlerdi. */
+      for (const isaretli of isaretliler) {
+        let d: HTMLElement | null = isaretli;
+        while (d && d.parentElement && d.parentElement !== document.documentElement) {
+          for (const kardes of Array.from(d.parentElement.children)) {
+            if (kardes === d) continue;
+            const icindeIsaretliVar = isaretliler.some(
+              (i) => kardes.contains(i) || kardes === i
+            );
+            if (!icindeIsaretliVar) kardes.setAttribute("data-panic-gizli", "1");
+          }
+          d = d.parentElement;
         }
-        d = d.parentElement;
       }
       odakStili.textContent = "[data-panic-gizli]{display:none !important}";
     };
