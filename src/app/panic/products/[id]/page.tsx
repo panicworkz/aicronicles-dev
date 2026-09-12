@@ -25,7 +25,8 @@ import { ProductGalleryUploader } from '@/components/ui/product-gallery-uploader
 import { onayla } from '@/components/ui/modal';
 import { ProductSeoAeoSuite } from '@/components/studio/ProductSeoAeoSuite';
 import { ProductSpecificationsBuilder } from '@/components/studio/ProductSpecificationsBuilder';
-import { formatPrice } from '@/lib/currency';
+import { formatPrice, formatConverted } from '@/lib/currency';
+import { useKurlar } from '@/lib/kurlar';
 import { toast } from 'sonner';
 import { SITE_DOMAIN } from '@/lib/seo';
 
@@ -202,6 +203,7 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
   }
 
   const parsedPrice = parseFloat(price) || 0;
+  const { kurlar, yanit: kurYanit } = useKurlar();
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -318,7 +320,7 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
               {/* Automatic Multi-Market Conversion Box */}
               <div className="p-3.5 rounded-xl border border-border bg-muted/30 space-y-2">
                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Automatic Multi-Market Exchange Rates
+                  {kurYanit ? `TCMB \u2014 ${kurYanit.date}${kurYanit.stale ? ' (eski)' : ''}` : 'Kur bekleniyor'}
                 </span>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="p-2 rounded-lg bg-background border">
@@ -327,11 +329,11 @@ export default function PanicEditProductPage({ params }: { params: Promise<{ id:
                   </div>
                   <div className="p-2 rounded-lg bg-background border">
                     <span className="text-[10px] text-muted-foreground block font-mono">EUR (€)</span>
-                    <span className="text-xs font-bold text-primary">{formatPrice(parsedPrice, 'EUR')}</span>
+                    <span className="text-xs font-bold text-primary">{formatConverted(parsedPrice, 'EUR', kurlar)}</span>
                   </div>
                   <div className="p-2 rounded-lg bg-background border">
                     <span className="text-[10px] text-muted-foreground block font-mono">TRY (₺)</span>
-                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{formatPrice(parsedPrice, 'TRY')}</span>
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{formatConverted(parsedPrice, 'TRY', kurlar)}</span>
                   </div>
                 </div>
               </div>

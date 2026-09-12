@@ -42,21 +42,24 @@ export async function GET() {
 
     const eurUsdRate = eurCrossOther || (usdSelling > 0 ? parseFloat((eurSelling / usdSelling).toFixed(4)) : 1.09);
 
+    if (!usdSelling || !eurSelling) {
+      throw new Error('TCMB yanitinda USD/EUR satis kuru yok');
+    }
+
     cachedRates = {
       success: true,
+      stale: false,
       source: 'TCMB',
       date: dateMatch,
       usd: {
         selling: usdSelling,
         buying: usdBuying,
         display: `₺${usdSelling.toFixed(2)}`,
-        change: '+0.12%',
       },
       eur: {
         selling: eurSelling,
         buying: eurBuying,
         display: `₺${eurSelling.toFixed(2)}`,
-        change: '+0.09%',
       },
       eurUsd: {
         rate: eurUsdRate,
@@ -70,18 +73,15 @@ export async function GET() {
   } catch (err: any) {
     console.error('Error fetching TCMB rates:', err);
 
+    // Elde son basarili kur varsa onu "eski" isaretiyle dondur.
     if (cachedRates) {
-      return NextResponse.json(cachedRates);
+      return NextResponse.json({ ...cachedRates, stale: true });
     }
 
-    return NextResponse.json({
-      success: true,
-      source: 'TCMB (Cached)',
-      date: new Date().toLocaleDateString('tr-TR'),
-      usd: { selling: 48.16, buying: 48.07, display: '₺48.16', change: '+0.12%' },
-      eur: { selling: 56.09, buying: 55.98, display: '₺56.09', change: '+0.09%' },
-      eurUsd: { rate: 1.16, display: '$1.16' },
-      updatedAt: new Date().toISOString(),
-    });
+    // Hic kur alinamadiysa uydurma deger dondurulmez.
+    return NextResponse.json(
+      { success: false, stale: true, error: 'TCMB kuru alinamadi' },
+      { status: 503 },
+    );
   }
 }
