@@ -1,10 +1,14 @@
 # Panic CMS — Çok-Kiracılık Mimari Kararları
 
 **Tarih:** 2026-09-12
-**Durum:** Kararlaştırıldı (Model 1 uygulanacak; Model 2 belgelendi, sonraya bırakıldı)
-**Bağlam:** fabelo.io için yapılmış tek-kiracı (single-tenant) CMS'i, birçok
-markanın (aicronicles.com, sile.pw, meet.istanbul, …) arkasında çalışan
-çok-siteli (multi-tenant) bir platforma dönüştürmek.
+**Durum:** Kararlaştırıldı — yeni temiz çekirdek (K8), Model 1 önce; Model 2
+belgelendi, sonraya bırakıldı.
+**Bağlam:** fabelo.io için yapılmış tek-kiracı (single-tenant) CMS'in
+kanıtlanmış parçalarını temel alarak, birçok markanın (aicronicles.com,
+sile.pw, meet.istanbul, …) arkasında çalışan çok-siteli (multi-tenant) bir
+platform kurmak. **Not (K8):** platform, fabelo koduna yama olarak değil,
+YENİ TEMİZ bir çekirdek olarak kurulur; fabelo ilk kiracı olarak migrate
+edilir.
 
 Bu doküman üst düzey mimari kararları tutar. Her alt-proje (①–⑦) kendi
 ayrıntılı spec'ini alacak ve buraya referans verecek.
@@ -81,6 +85,32 @@ kopyalama/ayrı deploy yok.
   SSL'i biz otomatik alırız (Let's Encrypt). Müşteri sunucusu yok.
 - **Model 2 (self-hosted)** — isteyen müşteriye, SONRA. Aşağıda ayrı bölüm.
 
+### K8 — Yeni temiz çekirdek; fabelo yama değil, ilk kiracı
+Platform, mevcut `aicronicles-dev` reposuna yama olarak İNŞA EDİLMEZ. Yeni,
+temiz bir kod tabanında multi-tenancy **birinci-sınıf** kurulur:
+tenant-context DB erişimi, tenant-scoped kimlik doğrulama, çalışma-anı
+konfigürasyon ve kontrol/kiracı düzlem ayrımı **baştan** vardır.
+
+fabelo'nun kanıtlanmış varlıkları — Drizzle şeması, React bileşenleri, sayfa
+mantığı, SEO, mağaza, editör — bu çekirdeğe **taşınır** (tenant-agnostik hale
+getirilerek). Atılan tek şey fabelo'nun tek-kiracı iskeletidir.
+
+**Neden (reddedilen yaklaşım):** Multi-tenancy'yi fabelo'nun üstüne yama
+olarak eklemek, tek-kiracı varsayımlarını (build-time site kimliği, tek
+`settings`, global `db`, tek admin) her yere gömülü bırakır; bunlar ikinci
+kiracıda çatlar, üçüncüde kırılır. "En az dosya değiştir" yanlış hedeftir —
+doğru temel için gereken değişir. fabelo canlı çalışırken yeni çekirdek
+paralel geliştirilir; eski varsayımlara geri kayma riski böyle sıfırlanır.
+
+**Doğru soru:** "Multi-tenancy'yi fabelo'ya nasıl eklerim?" DEĞİL; "Doğru bir
+multi-tenant çekirdek nasıl kurulur, fabelo onun ilk kiracısı olsun?"
+
+### K9 — Şema database-per-tenant'ta neredeyse aynen taşınır
+Kiracı ayrımı DB düzeyinde olduğundan (K1), kiracı tablolarına `tenant_id`
+sütunu EKLENMEZ; fabelo'nun tabloları kiracı DB'sinde büyük ölçüde aynen
+durur. Değişen: kontrol düzlemi tabloları (yeni), tek-kiracı varsayan alanların
+(build-time site kimliği vb.) çalışma-anına taşınması.
+
 ---
 
 ## 3. Model 2 — Self-hosted (GELECEK, alt-proje ⑦)
@@ -127,27 +157,37 @@ sayesinde mümkündür. Ters geçiş (Model 2 → Model 1) de aynı adımların 
 
 ## 4. Yol Haritası (alt-projeler)
 
-Model 1:
-- **① Çok-kiracılık temeli** — kontrol DB'si + `tenants`; `Host` → kiracı → DB
-  çözümü; istek-kapsamlı DB bağlantısı; site kimliğini build-time'dan
-  runtime'a taşıma (`NEXT_PUBLIC_SITE_URL` → kiracıdan); **fabelo.io'yu ilk
-  kiracı olarak taşı.**
-- **② İkinci kiracı + site kurma akışı** — yeni kiracı oluşturma aracı; gerçek
-  ikinci siteyle doğrulama.
-- **③ Göç (migration) yönetimi** — şema değişikliğini tüm kiracı DB'lerine
+Model 1 (yeni temiz çekirdek — K8):
+- **① Çekirdek iskelet + tenant-first temel** — yeni repo; proje kurulumu;
+  kontrol DB'si + `tenants`; `Host` → kiracı → DB çözümü; tenant-context DB
+  erişimi (birinci-sınıf, gizli sihir değil); çalışma-anı site kimliği
+  (build-time `NEXT_PUBLIC_SITE_URL` kavramı tümden kalkar); tenant-scoped
+  auth iskeleti. Kanıt: minimal örnek kiracı ile uçtan uca çalışır.
+- **② fabelo varlıklarını taşıma** — Drizzle şeması (K9), React bileşenleri,
+  sayfa mantığı, SEO, mağaza, editör → tenant-agnostik hale getirilerek yeni
+  çekirdeğe. fabelo'nun tek-kiracı bağımlılıkları (SITE sabiti vb.) sökülür.
+- **③ fabelo'yu ilk kiracı olarak migrate** — canlı `panic_cms` verisi + medya
+  → yeni platformda kiracı 1. Stage'de tam prova, geri dönüş noktası, sonra
+  kesme (cutover). fabelo.io yeni çekirdekte çalışır.
+- **④ İkinci kiracı + site kurma akışı** — yeni kiracı oluşturma aracı; gerçek
+  ikinci siteyle (ör. aicronicles) doğrulama.
+- **⑤ Göç (migration) yönetimi** — şema değişikliğini tüm kiracı DB'lerine
   güvenli uygulama; sürüm takibi; başarısız göç izolasyonu.
-- **④ Kontrol paneli** (`pw.panic.pw`) — siteleri listele/ekle/çıkar, domain
+- **⑥ Kontrol paneli** (`pw.panic.pw`) — siteleri listele/ekle/çıkar, domain
   bağlama, SSL otomasyonu.
 
 Sonra:
-- **⑤ Kiracı-başına yetkilendirme** — müşteri erişimi, rol/izin modeli.
-- **⑥ Esnek içerik türleri** — etkinlik/rezervasyon/kurumsal (YAGNI, çeşit
+- **⑦ Kiracı-başına yetkilendirme** — müşteri erişimi, rol/izin modeli.
+- **⑧ Esnek içerik türleri** — etkinlik/rezervasyon/kurumsal (YAGNI, çeşit
   artınca).
-- **⑦ Model 2 (self-hosted)** — yukarıdaki bölüm. **Model 1 bitip test
-  edilmeden başlanmaz.**
+- **⑨ Model 2 (self-hosted)** — yukarıdaki Model 2 bölümü. **Model 1 bitip
+  test edilmeden başlanmaz.**
 
-**Sıra kuralı:** ①→②→③→④ Model 1'i oluşturur ve test edilir. ⑦ ondan sonra.
+**Sıra kuralı:** ①→②→③ yeni çekirdeği kurup fabelo'yu taşır; ④→⑥ Model 1'i
+tamamlar ve test edilir. ⑨ ondan sonra.
 
 ### Yürütme ilkesi
-① fabelo.io'yu (canlı site) taşıyacak. Doğrudan canlıda yapılmaz: önce
-stage'de tam prova, geri dönüş noktası, sonra canlı. Mevcut çalışma düzeni bu.
+- fabelo.io canlı kalır; yeni çekirdek **paralel** geliştirilir (K8). fabelo'ya
+  ancak ③'te, stage'de tam prova + geri dönüş noktası sonrası dokunulur.
+- Yama yasak (K8): yeni kodda tek-kiracı kısayolu ("şimdilik tek site
+  varsayalım") yazılmaz; her katman baştan tenant-first.
