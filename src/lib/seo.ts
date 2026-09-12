@@ -91,7 +91,6 @@ export const SITE_TANIMI =
  * birbirine bagli iki tanim.
  */
 export function yayinSemasi() {
-  const kurumId = `${SITE}/#kurum`;
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -101,20 +100,15 @@ export function yayinSemasi() {
         url: `${SITE}/`,
         name: SITE_ADI,
         description: SITE_TANIMI,
-        publisher: { "@id": kurumId },
+        publisher: { "@id": YAYINCI["@id"] },
         inLanguage: "en",
       },
-      {
-        "@type": "Organization",
-        "@id": kurumId,
-        name: SITE_ADI,
-        url: `${SITE}/`,
-        description: SITE_TANIMI,
-        logo: {
-          "@type": "ImageObject",
-          url: `${SITE}/images/fabelo-logo.png`,
-        },
-      },
+      /* Kurum tanimi BURADA TEKRAR YAZILMIYOR. Once burada YAYINCI'nin
+         bir kopyasi duruyordu; ayni kurumun iki ayri tanimi demekti ve
+         biri guncellenince oteki geride kaliyordu — logo tam olarak
+         boyle ayristi. Tek fark aciklama: ana sayfada kurumun ne
+         yaptigini da soyluyoruz, yazi sayfalarinda gereksiz tekrar. */
+      { ...YAYINCI, description: SITE_TANIMI },
     ],
   };
 }
