@@ -205,7 +205,11 @@ export function ImageStudioDrawer({
                 alt={alt || 'Preview'}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  e.currentTarget.src = '/media/fabelo-card-25.webp';
+                  /* Gorsel yuklenemezse KALICI bir varliga dus: /images/
+                     altindaki marka ikonu depoda duruyor, silinmiyor. Once
+                     bir ornek karta (fabelo-card-25) dusuyordu; o kart medya
+                     temizliginde silindi ve yedek referansi yetim kalirdi. */
+                  e.currentTarget.src = '/images/fabelo-icon.png';
                 }}
               />
             </div>
