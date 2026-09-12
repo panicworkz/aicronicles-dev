@@ -31,9 +31,14 @@ export const metadata: Metadata = {
     default: "Fabelo | Personal Finance, Career & AI Tools for Professionals",
     template: "%s",
   },
+  /* icon/shortcut BURADA TANIMLI DEGIL: src/app/favicon.ico dosyasi var
+     ve Next onu hem /favicon.ico yolunda yayinliyor hem de <link rel=
+     "icon"> etiketini kendisi basiyor. Burada bir de PNG tanimlayinca
+     bas kisminda iki ayri rel="icon" cikiyordu; hangisinin kazandigi
+     tarayiciya kaliyordu. .ico 16'dan 256'ya alti cozunurluk tasiyor,
+     PNG'ye gerek yok. Apple dokunma simgesi .ico kabul etmiyor, o
+     yuzden yalnizca o PNG kaldi. */
   icons: {
-    icon: "/images/fabelo-icon.png",
-    shortcut: "/images/fabelo-icon.png",
     apple: "/images/fabelo-icon.png",
   },
 };
