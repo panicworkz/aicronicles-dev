@@ -125,7 +125,19 @@ export const pages = pgTable('pages', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
   slug: text('slug').notNull().unique(),
+  /* Basligin altindaki giris cumlesi. Sabit sayfada da yazinin
+     ustundeki spot kadar ise yariyor: hem sayfanin ustunde okunuyor
+     hem paylasim ozeti olarak gidiyor. */
+  excerpt: text('excerpt'),
+  /* Govdenin DOGRULUK KAYNAGI — yazilarla AYNI model (lib/bloklar.ts).
+     Sabit sayfalarin duzeni once kodda bir eslesme tablosundaydi;
+     artik duzeni de bloklar tasiyor. */
+  blocksJson: jsonb('blocks_json'),
+  /* Bloklardan URETILEN HTML. Elle duzenlenmemeli: her kayitta
+     bloklardan yeniden yaziliyor. */
   contentHtml: text('content_html'),
+  featuredImageId: integer('featured_image_id').references(() => media.id, { onDelete: 'set null' }),
+  featuredImageUrl: text('featured_image_url'),
   status: text('status').notNull().default('published'),
   metaTitle: text('meta_title'),
   metaDescription: text('meta_description'),
@@ -134,6 +146,25 @@ export const pages = pgTable('pages', {
 }, (table) => [
   index('pages_slug_idx').on(table.slug),
   index('pages_status_idx').on(table.status),
+]);
+
+/**
+ * KALICI YONLENDIRMELER.
+ *
+ * Bir adres degistiginde eskisine gelen okuru ve arama motorunu
+ * yenisine gondermek icin. Boyle bir yol yoktu: eski adres 404
+ * donuyordu, yani o adrese verilmis butun dis baglantilar ve arama
+ * sirasindaki yer bir anda kayboluyordu.
+ */
+export const redirects = pgTable('redirects', {
+  id: serial('id').primaryKey(),
+  fromSlug: text('from_slug').notNull().unique(),
+  toSlug: text('to_slug').notNull(),
+  /* Neden tasindi — alti ay sonra bakan biri icin. */
+  note: text('note'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('redirects_from_slug_idx').on(table.fromSlug),
 ]);
 
 export const siteSettings = pgTable('site_settings', {
@@ -248,6 +279,11 @@ export const orders = pgTable('orders', {
   /* Onay kayitlari. Dijital urundeki cayma hakki istisnasi ancak
      tuketici bilgilendirilip ONAYLADIYSA gecerli ve bunu satici
      ispat etmek zorunda. Bkz. scripts/migration_onay_kaydi.sql */
+  /* Odemenin ONAYLANDIGI an. payment_status tek basina "odendi mi"
+     sorusuna cevap veriyordu ama "ne zaman" sorusuna vermiyordu;
+     havale ve kapida odemede para siparisten gunler sonra geldigi
+     icin rapordaki haftalik gelir yanlis haftaya yaziliyordu. */
+  paidAt: timestamp('paid_at'),
   termsAcceptedAt: timestamp('terms_accepted_at'),
   digitalWaiverAt: timestamp('digital_waiver_at'),
   shippingAddressJson: jsonb('shipping_address_json'),
@@ -275,6 +311,43 @@ export const orderItems = pgTable('order_items', {
 }, (table) => [
   index('order_items_order_id_idx').on(table.orderId),
   index('order_items_product_id_idx').on(table.productId),
+]);
+
+/**
+ * SEPET GOLGESI.
+ *
+ * Sepetin kendisi tarayicida (localStorage) duruyor ve orada kalmali:
+ * sunucuda tutmak oturum ve temizlik isi demek. Bu tablo sepetin
+ * yerine gecmiyor, NE OLDUGUNU kaydediyor — "kac sepet acildi, kaci
+ * siparise dondu, birakilan sepetlerde ne kadar para var" sorularinin
+ * baska cevabi yoktu.
+ *
+ * "Birakilmis" bir DURUM DEGIL, hesap: son hareketin uzerinden gecen
+ * sure. Durum olarak yazsaydik onu guncelleyecek zamanlanmis bir is
+ * gerekirdi; o is bir gun calismayinca rapor sessizce yalan soylerdi.
+ */
+export const carts = pgTable('carts', {
+  id: serial('id').primaryKey(),
+  /* Tarayicinin urettigi rastgele kimlik — cerez degil, localStorage. */
+  token: text('token').notNull().unique(),
+  /* Yalnizca odeme adiminda YAZILDIYSA. Yazilmadiysa sepetin sahibi
+     bilinmiyor ve bu normal. */
+  email: text('email'),
+  name: text('name'),
+  itemsJson: jsonb('items_json').notNull().default([]),
+  itemCount: integer('item_count').notNull().default(0),
+  subtotal: numeric('subtotal', { precision: 10, scale: 2 }).notNull().default('0.00'),
+  currency: text('currency').notNull().default('USD'),
+  /** active | ordered */
+  status: text('status').notNull().default('active'),
+  orderId: integer('order_id').references(() => orders.id, { onDelete: 'set null' }),
+  orderedAt: timestamp('ordered_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('carts_status_idx').on(table.status),
+  index('carts_updated_at_idx').on(table.updatedAt),
+  index('carts_email_idx').on(table.email),
 ]);
 
 export const coupons = pgTable('coupons', {
