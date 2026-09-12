@@ -31,10 +31,21 @@ henüz taşınmaz; temelin sağlam olduğu iki örnek kiracıyla kanıtlanır.
 - Kontrol paneli UI (`pw.panic.pw`) → ⑥
 - Gerçek içerik, gerçek tema, gerçek mağaza
 
-**Kanıt kriteri (① ne zaman "bitti"):** İki örnek kiracı (`demo-a.localhost`,
-`demo-b.localhost`) farklı domainlerden farklı içerik gösterir; biri diğerinin
-verisini göremez; tenant context yoksa sorgu hata verir; giriş yapan kullanıcı
-yalnızca kendi kiracısının panelini görür.
+**Kanıt — iki kademeli:**
+
+- **Kademe 1 (①'in kendi kanıtı, geçici/atılabilir):** İki *boş/minimal*
+  geçici kiracı (`t1.localhost`, `t2.localhost`) ile yalnızca boru hattı
+  doğrulanır: iki domain doğru DB'ye gider, biri diğerinin verisini göremez,
+  tenant context yoksa sorgu hata verir, giriş domain'e hapslidir. fabelo
+  şeması/verisi YOK — sadece "iskelet ayakta mı". Bu, fabelo'yu hiç riske
+  atmadan temeli doğrular. Geçici kiracılar sonra atılır.
+- **Kademe 2 (gerçek kanıt, hedef):** ②(fabelo şema+bileşen) ve ③(fabelo veri
+  migrate) sonrası **fabelo tüm güncel içeriğiyle kiracı 1** olarak çalışır;
+  ④'te **meet.istanbul kiracı 2** olarak eklenir (meet.istanbul şu an
+  statik/dummy; içeriği ④'te birkaç mantıklı örnekle kurulur — ayrıca
+  konuşulacak). Gerçek-site doğrulaması burada yapılır.
+
+Bu spec (①) yalnızca Kademe 1'i kapsar; Kademe 2 ②→④'e aittir.
 
 ---
 
@@ -132,10 +143,12 @@ Build-time `NEXT_PUBLIC_SITE_URL` **yok** (K3). Site kimliği tenant'tan:
 - `getSession()` context'teki kiracı DB'sinden okur.
 - **Süper-admin (kontrol paneli) auth'u ① kapsamı DIŞINDA** — ⑥'da.
 
-### 3.7 Örnek kiracılar (kanıt)
-İki kiracı seed'i: `demo-a.localhost` ve `demo-b.localhost`, her biri kendi
-DB'sinde birer örnek sayfa + birer kullanıcı. Yerel `/etc/hosts` ya da
-`*.localhost` çözümü ile test. Kanıt senaryoları için bkz. §7.
+### 3.7 Geçici iskelet kiracıları (Kademe 1 kanıtı)
+İki *geçici/atılabilir* kiracı seed'i: `t1.localhost` ve `t2.localhost`, her
+biri kendi DB'sinde birer minimal sayfa + birer kullanıcı. Amaç yalnızca boru
+hattını kanıtlamak; fabelo şeması/içeriği YOK. Yerel `*.localhost` çözümü ile
+test. İskelet kanıtlanınca atılabilir. Gerçek kanıt kiracıları (fabelo,
+meet.istanbul) ②→④'te devreye girer. Senaryolar için bkz. §7.
 
 ---
 
@@ -189,14 +202,15 @@ panic-cms/
 
 ## 7. Test / Kanıt Kriteri
 
-Uçtan uca kanıt senaryoları (① biterken geçmeli):
-1. `demo-a.localhost` → A'nın içeriği; `demo-b.localhost` → B'nin içeriği.
-2. A'nın panelinde giriş yapan kullanıcı B'nin paneline geçemez (host-only
-   cookie).
+Uçtan uca kanıt senaryoları (① biterken, geçici kiracılarla geçmeli):
+1. `t1.localhost` → 1'in içeriği; `t2.localhost` → 2'nin içeriği.
+2. t1 panelinde giriş yapan kullanıcı t2 paneline geçemez (host-only cookie).
 3. Tenant kurulmadan bir DB sorgusu çağrılırsa → hata (fail-safe doğrulaması).
 4. Bilinmeyen domain (`nope.localhost`) → 404.
-5. `seo.ts`/sitemap/robots A ve B için farklı, doğru domaini basar (runtime
+5. `seo.ts`/sitemap/robots t1 ve t2 için farklı, doğru domaini basar (runtime
    config doğrulaması).
+
+(Gerçek-site doğrulaması — fabelo + meet.istanbul — Kademe 2'de, ②→④.)
 
 Birim testleri: `resolveTenant`, havuz cache, context fail-safe, `getSiteConfig`.
 
