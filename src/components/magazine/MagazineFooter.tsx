@@ -226,7 +226,7 @@ export default async function MagazineFooter() {
           <span className="byline" style={{ color: "#6b7178" }}>
             BUILT ON{" "}
             <a
-              href="https://panic.com.tr/"
+              href="https://panic.pw/"
               target="_blank"
               rel="noopener noreferrer"
               className="transition-colors kunye-link"

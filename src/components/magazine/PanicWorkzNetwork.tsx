@@ -13,7 +13,6 @@ const AG: Kolon[] = [
     no: "01",
     baslik: "AGENCY & STUDIO",
     baglantilar: [
-      { ad: "Panic", url: "https://panic.com.tr/" },
       { ad: "PanicWorkz", url: "https://panicworkz.com/" },
       { ad: "TestWorkz", url: "https://testworkz.com/" },
     ],
