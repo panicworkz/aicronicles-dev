@@ -53,6 +53,26 @@ type SepetDurumu = {
 
 const Baglam = createContext<SepetDurumu | null>(null);
 const ANAHTAR = "fabelo_sepet_v1";
+/* Sepetin sunucudaki golgesini tanimaya yarayan rastgele kimlik.
+   Cerez DEGIL: localStorage'da duruyor, hicbir yere otomatik
+   gonderilmiyor ve kime ait oldugu bilinmiyor. */
+const BELIRTEC = "fabelo_sepet_belirtec";
+
+function belirtecAl(): string {
+  try {
+    let b = localStorage.getItem(BELIRTEC);
+    if (!b) {
+      b = (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`)
+        .replace(/[^a-zA-Z0-9-]/g, "");
+      localStorage.setItem(BELIRTEC, b);
+    }
+    return b;
+  } catch {
+    /* Gizli sekmede depolama kapali olabiliyor; takip yapilmiyor,
+       sepet yine calisiyor. */
+    return "";
+  }
+}
 
 function ayniKalem(a: SepetKalemi, urunId: number, varyantId?: number | null) {
   return a.urunId === urunId && (a.varyantId ?? null) === (varyantId ?? null);
@@ -81,6 +101,40 @@ export function SepetSaglayici({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem(ANAHTAR, JSON.stringify(kalemler));
     } catch {}
+  }, [kalemler, hazir]);
+
+  /* SUNUCUYA HABER.
+     Sepet yine tarayicida duruyor; sunucuya giden sey yalnizca "su an
+     sepette sunlar var" bilgisi. Amaci raporlayabilmek: kac sepet
+     acildi, kaci siparise dondu, birakilanlarda ne kadar para var.
+
+     GECIKMELI (800ms): adet dugmesine ust uste basan biri her tikta
+     bir istek atmasin. Son degisiklikten sonra bir kez gidiyor.
+
+     keepalive: sekme kapanirken de son durum ulassin diye. Bu olmadan
+     "sepete koydu ve hemen cikti" hali hic kaydedilmiyordu — yani tam
+     da olcmek istedigimiz durum kayboluyordu. */
+  useEffect(() => {
+    if (!hazir) return;
+    const belirtec = belirtecAl();
+    if (!belirtec) return;
+
+    const zamanlayici = setTimeout(() => {
+      fetch("/api/cart/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          token: belirtec,
+          items: kalemler.map((k) => ({ urunId: k.urunId, adet: k.adet })),
+        }),
+      }).catch(() => {
+        /* Takip bir kolaylik; basarisiz olmasi alisverisi
+           etkilememeli. */
+      });
+    }, 800);
+
+    return () => clearTimeout(zamanlayici);
   }, [kalemler, hazir]);
 
   const durum = useMemo<SepetDurumu>(() => {

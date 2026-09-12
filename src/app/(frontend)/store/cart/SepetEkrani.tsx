@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { kargoUcreti, bolgesi, type KargoTarifesi } from "@/lib/kargo";
+import { ulkeler } from "@/lib/ulkeler";
 import { useSepet } from "@/components/store/SepetSaglayici";
 import { fiyat as bicimliFiyat, TUR_VAADI, turu } from "@/lib/magaza";
 
@@ -15,7 +17,7 @@ import { fiyat as bicimliFiyat, TUR_VAADI, turu } from "@/lib/magaza";
  * oldugu ve nasil odeyecegi.
  */
 
-export function SepetEkrani() {
+export function SepetEkrani({ tarife }: { tarife: KargoTarifesi }) {
   const { kalemler, hazir, adetYaz, cikar, fiyatYaz, araToplam, paraBirimi, bosalt } = useSepet();
   const router = useRouter();
 
@@ -45,13 +47,66 @@ export function SepetEkrani() {
      Dijital bir rehber icin adres istemek gereksiz veri toplamak
      olurdu — sunucu da ayni kurali uyguluyor. */
   const kargoGerekli = kalemler.some((k) => turu(k.tur) === "physical");
+
+  /* KARGO SIPARISTEN ONCE HESAPLANIYOR.
+     Once tutar siparisten sonra konusuluyordu; AB ve BK mevzuati
+     teslimat bedelinin siparis verilmeden once gosterilmesini
+     istiyor. Tarife girilmemisse null geliyor ve eski davranisa
+     donuyoruz — uydurma bir rakam gostermek yerine. */
+  const kargo = kargoUcreti(tarife, adres.country, kargoGerekli);
+  const genelToplam = araToplam + (kargo ?? 0);
   /* Sepette aninda teslim edilen bir sey varsa cayma hakki istisnasi
      devreye giriyor ve AYRICA onaylanmasi gerekiyor. */
   const dijitalVar = kalemler.some((k) => turu(k.tur) !== "physical");
-  const kapidaOdenebilir = kalemler.length > 0 && kalemler.every((k) => turu(k.tur) === "physical");
+  /* Kapida odeme: fiziksel siparis VE kuryenin nakit topladigi yer.
+     Ulke kosulu eksikti — yurt disina giden bir siparise de secenek
+     aciliyordu, oysa sunucu onu reddediyor. Sunucunun kabul
+     etmeyecegi bir secenegi gostermek, kullaniciyi formu doldurup
+     hata almaya gonderiyordu. */
+  const kapidaOdenebilir =
+    kalemler.length > 0 &&
+    kalemler.every((k) => turu(k.tur) === "physical") &&
+    bolgesi(adres.country) === "tr";
 
   // Kapida odeme secilmisken sepete dijital bir sey eklenirse secim gecersiz kalir.
   const gecerliYontem = yontem === "cash_on_delivery" && !kapidaOdenebilir ? "bank_transfer" : yontem;
+
+  /* KIM OLDUGUNU ODEME ADIMINDA OGRENIYORUZ.
+     Sepet golgesi urunleri zaten kaydediyor ama ADSIZ: sepete urun
+     koyup cikan birinin kim oldugunu bilmiyoruz ve bilmeye
+     calismiyoruz. Burada, odeme formuna adini ve e-postasini YAZMIS
+     biri icin durum farkli — siparisi yarim kalirsa ona ulasip
+     yardim edebilmek icin bu iki alan sepete iliştiriliyor.
+
+     Gecikme uzun (1,5 sn): her tusa basista istek gitmesin, kisi
+     yazmayi bitirsin. Gizlilik metninde bu acikca yaziyor. */
+  useEffect(() => {
+    if (!hazir || kalemler.length === 0) return;
+    const temizEposta = email.trim();
+    if (!temizEposta.includes("@")) return;
+
+    const zamanlayici = setTimeout(() => {
+      let belirtec = "";
+      try {
+        belirtec = localStorage.getItem("fabelo_sepet_belirtec") ?? "";
+      } catch {}
+      if (!belirtec) return;
+
+      fetch("/api/cart/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          token: belirtec,
+          items: kalemler.map((k) => ({ urunId: k.urunId, adet: k.adet })),
+          email: temizEposta,
+          name: ad.trim() || undefined,
+        }),
+      }).catch(() => {});
+    }, 1500);
+
+    return () => clearTimeout(zamanlayici);
+  }, [email, ad, kalemler, hazir]);
 
   /* KANCA ERKEN CIKISLARIN USTUNDE OLMAK ZORUNDA.
      Once asagida, "if (!hazir) return" satirlarindan sonra
@@ -153,6 +208,15 @@ export function SepetEkrani() {
           digitalWaiver: dijitalVar ? dijitalOnay : undefined,
           paymentMethod: gecerliYontem,
           address: kargoGerekli ? adres : null,
+          /* Sepet golgesini siparise baglamak icin. Olmazsa siparise
+             donusen sepet raporda "birakilmis" kalirdi. */
+          cartToken: (() => {
+            try {
+              return localStorage.getItem("fabelo_sepet_belirtec") ?? "";
+            } catch {
+              return "";
+            }
+          })(),
         }),
       });
       const d = await y.json();
@@ -267,17 +331,34 @@ export function SepetEkrani() {
           ))}
         </ul>
 
+        {kargoGerekli && (
+          <div className="flex items-baseline justify-between pt-4 text-[0.95rem]">
+            <span className="byline">DELIVERY</span>
+            <span>
+              {kargo === null
+                ? adres.country
+                  ? "quoted before dispatch"
+                  : "choose your country"
+                : kargo === 0
+                  ? "free"
+                  : bicimliFiyat(kargo, paraBirimi)}
+            </span>
+          </div>
+        )}
+
         <div
           className="flex items-baseline justify-between pt-5"
           style={{ borderTop: "2px solid var(--ink)" }}
         >
           <span className="byline">TOTAL</span>
-          <span className="display text-[1.6rem]">{bicimliFiyat(araToplam, paraBirimi)}</span>
+          <span className="display text-[1.6rem]">{bicimliFiyat(genelToplam, paraBirimi)}</span>
         </div>
         <p className="mt-2 text-[0.85rem]" style={{ color: "var(--ink-3)" }}>
-          {kargoGerekli
-            ? "Delivery is quoted once we have your address; we confirm before anything is charged."
-            : "No delivery charge — everything here is sent to you online."}
+          {!kargoGerekli
+            ? "No delivery charge — everything here is sent to you online."
+            : kargo === null
+              ? "Delivery is quoted once we have your address; we confirm before anything is charged."
+              : "Prices include tax where it applies. Delivery is included in the total above."}
         </p>
       </div>
 
@@ -315,7 +396,17 @@ export function SepetEkrani() {
                 <Girdi etiket="CITY" deger={adres.city} yaz={(v) => setAdres({ ...adres, city: v })} gerekli autoComplete="address-level2" />
                 <Girdi etiket="POSTCODE" deger={adres.postcode} yaz={(v) => setAdres({ ...adres, postcode: v })} gerekli autoComplete="postal-code" />
               </div>
-              <Girdi etiket="COUNTRY" deger={adres.country} yaz={(v) => setAdres({ ...adres, country: v })} gerekli autoComplete="country-name" />
+              {/* ULKE ARTIK SERBEST METIN DEGIL.
+                  "Germany", "Deutschland", "DE", "almanya" — hepsi
+                  kabul ediliyordu ve hicbiri kargo bolgesiyle
+                  eslesemiyordu. Ucreti siparisten once gosterebilmek
+                  icin buranin makinece okunabilir olmasi sart. */}
+              <Secim
+                etiket="COUNTRY"
+                deger={adres.country}
+                yaz={(v) => setAdres({ ...adres, country: v })}
+                secenekler={ulkeler()}
+              />
             </>
           )}
         </div>
@@ -338,7 +429,11 @@ export function SepetEkrani() {
             aciklama={
               kapidaOdenebilir
                 ? "Pay the courier when the parcel arrives."
-                : "Only for orders that are shipped — your basket has something delivered online."
+                : kalemler.some((k) => turu(k.tur) !== "physical")
+                  ? "Only for orders that are shipped — your basket has something delivered online."
+                  : adres.country
+                    ? "Not available for delivery outside Türkiye."
+                    : "Choose your country to see whether this is available."
             }
             kapali={!kapidaOdenebilir}
           />
@@ -397,22 +492,21 @@ export function SepetEkrani() {
             <Link href="/delivery-and-returns" target="_blank" className="underline">
               delivery and returns policy
             </Link>
-            .{" "}
-            {/* Turkce belgeler burada duruyor cunku yasa onlarin
-                SIPARISTEN ONCE sunulmasini istiyor. Etiketleri
-                Ingilizce; site bastan sona Ingilizce ve okurun
-                hangisinin ne oldugunu anlamasi gerekiyor. */}
-            <span style={{ color: "var(--ink-3)" }}>
-              Ordering from Turkey? Turkish law applies and these govern:{" "}
-              <Link href="/on-bilgilendirme-formu" target="_blank" className="underline">
-                pre-sale information
-              </Link>{" "}
-              and the{" "}
-              <Link href="/mesafeli-satis-sozlesmesi" target="_blank" className="underline">
-                distance sales agreement
-              </Link>
-              .
-            </span>
+            .
+            {/* TURKCE BELGELERE BAGLANTI KALDIRILDI.
+                "On Bilgilendirme Formu" ve "Mesafeli Satis Sozlesmesi"
+                Turk mevzuatinin istedigi IKI AYRI belge; site bastan
+                sona Ingilizce oldugu surece yayinda degiller (taslak).
+                Yayinda olmayan bir sayfaya baglanti vermek, odeme
+                adiminda musteriye 404 gostermek olurdu.
+
+                ISLEV KAYBOLMADI: sozlesme oncesi bilgilendirme ve
+                cayma hakki — AB 2011/83, BK Consumer Contracts
+                Regulations 2013 ve FTC kurallarinin istedigi sey —
+                yukaridaki iki sayfanin ICINDE duruyor.
+
+                Magaza Turkiye'ye acildiginda ikisi de geri gelmeli:
+                orada baglanti vermek yasal zorunluluk. */}
           </Onay>
 
           {dijitalVar && (
@@ -430,7 +524,7 @@ export function SepetEkrani() {
           className="byline mt-5 w-full px-6 py-3.5 transition-opacity hover:opacity-90 disabled:opacity-40"
           style={{ background: "var(--ink)", color: "var(--paper)" }}
         >
-          {gonderiliyor ? "PLACING YOUR ORDER…" : `PLACE ORDER — ${bicimliFiyat(araToplam, paraBirimi)}`}
+          {gonderiliyor ? "PLACING YOUR ORDER…" : `PLACE ORDER — ${bicimliFiyat(genelToplam, paraBirimi)}`}
         </button>
 
         <p className="mt-3 text-[0.82rem] leading-relaxed" style={{ color: "var(--ink-3)" }}>
@@ -472,6 +566,42 @@ function Onay({
       />
       <span>{children}</span>
     </label>
+  );
+}
+
+/** Acilir liste — Girdi ile ayni gorunum, ayni cerceve. */
+function Secim({
+  etiket,
+  deger,
+  yaz,
+  secenekler,
+}: {
+  etiket: string;
+  deger: string;
+  yaz: (v: string) => void;
+  secenekler: { kod: string; ad: string }[];
+}) {
+  return (
+    <div>
+      <label className="folio mb-1.5 block" style={{ color: "var(--ink-3)" }}>
+        {etiket}
+      </label>
+      <select
+        value={deger}
+        required
+        autoComplete="country"
+        onChange={(e) => yaz(e.target.value)}
+        className="w-full bg-transparent px-2.5 py-2 text-[0.95rem]"
+        style={{ border: "1px solid var(--rule)" }}
+      >
+        <option value="">Select a country…</option>
+        {secenekler.map((s) => (
+          <option key={s.kod} value={s.kod}>
+            {s.ad}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
