@@ -48,6 +48,13 @@ function isPublicApiRequest(pathname: string, method: string): boolean {
      orada kalabiliyor; bu uc hangi kalemlerin hala gecerli oldugunu
      soyluyor. Yalnizca OKUYOR ve zaten herkese acik olan urun
      bilgilerini donuyor. */
+  /* Sepet golgesi: okura acik olmali, cunku cagiran taraf okurun
+     tarayicisi. Yazdigi tek sey kendi sepetinin icerigi ve fiyatlar
+     sunucuda yeniden hesaplaniyor. */
+  if (method === 'POST' && pathname === '/api/cart/track') {
+    return true;
+  }
+
   if (method === 'POST' && pathname === '/api/cart/check') {
     return true;
   }
