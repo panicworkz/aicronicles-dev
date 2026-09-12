@@ -24,7 +24,15 @@ import { yazininBloklari, bloklarHtmle } from "@/lib/bloklar";
 import { yazarBloklariniDoldur } from "@/lib/yazar-blogu";
 import CmsPage from "@/components/magazine/CmsPage";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
-import { SITE, YAYINCI, markali, kirintiSemasi } from "@/lib/seo";
+import {
+  SITE,
+  YAYINCI,
+  markali,
+  mutlak,
+  kirintiSemasi,
+  gorselNesnesi,
+  type MedyaKunyesi,
+} from "@/lib/seo";
 import { sssCikar, sssSemasi } from "@/lib/faq";
 import { getSession } from "@/lib/auth";
 
@@ -118,7 +126,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * Yalnizca elimizde GERCEKTEN olan alanlar yaziliyor: uydurma yazar,
  * uydurma tarih ya da bos alan konmuyor.
  */
-function yaziSemasi(post: any, yazar: any, kategori: any) {
+function yaziSemasi(
+  post: any,
+  yazar: any,
+  kategori: any,
+  gorseller?: (string | Record<string, unknown>)[],
+) {
   const veri: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -132,13 +145,14 @@ function yaziSemasi(post: any, yazar: any, kategori: any) {
   };
   const aciklama = post.metaDescription || post.excerpt;
   if (aciklama) veri.description = aciklama;
-  // schema.org MUTLAK adres ister; medya yollari sitede goreli tutuluyor.
-  if (post.featuredImageUrl)
-    veri.image = [
-      post.featuredImageUrl.startsWith("http")
-        ? post.featuredImageUrl
-        : `${SITE}${post.featuredImageUrl}`,
-    ];
+  /* Gorseller: elde kunye varsa ImageObject listesi, yoksa eskisi gibi
+     duz kapak adresi. schema.org MUTLAK adres ister; medya yollari
+     sitede goreli tutuluyor, mutlak() onu cozuyor. */
+  if (gorseller && gorseller.length) {
+    veri.image = gorseller;
+  } else if (post.featuredImageUrl) {
+    veri.image = [mutlak(post.featuredImageUrl)];
+  }
   if (post.publishedAt) veri.datePublished = post.publishedAt.toISOString();
   if (post.updatedAt) veri.dateModified = post.updatedAt.toISOString();
   if (yazar?.name) veri.author = { "@type": "Person", name: yazar.name };
@@ -165,15 +179,90 @@ function sayfaBolumu(slug: string): string {
   return "PARTNERSHIPS";
 }
 
-/** Dosya adi -> {width,height} haritasi; gorsellere yer ayirmak icin */
-async function medyaBoyutlari(): Promise<Map<string, MediaBoyut>> {
+/**
+ * Dosya adi -> medya kunyesi haritasi.
+ *
+ * Once yalnizca {width,height,url} tasiyordu ve adi "medyaBoyutlari"ydi;
+ * tek isi gorsellere yer ayirmakti. Artik alt, altyazi ve AEO baglami da
+ * geliyor, cunku yapilandirilmis veri bunlari istiyor. Tek sorgu, iki is:
+ * ayni satirlari iki kez cekmenin anlami yok.
+ */
+type MedyaKaydi = MediaBoyut & MedyaKunyesi;
+
+async function medyaKayitlari(): Promise<Map<string, MedyaKaydi>> {
   const satirlar = await db.query.media.findMany();
-  const harita = new Map<string, MediaBoyut>();
+  const harita = new Map<string, MedyaKaydi>();
   for (const m of satirlar as any[]) {
     if (m?.filename)
-      harita.set(m.filename, { width: m.width ?? null, height: m.height ?? null, url: m.url ?? null });
+      harita.set(m.filename, {
+        width: m.width ?? null,
+        height: m.height ?? null,
+        url: m.url ?? null,
+        alt: m.alt ?? null,
+        caption: m.caption ?? null,
+        aeoContext: m.aeoContext ?? null,
+      });
   }
   return harita;
+}
+
+/**
+ * Adresin dosya adi parcasi — harita anahtari o.
+ *
+ * OLCU ONEKI ATILIYOR: sayfada gorseller `w1200-pexels-photo-6326003.webp`
+ * gibi turevlerle basiliyor ama medya tablosunda kayit asil adla
+ * (`pexels-photo-6326003.webp`) duruyor. Onek atilmadan kapak gorseli
+ * bile kunyesini bulamiyordu — turev adi hicbir satirla eslesmiyordu.
+ */
+function dosyaAdi(adres: string | null | undefined): string | null {
+  if (!adres) return null;
+  const temiz = adres.split("?")[0].split("#")[0];
+  const son = temiz.slice(temiz.lastIndexOf("/") + 1);
+  return son || null;
+}
+
+/** Turev adini asil ada indirger: w1200-foo.jpg -> foo.jpg */
+function asilAd(ad: string): string {
+  return ad.replace(/^w\d+-/, "");
+}
+
+/**
+ * Yazidaki gorsellerin ImageObject listesi: once kapak, sonra govdede
+ * GERCEKTEN gecenler.
+ *
+ * Govdedekiler de yaziliyor cunku baglam metinlerinin buyuk cogunlugu
+ * onlara ait; yalnizca kapagi isaretlemek 468 gorselin birkacini
+ * gorunur kilardi.
+ *
+ * Ayni dosya iki kez gecerse bir kez yaziliyor (Set ile), sira
+ * korunuyor: kapak basta, cunku sema ilk gorseli asil gorsel sayiyor.
+ */
+function yazininGorselleri(
+  post: any,
+  govdeHtml: string,
+  kayitlar: Map<string, MedyaKaydi>,
+): (string | Record<string, unknown>)[] {
+  const adlar: string[] = [];
+  const kapak = post.featuredImageUrl ? asilAd(dosyaAdi(post.featuredImageUrl)!) : null;
+  if (kapak) adlar.push(kapak);
+
+  /* Govdede ASIL ad araniyor: turevler (w1200-foo.jpg) asil adi
+     icerdigi icin bu arama ikisini de yakaliyor. */
+  for (const ad of kayitlar.keys()) {
+    if (ad !== kapak && govdeHtml.includes(ad)) adlar.push(ad);
+  }
+
+  const cikti: (string | Record<string, unknown>)[] = [];
+  for (const ad of new Set(adlar)) {
+    const kayit = kayitlar.get(ad);
+    /* Kapak veritabaninda olmayabilir (disaridan yapistirilmis adres);
+       o zaman yolun kendisi kullaniliyor. Sayfada gosterilen turev
+       degil, ASIL dosya isaretleniyor: sema kanonik varligi bekliyor. */
+    const adres = kayit?.url || (ad === kapak ? post.featuredImageUrl : `/media/${ad}`);
+    const nesne = gorselNesnesi(adres, kayit);
+    if (nesne) cikti.push(nesne);
+  }
+  return cikti;
 }
 
 export default async function ArticlePage({ params }: PageProps) {
@@ -218,7 +307,7 @@ export default async function ArticlePage({ params }: PageProps) {
           icindekileriDoldur(
             enrichArticleHtml(
               bloklarHtmle(yazininBloklari(page), { isaretle: true }),
-              await medyaBoyutlari()
+              await medyaKayitlari()
             )
           )
         )
@@ -312,7 +401,7 @@ export default async function ArticlePage({ params }: PageProps) {
     categorySlug: catById.get(p.categoryId)?.slug ?? null,
   });
 
-  const boyutlar = await medyaBoyutlari();
+  const boyutlar = await medyaKayitlari();
 
   /* GOVDE ARTIK BLOKLARDAN BASILIYOR.
      Isaretli uretim her blogun kok etiketine turunu yaziyor
@@ -331,6 +420,12 @@ export default async function ArticlePage({ params }: PageProps) {
     )
     )
   );
+
+  /* Gorsel kunyeleri govde BASILDIKTAN SONRA cikariliyor: hangi
+     gorselin gercekten sayfada oldugunu ancak son HTML soyluyor.
+     Blok cevrimi ve urun/video doldurmalari gorsel ekleyip
+     cikarabiliyor, ham icerige bakmak yaniltirdi. */
+  const gorseller = yazininGorselleri(post, govdeHtml, boyutlar);
 
   const related = halka.map(toCard);
   const trending = capraz.map(toCard);
@@ -353,7 +448,7 @@ export default async function ArticlePage({ params }: PageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(yaziSemasi(post, author, category)),
+          __html: JSON.stringify(yaziSemasi(post, author, category, gorseller)),
         }}
       />
       {/* Kirinti yolu ayri bir blok. Iki sema tek nesnede birlestirilebilirdi

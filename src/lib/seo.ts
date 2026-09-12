@@ -47,6 +47,68 @@ export function mutlak(yol: string | null | undefined): string | null {
   return `${SITE}${yol.startsWith("/") ? "" : "/"}${yol}`;
 }
 
+/** Bir medya satirindan semaya gereken alanlar. */
+export type MedyaKunyesi = {
+  url?: string | null;
+  alt?: string | null;
+  caption?: string | null;
+  aeoContext?: string | null;
+  width?: number | null;
+  height?: number | null;
+};
+
+/**
+ * Gorseli ImageObject olarak yazar.
+ *
+ * NEDEN DUZ ADRES YETMIYOR: sema `image` alanina duz bir adres de kabul
+ * ediyor ve sayfalar oyle basiyordu. Ama duz adres yalnizca "su dosya"
+ * diyor; gorselin NE ANLATTIGINI soylemiyor. Yanit motorlari bir
+ * gorseli alintilarken aciklamayi metinden tahmin etmek zorunda
+ * kaliyordu.
+ *
+ * Bu yuzden medya satirindaki uc alan buraya bagli:
+ *   alt        -> name         (kisa tanim, ekran okuyucunun da okudugu)
+ *   caption    -> caption      (okurun gordugu altyazi)
+ *   aeoContext -> description  (yalnizca motorlar icin yazilan baglam)
+ *
+ * aeoContext CMS'te yillardir dolduruluyordu ama yayin tarafinda
+ * hicbir yerde kullanilmiyordu: 468 gorselin baglami yazilmis ve tek
+ * bir arama motoru gormemisti. Bagladigimiz yer burasi.
+ *
+ * BOS ALAN YAZILMIYOR (kural: uydurma ya da bos alan konmaz). Elde
+ * yalnizca adres varsa geriye duz adres donuyor, ici bos bir
+ * ImageObject degil.
+ */
+export function gorselNesnesi(
+  adres: string | null | undefined,
+  kunye?: MedyaKunyesi | null,
+): string | Record<string, unknown> | null {
+  const url = mutlak(adres);
+  if (!url) return null;
+
+  const nesne: Record<string, unknown> = {
+    "@type": "ImageObject",
+    contentUrl: url,
+    url,
+  };
+  let zenginMi = false;
+
+  const ekle = (anahtar: string, deger: unknown) => {
+    if (deger === null || deger === undefined || deger === "") return;
+    nesne[anahtar] = deger;
+    zenginMi = true;
+  };
+
+  ekle("name", kunye?.alt?.trim());
+  ekle("caption", kunye?.caption?.trim());
+  ekle("description", kunye?.aeoContext?.trim());
+  // Olculer zenginlik saymiyor: tek baslarina anlam tasimiyorlar.
+  if (kunye?.width) nesne.width = kunye.width;
+  if (kunye?.height) nesne.height = kunye.height;
+
+  return zenginMi ? nesne : url;
+}
+
 /** Butun sayfalarin paylastigi yayinci kimligi. */
 /**
  * Yazi, koleksiyon ve profil semalarinin yayincisi.
