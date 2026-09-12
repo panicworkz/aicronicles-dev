@@ -41,6 +41,25 @@ export const metadata: Metadata = {
   icons: {
     apple: "/images/fabelo-icon.png",
   },
+
+  /* ARAMA SONUCUNDA TAM GORUNURLUK.
+     Bu yonergeler yokken Google varsayilani uyguluyor:
+     max-image-preview "standard", yani sonuclarda kucuk kare kupur ve
+     Discover'a girme sansi neredeyse yok; max-snippet de kisa tutuluyor.
+     "large" + sinirsiz kupur, yayinlarin istedigi ayar.
+
+     -1 "sinir yok" demek, 0 degil — 0 "hic gosterme" olurdu.
+
+     MAGAZA VE ABONELIK SAYFALARINI EZMIYOR: sayfa duzeyindeki
+     `robots: { index: false }` tanimlari (store, cart, order,
+     unsubscribe) katmandan geleni eziyor, tersi degil. */
+  robots: {
+    index: true,
+    follow: true,
+    "max-image-preview": "large",
+    "max-snippet": -1,
+    "max-video-preview": -1,
+  },
 };
 
 export default function FrontendLayout({

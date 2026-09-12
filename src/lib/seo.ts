@@ -48,10 +48,29 @@ export function mutlak(yol: string | null | undefined): string | null {
 }
 
 /** Butun sayfalarin paylastigi yayinci kimligi. */
+/**
+ * Yazi, koleksiyon ve profil semalarinin yayincisi.
+ *
+ * @id ANA SAYFADAKI Organization ile AYNI: yayinSemasi() da
+ * `${SITE}/#kurum` kimligini kullaniyor. Ayni kimlik, arama motoru
+ * icin "bu iki tanim ayni kurum" demek; farkli kimlikler (ya da hic
+ * kimlik olmamasi) her sayfada ayri bir kurum gibi okunuyordu.
+ *
+ * logo BURADA DA VAR: ana sayfanin Organization'i logoyu tasiyordu
+ * ama yazi sayfalarinin publisher'i tasimiyordu ve Article
+ * yapilandirilmis verisi yayincinin isaretini bekliyor. Tanim kendi
+ * basina eksiksiz olmali, cunku bir yazi sayfasi ana sayfanin
+ * @graph'ini basmiyor — yalnizca bu nesneyi basiyor.
+ */
 export const YAYINCI = {
   "@type": "Organization",
+  "@id": `${SITE}/#kurum`,
   name: "Fabelo",
   url: SITE,
+  logo: {
+    "@type": "ImageObject",
+    url: `${SITE}/images/fabelo-logo.png`,
+  },
 } as const;
 
 /** Yayinin adi ve tanimi — besleme ve sema ayni cumleyi kullansin. */

@@ -24,7 +24,7 @@ import { yazininBloklari, bloklarHtmle } from "@/lib/bloklar";
 import { yazarBloklariniDoldur } from "@/lib/yazar-blogu";
 import CmsPage from "@/components/magazine/CmsPage";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
-import { SITE, markali, kirintiSemasi } from "@/lib/seo";
+import { SITE, YAYINCI, markali, kirintiSemasi } from "@/lib/seo";
 import { sssCikar, sssSemasi } from "@/lib/faq";
 import { getSession } from "@/lib/auth";
 
@@ -124,11 +124,11 @@ function yaziSemasi(post: any, yazar: any, kategori: any) {
     "@type": "Article",
     headline: post.metaTitle || post.title,
     mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE}/${post.slug}` },
-    publisher: {
-      "@type": "Organization",
-      name: "Fabelo",
-      url: SITE,
-    },
+    /* Yayinci tanimi BURADA YAZILMIYOR, seo.ts'ten geliyor. Daha once
+       burada kendi kopyasi vardi: ne @id tasiyordu ne logo, yani ana
+       sayfanin Organization'iyla ayni kurum oldugu anlasilmiyordu ve
+       Article'in bekledigi yayinci isareti hic basilmiyordu. */
+    publisher: YAYINCI,
   };
   const aciklama = post.metaDescription || post.excerpt;
   if (aciklama) veri.description = aciklama;
