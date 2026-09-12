@@ -79,6 +79,40 @@ export type MedyaKunyesi = {
  * yalnizca adres varsa geriye duz adres donuyor, ici bos bir
  * ImageObject degil.
  */
+/**
+ * Gorseli ANLATMAYAN baglam metinleri.
+ *
+ * Kutuphanedeki 468 baglamin yalnizca 63'u birbirinden farkli: ayni
+ * metin ortalama yedi gorselde tekrar ediyor ve govdesi su:
+ *
+ *   Visual demonstration for "<yazi basligi>". High-resolution
+ *   contextual asset indexed for AI search engines, multi-modal
+ *   query resolution, and visual citation.
+ *
+ * Ikinci cumle gorsel hakkinda hicbir sey soylemiyor; arama motoruna
+ * yaranmak icin dizilmis anahtar kelimeler. Boyle bir metni yayina
+ * basmak, hicbir sey basmamaktan kotu: Google'in spam politikalari
+ * anahtar kelime doldurmayi acikca sayiyor ve bu metin yedi ayri
+ * gorselde birebir tekrar ediyor.
+ *
+ * Bu yuzden SUZULUYOR. Gorseli gercekten anlatan bir baglam yazildigi
+ * gun kendiliginden yayina cikacak — suzgec metnin kendisine bakiyor,
+ * alana degil.
+ */
+const BOS_KALIPLAR = [
+  /^visual demonstration for/i,
+  /indexed for ai search engines/i,
+  /multi-modal query resolution/i,
+  /high-resolution contextual asset/i,
+];
+
+function anlamliBaglam(metin: string | null | undefined): string | null {
+  const t = metin?.trim();
+  if (!t) return null;
+  if (BOS_KALIPLAR.some((k) => k.test(t))) return null;
+  return t;
+}
+
 export function gorselNesnesi(
   adres: string | null | undefined,
   kunye?: MedyaKunyesi | null,
@@ -101,7 +135,7 @@ export function gorselNesnesi(
 
   ekle("name", kunye?.alt?.trim());
   ekle("caption", kunye?.caption?.trim());
-  ekle("description", kunye?.aeoContext?.trim());
+  ekle("description", anlamliBaglam(kunye?.aeoContext));
   // Olculer zenginlik saymiyor: tek baslarina anlam tasimiyorlar.
   if (kunye?.width) nesne.width = kunye.width;
   if (kunye?.height) nesne.height = kunye.height;
