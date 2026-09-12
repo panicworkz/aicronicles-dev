@@ -33,6 +33,7 @@ type Siparis = {
   customerEmail: string;
   total: unknown;
   currency: string | null;
+  shipping: string | null;
   paymentMethod: string | null;
   shippingAddressJson: any;
 };
@@ -42,6 +43,11 @@ const HAVALE = {
   banka: process.env.BANKA_ADI || "",
   iban: process.env.BANKA_IBAN || "",
   unvan: process.env.BANKA_UNVAN || "",
+  /* SWIFT/BIC EKLENDI. IBAN tek basina SEPA alani icinde yeter;
+     disaridan gonderen bir bankanin BIC'e ihtiyaci var ve o olmadan
+     havale ya reddediliyor ya elle islem icin bekliyor. Magaza yurt
+     disina acildigi icin artik eksik bir alan. */
+  swift: process.env.BANKA_SWIFT || "",
 };
 
 function govde(siparis: Siparis, kalemler: Kalem[]): string {
@@ -63,7 +69,11 @@ function govde(siparis: Siparis, kalemler: Kalem[]): string {
         (HAVALE.unvan ? `  Account name: ${HAVALE.unvan}\n` : "") +
         (HAVALE.banka ? `  Bank: ${HAVALE.banka}\n` : "") +
         `  IBAN: ${HAVALE.iban}\n` +
+        (HAVALE.swift ? `  SWIFT/BIC: ${HAVALE.swift}\n` : "") +
         `  Reference: ${siparis.orderNumber}\n\n` +
+        `Sending from outside the country? Ask your bank to send it in ` +
+        `${birim} and to charge the transfer fee to you (SHA or OUR), so the ` +
+        `amount arrives whole.\n\n` +
         `We start as soon as it lands. Nothing has been charged yet.`
       : `We will send you the account details for the transfer, quoting ` +
         `${siparis.orderNumber} as the reference. Nothing has been charged yet.`
@@ -77,9 +87,18 @@ function govde(siparis: Siparis, kalemler: Kalem[]): string {
         .join(", ")}`
     : "";
 
+  /* Kargo AYRI SATIR. Toplamin icinde eriyip gitmemeli: musteri
+     neyin ne kadar tuttugunu gorebilmeli ve teslimat bedeli artik
+     siparis aninda belli. Sifirsa yazilmiyor — "Delivery: 0.00"
+     satiri bir sey anlatmiyor. */
+  const kargoTutari = Number(siparis.shipping ?? 0);
+  const kargoSatiri =
+    kargoTutari > 0 ? `Delivery: ${fiyat(siparis.shipping!, birim)}\n` : "";
+
   return (
     `Order ${siparis.orderNumber}\n\n` +
     `${satirlar}\n\n` +
+    `${kargoSatiri}` +
     `Total due: ${fiyat(siparis.total, birim)}\n\n` +
     `${odemeBolumu}` +
     adresBolumu +

@@ -2,9 +2,13 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Store, Globe, Loader2, ExternalLink, Type } from 'lucide-react';
+import { Store, Globe, Loader2, ExternalLink, Type, Truck } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { FontSecici } from '@/components/studio/FontSecici';
+import { BOLGELER } from '@/lib/kargo';
 import { toast } from 'sonner';
 import { SITE, SITE_DOMAIN } from '@/lib/seo';
 
@@ -29,6 +33,10 @@ import { SITE, SITE_DOMAIN } from '@/lib/seo';
 export default function AyarlarSayfasi() {
   const [magazaAcik, setMagazaAcik] = useState<boolean | null>(null);
   const [fontIkilisi, setFontIkilisi] = useState<string>('newsreader-inter');
+  /* Kargo tarifesi metin olarak tutuluyor: kutuyu bosaltinca "0"
+     olmasin, bos kalsin. Bos = "girilmedi", 0 = "bedava" — ikisi
+     ayri sey ve sepette ayri gorunuyorlar. */
+  const [tarife, setTarife] = useState<Record<string, string>>({ tr: '', avrupa: '', dunya: '' });
   const [kaydediliyor, setKaydediliyor] = useState(false);
 
   const getir = useCallback(async () => {
@@ -39,6 +47,14 @@ export default function AyarlarSayfasi() {
       if (typeof d?.settings?.font_ikilisi === 'string') {
         setFontIkilisi(d.settings.font_ikilisi);
       }
+      const k = d?.settings?.kargo_tarifesi;
+      if (k && typeof k === 'object') {
+        setTarife({
+          tr: k.tr === null || k.tr === undefined ? '' : String(k.tr),
+          avrupa: k.avrupa === null || k.avrupa === undefined ? '' : String(k.avrupa),
+          dunya: k.dunya === null || k.dunya === undefined ? '' : String(k.dunya),
+        });
+      }
     } catch {
       toast.error('Settings could not be loaded');
       setMagazaAcik(false);
@@ -48,6 +64,24 @@ export default function AyarlarSayfasi() {
   useEffect(() => {
     getir();
   }, [getir]);
+
+  async function tarifeYaz() {
+    setKaydediliyor(true);
+    try {
+      const y = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'kargo_tarifesi', value: tarife }),
+      });
+      const d = await y.json();
+      if (!d?.success) throw new Error(d?.message);
+      toast.success('Delivery charges saved');
+    } catch {
+      toast.error('Delivery charges could not be saved');
+    } finally {
+      setKaydediliyor(false);
+    }
+  }
 
   async function magazaYaz(yeni: boolean) {
     setKaydediliyor(true);
@@ -149,6 +183,64 @@ export default function AyarlarSayfasi() {
               <Loader2 className="size-3 animate-spin" /> Reading the current setting…
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* KARGO TARIFESI.
+          Neden burada: teslimat bedelinin siparis verilmeden ONCE
+          gorunmesi AB ve BK'da zorunlu. Ucret girilmediginde sepet
+          eski davranisa donuyor ("dispatch'ten once bildirilecek") —
+          yani calisiyor ama o sart karsilanmiyor. Uyari asagida. */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <Truck className="size-4 text-primary" />
+            <span>Delivery charges</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            One price per zone, in USD — the currency products are priced in.
+            The basket shows it before the order is placed and adds it to the
+            total. Leave a zone empty and that destination falls back to
+            &ldquo;quoted before dispatch&rdquo;.
+          </p>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            {BOLGELER.map((b) => (
+              <div key={b.kod} className="space-y-1.5">
+                <Label className="text-xs font-medium">{b.ad}</Label>
+                <div className="flex items-center">
+                  <span className="flex h-9 items-center rounded-l-md border border-r-0 border-input bg-muted/60 px-2.5 font-mono text-xs text-muted-foreground">
+                    $
+                  </span>
+                  <Input
+                    inputMode="decimal"
+                    placeholder="—"
+                    value={tarife[b.kod]}
+                    onChange={(e) => setTarife({ ...tarife, [b.kod]: e.target.value })}
+                    className="h-9 rounded-l-none text-sm"
+                  />
+                </div>
+                <p className="text-[11px] leading-snug text-muted-foreground">
+                  {b.aciklama}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {BOLGELER.some((b) => !tarife[b.kod].trim()) && (
+            <p className="rounded-md border border-amber-400/60 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              Zones left empty cannot show a delivery price at checkout. For
+              buyers in the EU and the UK that price has to be shown before the
+              order is placed, so leave them empty only while the store is
+              closed.
+            </p>
+          )}
+
+          <Button size="sm" onClick={tarifeYaz} disabled={kaydediliyor}>
+            {kaydediliyor ? 'Saving…' : 'Save delivery charges'}
+          </Button>
         </CardContent>
       </Card>
 

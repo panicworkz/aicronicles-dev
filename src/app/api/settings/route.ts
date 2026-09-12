@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/db";
+import { tarifeyiOku } from "@/lib/kargo";
 import { FONT_IKILILERI } from "@/lib/fontlar";
 import { eq } from "drizzle-orm";
 import { handleApiError, apiBadRequest } from "@/lib/api-response";
@@ -19,7 +20,7 @@ export const dynamic = "force-dynamic";
  * yarin bir ekran yanlis bir ad gonderirse sessizce cop birikirdi.
  */
 
-const YAZILABILIR = ["magaza_acik", "font_ikilisi"] as const;
+const YAZILABILIR = ["magaza_acik", "font_ikilisi", "kargo_tarifesi"] as const;
 type Anahtar = (typeof YAZILABILIR)[number];
 
 export async function GET() {
@@ -52,7 +53,13 @@ export async function PUT(req: NextRequest) {
        ve dosya yoluna giren bir deger, serbest metin olarak kabul
        edilmemeli. */
     let deger: unknown;
-    if (anahtar === "font_ikilisi") {
+    if (anahtar === "kargo_tarifesi") {
+      /* Serbest gelen deger SUZULUYOR: panele girilen "12,50" gibi
+         bir metin sayiya, bos alan null'a duser. Ham nesneyi oldugu
+         gibi yazsaydik, bir siparis aninda sayi olmayan bir degerle
+         carpim yapilirdi. */
+      deger = tarifeyiOku(g?.value);
+    } else if (anahtar === "font_ikilisi") {
       const istenen = String(g?.value ?? "");
       if (!FONT_IKILILERI.some((i) => i.id === istenen)) {
         return apiBadRequest(`Unknown font pairing: ${istenen}`);

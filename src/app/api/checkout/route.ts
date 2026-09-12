@@ -4,6 +4,9 @@ import { eq, inArray, sql } from "drizzle-orm";
 import { handleApiError, apiBadRequest } from "@/lib/api-response";
 import { turu, stokta } from "@/lib/magaza";
 import { siparisBildir } from "@/lib/siparis-eposta";
+import { kargoUcreti, bolgesi } from "@/lib/kargo";
+import { kargoTarifesi } from "@/lib/kargo-ayar";
+import { ulkeGecerli } from "@/lib/ulkeler";
 
 export const dynamic = "force-dynamic";
 
@@ -29,10 +32,18 @@ export const dynamic = "force-dynamic";
 const YONTEMLER = ["bank_transfer", "cash_on_delivery"] as const;
 type Yontem = (typeof YONTEMLER)[number];
 
-/** Kapida odeme yalnizca ELDEN teslim edilen bir sey icin anlamli. */
-function yontemUygun(yontem: Yontem, turler: string[]): boolean {
-  if (yontem === "cash_on_delivery") return turler.every((t) => t === "physical");
-  return true;
+/**
+ * Kapida odeme yalnizca ELDEN teslim edilen bir sey icin ve yalnizca
+ * KURYENIN NAKIT TOPLADIGI yerde anlamli.
+ *
+ * Ulke kosulu eksikti: Almanya'ya giden bir siparise de kapida odeme
+ * secenegi aciliyordu. Boyle bir siparis alinsa parayi kimse tahsil
+ * edemezdi — yurt disi kuryeler bu hizmeti vermiyor.
+ */
+function yontemUygun(yontem: Yontem, turler: string[], ulke?: string | null): boolean {
+  if (yontem !== "cash_on_delivery") return true;
+  if (!turler.every((t) => t === "physical")) return false;
+  return bolgesi(ulke) === "tr";
 }
 
 function eposta(d: unknown): string | null {
@@ -157,11 +168,7 @@ export async function POST(req: NextRequest) {
         "Please confirm you understand that items delivered immediately cannot be cancelled."
       );
     }
-    if (!yontemUygun(yontem, turler)) {
-      return apiBadRequest(
-        "Cash on delivery is only available when everything in the order is shipped."
-      );
-    }
+
 
     /* Kargo adresi yalnizca ELDE teslim edilen bir sey varsa gerekiyor.
        Dijital bir rehber icin adres istemek gereksiz veri toplamaktir. */
@@ -172,12 +179,36 @@ export async function POST(req: NextRequest) {
         (a) => !String(adres?.[a] ?? "").trim()
       );
       if (eksik.length) return apiBadRequest("A delivery address is required.");
+      /* Ulke kodu DOGRULANIYOR: kargo bolgesi buradan cikiyor ve
+         serbest bir metin "Rest of world" tarifesine dusup yanlis
+         ucret uretebilirdi. */
+      if (!ulkeGecerli(adres?.country)) {
+        return apiBadRequest("Please choose your country from the list.");
+      }
+    }
+
+    /* Yontem kontrolu ADRESTEN SONRA: kapida odemenin gecerli olup
+       olmadigi teslimat ulkesine bagli ve ulke ancak burada belli
+       oluyor. */
+    if (!yontemUygun(yontem, turler, adres?.country)) {
+      return apiBadRequest(
+        "Cash on delivery is available only for shipped orders inside Türkiye."
+      );
     }
 
     const telefon = String(g?.phone ?? "").trim().slice(0, 40);
     if (kargoGerekli && !telefon) {
       return apiBadRequest("A phone number is required for delivery.");
     }
+
+    /* KARGO SUNUCUDA HESAPLANIYOR.
+       Istemci de hesapliyor (sepette gostermek icin) ama gonderdigi
+       tutara guvenilmiyor: tarayicidan gelen bir sayiyi siparise
+       yazmak, alicinin kargoyu sifira cekebilmesi demekti. Tarife
+       girilmemisse sifir kaliyor ve eski davranis suruyor — tutar
+       dispatch'ten once musteriyle konusuluyor. */
+    const tarife = await kargoTarifesi();
+    const kargo = kargoUcreti(tarife, adres?.country, kargoGerekli) ?? 0;
 
     /* Musteri kaydi e-postaya gore: ayni kisi ikinci kez alirsa yeni
        bir kayit acilmasin. */
@@ -209,10 +240,14 @@ export async function POST(req: NextRequest) {
         /* Kargo ve vergi HENUZ SIFIR ve oyle yaziliyor. Uydurma bir
            kargo ucreti koymak yerine, tutar belirlenince buraya
            girecek — siparis kaydinda "bilinmiyor" diye bir sey yok. */
-        shipping: "0.00",
+        shipping: kargo.toFixed(2),
+        /* Vergi FIYATA DAHIL: gosterilen fiyat son fiyat, ayri bir
+           satir yok. Sifir yazmak burada "vergi yok" demek degil,
+           "ayrica eklenmedi" demek — satis sartlarinda da boyle
+           yaziyor. */
         tax: "0.00",
         discount: "0.00",
-        total: araToplam.toFixed(2),
+        total: (araToplam + kargo).toFixed(2),
         currency: paraBirimi || "USD",
         /* Havale de kapida odeme de parayi SONRA aliyor. */
         paymentStatus: "pending",
@@ -236,10 +271,32 @@ export async function POST(req: NextRequest) {
       .update(schema.customers)
       .set({
         orderCount: sql`coalesce(${schema.customers.orderCount}, 0) + 1`,
-        totalSpent: sql`coalesce(${schema.customers.totalSpent}, 0) + ${araToplam.toFixed(2)}`,
+        /* Kargo DAHIL: musterinin bize odedigi tutar bu. Ara toplami
+           yazsaydik panelde "ne kadar harcadi" sorusuna eksik cevap
+           verirdik. */
+        totalSpent: sql`coalesce(${schema.customers.totalSpent}, 0) + ${(araToplam + kargo).toFixed(2)}`,
         updatedAt: new Date(),
       } as any)
       .where(eq(schema.customers.id, musteriId));
+
+    /* SEPET GOLGESI KAPATILIYOR.
+       Bu yapilmazsa siparise donusen her sepet, raporda sonsuza
+       kadar "birakilmis sepet" olarak gorunurdu — yani en basarili
+       alisverisler kayip gibi sayilirdi. */
+    const sepetBelirteci = String(g?.cartToken ?? "").trim();
+    if (/^[a-zA-Z0-9-]{8,64}$/.test(sepetBelirteci)) {
+      await db
+        .update(schema.carts)
+        .set({
+          status: "ordered",
+          orderId: siparis.id,
+          orderedAt: new Date(),
+          email,
+          name: ad,
+          updatedAt: new Date(),
+        } as any)
+        .where(eq(schema.carts.token, sepetBelirteci));
+    }
 
     /* Bildirim EN SONDA ve sonucu siparisi etkilemiyor: siparis zaten
        kaydedildi. Gecit dusse bile musteri onay sayfasini goruyor ve
