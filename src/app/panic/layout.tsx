@@ -26,6 +26,8 @@ import {
   ChevronLeft,
   Ruler, Inbox, ClipboardList,
   Info,
+  BarChart3,
+  ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +88,9 @@ export default function PanicAdminLayout({
           icon: FolderTree,
         },
         { href: "/panic/orders", label: "Orders & Sales", icon: ShoppingCart },
+        /* Sepetler siparislerin YANINDA: ikisi ayni hikayenin iki
+           ucu — biri tamamlanan, digeri tamamlanmayan alisveris. */
+        { href: "/panic/carts", label: "Carts & Abandoned", icon: ShoppingBag },
         { href: "/panic/customers", label: "Customers", icon: Users },
         { href: "/panic/coupons", label: "Coupons", icon: Ticket },
       ],
@@ -93,6 +98,10 @@ export default function PanicAdminLayout({
     {
       title: "SYSTEM",
       items: [
+        /* Raporlar SYSTEM'de: hem magazayi hem icerigi kapsiyor,
+           yani iki bolumden birine koymak digerini disarida
+           birakmak olurdu. */
+        { href: "/panic/reports", label: "Reports", icon: BarChart3 },
         { href: "/panic/settings", label: "Settings", icon: Settings },
         { href: "/panic/about", label: "About PANIC", icon: Info },
       ],

@@ -8,6 +8,7 @@ import AnchorPin from "@/components/magazine/AnchorPin";
 import NavProgress from "@/components/magazine/NavProgress";
 import CanliOnizleme from "@/components/magazine/CanliOnizleme";
 import VideoOynat from "@/components/magazine/VideoOynat";
+import Olcum from "@/components/magazine/Olcum";
 import "./globals.css";
 import { SITE, SITE_ADI } from "@/lib/seo";
 
@@ -54,18 +55,35 @@ export default function FrontendLayout({
         title={SITE_ADI}
         href={`${SITE}/rss`}
       />
-      {/* Umami olcumu — umami.panic.pw'de kayitli "Fabelo.io" sitesi.
-          O kayit 2025 subatindan beri veri tasiyor (Ghost donemi dahil);
-          yeni kayit acmak gecmisi ikiye bolerdi, o yuzden AYNI kimlik
-          kullaniliyor.
+      {/* Umami olcumu — umami.panic.pw'deki "Fabelo.io" kaydi. O kayit
+          2025 subatindan beri veri tasiyor (Ghost donemi dahil); yeni
+          kayit acmak gecmisi ikiye bolerdi, o yuzden AYNI kimlik.
 
-          Yalnizca YAYIN katmaninda: /panic bu katmanin disinda kaldigi
-          icin yonetim ekranindaki gezinme olcume karismiyor. */}
-      <Script
-        src="https://umami.panic.pw/script.js"
-        data-website-id="f4fc9e52-de17-44ac-92b1-6b23ff6fec91"
-        strategy="afterInteractive"
-        defer
+          BETIK ARTIK <Script> ILE DEGIL, Olcum bileseninden takiliyor.
+          Iki sebep var ve ikisi de olcumu bozuyordu:
+
+          1. ONIZLEME SAYILIYORDU. Yazi editorunun tuvali sayfayi bir
+             cerceve icinde ?live=1 ile aciyor. Kosulsuz yuklenen betik
+             yazarin duzenleme dakikalarini "ziyaret" olarak sayiyordu;
+             en cok duzenlenen yazi en cok okunan yazi gibi gorunurdu.
+             Ayni tuzaga reklam sayaclarinda bir kez dusulmustu.
+
+          2. STAGE, CANLININ VERISINE YAZIYORDU. Kimlik koda gomulu
+             oldugu icin panic.panic.pw da ayni siteye olcum
+             gonderiyordu — sinama gezintileri fabelo.io'nun
+             rakamlarina karisiyordu. Kimlik artik ORTAMDAN geliyor:
+             stage'de bos, yani hicbir sey gondermiyor.
+
+          GONDERME ve OKUMA kimlikleri AYRI degiskenler
+          (UMAMI_TRACK_ID / UMAMI_WEBSITE_ID). Tek degisken olsaydi
+          stage'i susturmak, ayni anda rapor ekranini da kor
+          birakirdi: stage olcum GONDERMEMELI ama sitenin verisini
+          OKUYABILMELI.
+
+          Yayin katmanina ozel oldugu icin /panic zaten disarida. */}
+      <Olcum
+        kok={process.env.UMAMI_URL ?? ""}
+        siteKimligi={process.env.UMAMI_TRACK_ID ?? ""}
       />
       <div className="theme-fabelo min-h-screen">{children}</div>
       <CustomCursor />
