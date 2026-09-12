@@ -1,6 +1,9 @@
 /**
  * DEMO SIPARISLERI — rapor ekranlarini gercek veriyle gormek icin.
  *
+ * CANLIDA CALISTIRILMAZ. Betik veritabani adini kontrol ediyor:
+ * panic_cms_stage degilse hicbir sey yapmadan cikiyor.
+ *
  * MUSTERI KIMLIKLERI UYDURULMUYOR: adlar, e-postalar ve adresler
  * dummyjson.com'dan geliyor. Elle yazilmis "ornek" veri inandirici
  * gorundugu icin fark edilmiyor ve bir sure sonra gercek sanilyor;
@@ -27,7 +30,18 @@
 import pg from "pg";
 
 const temizle = process.argv.includes("--temizle");
-const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
+const adres = process.env.DATABASE_URL ?? "";
+
+/* Guvenlik kilidi: canliya demo veri yazmak, gercek siparislerin
+   arasina sahte kayit karistirmak demek. Temizleme de kilitli —
+   canliya yanlislikla baglanan bir --temizle, gercek siparislerden
+   DEMO- ile baslayan varsa onlari silerdi. */
+if (!adres.includes("panic_cms_stage")) {
+  console.error("Bu betik yalnizca panic_cms_stage uzerinde calisir.");
+  process.exit(1);
+}
+
+const db = new pg.Client({ connectionString: adres });
 await db.connect();
 
 const ONEK = "DEMO-";
