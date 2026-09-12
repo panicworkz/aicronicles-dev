@@ -1,5 +1,5 @@
 import React from "react";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { db, schema } from "@/db";
 import { eq, desc, ne, and } from "drizzle-orm";
 import Link from "next/link";
@@ -21,10 +21,12 @@ import { urunBloklariniDoldur } from "@/lib/urun-blogu";
 import { icindekileriDoldur } from "@/lib/icindekiler";
 import { videoBloklariniDoldur } from "@/lib/video";
 import { yazininBloklari, bloklarHtmle } from "@/lib/bloklar";
+import { yazarBloklariniDoldur } from "@/lib/yazar-blogu";
 import CmsPage from "@/components/magazine/CmsPage";
 import AuthorAvatar from "@/components/magazine/AuthorAvatar";
 import { SITE, markali, kirintiSemasi } from "@/lib/seo";
 import { sssCikar, sssSemasi } from "@/lib/faq";
+import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -47,8 +49,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     /* Sabit sayfalarin da kanonik adresi olmali. Yazilar ve liste
        sayfalari alirken /about, /advertise ve otekiler bossa kaliyordu;
        izleme parametreli her adres ayri bir sayfa sayilirdi. */
-    const sayfaAciklamasi = page.metaDescription || "Fabelo publication page.";
+    const sayfaAciklamasi =
+      page.metaDescription || page.excerpt || "Fabelo publication page.";
     const sayfaAdresi = `${SITE}/${page.slug}`;
+    /* Sayfanin kendi kapagi varsa paylasim gorseli o. Once kosulsuz
+       marka isareti kullaniliyordu; sabit sayfalarin kapagi yoktu.
+       Artik var. */
+    const sayfaGorseli = page.featuredImageUrl
+      ? page.featuredImageUrl.startsWith("http")
+        ? page.featuredImageUrl
+        : `${SITE}${page.featuredImageUrl}`
+      : `${SITE}/images/fabelo-logo.png`;
     return {
       title: markali(page.metaTitle || page.title),
       description: sayfaAciklamasi,
@@ -58,14 +69,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         url: sayfaAdresi,
         title: page.title,
         description: sayfaAciklamasi,
-        // Sabit sayfanin kendi gorseli yok; marka isareti kullaniliyor.
-        images: [{ url: `${SITE}/images/fabelo-logo.png` }],
+        images: [{ url: sayfaGorseli }],
       },
       twitter: {
-        card: "summary",
+        card: page.featuredImageUrl ? "summary_large_image" : "summary",
         title: page.title,
         description: sayfaAciklamasi,
-        images: [`${SITE}/images/fabelo-logo.png`],
+        images: [sayfaGorseli],
       },
     };
   }
@@ -137,6 +147,24 @@ function yaziSemasi(post: any, yazar: any, kategori: any) {
 }
 
 
+/* Sabit sayfanin ust bandindaki kunye etiketi. Sayfanin turunu
+   anlatan tek satir; icerigin bir parcasi degil, o yuzden govdeye
+   degil buraya ait. */
+const HUKUKI = new Set([
+  "terms-and-conditions",
+  "data-and-privacy",
+  "terms-of-sale",
+  "delivery-and-returns",
+  "on-bilgilendirme-formu",
+  "mesafeli-satis-sozlesmesi",
+]);
+
+function sayfaBolumu(slug: string): string {
+  if (HUKUKI.has(slug)) return "LEGAL";
+  if (slug === "about") return "MASTHEAD";
+  return "PARTNERSHIPS";
+}
+
 /** Dosya adi -> {width,height} haritasi; gorsellere yer ayirmak icin */
 async function medyaBoyutlari(): Promise<Map<string, MediaBoyut>> {
   const satirlar = await db.query.media.findMany();
@@ -151,6 +179,19 @@ async function medyaBoyutlari(): Promise<Map<string, MediaBoyut>> {
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
 
+  /* YONLENDIRME EN BASTA.
+     Yazi aramasindan ONCE bakiliyor, cunku yonlendirme acik bir
+     talimat: "bu adres artik suraya gidiyor". Sonra bakilsaydi,
+     taslaga alinmis eski yazi once bulunur ve 404 donerdi —
+     yonlendirme hic calismazdi.
+
+     permanentRedirect 308 donuyor; Google bunu 301 ile ayni
+     sayiyor, yani birikmis deger yeni adrese geciyor. */
+  const yonlendirme = await db.query.redirects.findFirst({
+    where: eq(schema.redirects.fromSlug, slug),
+  });
+  if (yonlendirme) permanentRedirect(`/${yonlendirme.toSlug}`);
+
   const post = await db.query.posts.findFirst({ where: eq(schema.posts.slug, slug) });
 
   /* ---------------------------------------------------------------
@@ -159,19 +200,41 @@ export default async function ArticlePage({ params }: PageProps) {
   if (!post) {
     const page = await db.query.pages.findFirst({ where: eq(schema.pages.slug, slug) });
     if (!page) notFound();
+    /* TASLAK GERCEKTEN GIZLI.
+       Editorde secenegin adi "Draft (Hidden)" ama sayfa herkese
+       aciktı: adresi bilen — ya da site haritasindan bulan — okur
+       yayindan kaldirilmis bir sayfayi okuyabiliyordu. Taslagi
+       yalnizca panele girmis biri goruyor; tuvaldeki onizleme de
+       oturum cerezini tasidigi icin calismaya devam ediyor. */
+    if (page.status !== "published" && !(await getSession())) notFound();
+
+    /* Sayfa govdesi de YAZIYLA AYNI YOLDAN geciyor: bloklardan
+       isaretli HTML, sonra okuma aninda dolan bloklar. Ayri bir yol
+       olsaydi sabit sayfada urun karti ya da video calismazdi ve
+       bunun sebebi hicbir yerde yazmazdi. */
+    const sayfaGovdesi = await yazarBloklariniDoldur(
+      await urunBloklariniDoldur(
+        videoBloklariniDoldur(
+          icindekileriDoldur(
+            enrichArticleHtml(
+              bloklarHtmle(yazininBloklari(page), { isaretle: true }),
+              await medyaBoyutlari()
+            )
+          )
+        )
+      )
+    );
 
     return (
       <div className="mag min-h-screen">
         <MagazineHeader />
         <CmsPage
-          slug={page.slug}
           baslik={decodeEntities(page.title)}
-          contentHtml={enrichArticleHtml(page.contentHtml, await medyaBoyutlari())}
+          ozet={page.excerpt ? decodeEntities(page.excerpt) : null}
+          govdeHtml={sayfaGovdesi}
+          kapakUrl={page.featuredImageUrl}
+          bolum={sayfaBolumu(page.slug)}
           guncellendi={page.updatedAt}
-          yazarlar={(await db.query.authors.findMany()).map((a: any) => ({
-            name: a.name,
-            avatarUrl: a.avatarUrl ?? null,
-          }))}
         />
         <MagazineFooter />
       </div>
@@ -189,11 +252,46 @@ export default async function ArticlePage({ params }: PageProps) {
     ? await db.query.categories.findFirst({ where: eq(schema.categories.id, post.categoryId) })
     : null;
 
-  const others = await db.query.posts.findMany({
-    where: and(eq(schema.posts.status, "published"), ne(schema.posts.id, post.id)),
-    orderBy: [desc(schema.posts.publishedAt)],
-    limit: 9,
+  /* ILGILI YAZILAR — HALKA YONTEMI.
+     Once burada "en yeni 9 yazi" duruyordu ve bu her sayfada AYNI 9
+     yaziydi. Sonucu olculdu: 47 yazinin 38'ine site icinden hicbir
+     baglanti gitmiyordu. Okur oraya ancak aramadan ulasabiliyor,
+     arama motoru da sayfayi sitenin kenarinda sayiyor.
+
+     Cozum bir halka: her yazi, KENDI KATEGORISINDEKI siradan sonraki
+     dort yaziya baglaniyor. Kategori bitince basa donuyor. Boylece
+     her yazinin tam olarak dort gelen baglantisi oluyor ve
+     kategoride disarida kalan yazi kalmiyor — "en populer dordu"
+     gibi bir secim yapmadigimiz icin kimse disarida kalmiyor.
+
+     Sira KIMLIGE gore: yayin tarihine gore olsaydi bir yazinin
+     tarihi degistiginde butun halka kayardi. */
+  const tumYazilar = await db.query.posts.findMany({
+    where: eq(schema.posts.status, "published"),
+    orderBy: [schema.posts.id],
   });
+
+  const kardesler = tumYazilar.filter((p: any) => p.categoryId === post.categoryId);
+  const sira = kardesler.findIndex((p: any) => p.id === post.id);
+
+  const halka: any[] = [];
+  for (let k = 1; k <= 4 && k < kardesler.length; k++) {
+    halka.push(kardesler[(sira + k) % kardesler.length]);
+  }
+
+  /* Kenar cubugundaki liste BASKA kategorilerden: okur kendi
+     konusunun disina da cikabilsin, kategoriler birbirine baglansin.
+     Burada da halka mantigi var — kimlige gore kayan bir pencere. */
+  const digerKategoriler = tumYazilar.filter(
+    (p: any) => p.categoryId !== post.categoryId
+  );
+  const kayma = digerKategoriler.length ? post.id % digerKategoriler.length : 0;
+  const capraz = Array.from(
+    { length: Math.min(5, digerKategoriler.length) },
+    (_, k) => digerKategoriler[(kayma + k) % digerKategoriler.length]
+  );
+
+  const others = [...halka, ...capraz];
 
   const authors = await db.query.authors.findMany();
   const categories = await db.query.categories.findMany();
@@ -234,8 +332,8 @@ export default async function ArticlePage({ params }: PageProps) {
     )
   );
 
-  const related = others.slice(0, 4).map(toCard);
-  const trending = others.slice(4, 9).map(toCard);
+  const related = halka.map(toCard);
+  const trending = capraz.map(toCard);
 
   /* Yazinin tag'leri — tagsJson (fabelo.io tag'leri buraya yaziliyor) */
   /* Yazinin govdesindeki SSS. Ayri bir alan yok — yazarin zaten

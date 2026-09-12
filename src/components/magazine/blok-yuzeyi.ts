@@ -491,6 +491,37 @@ export function blokYuzeyiKur({
           '<li><div class="adim-baslik">First step</div><div class="adim-govde">Describe what to do.</div></li>';
         break;
 
+      case "kartlar":
+        o = document.createElement("div");
+        o.className = "kartlar";
+        o.setAttribute("data-blok", "kartlar");
+        o.setAttribute("data-sutun", "3");
+        o.innerHTML = [1, 2, 3]
+          .map(
+            (n) =>
+              `<div class="kart"><div class="kart-baslik">Card ${n}</div>` +
+              `<div class="kart-govde">What it is.</div></div>`
+          )
+          .join("");
+        break;
+
+      case "bant":
+        o = document.createElement("div");
+        o.className = "bant";
+        o.setAttribute("data-blok", "bant");
+        o.innerHTML =
+          '<div class="bant-baslik">Get in touch</div><div class="bant-govde">How to reach us.</div>';
+        break;
+
+      case "yazarlar":
+        /* BOS DOGUYOR: hangi kisiler olacagi ayar panelinden
+           seciliyor. Rastgele bir yazar kimligi uydurmak, sayfada
+           yanlis birini gostermek olurdu. */
+        o = document.createElement("div");
+        o.className = "yazarlar";
+        o.setAttribute("data-blok", "yazarlar");
+        break;
+
       case "kaynakca":
         o = document.createElement("ol");
         o.className = "kaynakca";
@@ -772,6 +803,36 @@ export function blokYuzeyiKur({
      tanimliydilar ama hicbir yerde gosterilmiyorlardi: alt metin,
      altyazi, cipa kimligi gibi seyler duzenlenemez kaliyordu. */
 
+  /* Yazar listesi BIR KEZ cekiliyor: ayar paneli her acildiginda
+     yeniden istemek, ag uzerinde ayni cevabi tekrar tekrar
+     beklemekti. */
+  let yazarOnbellek: Promise<{ id: number; name: string }[]> | null = null;
+  const yazarlariGetir = () => {
+    yazarOnbellek ??= fetch("/api/authors", { credentials: "same-origin" })
+      .then((r) => r.json())
+      .then((d) => (Array.isArray(d?.authors) ? d.authors : []))
+      /* Istek basarisiz olursa bos liste: panelin acilmamasindansa
+         "kayit yok" demek daha dogru bir yalan degil — asagida
+         ayrica soyleniyor. */
+      .catch(() => []);
+    return yazarOnbellek;
+  };
+
+  /** Kunye blogunda bir kisiyi ekler ya da cikarir. */
+  const yazarKartiDegistir = (blok: HTMLElement, kimlik: number, ekle: boolean) => {
+    const varOlan = blok.querySelector(`.yazar-kart[data-yazar="${kimlik}"]`);
+    if (!ekle) {
+      varOlan?.remove();
+      return;
+    }
+    if (varOlan) return;
+    const kart = document.createElement("div");
+    kart.className = "yazar-kart";
+    kart.setAttribute("data-yazar", String(kimlik));
+    kart.innerHTML = '<div class="yazar-govde">What they cover here.</div>';
+    blok.appendChild(kart);
+  };
+
   const ayarKapat = () => {
     ayarAcik = false;
     ayarlar.style.display = "none";
@@ -790,6 +851,8 @@ export function blokYuzeyiKur({
       case "gorsel.genis": return o.classList.contains("kg-width-wide");
       case "liste.sirali": return o.tagName === "OL";
       case "urun.urunId": return o.getAttribute("data-urun-id") ?? "";
+      case "kartlar.sutun": return o.getAttribute("data-sutun") ?? "3";
+      case "kartlar.numarali": return o.getAttribute("data-numarali") === "1";
       default: return "";
     }
   };
@@ -851,6 +914,13 @@ export function blokYuzeyiKur({
       case "urun.urunId":
         o.setAttribute("data-urun-id", String(deger));
         break;
+      case "kartlar.sutun":
+        o.setAttribute("data-sutun", String(deger));
+        break;
+      case "kartlar.numarali":
+        if (deger) o.setAttribute("data-numarali", "1");
+        else o.removeAttribute("data-numarali");
+        break;
     }
     yolla();
   };
@@ -887,6 +957,51 @@ export function blokYuzeyiKur({
       const etiket = document.createElement("span");
       etiket.textContent = alan.etiket;
       sarmal.appendChild(etiket);
+
+      /* KUNYE SECICI. Kutu isaretlendiginde karti dogurup dogru
+         yere koyuyor; kaldirildiginda yalnizca o kart gidiyor —
+         yanindaki kartlarin sayfaya ozel metni duruyor. */
+      if (alan.tur === "yazarlar") {
+        const liste = document.createElement("div");
+        liste.style.cssText = "display:flex;flex-direction:column;gap:5px;font-weight:400";
+        const bekle = document.createElement("span");
+        bekle.textContent = "Loading people…";
+        bekle.style.cssText = `color:${R.soluk};font-size:11.5px`;
+        liste.appendChild(bekle);
+        sarmal.appendChild(liste);
+        ayarlar.appendChild(sarmal);
+
+        const hedef = secili;
+        yazarlariGetir().then((yazarlar) => {
+          liste.innerHTML = "";
+          if (!yazarlar.length) {
+            const bos = document.createElement("span");
+            bos.textContent = "No author records yet.";
+            bos.style.cssText = `color:${R.soluk};font-size:11.5px`;
+            liste.appendChild(bos);
+            return;
+          }
+          for (const y of yazarlar) {
+            const satir = document.createElement("label");
+            satir.style.cssText =
+              "display:flex;align-items:center;gap:7px;font-size:12.5px;cursor:pointer";
+            const kutu = document.createElement("input");
+            kutu.type = "checkbox";
+            kutu.checked = Boolean(
+              hedef.querySelector(`.yazar-kart[data-yazar="${y.id}"]`)
+            );
+            kutu.addEventListener("change", () => {
+              yazarKartiDegistir(hedef, y.id, kutu.checked);
+              yolla();
+            });
+            const ad = document.createElement("span");
+            ad.textContent = y.name;
+            satir.append(kutu, ad);
+            liste.appendChild(satir);
+          }
+        });
+        continue;
+      }
 
       const mevcut = alanOku(secili, t, alan);
       let girdi: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;

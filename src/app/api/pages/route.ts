@@ -33,13 +33,10 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const { title, slug, contentHtml, status, metaTitle, metaDescription } = body;
 
-    /* SABIT SAYFALAR DA SEMADAN GECIYOR.
-       Bu sayfalarin editoru artik dogrudan HTML yazilan bir kutu;
-       suzgec olmasaydi yapistirilan bir script ya da satir ici stil
-       oldugu gibi yayina cikardi. Etkisi once olculdu: dokuz sayfanin
-       dokuzu da cevrimden kayipsiz geciyor. */
-    const temizHtml =
-      typeof contentHtml === 'string' ? bloklarHtmle(htmlBloklara(contentHtml)) : contentHtml;
+    /* BLOKLAR BURADA TURETILIYOR, editorde degil — yazilarla ayni
+       kural. Sabit sayfalar da semadan geciyor. */
+    const bloklar =
+      typeof contentHtml === 'string' ? htmlBloklara(contentHtml) : undefined;
 
     if (!title || !slug) {
       return apiBadRequest('Title and Slug are required');
@@ -50,7 +47,11 @@ export async function POST(req: Request) {
     const insertData: any = {
       title,
       slug: cleanSlug,
-      contentHtml: temizHtml || '',
+      excerpt: body.excerpt ?? null,
+      blocksJson: bloklar ?? [],
+      contentHtml: bloklar ? bloklarHtmle(bloklar) : '',
+      featuredImageUrl: body.featuredImageUrl ?? null,
+      featuredImageId: body.featuredImageId ?? null,
       status: status || 'published',
       metaTitle: metaTitle || title,
       metaDescription: metaDescription || '',

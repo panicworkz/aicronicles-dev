@@ -118,7 +118,14 @@ function Katman({
     >
       {/* Perde — tiklayinca kapanir. */}
       <div
-        className="pencere-perde fixed inset-0 bg-foreground/25 backdrop-blur-[2px]"
+        /* PERDE RENGI SATIR ICI, Tailwind alfasiyla DEGIL.
+           "bg-foreground/25" sinifi bu projede hic uretilmiyor: tema
+           renkleri config'te var(--foreground) olarak tanimli ve
+           Tailwind 3 boyle bir degerden alfa varyanti uretemiyor,
+           sinifi sessizce atliyor. Sonuc: onay penceresinin arkasinda
+           karartma hic yoktu, yalnizca bulaniklik vardi. */
+        className="pencere-perde fixed inset-0 backdrop-blur-[2px]"
+        style={{ background: "rgb(0 0 0 / 0.25)" }}
         onClick={kapat}
         aria-hidden="true"
       />

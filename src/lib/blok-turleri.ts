@@ -19,7 +19,16 @@ import type { Blok } from "@/lib/bloklar";
  * alan, ne tur bir girdi, ne yazacak. Ayri bir form yazilmiyor.
  */
 
-export type AlanTuru = "metin" | "uzunMetin" | "gorsel" | "secim" | "anahtar";
+export type AlanTuru =
+  | "metin"
+  | "uzunMetin"
+  | "gorsel"
+  | "secim"
+  | "anahtar"
+  /* Yazar secici — kunye kartlari icin. Ayri bir tur cunku secilen
+     sey bir METIN degil, bir KAYIT: panel yazar listesini gosterip
+     kimlikleri yaziyor. */
+  | "yazarlar";
 
 export type Alan = {
   ad: string;
@@ -331,6 +340,62 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
     ],
   },
 
+  kartlar: {
+    t: "kartlar",
+    aciklama: "A grid of short cards — formats, options, highlights.",
+    simge: '<rect x="1" y="3" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="13" y="3" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="1" y="13" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="13" y="13" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/>',
+    ad: "Cards",
+    eklenebilir: true,
+    yeni: () => ({
+      t: "kartlar",
+      sutun: 3,
+      ogeler: [
+        { baslik: "First card", html: "What it is." },
+        { baslik: "Second card", html: "What it is." },
+        { baslik: "Third card", html: "What it is." },
+      ],
+    }),
+    yerindeYazilir: true,
+    alanlar: [
+      {
+        ad: "sutun",
+        etiket: "Columns",
+        tur: "secim",
+        secenekler: [
+          { deger: "2", etiket: "Two" },
+          { deger: "3", etiket: "Three" },
+          { deger: "4", etiket: "Four" },
+        ],
+      },
+      { ad: "numarali", etiket: "Number the cards", tur: "anahtar" },
+    ],
+  },
+
+  bant: {
+    t: "bant",
+    aciklama: "A dark full-width band — closing note, contact, disclaimer.",
+    simge: '<rect x="1" y="6" width="22" height="12" rx="1.5"/><rect x="4" y="9" width="8" height="1.8" rx=".9" fill="var(--paper,#fff)"/><rect x="4" y="13" width="14" height="1.6" rx=".8" fill="var(--paper,#fff)" opacity=".7"/>',
+    ad: "Band",
+    eklenebilir: true,
+    yeni: () => ({ t: "bant", baslik: "Get in touch", html: "How to reach us." }),
+    yerindeYazilir: true,
+    alanlar: [],
+  },
+
+  yazarlar: {
+    t: "yazarlar",
+    aciklama: "Masthead cards. Names and portraits come from the author records.",
+    simge: '<circle cx="6" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 19c0-2.8 2-4.5 4.5-4.5s4.5 1.7 4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="18" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M13.5 19c0-2.8 2-4.5 4.5-4.5s4.5 1.7 4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4"/>',
+    ad: "Author cards",
+    eklenebilir: true,
+    /* Bos doguyor: hangi yazarlar oldugunu ayar panelinden seciyor.
+       Rastgele bir yazar kimligi uydurmak, sayfada yanlis bir kisiyi
+       gostermek demekti. */
+    yeni: () => ({ t: "yazarlar", ogeler: [] }),
+    yerindeYazilir: true,
+    alanlar: [{ ad: "yazarlar", etiket: "People", tur: "yazarlar" }],
+  },
+
   video: {
     t: "video",
     aciklama: "YouTube or Vimeo. Loads only when the reader clicks.",
@@ -436,8 +501,9 @@ export const BLOK_TANIMLARI: Record<Blok["t"], BlokTanimi> = {
 export const EKLENEBILIR_TURLER = (
   [
     "paragraf", "baslik", "gorsel", "galeri", "liste", "tablo",
-    "icindekiler", "kutu", "artilar", "adimlar", "istatistik", "grafik",
-    "alinti", "sutunlar", "kod", "video", "cta", "urun", "kaynakca", "ayrac",
+    "icindekiler", "kutu", "kartlar", "artilar", "adimlar", "istatistik", "grafik",
+    "alinti", "sutunlar", "bant", "kod", "video", "cta", "urun", "yazarlar",
+    "kaynakca", "ayrac",
   ] as const
 ).map((t) => BLOK_TANIMLARI[t]);
 

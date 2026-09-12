@@ -124,6 +124,31 @@ export type Blok =
   | { t: "kaynakca"; ogeler: string[] }
   /* Cagri kutusu. */
   | { t: "cta"; baslik: string; metin?: string; dugmeMetni: string; adres: string }
+
+  /* ---- SAYFA DUZENI TASIYAN TURLER ----
+     Bunlar sabit sayfalar icin acildi ama yaziya da konabiliyor.
+     Gerekcesi: sabit sayfalarin duzeni once KOD'da duruyordu —
+     "advertise sayfasinin 'advertising-formats' basligindaki ilk
+     liste kart izgarasi olsun" diye bir eslesme tablosu vardi. Yazar
+     bir basligin kimligini degistirdiginde duzen sessizce dagiliyor,
+     yeni bir sayfada ise hicbir sey olmuyordu. Simdi duzeni yazar
+     koyuyor: kart istiyorsa kart blogu ekliyor. */
+
+  /* Kart izgarasi — "Advertising Formats", "Audience Snapshot".
+     numarali: kartlarin ustunde sira numarasi cikar. */
+  | {
+      t: "kartlar";
+      sutun: 2 | 3 | 4;
+      numarali?: boolean;
+      ogeler: { baslik: string; html: string }[];
+    }
+  /* Bant — sayfanin akisindan cikan, koyu zeminli kapanis alani. */
+  | { t: "bant"; baslik?: string; html: string }
+  /* Kunye kartlari. Urun karti gibi YARI VERI BAGLI: kisinin adi ve
+     gorseli okuma aninda yazar kaydindan geliyor (degisince sayfa da
+     degisir), yanindaki tanitim yazisi ise sayfanin kendi metni —
+     "Fabelo'da ne yaziyor" cumlesi yazarin genel kunyesi degil. */
+  | { t: "yazarlar"; ogeler: { yazarId: number; html: string }[] }
   /* Video — govdede yalnizca kimlik duruyor, oynatici okuma aninda
      basiliyor. Sema iframe'i yasakliyor ve bu DOGRU: kaydedilen sey
      bir kimlik, calistirilabilir bir sey degil. */
@@ -628,6 +653,40 @@ function isaretliBlok(isaret: string, o: HTMLElement): Blok | null {
       };
     }
 
+    case "kartlar": {
+      const sutun = Number(o.getAttribute("data-sutun") ?? 3);
+      return {
+        t: "kartlar",
+        sutun: ([2, 3, 4].includes(sutun) ? sutun : 3) as 2 | 3 | 4,
+        ...(o.getAttribute("data-numarali") === "1" ? { numarali: true } : {}),
+        ogeler: o.querySelectorAll(".kart").map((k) => ({
+          baslik: k.querySelector(".kart-baslik")?.textContent?.trim() ?? "",
+          html: k.querySelector(".kart-govde")?.innerHTML ?? "",
+        })),
+      };
+    }
+
+    case "bant":
+      return {
+        t: "bant",
+        ...(metin(".bant-baslik") ? { baslik: metin(".bant-baslik") } : {}),
+        html: ic(".bant-govde") || o.innerHTML,
+      };
+
+    case "yazarlar":
+      return {
+        t: "yazarlar",
+        ogeler: o
+          .querySelectorAll(".yazar-kart")
+          .map((k) => ({
+            yazarId: Number(k.getAttribute("data-yazar") ?? 0),
+            html: k.querySelector(".yazar-govde")?.innerHTML ?? "",
+          }))
+          /* Kimligi olmayan kart atiliyor: hangi kisiyi gosterdigi
+             bilinmeyen bir kunye karti okuma aninda bos cikardi. */
+          .filter((k) => Number.isFinite(k.yazarId) && k.yazarId > 0),
+      };
+
     case "galeri": {
       const sutun = Number(o.getAttribute("data-sutun") ?? 3);
       return {
@@ -785,6 +844,45 @@ export function bloklarHtmle(
             `<div class="cta-baslik">${b.baslik}</div>` +
             (b.metin ? `<div class="cta-metin">${b.metin}</div>` : "") +
             `<div class="cta-dugme"><a${oznitelik("href", b.adres)}>${b.dugmeMetni}</a></div>` +
+            `</div>`
+          );
+
+        case "kartlar":
+          return (
+            `<div class="kartlar" data-blok="kartlar" data-sutun="${b.sutun}"` +
+            (b.numarali ? ` data-numarali="1"` : "") +
+            `>` +
+            b.ogeler
+              .map(
+                (k) =>
+                  `<div class="kart"><div class="kart-baslik">${k.baslik}</div>` +
+                  `<div class="kart-govde">${k.html}</div></div>`
+              )
+              .join("") +
+            `</div>`
+          );
+
+        case "bant":
+          return (
+            `<div class="bant" data-blok="bant">` +
+            (b.baslik ? `<div class="bant-baslik">${b.baslik}</div>` : "") +
+            `<div class="bant-govde">${b.html}</div></div>`
+          );
+
+        case "yazarlar":
+          /* Ad ve gorsel BURADA YOK: okuma aninda yazar kaydindan
+             basiliyor (lib/yazar-blogu.ts). Sayfaya kopyalansaydi
+             yazarin adi degistiginde sayfa eski adi gostermeye devam
+             ederdi ve kimse fark etmezdi. */
+          return (
+            `<div class="yazarlar" data-blok="yazarlar">` +
+            b.ogeler
+              .map(
+                (k) =>
+                  `<div class="yazar-kart" data-yazar="${k.yazarId}">` +
+                  `<div class="yazar-govde">${k.html}</div></div>`
+              )
+              .join("") +
             `</div>`
           );
 

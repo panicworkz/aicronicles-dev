@@ -174,6 +174,7 @@ export default function CanliOnizleme() {
         /* Panelin bastigi HTML'de contenteditable yok: yeniden
            uygulanmazsa yazi bloklari duzenlenemez hale gelir. */
         duzenlenebilirlikUygula(govde);
+        rayiTazele();
       }
       if (kapak && typeof featuredImageUrl === "string" && featuredImageUrl) {
         kapak.src = featuredImageUrl;
@@ -181,10 +182,61 @@ export default function CanliOnizleme() {
     };
     window.addEventListener("message", dinle);
 
+    /**
+     * ICINDEKILER RAYINI GOVDEDEN TAZELER.
+     *
+     * Ray sunucuda bir kez uretiliyordu; tuvalde bir basligi
+     * degistirdiginizde sayfanin ustundeki metin degisiyor, soldaki
+     * ray eski basligi gostermeye devam ediyordu. Ray govdenin
+     * HARITASI — govde degistigi anda degismeli, yoksa yazara
+     * sayfanin yalan soyledigi bir an birakiyoruz.
+     *
+     * Yazma durmasini BEKLEMIYOR (yolla gibi gecikmeli degil): ray
+     * kendi ekranimizda cizilen bir sey, panele gitmiyor.
+     */
+    const ray = document.querySelector<HTMLElement>('[data-canli="ray"]');
+    const rayiTazele = () => {
+      if (!ray || !govde) return;
+      const basliklar = Array.from(govde.querySelectorAll("h2"));
+      /* Ucten az baslikta ray gostermeye degmez — sunucudaki kuralin
+         aynisi; ikisi ayrisirsa sayfa yuklendiginde bir turlu,
+         yazarken baska turlu gorunurdu. */
+      if (basliklar.length > 2) ray.removeAttribute("data-ray-gizli");
+      else ray.setAttribute("data-ray-gizli", "1");
+
+      const liste = ray.querySelector("ol");
+      if (!liste) return;
+      liste.innerHTML = "";
+      basliklar.forEach((h, i) => {
+        const madde = document.createElement("li");
+        madde.style.borderTop = "1px solid var(--rule)";
+        /* Kimligi olmayan basliga BAGLANTI VERILMIYOR. Yeni yazilan
+           bir basligin cipasi kayitta olusuyor (bloklar.ts); simdi
+           "#" yazsaydik tiklayan kisi sayfanin basina atilirdi. */
+        const ic = document.createElement(h.id ? "a" : "span");
+        if (h.id) ic.setAttribute("href", `#${h.id}`);
+        ic.className =
+          "flex gap-3 py-2.5 text-[0.88rem] leading-snug transition-colors hover:text-[var(--accent-ink)]";
+        const sayi = document.createElement("span");
+        sayi.className = "folio shrink-0";
+        sayi.style.color = "var(--ink-3)";
+        sayi.textContent = String(i + 1).padStart(2, "0");
+        const metin = document.createElement("span");
+        metin.textContent = h.textContent?.trim() ?? "";
+        ic.append(sayi, metin);
+        madde.appendChild(ic);
+        liste.appendChild(madde);
+      });
+    };
+
     /* Panele her tusta degil, yazma durunca haber veriliyor: her harfte
        mesaj yollamak editorun durumunu gereksizce doverdi. */
     let zamanlayici: ReturnType<typeof setTimeout> | null = null;
     const degisti = () => {
+      /* Ray HEMEN tazeleniyor, panele haber vermeyi bekletmeden:
+         biri ust satirdaki basligi degistirirken soldaki haritanin
+         eski basligi gostermesi icin hicbir sebep yok. */
+      rayiTazele();
       if (zamanlayici) clearTimeout(zamanlayici);
       zamanlayici = setTimeout(yolla, 400);
     };
@@ -213,6 +265,11 @@ export default function CanliOnizleme() {
        Yani ekranda tek bir dev metin kutusu vardi, blok yok.
        Duzenlenebilirlik artik blok basina veriliyor (blok-yuzeyi.ts);
        govde yalnizca olaylari topluyor. */
+    /* Ilk cizim: sunucudan gelen ray zaten dogru, ama blok yuzeyi
+       govdeyi normallestirebiliyor (ornegin bos govdeye paragraf
+       ekliyor) — ikisinin ayni kalmasi icin bir kez calisiyor. */
+    rayiTazele();
+
     if (govde) {
       govde.addEventListener("input", degisti);
       /* focusout, blur'un kabaran hali: blur kabarmadigi icin blok
@@ -283,6 +340,17 @@ export default function CanliOnizleme() {
        (biri metin, biri blok icin) iki farkli gecmis varmis izlenimi
        verirdi; oysa yigin bastan beri tek ve ikisini de kapsiyor —
        metin duzenlemesi de blok tasima/silme de ayni sirada duruyor. */
+    /* BOS GOVDE ICIN BIR BASLANGIC.
+       Yeni acilan bir yazi ya da sayfada govde bos geliyor; blok
+       yuzeyi ise secili bir blogun uzerinden calisiyor. Hicbir blok
+       yoksa secilecek bir sey de yok — ekleme menusune ulasmanin
+       yolu kalmiyordu ve yeni sayfa tuvalde bos bir duvar olarak
+       duruyordu. Bir bos paragrafla baslamak, yazarin ilk harfi
+       yazabilecegi yeri veriyor. */
+    if (govde && govde.children.length === 0) {
+      govde.innerHTML = "<p><br></p>";
+    }
+
     const yuzey = govde
       ? blokYuzeyiKur({
           govde,

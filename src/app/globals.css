@@ -932,6 +932,147 @@ html {
   margin-top: 0.3rem;
 }
 
+/* ---- KART IZGARASI ----
+   Once bu duzen KOD'da duruyordu: "advertise sayfasinin
+   'advertising-formats' basligindaki ilk liste kart olsun" diye bir
+   eslesme tablosu vardi (CmsPage'in DUZEN sabiti). Basligin kimligi
+   degisince duzen sessizce dagiliyor, yeni bir sayfada ise hicbir sey
+   olmuyordu. Artik kart isteyen kart blogu koyuyor. */
+.mag .article-body .kartlar {
+  display: grid;
+  gap: 1px;
+  background: var(--rule);
+  margin: 2.2em 0;
+  counter-reset: kart;
+}
+.mag .article-body .kartlar[data-sutun="2"] { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.mag .article-body .kartlar[data-sutun="3"] { grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); }
+.mag .article-body .kartlar[data-sutun="4"] { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.mag .article-body .kartlar > .kart {
+  background: var(--paper);
+  padding: 1.6rem 1.5rem;
+  counter-increment: kart;
+}
+.mag .article-body .kartlar[data-numarali="1"] > .kart::before {
+  content: counter(kart, decimal-leading-zero);
+  display: block;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+.mag .article-body .kart-baslik {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.16rem;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+.mag .article-body .kart-govde {
+  font-size: 0.94rem;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.mag .article-body .kart-govde > :first-child { margin-top: 0; }
+.mag .article-body .kart-govde > :last-child { margin-bottom: 0; }
+
+/* ---- BANT ----
+   Sayfanin akisindan cikan koyu kapanis alani. */
+.mag .article-body .bant {
+  margin: 2.6em 0;
+  padding: 2.2rem 2rem 2.4rem;
+  background: var(--ink);
+  color: var(--paper);
+}
+.mag .article-body .bant-baslik {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.76rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.9rem;
+}
+.mag .article-body .bant-govde { font-size: 1.05rem; line-height: 1.7; max-width: 64ch; }
+.mag .article-body .bant-govde > :first-child { margin-top: 0; }
+.mag .article-body .bant-govde > :last-child { margin-bottom: 0; }
+.mag .article-body .bant-govde a { color: var(--paper); text-decoration-color: var(--accent); }
+
+/* ---- KUNYE KARTLARI ----
+   Ad, rol ve portre okuma aninda yazar kaydindan basiliyor
+   (lib/yazar-blogu.ts); yanindaki tanitim yazisi sayfanin metni. */
+.mag .article-body .yazarlar {
+  display: grid;
+  gap: 1px;
+  background: var(--rule);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin: 2.2em 0;
+}
+.mag .article-body .yazar-kart { background: var(--paper); padding: 1.8rem 1.6rem; }
+.mag .article-body .yazar-kimlik { display: flex; flex-direction: column; gap: 0.15rem; }
+.mag .article-body .yazar-gorsel,
+.mag .article-body .yazar-harf {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0.7rem;
+}
+.mag .article-body .yazar-harf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--rule);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.4rem;
+  color: var(--ink-2);
+}
+.mag .article-body .yazar-ad {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.22rem;
+  line-height: 1.25;
+  color: var(--ink);
+  text-decoration: none;
+}
+.mag .article-body .yazar-rol {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.mag .article-body .yazar-govde {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.94rem;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.mag .article-body .yazar-govde > :first-child { margin-top: 0; }
+.mag .article-body .yazar-govde > :last-child { margin-bottom: 0; }
+
+/* Icindekiler rayi: uc basliktan az sayfada gizli. Kaldirmak yerine
+   gizlemek, tuvalde ucuncu baslik yazildiginda rayin gorunmesini
+   mumkun kiliyor — DOM'da olmayan bir sey tazelenemez. */
+[data-ray-gizli="1"] { display: none !important; }
+
+/* ---- SABIT SAYFA GOVDESI ----
+   Yazi sayfasinda govde zaten okuma olcusunde bir kolonda duruyor.
+   Sabit sayfada kolon genis: metin okunabilir olcude kaliyor, kart /
+   bant / kunye ise kolonun tamamina yayiliyor. Tek bir kap olmasi
+   sart — yerinde duzenleme govdeyi tek parca istiyor. */
+.mag .article-body--sayfa > p,
+.mag .article-body--sayfa > h2,
+.mag .article-body--sayfa > h3,
+.mag .article-body--sayfa > h4,
+.mag .article-body--sayfa > ul,
+.mag .article-body--sayfa > ol,
+.mag .article-body--sayfa > blockquote,
+.mag .article-body--sayfa > .kutu,
+.mag .article-body--sayfa > .artilar-eksiler,
+.mag .article-body--sayfa > .kaynakca,
+.mag .article-body--sayfa > figure { max-width: 760px; }
+
 /* ---- ADIM ADIM ---- */
 .mag .article-body ol.adimlar { counter-reset: adim; list-style: none; padding-left: 0; margin: 2em 0; }
 .mag .article-body ol.adimlar > li {
